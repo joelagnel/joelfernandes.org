@@ -3,7 +3,7 @@ layout: post
 title: "USDT for reliable Userspace event tracing"
 date: 2018-02-10 23:22:39 -0800
 comments: true
-categories: 
+categories: linuxinternals
 ---
 Userspace program when compiled to native can place tracepoints in them using a USDT (User Statically Defined Tracing), the details of the tracepoints (such as address and arguments) are placed as a note in the ELF binary for other tools to interpret. This at first seems much better than using Uprobes directly on userspace functions, since the latter not only needs symbol information from the binary but is also at the mercy of compiler optimizations and function inlining. In Android we directly write into `tracing_mark_write` for userspace tracepoints. While this has its advantages (simplicity), it also means that the only way to "process" the trace information for ALL tracing usecases is by reading back the trace buffer to userspace and processing them offline, thus needing a full user-kernel-user round trip. Further its not possible to easily create triggers on these events (dump the stack or stop tracing when an event fires, for example). Uprobes event tracing on the other hands gets the full benefit that ftrace events do. Also all userspace emitted trace data is a string which has to be parsed and post-processed. USDT seems a nice way to solve some of these problems, since we can then use the user-provided data and create Uprobes at the correct locations, and process these on the fly using BCC without things ever hitting the trace buffer or returning to userspace.
 

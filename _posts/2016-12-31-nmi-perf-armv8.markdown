@@ -3,7 +3,7 @@ layout: post
 title: "ARMv8: flamegraph and NMI support"
 date: 2016-12-31 22:29:26 -0700
 comments: true
-categories: 
+categories: linuxinternals
 ---
 
 Non-maskable interrupts (NMI) is a really useful feature for debugging, that hardware can provide. Unfortunately ARM doesn't provide an out-of-the-box NMI interrupt mechanism. This post shows a flamegraph issue due to missing NMI support, and the upstream work being done to simulate NMI in ARMv8.

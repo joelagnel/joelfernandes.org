@@ -3,7 +3,7 @@ layout: post
 title: "Ftrace events mechanism"
 date: 2016-06-18 22:29:26 -0700
 comments: true
-categories: 
+categories: linuxinternals
 ---
 Ftrace events are a mechanism that allows different pieces of code in the kernel to 'broadcast' events of interest. Such as a scheduler context-switch `sched_switch` for example. In the scheduler core's `__schedule` function, you'll see something like: `trace_sched_switch(preempt, prev, next);`
 This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).

@@ -3,7 +3,7 @@ layout: post
 title: "Tying 2 voltage sources/signals together"
 date: 2015-12-25 14:51:29 -0600
 comments: true
-categories: 
+categories: electronics, linuxinternals
 ---
 Recently I [asked](http://electronics.stackexchange.com/questions/207492/how-are-conflicts-between-voltage-sources-or-signals-resolved/207496) a question on StackExchange about what happens when 2 voltage signals are tied together. What's the resultant voltage and what decides this voltage? The whole train of thought started when I was trying to contemplate what happens when you use pull-ups on signals that are not Open Drain.
 

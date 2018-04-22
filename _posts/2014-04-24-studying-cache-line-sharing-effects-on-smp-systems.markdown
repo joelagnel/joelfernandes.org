@@ -3,7 +3,7 @@ layout: post
 title: "Studying cache-line sharing effects on SMP systems"
 date: 2014-04-24 20:28:24 -0500
 comments: true
-categories: 
+categories: linuxinternals
 ---
 
 Having read the chapter on counting and per-CPU counters in [Paul Mckenney's recent book](http://www.lulu.com/shop/paul-e-mckenney/is-parallel-programming-hard-and-if-so-what-can-you-do-about-it-first-bw-print-edition/paperback/product-21562459.html), I thought I would do a small experiment to check how good or bad it would be if those per-CPU counters were close to each other in memory.
