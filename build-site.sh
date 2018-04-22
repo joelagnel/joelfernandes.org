@@ -1,15 +1,12 @@
 #!/bin/bash
+set -x
 
 set -e
 
 rm -rf _site
+git clone git@github.com:joelagnel/joelfernandes.org.git _site -b gh-pages
 jekyll build
-mkdir -p _site/.git/
 cd _site
-git init
 git add *
-git commit -asm site
-cd ..
-cp git-config-gh-pages _site/.git/config
-cd _site
-git push origin HEAD:gh-pages --force
+git commit -asm "Update on $(date)"
+git push origin HEAD:gh-pages
