@@ -1,0 +1,43 @@
+body > header {
+  background: $header-bg;
+  h1 {
+    display: inline-block;
+    margin: 0;
+    a, a:visited, a:hover {
+      color: $title_color;
+      text-decoration: none;
+      font-family: $hnav-font;
+    }
+  }
+  h2 {
+    margin: .2em 0 0;
+    @extend .sans;
+    font-size: 1.1em;
+    color: $subtitle-color;
+    font-weight: normal;
+  }
+.hnav {
+   a {
+      @include link-colors($hnav-color, $subtitle-color, $visited: $hnav-color);
+      font-family: $hnav-font;
+      text-decoration: none;
+      font-size: 1.0em;
+      padding: .1em 0;
+      line-height: 1.5em;
+   }
+}
+
+.hnavtitle {
+   font-family: $mono;
+   font-weight: bold;
+   a:hover {
+        color: $subtitle-color;
+  	text-decoration:none;
+   }
+   a, a:visited {
+   	color: #ff6669;
+  	text-decoration:none;
+   }
+}
+
+}
