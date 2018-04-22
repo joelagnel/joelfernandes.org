@@ -1,0 +1,26 @@
+This documents how I build www.joelfernandes.org
+
+All that's needed to be done is clone and run build-site.sh
+
+---
+However, the following is how I got to that if you want more details:
+
+Unfortunately github doesn't have plugins the site needs to autogen the site, and I don't have to find a way to make them work. So for now, here's what I do:
+
+master branch contains sources
+gh-pages branch contains site
+
+jekyll generates output is in _site when doing "jekyll build".
+In _site, I have a .git/config which is also available in git-config-gh-pages file in the master branch. In this directory, I do:
+git push origin gh-pages
+
+So the flow is:
+Edit or add posts to master branch
+jekyll serve
+
+rm -rf _site
+jekyll build
+mkdir -p _site/.git/
+cp git-config-gh-pages _site/.git/config
+cd _site
+git push origin gh-pages
