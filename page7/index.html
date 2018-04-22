@@ -5,36 +5,21 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>MicroSD card remote switch - JoelFernand.es</title>
+  <title>JoelFernand.es</title>
   <meta name="author" content="Joel Fernandes">
 
   
   <meta name="description" content="
 
-  
-  
-    
-      MicroSD card remote switch
-    
-    
-      
-        
+
+Here's a list of all the articles and posts:
+
+
+ 10 Feb 2018 &nbsp; USDT for reliable Userspace event tracing
 
 
 
-
-
-
-
-
-
-Jun 04, 2014
-        
-           | Comments
-        
-      
-    
- ...">
+ 08 Jan 2018 &nbsp; BPFd- Runnin...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -43,7 +28,7 @@ Jun 04, 2014
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">
+  <link rel="canonical" href="http://www.linuxinternals.org/page7/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernand.es" type="application/atom+xml">
@@ -109,12 +94,62 @@ Jun 04, 2014
 -->
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
+
+<article>
+Here's a list of all the articles and posts:
+
+<font face="monospace">
+ <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems and architectures</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>31 Dec 2016</span> &nbsp; <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>18 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>22 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></li>
+</font>
+
+</article>
+
   
+  
+  
+    <article>
+Most Recept Post:
+      
   <header>
     
-      <h1 class="entry-title">MicroSD card remote switch</h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></h1>
     
     
       <p class="meta">
@@ -130,15 +165,15 @@ Jun 04, 2014
 
 <time datetime="2014-06-04T04:12:55-07:00" pubdate data-updated="true">Jun 04, 2014</time>
         
-           | <a href="#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+           | <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">Comments</a>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>Recently, I’ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem <em>without</em> removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what’s going on.</p>
+  <div class="entry-content"><p>Recently, I’ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem <em>without</em> removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what’s going on.</p>
 
 <p>The base board requires two <a href="https://www.sparkfun.com/products/9419">SparkFun MicroSD sniffers</a>. The card cage on the sniffer is unused for my purposes. The switcher is controlled through an <a href="https://www.sparkfun.com/products/9717">FTDI cable</a>. 
 I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switch.c">wrote up</a> a <code class="highlighter-rouge">switch</code> program to control the switcher with libftdi. You just have to pass to it the FTDI’s serial number and whether you want to switch to host-mode (for programming the card) or target-mode (for booting the programmed card).
@@ -153,61 +188,22 @@ I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switc
 
 <p>Hope you enjoyed it, let me know what yout think in the comments:)</p>
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
-<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
-
-      
-
-
-
-
-
-
-
-
-
-<time datetime="2014-06-04T04:12:55-07:00" pubdate data-updated="true">Jun 04, 2014</time>
-      
-
-<span class="categories">
   
-    linuxinternals
   
-</span>
 
 
-    </p>
+    </article>
+  
+  <div class="pagination">
     
-      <div class="sharing">
-  
-  
-  
-</div>
-
+      <a class="prev" href="8">&larr; Older</a>
     
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html" title="Previous Post: Linux Spinlock Internals">&laquo; Linux Spinlock Internals</a>
-      
-      
-        <a class="basic-alignment right" href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html" title="Next Post: Tying 2 voltage sources/signals together">Tying 2 voltage sources/signals together &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="6">Newer &rarr;</a>
+    
+  </div>
 </div>
-  </section>
-
-</div>
-
 <aside class="sidebar">
   
     <section>
@@ -264,7 +260,6 @@ I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switc
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -279,10 +274,7 @@ I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switc
       var disqus_shortname = 'linuxinternals1';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html';
-        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

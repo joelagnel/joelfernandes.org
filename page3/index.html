@@ -10,31 +10,16 @@
 
   
   <meta name="description" content="
-  
-  
-  
-    
-      
-  
-    
-      MicroSD card remote switch
-    
-    
-      
-        
+
+
+Here's a list of all the articles and posts:
+
+
+ 10 Feb 2018 &nbsp; USDT for reliable Userspace event tracing
 
 
 
-
-
-
-
-
-
-Jun 04, 2014
-        
-           | Comments
-     ...">
+ 08 Jan 2018 &nbsp; BPFd- Runnin...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -110,14 +95,61 @@ Jun 04, 2014
   <div id="main">
     <div id="content">
       <div class="blog-index">
+
+<article>
+Here's a list of all the articles and posts:
+
+<font face="monospace">
+ <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems and architectures</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>31 Dec 2016</span> &nbsp; <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>18 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>22 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></li>
+</font>
+
+</article>
+
   
   
   
     <article>
+Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></h1>
     
     
       <p class="meta">
@@ -131,237 +163,62 @@ Jun 04, 2014
 
 
 
-<time datetime="2014-06-04T04:12:55-07:00" pubdate data-updated="true">Jun 04, 2014</time>
+<time datetime="2016-12-31T21:29:26-08:00" pubdate data-updated="true">Dec 31, 2016</time>
         
-           | <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Recently, I’ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem <em>without</em> removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what’s going on.</p>
-
-<p>The base board requires two <a href="https://www.sparkfun.com/products/9419">SparkFun MicroSD sniffers</a>. The card cage on the sniffer is unused for my purposes. The switcher is controlled through an <a href="https://www.sparkfun.com/products/9717">FTDI cable</a>. 
-I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switch.c">wrote up</a> a <code class="highlighter-rouge">switch</code> program to control the switcher with libftdi. You just have to pass to it the FTDI’s serial number and whether you want to switch to host-mode (for programming the card) or target-mode (for booting the programmed card).
-<a href="https://github.com/joelagnel/microsd-switch">Hardware design files</a> are available under a CC-BY-NC-SA 3.0 license.</p>
-
-<p>Screencast&lt;iframe width="100%" height="515" src="http://www.youtube.com/embed/StpIihVQ7oM " frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen&gt;&lt;/iframe&gt;</p>
-
-<p>Pictures
-<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo5.jpg" />
-<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo2.jpg" />
-<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/front.png" /></p>
-
-<p>Hope you enjoyed it, let me know what yout think in the comments:)</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-
-<time datetime="2014-05-07T20:42:45-07:00" pubdate data-updated="true">May 07, 2014</time>
-        
-           | <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Comments</a>
+           | <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2016/12/31/nmi-perf-armv8.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>This article tries to clarify how spinlocks are implemented in the Linux kernel and how they should be used correctly in the face of preemption and interrupts. The focus of this article will be more on basic concepts than details, as details tend to be forgotten more easily and shouldn’t be too hard to look up although attention is paid to it to the extent that it helps understanding.</p>
+  <div class="entry-content"><p>Non-maskable interrupts (NMI) is a really useful feature for debugging, that hardware can provide. Unfortunately ARM doesn’t provide an out-of-the-box NMI interrupt mechanism. This post shows a flamegraph issue due to missing NMI support, and the upstream work being done to simulate NMI in ARMv8.</p>
 
-<p>Fundamentally somewhere in <code class="highlighter-rouge">include/linux/spinlock.h</code>, a decision is made on which spinlock header to pull based on whether SMP is enabled or not:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
-# include &lt;linux/spinlock_api_smp.h&gt;
-#else
-# include &lt;linux/spinlock_api_up.h&gt;
-#endif
+<p>Some great Linux kernel features that rely on NMI to work properly are:</p>
+
+<ul>
+  <li>
+    <p>Backtrace from all CPUs: A number of places in the kernel rely on dumping the stacks of all CPUs at the time of a failure to determine what was going on. Some of them are <a href="http://lxr.free-electrons.com/source/kernel/hung_task.c">Hung Task detection</a>, <a href="http://lxr.free-electrons.com/source/Documentation/lockup-watchdogs.txt">Hard/soft lockup detector</a> and spinlock debugging code.</p>
+  </li>
+  <li>
+    <p>Perf profiling and flamegraphs: To be able to profile code that runs in interrupt handlers, or in sections of code that disable interrupts, Perf relies on NMI support in the architecture. <a href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html">flamegraphs</a> are a great visual representation of perf profile output. Below is a flamegraph I generated from perf profile output, that shows just what happens on an architecture like ARMv8 with missing NMI support. Perf is using maskable-interrupts on this platform for profiling:</p>
+  </li>
+</ul>
+
+<p><img src="/images/nmi/flamegraph.png" /></p>
+
+<p>As you can see in the area of the flamegraph where the arrow is pointed, a large amount of time is spent in <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>. It can baffle anyone looking at this data for the first time, and make them think that most of the time is spent in the unlock function. What’s actually happenning is because perf is using a maskable interrupt in ARMv8 to do its profiling, any section of code that disables interrupts will not be see in the flamegraph (not be profiled). In other words perf is unable to peek into sections of code where interrupts are disabled. As a result, when interrupts are reenabled during the <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>, the perf interrupt routine then kicks in and records the large number of samples that elapsed in the interrupt-disable section but falsely accounts it to the _raw_spin_unlock_restore function during which the perf interrupt got a chance to run. Hence the flamegraph anomaly. It is indeed quite sad that ARM still doesn’t have a true NMI which perf would love to make use of.</p>
+
+<p>BUT! <a href="https://lkml.org/lkml/2016/8/19/583">Daniel Thompson</a> has been hard at work trying to simulate Non-maskable interrupts on ARMv8. The idea is <a href="/misc/arm-irq-priortization-white-paper.pdf">based on using interrupt priorities</a> and is the subject of the rest of this post.</p>
+
+<h2 id="nmi-simulation-using-priorities">NMI Simulation using priorities</h2>
+<p>To simulate an NMI, Daniel creates 2 groups of interrupts in his patchset. One group is for all ‘normal’ interrupts, and the other for non-maskable interrupts (NMI). Non-maskable interrupts are assigned a higher priority than the normal interrupt group. Inorder to ‘mask’ interrupts in this approach, Daniel replaces the regular interrupt masking scheme in the kernel which happens at the CPU-core level, with setting of the interrupt controller’s PMR (priority mask register). When the PMR is set to a certain value, only interrupts which have a higher priority than what’s in the PMR will be signaled to a CPU core, all other interrupts will be silenced (masked). By using this technique, it is possible to mask normal interrupts while keeping the NMI unmasked all the time.</p>
+
+<p>Just how does he do this? So, a small primer on interrupts in the ARM world.
+ARM uses the GIC <a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0176c/ar01s03s01.html">Generic interrupt controller</a> to prioritize and route interrupts to CPU cores. GIC interrupt priorties go from 0 to 255. 0 being highest and 255 being the lowest. By default, the kernel <a href="http://lxr.free-electrons.com/source/include/linux/irqchip/arm-gic.h?v=4.8#L57">assigns priority 0xa0 (192)</a> to all interrupts. He changes this default priority from 0xa0 to 0xc0 (you’ll see why).
+He then defines what values of PMR would be consider as “unmasked” vs “masked”. Masked is 0xb0 and unmasked is 0xf0. This results in the following priorities (greater numbers are lower priority).</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0xf0 (240 decimal)  (11110000 binary) - Interrupts Unmasked (enabled)
+0xc0 (192 decimal)  (11000000 binary) - Normal interrupt priority
+0xb0 (176 decimal)  (10110000 binary) - Interrupts masked   (disabled)
+0x80 (128 decimal)  (10000000 binary) - Non-maskable interrupts
 </code></pre></div></div>
+<p>In this new scheme, when interrupts are to be masked (disabled), the PMR is set to 0xf0 and when they are unmasked (enabled), the PMR is set to 0xb0. As you can see, setting the PMR to 0xb0 indeed masks normal interrupts, because 0xb0(PMR) &lt; 0xc0(Normal), however non-maskable interrupts still stay unmasked as 0x80(NMI) &lt; 0xb0(PMR). Also notice that inorder to mask/unmask interrupts, all that needs to be done is flip bit 7 in the PMR (0xb0 -&gt; 0xf0). Daniel largely uses Bit 7 as the mask bit in the patchset.</p>
 
-<p>We’ll go over how things are implemented in both the SMP (Symmetric Multi-Processor) and UP (Uni-Processor) cases.</p>
+<h2 id="quirk-1-saving-of-the-pmr-context-during-traps">Quirk 1: Saving of the PMR context during traps</h2>
+<p>Its suggested in the patchset that during traps, the priority value set in the PMR needs to be saved because it may change during traps. To facilitate this, Daniel found a dummy bit in the PSTATE register (PSR). During any exception, Bit 7 of of the PMR is saved into a PSR bit (he calls it the G bit) and restores it on return from the exception. Look at the changes to <code class="highlighter-rouge">kernel_entry</code> macro in the set for this code.</p>
 
-<p>For the SMP case, <code class="highlighter-rouge">__raw_spin_lock*</code> functions in <code class="highlighter-rouge">kernel/locking/spinlock.c</code> are called when one calls some version of a <code class="highlighter-rouge">spin_lock</code>.</p>
+<h2 id="quirk-2-ack-of-masked-interrupts">Quirk 2: Ack of masked interrupts</h2>
+<p>Note that interrupts are masked before the GIC interrupt controller code can even identify the source of the interrupt. When the GIC code eventually runs, it is tasked with identifying the interrupt source. It does so by reading the <code class="highlighter-rouge">IAR</code> register. This read also has the affecting of “Acking” the interrupt - in other words, telling the GIC that the kernel has acknowledged the interrupt request for that particular source. Daniel points out that, because the new scheme uses PMR for interrupt masking, its no longer possible to ACK interrupts without first unmasking them (by resetting the PMR) so he temporarily resets PMR, does the <code class="highlighter-rouge">IAR</code> read, and restores it. Look for the code in <code class="highlighter-rouge">gic_read_iar_common</code> in his patchset to handle this case.</p>
 
-<p>Following is the definition of the most basic version defined with a macro:</p>
+<h2 id="open-questions-i-have">Open questions I have</h2>
+<ul>
+  <li>Where in the patchset does Daniel mask NMIs once an NMI is in progress, or is this even needed?</li>
+</ul>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
-void __lockfunc __raw_##op##_lock(locktype##_t *lock)                   \
-{                                                                       \
-        for (;;) {                                                      \
-                preempt_disable();                                      \
-                if (likely(do_raw_##op##_trylock(lock)))                \
-                        break;                                          \
-                preempt_enable();                                       \
-                                                                        \
-                if (!(lock)-&gt;break_lock)                                \
-                        (lock)-&gt;break_lock = 1;                         \
-                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
-                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
-        }                                                               \
-        (lock)-&gt;break_lock = 0;                                         \
-}                                                                       \
-</code></pre></div></div>
+<h2 id="future-work">Future work</h2>
+<p>Daniel has tested his patchset only on the foundation model yet, but it appears that the patch series with modifications should work on the newer Qualcomm chipsets that have the necessary GIC (Generic interrupt controller) access from the core to mess with IRQ priorities. Also, currently Daniel has only implemented CPU backtrace, more work needs to be done for perf support which I’ll look into if I can get backtraces working properly on real silicon first.</p>
 
-<p>The function has several imporant bits. First it disables preemption on line 5, then tries to <em>atomically</em> acquire the spinlock on line 6. If it succeeds it breaks from the <code class="highlighter-rouge">for</code> loop on line 7, leaving preemption disabled for the duration of crticial section being protected by the lock. If it didn’t succeed in acquiring the lock (maybe some other CPU grabbed the lock already), it enables preemption back and spins till it can acquire the lock keeping <em>preemption enabled during this period</em>. Each time it detects that the lock can’t be acquired in the <code class="highlighter-rouge">while</code> loop, it calls an architecture specific relax function which has the effect executing some variant of a <code class="highlighter-rouge">no-operation</code> instruction that causes the CPU to execute such an instruction efficiently in a lower power state. We’ll talk about the <code class="highlighter-rouge">break_lock</code> usage in a bit. Soon as it knows the lock is free, say the <code class="highlighter-rouge">raw_spin_can_lock(lock)</code> function returned 1, it goes back to the beginning of the <code class="highlighter-rouge">for</code> loop and tries to acquire the lock again.</p>
-
-<p>What’s important to note here is the reason for keeping preemption enabled (we’ll see in a bit that for UP configurations, this is not done). While the kernel is spinning on a lock, other processes shouldn’t be kept from preempting the spinning thread. The lock in these cases have been acquired on a <em>different CPU</em> because (assuming bug free code) it’s impossible the current CPU which is trying to grab the lock has already acquired it, because preemption is disabled on acquiral. So it makes sense for the spinning kernel thread to be preempted giving others CPU time.
-It is also possible that more than one process on the current CPU is trying to acquire the same lock and spinning on it, in this case the kernel gets continuously preempted between the 2 threads fighting for the lock, while some other CPU in the cluster happily holds the lock, hopefully for not too long.</p>
-
-<p>That’s where the <code class="highlighter-rouge">break_lock</code> element in the lock structure comes in. Its used to signal to the lock-holding processor in the cluster that there is someone else trying to acquire the lock. This can cause the lock to released early by the holder if required.</p>
-
-<p>Now lets see what happens in the UP (Uni-Processor) case.</p>
-
-<p>Believe it or not, it’s really this simple:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define ___LOCK(lock) \
-  do { __acquire(lock); (void)(lock); } while (0)
-
-#define __LOCK(lock) \
-  do { preempt_disable(); ___LOCK(lock); } while (0)
-
-// ....skipped some lines.....
-#define _raw_spin_lock(lock)                    __LOCK(lock)
-</code></pre></div></div>
-
-<p>All that needs to be done is to disable preemption and acquire the lock. The code really doesn’t do anything other than disable preemption. The references to the <code class="highlighter-rouge">lock</code> variable are just to suppress compiler warnings as mentioned in comments in the source file.</p>
-
-<p>There’s no spinning at all here like the UP case and the reason is simple: in the SMP case, remember we had agreed that while a lock is <em>acquired</em> by a particular CPU (in this case just the 1 CPU), no other process on that CPU should have acquired the lock. How could it have gotten a chance to do so with preemption disabled on that CPU to begin with?</p>
-
-<p>Even if the code is buggy, (say the same process tries to acquires the lock twice), it’s still impossible that 2 <em>different processes</em> try to acquire the same lock on a Uni-Processor system considering preemption is disabled on lock acquiral. Following that idea, in the Uni-processor case, since we are running on only 1 CPU, all that needs to be done is to disable preemption, since the fact that we are being allowed to disable preemption to begin with, means that no one else has acquired the lock. Works really well!</p>
-
-<h2 id="sharing-spinlocks-between-interrupt-and-process-context">Sharing spinlocks between interrupt and process-context</h2>
-<p>It is possible that a critical section needs to be protected by the same lock in both an interrupt and in non-interrupt (process) execution context in the kernel. In this case <code class="highlighter-rouge">spin_lock_irqsave</code> and the <code class="highlighter-rouge">spin_unlock_irqrestore</code> variants have to be used to protect the critical section. This has the effect of disabling interrupts on the  executing CPU. Imagine what would happen if you just used <code class="highlighter-rouge">spin_lock</code> in the process context?</p>
-
-<p>Picture the following:</p>
-
-<ol>
-  <li>Process context kernel code acquires <em>lock A</em> using <code class="highlighter-rouge">spin_lock</code>.</li>
-  <li>While the lock is held, an interrupt comes in on the same CPU and executes.</li>
-  <li>Interrupt Service Routing (ISR) tries to acquire <em>lock A</em>, and spins continuously waiting for it.</li>
-  <li>For the duration of the ISR, the Process context is blocked and never gets a chance to run and free the lock.</li>
-  <li>Hard lock up condition on the CPU!</li>
-</ol>
-
-<p>To prevent this, the process context code needs call <code class="highlighter-rouge">spin_lock_irqsave</code> which has the effect of disabling interrupts on that particular CPU along with the regular disabling of preemption we saw earlier <em>before</em> trying to grab the lock.</p>
-
-<p>Note that the ISR can still just call <code class="highlighter-rouge">spin_lock</code> instead of <code class="highlighter-rouge">spin_lock_irqsave</code> because interrupts are disabled anyway during ISR execution. Often times people use <code class="highlighter-rouge">spin_lock_irqsave</code> in an ISR, that’s not necessary.</p>
-
-<p>Also note that during the executing of the critical section protected by <code class="highlighter-rouge">spin_lock_irqsave</code>, the interrupts are only disabled on the executing CPU. The same interrupt can come in on a different CPU and the ISR will be executed there, but that will not trigger the hard lock condition I talked about, because the process-context code is not blocked and can finish executing the locked critical section and release the lock while the ISR spins on the lock on a different CPU waiting for it. The process context does get a chance to finish and free the lock causing no hard lock up.</p>
-
-<p>Following is what the <code class="highlighter-rouge">spin_lock_irqsave</code> code looks like for the SMP case, UP case is similar, look it up. BTW, the only difference here compared to the regular <code class="highlighter-rouge">spin_lock</code> I described in the beginning are the <code class="highlighter-rouge">local_irq_save</code> and <code class="highlighter-rouge">local_irq_restore</code> that accompany the <code class="highlighter-rouge">preempt_disable</code> and <code class="highlighter-rouge">preempt_enable</code> in the lock code:</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
-unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
-{                                                                       \
-        unsigned long flags;                                            \
-                                                                        \
-        for (;;) {                                                      \
-                preempt_disable();                                      \
-                local_irq_save(flags);                                  \
-                if (likely(do_raw_##op##_trylock(lock)))                \
-                        break;                                          \
-                local_irq_restore(flags);                               \
-                preempt_enable();                                       \
-                                                                        \
-                if (!(lock)-&gt;break_lock)                                \
-                        (lock)-&gt;break_lock = 1;                         \
-                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
-                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
-        }                                                               \
-        (lock)-&gt;break_lock = 0;                                         \
-        return flags;                                                   \
-}                                                                       \
-</code></pre></div></div>
-
-<p>Hope this post made a few things more clear, there’s a lot more to spinlocking. A good reference is <a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/">Rusty’s Unreliable Guide To Locking</a>.</p>
-</div>
-  
-  
-
-
-    </article>
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-
-<time datetime="2014-04-24T18:28:24-07:00" pubdate data-updated="true">Apr 24, 2014</time>
-        
-           | <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Having read the chapter on counting and per-CPU counters in <a href="http://www.lulu.com/shop/paul-e-mckenney/is-parallel-programming-hard-and-if-so-what-can-you-do-about-it-first-bw-print-edition/paperback/product-21562459.html">Paul Mckenney’s recent book</a>, I thought I would do a small experiment to check how good or bad it would be if those per-CPU counters were close to each other in memory.</p>
-
-<p>Paul talks about using one global shared counter for N threads on N CPUs, and the effects it can have on the cache. Each CPU core’s cache in an SMP system will need exclusive rights on a specific cache line of memory, before it can do the write. This means that, at any given time <em>only one</em> CPU can and should do a write to that part of memory.</p>
-
-<p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core’s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
-
-<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
-
-<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
-
-<p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
-
-<p>Below are the results of running the program on 3 different SMP systems (2 threads on 2 CPUs, sorry I don’t have better multi-core hardware ATM):</p>
-
-<p>Effect of running on a reference ARM dual-core Cortex-A9 system:
-<img src="/images/cache-sharing/a9-counts.jpeg" /></p>
-
-<p>Notice the jump in through-put once the separation changes from 16 to 32 bytes. That gives us a good idea that the L1 cache line size on Cortex-A9 systems is 32 bytes (8 words). Something the author didn’t know for sure in advance (I initially thought it was 64-bytes).</p>
-
-<p>Effect of running on a reference ARM dual-core Cortex-A15 system:
-<img src="/images/cache-sharing/a15-counts.jpeg" /></p>
-
-<p>L1 Cache-line size of Cortex A-15 is 64 bytes (8 words). Expected jump for a separation of 64 bytes.</p>
-
-<p>Effect of running on a x86-64 i7-3687U dual-core CPU:
-<img src="/images/cache-sharing/x86-counts.jpeg" />.</p>
-
-<p>L1 Cache-line size of this CPU is 64 bytes too (8 words). Expected jump for a separation of 64 bytes.</p>
-
-<p>This shows your parallel programs need to take care of cache-line alignment to avoid false-sharing effects. Also, doing something like this in your program is an indirect way to find out what the cache-line size is for your CPU, or a direct way to get fired, whichever way you want to look at it. ;)</p>
 </div>
   
   
@@ -406,7 +263,7 @@ unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
       </li>
     
       <li class="post">
-        <a href="/electronics,/linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a>
+        <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a>
       </li>
     
       <li class="post">

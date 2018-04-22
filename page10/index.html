@@ -5,33 +5,21 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Design of fork followed by exec in Linux - JoelFernand.es</title>
+  <title>JoelFernand.es</title>
   <meta name="author" content="Joel Fernandes">
 
   
   <meta name="description" content="
 
-  
-  
-    
-      Design of fork followed by exec in Linux
-    
-    
-      
-        
+
+Here's a list of all the articles and posts:
+
+
+ 10 Feb 2018 &nbsp; USDT for reliable Userspace event tracing
 
 
 
-
-
-
-
-
-
-Apr 22, 2014
-        
-           | Comments
-        ...">
+ 08 Jan 2018 &nbsp; BPFd- Runnin...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -40,7 +28,7 @@ Apr 22, 2014
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">
+  <link rel="canonical" href="http://www.linuxinternals.org/page10/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernand.es" type="application/atom+xml">
@@ -106,12 +94,62 @@ Apr 22, 2014
 -->
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
+
+<article>
+Here's a list of all the articles and posts:
+
+<font face="monospace">
+ <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems and architectures</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>31 Dec 2016</span> &nbsp; <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>18 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>22 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></li>
+</font>
+
+</article>
+
   
+  
+  
+    <article>
+Most Recept Post:
+      
   <header>
     
-      <h1 class="entry-title">Design of fork followed by exec in Linux</h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></h1>
     
     
       <p class="meta">
@@ -127,15 +165,15 @@ Apr 22, 2014
 
 <time datetime="2014-04-22T21:06:11-07:00" pubdate data-updated="true">Apr 22, 2014</time>
         
-           | <a href="#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+           | <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Comments</a>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p>A lot of folks ask <em>why do you have to do fork and then an exec, to execute a new program?</em> and <em>why can’t it be done in one step?</em>, or <em>why does fork <a href="http://man7.org/linux/man-pages/man2/fork.2.html">create a copy-on-writed address space</a>, to only have it thrown away later when you do an exec?</em>. So I decided do a small write up about this topic.</p>
+  <div class="entry-content"><p>A lot of folks ask <em>why do you have to do fork and then an exec, to execute a new program?</em> and <em>why can’t it be done in one step?</em>, or <em>why does fork <a href="http://man7.org/linux/man-pages/man2/fork.2.html">create a copy-on-writed address space</a>, to only have it thrown away later when you do an exec?</em>. So I decided do a small write up about this topic.</p>
 
 <p>On a separate note, firstly it is important to remember that <code class="highlighter-rouge">fork</code> is not used for threading, its primary use is to create a separate process, that is a child of the parent process that called <code class="highlighter-rouge">fork</code>.</p>
 
@@ -183,59 +221,20 @@ Apr 22, 2014
 
 <p>Please share any comments you may have in the comments section.</p>
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
-<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
-
-      
-
-
-
-
-
-
-
-
-
-<time datetime="2014-04-22T21:06:11-07:00" pubdate data-updated="true">Apr 22, 2014</time>
-      
-
-<span class="categories">
   
-    linuxinternals
   
-</span>
 
 
-    </p>
+    </article>
+  
+  <div class="pagination">
     
-      <div class="sharing">
-  
-  
-  
-</div>
-
+    <a href="/blog/archives">Blog Archives</a>
     
-    <p class="meta">
-      
-      
-        <a class="basic-alignment right" href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html" title="Next Post: Studying cache-line sharing effects on SMP systems">Studying cache-line sharing effects on SMP systems &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a class="next" href="9">Newer &rarr;</a>
+    
+  </div>
 </div>
-  </section>
-
-</div>
-
 <aside class="sidebar">
   
     <section>
@@ -292,7 +291,6 @@ Apr 22, 2014
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -307,10 +305,7 @@ Apr 22, 2014
       var disqus_shortname = 'linuxinternals1';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html';
-        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

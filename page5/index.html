@@ -5,34 +5,21 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>TIF_NEED_RESCHED: why is it needed - JoelFernand.es</title>
+  <title>JoelFernand.es</title>
   <meta name="author" content="Joel Fernandes">
 
   
   <meta name="description" content="
 
-  
-  
-    
-      TIF_NEED_RESCHED: why is it needed
-    
-    
-      
-        
+
+Here's a list of all the articles and posts:
+
+
+ 10 Feb 2018 &nbsp; USDT for reliable Userspace event tracing
 
 
 
-
-
-
-
-
-
-Mar 20, 2016
-        
-           | Comments
-        
-     ...">
+ 08 Jan 2018 &nbsp; BPFd- Runnin...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -41,7 +28,7 @@ Mar 20, 2016
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">
+  <link rel="canonical" href="http://www.linuxinternals.org/page5/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernand.es" type="application/atom+xml">
@@ -107,12 +94,62 @@ Mar 20, 2016
 -->
   <div id="main">
     <div id="content">
-      <div>
-<article class="hentry" role="article">
+      <div class="blog-index">
+
+<article>
+Here's a list of all the articles and posts:
+
+<font face="monospace">
+ <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems and architectures</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>31 Dec 2016</span> &nbsp; <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>18 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></li>
+</font>
+
+<font face="monospace">
+ <li><span>22 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></li>
+</font>
+
+</article>
+
   
+  
+  
+    <article>
+Most Recept Post:
+      
   <header>
     
-      <h1 class="entry-title">TIF_NEED_RESCHED: why is it needed</h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></h1>
     
     
       <p class="meta">
@@ -128,15 +165,15 @@ Mar 20, 2016
 
 <time datetime="2016-03-20T01:44:32-07:00" pubdate data-updated="true">Mar 20, 2016</time>
         
-           | <a href="#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+           | <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">Comments</a>
         
       </p>
     
   </header>
 
 
-<div class="entry-content"><p><code class="highlighter-rouge">TIF_NEED_RESCHED</code> is one of the many “thread information flags” stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is <code class="highlighter-rouge">TIF_NEED_RESCHED</code>. Inorder to explain why its important and how it works, I will go over 2 cases where <code class="highlighter-rouge">TIF_NEED_RESCHED</code> is used.</p>
+  <div class="entry-content"><p><code class="highlighter-rouge">TIF_NEED_RESCHED</code> is one of the many “thread information flags” stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is <code class="highlighter-rouge">TIF_NEED_RESCHED</code>. Inorder to explain why its important and how it works, I will go over 2 cases where <code class="highlighter-rouge">TIF_NEED_RESCHED</code> is used.</p>
 
 <h2 id="preemption">Preemption</h2>
 <p>Preemption is the process of forceably grabbing CPU from a user or kernel context and giving it to someone else (user or kernel). It is the means for timesharing a CPU between competing tasks (I will use task as terminology for process).
@@ -199,61 +236,22 @@ Note that, for return to kernel mode, I see that <code class="highlighter-rouge"
 <p>Next time you see <code class="highlighter-rouge">if (need_resched())</code> in kernel code, you’ll have a better idea why its there :). Let me know your comments if any.</p>
 
 </div>
-
-
-  <footer>
-    <p class="meta">
-      
-<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
-
-      
-
-
-
-
-
-
-
-
-
-<time datetime="2016-03-20T01:44:32-07:00" pubdate data-updated="true">Mar 20, 2016</time>
-      
-
-<span class="categories">
   
-    linuxinternals
   
-</span>
 
 
-    </p>
+    </article>
+  
+  <div class="pagination">
     
-      <div class="sharing">
-  
-  
-  
-</div>
-
+      <a class="prev" href="6">&larr; Older</a>
     
-    <p class="meta">
-      
-        <a class="basic-alignment left" href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html" title="Previous Post: Tying 2 voltage sources/signals together">&laquo; Tying 2 voltage sources/signals together</a>
-      
-      
-        <a class="basic-alignment right" href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html" title="Next Post: Ftrace events mechanism">Ftrace events mechanism &raquo;</a>
-      
-    </p>
-  </footer>
-</article>
-
-  <section>
-    <h1>Comments</h1>
-    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+    <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="4">Newer &rarr;</a>
+    
+  </div>
 </div>
-  </section>
-
-</div>
-
 <aside class="sidebar">
   
     <section>
@@ -310,7 +308,6 @@ Note that, for return to kernel mode, I see that <code class="highlighter-rouge"
   
 </aside>
 
-
     </div>
   </div>
   <footer role="contentinfo"><p>
@@ -325,10 +322,7 @@ Note that, for return to kernel mode, I see that <code class="highlighter-rouge"
       var disqus_shortname = 'linuxinternals1';
       
         
-        // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html';
-        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html';
-        var disqus_script = 'embed.js';
+        var disqus_script = 'count.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
