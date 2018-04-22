@@ -17,7 +17,7 @@
       
   
     
-      ARMv8: flamegraph and NMI support
+      Ftrace events mechanism
     
     
       
@@ -31,9 +31,10 @@
 
 
 
-Dec 31, 2016
+Jun 18, 2016
         
-           | Comment...">
+           | Comments
+        ...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -110,88 +111,6 @@ Dec 31, 2016
     <div id="content">
       <div class="blog-index">
   
-  
-  
-    <article>
-      
-  <header>
-    
-      <h1 class="entry-title"><a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></h1>
-    
-    
-      <p class="meta">
-        
-
-
-
-
-
-
-
-
-
-<time datetime="2016-12-31T21:29:26-08:00" pubdate data-updated="true">Dec 31, 2016</time>
-        
-           | <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2016/12/31/nmi-perf-armv8.html">Comments</a>
-        
-      </p>
-    
-  </header>
-
-
-  <div class="entry-content"><p>Non-maskable interrupts (NMI) is a really useful feature for debugging, that hardware can provide. Unfortunately ARM doesn’t provide an out-of-the-box NMI interrupt mechanism. This post shows a flamegraph issue due to missing NMI support, and the upstream work being done to simulate NMI in ARMv8.</p>
-
-<p>Some great Linux kernel features that rely on NMI to work properly are:</p>
-
-<ul>
-  <li>
-    <p>Backtrace from all CPUs: A number of places in the kernel rely on dumping the stacks of all CPUs at the time of a failure to determine what was going on. Some of them are <a href="http://lxr.free-electrons.com/source/kernel/hung_task.c">Hung Task detection</a>, <a href="http://lxr.free-electrons.com/source/Documentation/lockup-watchdogs.txt">Hard/soft lockup detector</a> and spinlock debugging code.</p>
-  </li>
-  <li>
-    <p>Perf profiling and flamegraphs: To be able to profile code that runs in interrupt handlers, or in sections of code that disable interrupts, Perf relies on NMI support in the architecture. <a href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html">flamegraphs</a> are a great visual representation of perf profile output. Below is a flamegraph I generated from perf profile output, that shows just what happens on an architecture like ARMv8 with missing NMI support. Perf is using maskable-interrupts on this platform for profiling:</p>
-  </li>
-</ul>
-
-<p><img src="/images/nmi/flamegraph.png" /></p>
-
-<p>As you can see in the area of the flamegraph where the arrow is pointed, a large amount of time is spent in <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>. It can baffle anyone looking at this data for the first time, and make them think that most of the time is spent in the unlock function. What’s actually happenning is because perf is using a maskable interrupt in ARMv8 to do its profiling, any section of code that disables interrupts will not be see in the flamegraph (not be profiled). In other words perf is unable to peek into sections of code where interrupts are disabled. As a result, when interrupts are reenabled during the <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>, the perf interrupt routine then kicks in and records the large number of samples that elapsed in the interrupt-disable section but falsely accounts it to the _raw_spin_unlock_restore function during which the perf interrupt got a chance to run. Hence the flamegraph anomaly. It is indeed quite sad that ARM still doesn’t have a true NMI which perf would love to make use of.</p>
-
-<p>BUT! <a href="https://lkml.org/lkml/2016/8/19/583">Daniel Thompson</a> has been hard at work trying to simulate Non-maskable interrupts on ARMv8. The idea is <a href="/misc/arm-irq-priortization-white-paper.pdf">based on using interrupt priorities</a> and is the subject of the rest of this post.</p>
-
-<h2 id="nmi-simulation-using-priorities">NMI Simulation using priorities</h2>
-<p>To simulate an NMI, Daniel creates 2 groups of interrupts in his patchset. One group is for all ‘normal’ interrupts, and the other for non-maskable interrupts (NMI). Non-maskable interrupts are assigned a higher priority than the normal interrupt group. Inorder to ‘mask’ interrupts in this approach, Daniel replaces the regular interrupt masking scheme in the kernel which happens at the CPU-core level, with setting of the interrupt controller’s PMR (priority mask register). When the PMR is set to a certain value, only interrupts which have a higher priority than what’s in the PMR will be signaled to a CPU core, all other interrupts will be silenced (masked). By using this technique, it is possible to mask normal interrupts while keeping the NMI unmasked all the time.</p>
-
-<p>Just how does he do this? So, a small primer on interrupts in the ARM world.
-ARM uses the GIC <a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0176c/ar01s03s01.html">Generic interrupt controller</a> to prioritize and route interrupts to CPU cores. GIC interrupt priorties go from 0 to 255. 0 being highest and 255 being the lowest. By default, the kernel <a href="http://lxr.free-electrons.com/source/include/linux/irqchip/arm-gic.h?v=4.8#L57">assigns priority 0xa0 (192)</a> to all interrupts. He changes this default priority from 0xa0 to 0xc0 (you’ll see why).
-He then defines what values of PMR would be consider as “unmasked” vs “masked”. Masked is 0xb0 and unmasked is 0xf0. This results in the following priorities (greater numbers are lower priority).</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0xf0 (240 decimal)  (11110000 binary) - Interrupts Unmasked (enabled)
-0xc0 (192 decimal)  (11000000 binary) - Normal interrupt priority
-0xb0 (176 decimal)  (10110000 binary) - Interrupts masked   (disabled)
-0x80 (128 decimal)  (10000000 binary) - Non-maskable interrupts
-</code></pre></div></div>
-<p>In this new scheme, when interrupts are to be masked (disabled), the PMR is set to 0xf0 and when they are unmasked (enabled), the PMR is set to 0xb0. As you can see, setting the PMR to 0xb0 indeed masks normal interrupts, because 0xb0(PMR) &lt; 0xc0(Normal), however non-maskable interrupts still stay unmasked as 0x80(NMI) &lt; 0xb0(PMR). Also notice that inorder to mask/unmask interrupts, all that needs to be done is flip bit 7 in the PMR (0xb0 -&gt; 0xf0). Daniel largely uses Bit 7 as the mask bit in the patchset.</p>
-
-<h2 id="quirk-1-saving-of-the-pmr-context-during-traps">Quirk 1: Saving of the PMR context during traps</h2>
-<p>Its suggested in the patchset that during traps, the priority value set in the PMR needs to be saved because it may change during traps. To facilitate this, Daniel found a dummy bit in the PSTATE register (PSR). During any exception, Bit 7 of of the PMR is saved into a PSR bit (he calls it the G bit) and restores it on return from the exception. Look at the changes to <code class="highlighter-rouge">kernel_entry</code> macro in the set for this code.</p>
-
-<h2 id="quirk-2-ack-of-masked-interrupts">Quirk 2: Ack of masked interrupts</h2>
-<p>Note that interrupts are masked before the GIC interrupt controller code can even identify the source of the interrupt. When the GIC code eventually runs, it is tasked with identifying the interrupt source. It does so by reading the <code class="highlighter-rouge">IAR</code> register. This read also has the affecting of “Acking” the interrupt - in other words, telling the GIC that the kernel has acknowledged the interrupt request for that particular source. Daniel points out that, because the new scheme uses PMR for interrupt masking, its no longer possible to ACK interrupts without first unmasking them (by resetting the PMR) so he temporarily resets PMR, does the <code class="highlighter-rouge">IAR</code> read, and restores it. Look for the code in <code class="highlighter-rouge">gic_read_iar_common</code> in his patchset to handle this case.</p>
-
-<h2 id="open-questions-i-have">Open questions I have</h2>
-<ul>
-  <li>Where in the patchset does Daniel mask NMIs once an NMI is in progress, or is this even needed?</li>
-</ul>
-
-<h2 id="future-work">Future work</h2>
-<p>Daniel has tested his patchset only on the foundation model yet, but it appears that the patch series with modifications should work on the newer Qualcomm chipsets that have the necessary GIC (Generic interrupt controller) access from the core to mess with IRQ priorities. Also, currently Daniel has only implemented CPU backtrace, more work needs to be done for perf support which I’ll look into if I can get backtraces working properly on real silicon first.</p>
-
-</div>
-  
-  
-
-
-    </article>
   
   
     <article>
@@ -430,6 +349,78 @@ Note that, for return to kernel mode, I see that <code class="highlighter-rouge"
 
     </article>
   
+  
+    <article>
+      
+  <header>
+    
+      <h1 class="entry-title"><a href="/electronics,/linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2015-12-25T12:51:29-08:00" pubdate data-updated="true">Dec 25, 2015</time>
+        
+           | <a href="/electronics,/linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/electronics,/linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+  <div class="entry-content"><p>Recently I <a href="http://electronics.stackexchange.com/questions/207492/how-are-conflicts-between-voltage-sources-or-signals-resolved/207496">asked</a> a question on StackExchange about what happens when 2 voltage signals are tied together. What’s the resultant voltage and what decides this voltage? The whole train of thought started when I was trying to contemplate what happens when you use pull-ups on signals that are not Open Drain.</p>
+
+<p>I create and simulated a Circuit with the same scenario in LTSpice. “V” is the voltage between the “+” terminals of V1 and V2 and its shown on the right of the simulation. We will confirm the simulation result by doing some math later.<img src="/images/voltage-conflict/voltage-conflict-1.png" /></p>
+
+<p>The question is what is the voltage across the load after hooking them up together. And what do the currents look like? Is there a current flowing between the 2 sources as well (apart from the current flowing to the load) because 5v &gt; 1.8v?
+The simulator refuses to do a simulation without your author adding an internal resistance to the voltage sources first. All voltages sources have certain internal resistances, so that’s fair. This can be considered analogous to having a voltage signal with a certain resistance along its path which limits its current sourcing (or sinking) capabilities.</p>
+
+<p>So I added 1k resistances internally, normally the resistance of a voltage source is far less than this. AA batteries have just 0.1-0.2ohms.
+Now the circuit looks something like this: <img src="/images/voltage-conflict/voltage-conflict-2.png" /></p>
+
+<p>One can simply apply <a href="https://en.wikipedia.org/wiki/Kirchhoff%27s_circuit_laws#Kirchhoff.27s_current_law_.28KCL.29">Kirchoff’s current law</a> to the above circuit, the direction of currents would be as in the circuit. I1 and I2 are the currents flowing through R2 and R1 respectively.</p>
+
+<p>By Kirchoff’s law, All the current entering the node labeled V will be equal to the current exiting it even if the currents are not in the actual direction shown above. From this we see:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1 = (1.8 - V) / 1k
+I2 = (5 - V)   / 1k
+I3 = (V - 0)   / 10k
+
+I3 = I2 + I1
+V / 10k  = ((1.8 - V) / 1k) + ((5 - V) / 1k)
+V = 3.2381v
+</code></pre></div></div>
+
+<p>Fom this we see the voltage at V is somewhere between 5 and 1.8v. Infact, where it is between 5 and 1.8 depends on how strong or weak the resistances associated with the sources are. If the resistances are lower, then the sources have more of an influence and vice versa. An interesting observation is I1 is negative if you plug V=3.2v in the above equation. This means the current for voltage source V2 (the 1.8v voltage source) is actually flowing into it rather than out of it (its being sinked) and so I1 is actually opposite in direction to the picture shown above.</p>
+
+<p>A simpler case is having 2 voltage sources of the exact same voltage values, in this case the circuit would look like:<img src="/images/voltage-conflict/voltage-conflict-3.png" /></p>
+
+<p><a href="https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem">Thevenin’s theorem</a>  provides an easy simplication into the following, where the equivalent voltage source value is the same but the series resistance is now halved. This results in the following circuit:
+<img src="/images/voltage-conflict/voltage-conflict-4.png" /></p>
+
+<p>Now you can use the <a href="https://en.wikipedia.org/wiki/Voltage_divider">Voltage divider</a> concept and easily solve this:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>V = V2 * (R2 / (R1 + R2) )
+  = 1.8v * ( 10k / (10k + 0.5k) )
+  = 1.7142v
+</code></pre></div></div>
+<p>As you would notice, the 1k resistance dropped around 0.085v of voltage before getting to the 10k load.
+Thanks for reading. Please leave your comments or inputs below.</p>
+</div>
+  
+  
+
+
+    </article>
+  
   <div class="pagination">
     
       <a class="prev" href="3">&larr; Older</a>
@@ -445,10 +436,6 @@ Note that, for return to kernel mode, I see that <code class="highlighter-rouge"
     <section>
   <h1>Recent Posts</h1>
   <ul id="recent_posts">
-    
-      <li class="post">
-        <a href="/linuxinternals/2018/03/10/usdt2-notes.html">USDT for reliable Userspace event tracingx</a>
-      </li>
     
       <li class="post">
         <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a>
