@@ -1,0 +1,333 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Design of fork followed by exec in Linux - JoelFernand.es</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      Design of fork followed by exec in Linux
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+Apr 22, 2014
+        
+           | Comments
+        ...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernand.es" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernand.es</a></h1>
+  
+    <h2>My dumping ground for what I've been upto</h2>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <a href="/joel">About me</a><br>
+ <a href="/linuxinternals/">Linux Internals Articles</a><br>
+ <a href="/blog/archives/">All blog posts</a><br>
+ <a href="/resources">Talks and resources</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=150 width=150>
+</div>
+
+<div style="position:absolute; top: 170px" class="hnavtitle">
+<a>Open Source is how I roll.</a>
+<!-- a href="http://www.meetup.com/LinuxInternals-org-Embedded-Linux-Training/">Join the internals meetup! -->
+<!-- a href="http://www.meetup.com/LinuxInternals-org-Embedded-Linux-Training/">Join the internals meetup! -->
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Design of fork followed by exec in Linux</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2014-04-22T21:06:11-07:00" pubdate data-updated="true">Apr 22, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>A lot of folks ask <em>why do you have to do fork and then an exec, to execute a new program?</em> and <em>why can’t it be done in one step?</em>, or <em>why does fork <a href="http://man7.org/linux/man-pages/man2/fork.2.html">create a copy-on-writed address space</a>, to only have it thrown away later when you do an exec?</em>. So I decided do a small write up about this topic.</p>
+
+<p>On a separate note, firstly it is important to remember that <code class="highlighter-rouge">fork</code> is not used for threading, its primary use is to create a separate process, that is a child of the parent process that called <code class="highlighter-rouge">fork</code>.</p>
+
+<p>Normally one might think that doing a <code class="highlighter-rouge">fork</code> and separate <code class="highlighter-rouge">exec</code> can be combined in one step, and it probably should be. But there are applications of maintaining this separation. Here’s a <a href="http://stackoverflow.com/questions/1345320/applications-of-fork-system-call">post that explains</a> why you might need to do just a <code class="highlighter-rouge">fork</code> call. Summarizing the post, you may need to setup some initial data and “fork” a bunch of workers. All these works are supposed to execute in <em>their own</em> address space and share <em>only the initial data</em>. In this case, copy-on-write is extremely useful since the initial data can be shared in physical memory and forking this way would be extremely cheap. The kernel marks all these shared pages as read only, and makes writable copies of shared data when they are written to.</p>
+
+<p>There is a small overhead if <code class="highlighter-rouge">fork</code> is followed immediately by an <code class="highlighter-rouge">exec</code> system call, since the copy-on-write shared address space is of no use and is thrown away anyway. Combining both the <code class="highlighter-rouge">fork</code>, <code class="highlighter-rouge">exec</code> in this case might might have some advantages, reducing this overhead.</p>
+
+<h2 id="linux-implementation-of-copy-on-write-cow-for-shared-virtual-memory-areas">Linux Implementation of Copy-on-write (COW) for shared Virtual Memory Areas</h2>
+<p>Some of this COW code that executes on a fork can be found in <code class="highlighter-rouge">mm/memory.c</code>. There is an is_cow function to detect if a virtual memory area (a region of virtual memory, see <code class="highlighter-rouge">/proc/self/maps</code>) is copy-on-write.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kr">inline</span> <span class="n">bool</span> <span class="nf">is_cow_mapping</span><span class="p">(</span><span class="n">vm_flags_t</span> <span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">VM_SHARED</span> <span class="o">|</span> <span class="n">VM_MAYWRITE</span><span class="p">))</span> <span class="o">==</span> <span class="n">VM_MAYWRITE</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>A VMA (Virtual Memory Area) is a contiguous segment of virtual memory belonging to a particular process. Every VMA has a bunch of VM_ flags associated with it. <code class="highlighter-rouge">VM_MAYWRITE</code>, relevant to the above code, is used to mark that a mapped region can be changed to writable by mprotect system call. It is possible that a memory region is initially readonly and the user wants to make it writable. <code class="highlighter-rouge">VM_MAYWRITE</code> gives that permission. Note that if if the kernel doesn’t set <code class="highlighter-rouge">VM_MAYWRITE</code>, then the region is automatically not COW because there is no question of writing to it.</p>
+
+<p>When a memory mapping is created via the mmap system call, and if <code class="highlighter-rouge">MAP_SHARED</code> is passed in flags, the <code class="highlighter-rouge">VM_SHARED</code> bit is set for the VMA and as a result the region is not copy-on-write (The above is_cow_mapping function returns false). By definition, shared memory regions are just that - shared. So no need copy-on-write. In other words, If the VMA is a shared mapping or is a read only mapping, then it isn’t a COW mapping.</p>
+
+<p>Let’s take the example of mapping a file using mmap,</p>
+
+<p>By default in the kernel on VMA creation, the VMA flags is set to <code class="highlighter-rouge">VM_SHARED = 0</code> and <code class="highlighter-rouge">VM_MAYWRITE = 1</code>. Now if mmap is asked it to create a shared mapping of a file by passing it <code class="highlighter-rouge">MAP_SHARED</code> flag, for example, that can be shared with other processes that are being forked, then the <code class="highlighter-rouge">VM_SHARED</code> bit is set to 1 for that VMA. Additionally if the file is opened in read only mode, then <code class="highlighter-rouge">VM_MAYWRITE</code> is set to 1. This has the effect of making is_cow_mapping return false. Ofcourse, the shared mapping doesn’t need to be a COW.</p>
+
+<p>On the other hand, if <code class="highlighter-rouge">MAP_PRIVATE</code> is passed in the flags to mmap, then <code class="highlighter-rouge">VM_SHARED</code> bit is set to 0, and <code class="highlighter-rouge">VM_MAYWRITE</code> remains at 1 (regardless of whether the file is read or write opened, since writes will not be carried to the underlying file). This makes is_cow_mapping return true. Indeed, private mappings should be copy-on-write enabled.</p>
+
+<p>You can see the code I’m talking about <a href="http://lxr.free-electrons.com/source/mm/mmap.c#L1284">conveniently here</a>.</p>
+
+<p>The important point here is that every mapping is either a COW mapping or not a COW mapping. During the <code class="highlighter-rouge">clone</code> system call which is called by <code class="highlighter-rouge">fork</code> library call internally, if the <code class="highlighter-rouge">CLONE_VM</code> flag is not passed to <code class="highlighter-rouge">clone</code> as is the case internally within <code class="highlighter-rouge">fork</code>, then all the VMA mappings of the parent process are copied to the child, including the page table entries. In this case, any writes to COW mappings should trigger a copy on write. The main thing to note is the children <em>inherit</em> the COW property of all the copied VMA mappings of its parent and don’t need to be explictly marked as COW.</p>
+
+<p>However, If <code class="highlighter-rouge">CLONE_VM</code> is passed, then the VMAs are not copied and the memory descriptor of the child and the parent process are the same, in this case the child and parent share the same address space and are thus are threads. <a href="http://lxr.free-electrons.com/source/kernel/fork.c#L879">See for yourself</a>. COW or no COW doesn’t matter here.</p>
+
+<p>So here’s a question for you, For N <code class="highlighter-rouge">clone</code> system calls with <code class="highlighter-rouge">!CLONE_VM</code> passed for spawning N threads, we can just create as many VMA copies as we want each time, the COW mappings will take care of themselves. Right? Almost! There’s more work… the <em>physical pages</em> of both the original VMA and the copy VMA have to be marked as read-only. That’s the only way Copy-on-write of those will be triggered by the CPU when those pages are written to. Here’s the code in <a href="http://lxr.free-electrons.com/source/mm/memory.c#L849">copy_one_pte</a> that sets this up:</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="cm">/*
+          * If it's a COW mapping, write protect it both
+          * in the parent and the child
+          */</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">is_cow_mapping</span><span class="p">(</span><span class="n">vm_flags</span><span class="p">))</span> <span class="p">{</span>
+                 <span class="n">ptep_set_wrprotect</span><span class="p">(</span><span class="n">src_mm</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">src_pte</span><span class="p">);</span>
+                 <span class="n">pte</span> <span class="o">=</span> <span class="n">pte_wrprotect</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+         <span class="p">}</span>
+</code></pre></div></div>
+<p>There you go, now when the COW memory region is written to, a page fault happens, and the page fault handler knows that the VMA of the faulting page is a COW and that’s what triggered the page fault. It can then create a copy of the page and restart the faulting instruction, this time removing the write protection if there aren’t any others sharing the VMA. So in short, fork+exec can be expensive if you had done lots of <code class="highlighter-rouge">fork</code> calls on a process with a lot of large files. Since all this copying business is wasted on doing a subsequent <code class="highlighter-rouge">exec</code> system call.</p>
+
+<p>There is one optimization however, why should you have to do this marking for pages that are not physically present in memory? Those will fault anyway. So the above code is <em>not run</em> if the page is not present, nicely done by checking for <code class="highlighter-rouge">!pte_present(pte)</code> to be true before the preceding code.</p>
+
+<p>Please share any comments you may have in the comments section.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2014-04-22T21:06:11-07:00" pubdate data-updated="true">Apr 22, 2014</time>
+      
+
+<span class="categories">
+  
+    linuxinternals
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+        <a class="basic-alignment right" href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html" title="Next Post: Studying cache-line sharing effects on SMP systems">Studying cache-line sharing effects on SMP systems &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems and architectures</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a>
+      </li>
+    
+      <li class="post">
+        <a href="/electronics,/linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a>
+      </li>
+    
+  </ul>
+</section>
+
+
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2018 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html';
+        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
