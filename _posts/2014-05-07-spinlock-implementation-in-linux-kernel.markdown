@@ -3,7 +3,7 @@ layout: post
 title: "Linux Spinlock Internals"
 date: 2014-05-07 22:42:45 -0500
 comments: true
-categories: 
+categories: linuxinternals
 ---
 This article tries to clarify how spinlocks are implemented in the Linux kernel and how they should be used correctly in the face of preemption and interrupts. The focus of this article will be more on basic concepts than details, as details tend to be forgotten more easily and shouldn't be too hard to look up although attention is paid to it to the extent that it helps understanding.
 
