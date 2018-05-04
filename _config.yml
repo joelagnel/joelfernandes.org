@@ -6,6 +6,7 @@ url: http://www.linuxinternals.org
 title: JoelFernand.es
 subtitle: My dumping ground for what I've been upto
 author: Joel Fernandes
+github_user: joelagnel
 
 paginate: 1          # Posts per page on the blog index
 pagination_dir: blog  # Directory base for pagination URLs eg. /blog/page/2/
@@ -18,7 +19,8 @@ plugins: [jekyll-paginate]
 
 # list each of the sidebar modules you want to include, in the order you want them to appear.
 # To add custom asides, create files in /source/_includes/custom/asides/ and add them to the list like 'custom/asides/custom_aside_name.html'
-default_asides: [asides/recent_posts.html, asides/github.html, asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
+default_asides: [asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
+# default_asides: [asides/recent_posts.html, asides/github.html, asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
 
 simple_search: https://www.google.com/search
 description:
