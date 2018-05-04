@@ -5,6 +5,7 @@ date: 2014-04-25 13:29
 comments: true
 sharing: true
 footer: true
+published: false
 ---
 #### My Presentations
 [ELCE 2016: Debugging Real-Time issues in Linux](/technical-resources/elce2016-debug-rt.pdf)
