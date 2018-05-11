@@ -102,6 +102,10 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 Full list of all posts on this site:
 
 <font face="monospace">
+ <li><span>10 May 2018</span> &nbsp; <a href="/2018/05/10/2018-05-10-5~rcu-preempt-context-switch.html"></a>  [] </li>
+</font>
+
+<font face="monospace">
  <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a>  [linuxinternals] </li>
 </font>
 
@@ -151,7 +155,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></h1>
     
     
       <p class="meta">
@@ -165,46 +169,121 @@ Most Recept Post:
 
 
 
-<time datetime="2014-04-24T18:28:24-07:00" pubdate data-updated="true">Apr 24, 2014</time>
+<time datetime="2014-05-07T20:42:45-07:00" pubdate data-updated="true">May 07, 2014</time>
         
-           | <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Comments</a>
+           | <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Having read the chapter on counting and per-CPU counters in <a href="http://www.lulu.com/shop/paul-e-mckenney/is-parallel-programming-hard-and-if-so-what-can-you-do-about-it-first-bw-print-edition/paperback/product-21562459.html">Paul Mckenney’s recent book</a>, I thought I would do a small experiment to check how good or bad it would be if those per-CPU counters were close to each other in memory.</p>
+  <div class="entry-content"><p>This article tries to clarify how spinlocks are implemented in the Linux kernel and how they should be used correctly in the face of preemption and interrupts. The focus of this article will be more on basic concepts than details, as details tend to be forgotten more easily and shouldn’t be too hard to look up although attention is paid to it to the extent that it helps understanding.</p>
 
-<p>Paul talks about using one global shared counter for N threads on N CPUs, and the effects it can have on the cache. Each CPU core’s cache in an SMP system will need exclusive rights on a specific cache line of memory, before it can do the write. This means that, at any given time <em>only one</em> CPU can and should do a write to that part of memory.</p>
+<p>Fundamentally somewhere in <code class="highlighter-rouge">include/linux/spinlock.h</code>, a decision is made on which spinlock header to pull based on whether SMP is enabled or not:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+# include &lt;linux/spinlock_api_smp.h&gt;
+#else
+# include &lt;linux/spinlock_api_up.h&gt;
+#endif
+</code></pre></div></div>
 
-<p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core’s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
+<p>We’ll go over how things are implemented in both the SMP (Symmetric Multi-Processor) and UP (Uni-Processor) cases.</p>
 
-<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
+<p>For the SMP case, <code class="highlighter-rouge">__raw_spin_lock*</code> functions in <code class="highlighter-rouge">kernel/locking/spinlock.c</code> are called when one calls some version of a <code class="highlighter-rouge">spin_lock</code>.</p>
 
-<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
+<p>Following is the definition of the most basic version defined with a macro:</p>
 
-<p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+void __lockfunc __raw_##op##_lock(locktype##_t *lock)                   \
+{                                                                       \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+}                                                                       \
+</code></pre></div></div>
 
-<p>Below are the results of running the program on 3 different SMP systems (2 threads on 2 CPUs, sorry I don’t have better multi-core hardware ATM):</p>
+<p>The function has several imporant bits. First it disables preemption on line 5, then tries to <em>atomically</em> acquire the spinlock on line 6. If it succeeds it breaks from the <code class="highlighter-rouge">for</code> loop on line 7, leaving preemption disabled for the duration of crticial section being protected by the lock. If it didn’t succeed in acquiring the lock (maybe some other CPU grabbed the lock already), it enables preemption back and spins till it can acquire the lock keeping <em>preemption enabled during this period</em>. Each time it detects that the lock can’t be acquired in the <code class="highlighter-rouge">while</code> loop, it calls an architecture specific relax function which has the effect executing some variant of a <code class="highlighter-rouge">no-operation</code> instruction that causes the CPU to execute such an instruction efficiently in a lower power state. We’ll talk about the <code class="highlighter-rouge">break_lock</code> usage in a bit. Soon as it knows the lock is free, say the <code class="highlighter-rouge">raw_spin_can_lock(lock)</code> function returned 1, it goes back to the beginning of the <code class="highlighter-rouge">for</code> loop and tries to acquire the lock again.</p>
 
-<p>Effect of running on a reference ARM dual-core Cortex-A9 system:
-<img src="/images/cache-sharing/a9-counts.jpeg" /></p>
+<p>What’s important to note here is the reason for keeping preemption enabled (we’ll see in a bit that for UP configurations, this is not done). While the kernel is spinning on a lock, other processes shouldn’t be kept from preempting the spinning thread. The lock in these cases have been acquired on a <em>different CPU</em> because (assuming bug free code) it’s impossible the current CPU which is trying to grab the lock has already acquired it, because preemption is disabled on acquiral. So it makes sense for the spinning kernel thread to be preempted giving others CPU time.
+It is also possible that more than one process on the current CPU is trying to acquire the same lock and spinning on it, in this case the kernel gets continuously preempted between the 2 threads fighting for the lock, while some other CPU in the cluster happily holds the lock, hopefully for not too long.</p>
 
-<p>Notice the jump in through-put once the separation changes from 16 to 32 bytes. That gives us a good idea that the L1 cache line size on Cortex-A9 systems is 32 bytes (8 words). Something the author didn’t know for sure in advance (I initially thought it was 64-bytes).</p>
+<p>That’s where the <code class="highlighter-rouge">break_lock</code> element in the lock structure comes in. Its used to signal to the lock-holding processor in the cluster that there is someone else trying to acquire the lock. This can cause the lock to released early by the holder if required.</p>
 
-<p>Effect of running on a reference ARM dual-core Cortex-A15 system:
-<img src="/images/cache-sharing/a15-counts.jpeg" /></p>
+<p>Now lets see what happens in the UP (Uni-Processor) case.</p>
 
-<p>L1 Cache-line size of Cortex A-15 is 64 bytes (8 words). Expected jump for a separation of 64 bytes.</p>
+<p>Believe it or not, it’s really this simple:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define ___LOCK(lock) \
+  do { __acquire(lock); (void)(lock); } while (0)
 
-<p>Effect of running on a x86-64 i7-3687U dual-core CPU:
-<img src="/images/cache-sharing/x86-counts.jpeg" />.</p>
+#define __LOCK(lock) \
+  do { preempt_disable(); ___LOCK(lock); } while (0)
 
-<p>L1 Cache-line size of this CPU is 64 bytes too (8 words). Expected jump for a separation of 64 bytes.</p>
+// ....skipped some lines.....
+#define _raw_spin_lock(lock)                    __LOCK(lock)
+</code></pre></div></div>
 
-<p>This shows your parallel programs need to take care of cache-line alignment to avoid false-sharing effects. Also, doing something like this in your program is an indirect way to find out what the cache-line size is for your CPU, or a direct way to get fired, whichever way you want to look at it. ;)</p>
+<p>All that needs to be done is to disable preemption and acquire the lock. The code really doesn’t do anything other than disable preemption. The references to the <code class="highlighter-rouge">lock</code> variable are just to suppress compiler warnings as mentioned in comments in the source file.</p>
+
+<p>There’s no spinning at all here like the UP case and the reason is simple: in the SMP case, remember we had agreed that while a lock is <em>acquired</em> by a particular CPU (in this case just the 1 CPU), no other process on that CPU should have acquired the lock. How could it have gotten a chance to do so with preemption disabled on that CPU to begin with?</p>
+
+<p>Even if the code is buggy, (say the same process tries to acquires the lock twice), it’s still impossible that 2 <em>different processes</em> try to acquire the same lock on a Uni-Processor system considering preemption is disabled on lock acquiral. Following that idea, in the Uni-processor case, since we are running on only 1 CPU, all that needs to be done is to disable preemption, since the fact that we are being allowed to disable preemption to begin with, means that no one else has acquired the lock. Works really well!</p>
+
+<h2 id="sharing-spinlocks-between-interrupt-and-process-context">Sharing spinlocks between interrupt and process-context</h2>
+<p>It is possible that a critical section needs to be protected by the same lock in both an interrupt and in non-interrupt (process) execution context in the kernel. In this case <code class="highlighter-rouge">spin_lock_irqsave</code> and the <code class="highlighter-rouge">spin_unlock_irqrestore</code> variants have to be used to protect the critical section. This has the effect of disabling interrupts on the  executing CPU. Imagine what would happen if you just used <code class="highlighter-rouge">spin_lock</code> in the process context?</p>
+
+<p>Picture the following:</p>
+
+<ol>
+  <li>Process context kernel code acquires <em>lock A</em> using <code class="highlighter-rouge">spin_lock</code>.</li>
+  <li>While the lock is held, an interrupt comes in on the same CPU and executes.</li>
+  <li>Interrupt Service Routing (ISR) tries to acquire <em>lock A</em>, and spins continuously waiting for it.</li>
+  <li>For the duration of the ISR, the Process context is blocked and never gets a chance to run and free the lock.</li>
+  <li>Hard lock up condition on the CPU!</li>
+</ol>
+
+<p>To prevent this, the process context code needs call <code class="highlighter-rouge">spin_lock_irqsave</code> which has the effect of disabling interrupts on that particular CPU along with the regular disabling of preemption we saw earlier <em>before</em> trying to grab the lock.</p>
+
+<p>Note that the ISR can still just call <code class="highlighter-rouge">spin_lock</code> instead of <code class="highlighter-rouge">spin_lock_irqsave</code> because interrupts are disabled anyway during ISR execution. Often times people use <code class="highlighter-rouge">spin_lock_irqsave</code> in an ISR, that’s not necessary.</p>
+
+<p>Also note that during the executing of the critical section protected by <code class="highlighter-rouge">spin_lock_irqsave</code>, the interrupts are only disabled on the executing CPU. The same interrupt can come in on a different CPU and the ISR will be executed there, but that will not trigger the hard lock condition I talked about, because the process-context code is not blocked and can finish executing the locked critical section and release the lock while the ISR spins on the lock on a different CPU waiting for it. The process context does get a chance to finish and free the lock causing no hard lock up.</p>
+
+<p>Following is what the <code class="highlighter-rouge">spin_lock_irqsave</code> code looks like for the SMP case, UP case is similar, look it up. BTW, the only difference here compared to the regular <code class="highlighter-rouge">spin_lock</code> I described in the beginning are the <code class="highlighter-rouge">local_irq_save</code> and <code class="highlighter-rouge">local_irq_restore</code> that accompany the <code class="highlighter-rouge">preempt_disable</code> and <code class="highlighter-rouge">preempt_enable</code> in the lock code:</p>
+
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
+{                                                                       \
+        unsigned long flags;                                            \
+                                                                        \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                local_irq_save(flags);                                  \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                local_irq_restore(flags);                               \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+        return flags;                                                   \
+}                                                                       \
+</code></pre></div></div>
+
+<p>Hope this post made a few things more clear, there’s a lot more to spinlocking. A good reference is <a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/">Rusty’s Unreliable Guide To Locking</a>.</p>
 </div>
   
   
