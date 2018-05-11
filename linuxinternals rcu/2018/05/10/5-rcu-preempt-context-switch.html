@@ -192,20 +192,14 @@ a task that is currently in an RCU read section gets preempted, then the CPU
 has reached a QS because it is no longer running the RCU-read section that is
 blocking the GP. But now, the task has reached a non-QS (It is blocking the
 GP). This list basically indicates this fact. If there are blocking tasks, then
-the GP cannot complete even though the CPU reports its QS. <a href="https://lkml.org/lkml/2018/5/4/632">Paul Mckenney
-explains this here</a>. The other benefit of
-having a list of tasks is that preempted RCU read sections can be boosted.
-Paul Mckenney again came to the rescue to <a href="https://lkml.org/lkml/2018/5/4/659">explain this to
-me</a>.</p>
+the GP cannot complete even though the CPU reports its QS. <a href="https://lkml.org/lkml/2018/5/4/632">Paul Mckenney explains this here</a>. The other benefit of having a list of tasks is that preempted RCU read sections can be boosted. Paul Mckenney again came to the rescue to <a href="https://lkml.org/lkml/2018/5/4/659">explain this to me</a>.</p>
 
 <p>Finally, you see that <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> does report a QS. This
 is because if the task was in a read section, it has just been added to the
 blocked task list. If its not, then we just reached a QS for the CPU. Either
 way we entered a CPU QS. So is recorded with a call to <code class="highlighter-rouge">rcu_preempt_qs();</code>.</p>
 
-<p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP
-document</a>
-which also explains some of the RCU-preempt behaviors.</p>
+<p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP document</a> which also explains some of the RCU-preempt behaviors.</p>
 
 <p>Side note: At the moment, I don’t immediately see why by blocking in a RCU-preempt
 section shouldn’t be allowed.  Since we’re tracking blocked tasks the same way

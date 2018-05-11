@@ -179,8 +179,7 @@ Most Recept Post:
   </header>
 
 
-  <div class="entry-content"><h2 id="introduction">Introduction</h2>
-<p>Note: This article requires knowledge of RCU (read copy update) basics and its
+  <div class="entry-content"><p>Note: This article requires knowledge of RCU (read copy update) basics and its
 different flavors.</p>
 
 <p>RCU’s main algorithm is to detect when it is free to reclaim objects that RCU
@@ -201,8 +200,7 @@ RCU. It can also effect real-time response of applications.</p>
 Obviously in this flavor, RCU reader sections can get preempted to run
 something else.</p>
 
-<p>A <a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">recent
-discussion</a>
+<p>A <a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">recent discussion</a>
 on LKML clarified to me that “preempted to run something else” not only covers
 involuntary preemption but also voluntarily sleeping. This design is because,
 with <code class="highlighter-rouge">PREEMPT_RT</code> kernels, “rt” version of spinlocks are actually mutexes that
@@ -216,7 +214,7 @@ help of <code class="highlighter-rouge">schedule()</code> or if it was a kernel 
 or system calls) that called into the scheduler to preempt the currently
 running task.</p>
 
-<p><code class="highlighter-rouge">rcu_note_context_switch</code> calls <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> for
+<p><code class="highlighter-rouge">rcu_note_context_switch</code> first calls <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> for
 RCU-preempt to take note. Lets discuss this function.</p>
 
 <p>First note that the RCU-preempt flavor does warn you if you voluntarily sleep inside
@@ -226,7 +224,7 @@ patchset, idk. The warning is <code class="highlighter-rouge">WARN_ON_ONCE(!pree
 t-&gt;rcu_read_lock_nesting &gt; 0);</code>. But seems pretty clear to me a non-RT kernel
 would scream with this warning if an RCU-preempt read section went to sleep.
 Getting preempted is Ok but not voluntary sleeping according to this code! (see
-edit in last para)</p>
+side note in last para)</p>
 
 <p>If the task being preempted is in a read-side RCU section, then (and only then)
 it calls <code class="highlighter-rouge">rcu_preempt_ctxt_queue</code>. Here the task being preempted is added to a
@@ -249,11 +247,16 @@ is because if the task was in a read section, it has just been added to the
 blocked task list. If its not, then we just reached a QS for the CPU. Either
 way we entered a CPU QS. So is recorded with a call to <code class="highlighter-rouge">rcu_preempt_qs();</code>.</p>
 
-<p>Update: At the moment, I don’t immediately see why by blocking in a RCU-preempt
+<p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP
+document</a>
+which also explains some of the RCU-preempt behaviors.</p>
+
+<p>Side note: At the moment, I don’t immediately see why by blocking in a RCU-preempt
 section shouldn’t be allowed.  Since we’re tracking blocked tasks the same way
 as preempted tasks, it should be possible to handle them the same way. They
-both cause a CPU QS and a task non-QS to be entered. Perhaps the warning should
-be removed? Let me know your feedback in the comments.</p>
+both cause a CPU QS and a task non-QS to be entered, they both need priority
+boosting. Perhaps the warning should be removed? Let me know your feedback in
+the comments.</p>
 </div>
   
   
