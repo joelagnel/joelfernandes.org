@@ -1600,7 +1600,8 @@ li code {
     background: #fff;
     font-size: .8em;
     line-height: 1.5em;
-    color: #555;
+    color: #8e5000;
+    font-weight: bold;
     border: 1px solid #ddd;
     -webkit-border-radius: 0.4em;
     -moz-border-radius: 0.4em;
