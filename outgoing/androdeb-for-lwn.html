@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<!-- saved from url=(0087)http://127.0.0.1:4000/linuxinternals/2018/05/10/15-androdeb-running-BCC-on-android.html -->
+<html class="js video maskImage placeholder" lang="en"><!--<![endif]--><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  
+  <title>androdeb: Running Powerful Linux tracing tools like BCC in Android - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      androdeb: Running Powerful Linux tracing tools like BCC in Android
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+May 10, 2018
+        
+    ...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width,minimum-scale=1,maximum-scale=1">
+
+  
+  <link rel="canonical" href="http://localhost:4000/linuxinternals/2018/05/10/15-androdeb-running-BCC-on-android.html">
+  <link href="http://127.0.0.1:4000/favicon.png" rel="icon">
+  <link href="./androdeb-for-lwn_files/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="http://127.0.0.1:4000/linuxinternals/2018/05/10/15-androdeb-running-BCC-on-android.html" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="./androdeb-for-lwn_files/modernizr-2.0.js"></script>
+  <script src="./androdeb-for-lwn_files/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="./androdeb-for-lwn_files/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="./androdeb-for-lwn_files/css" rel="stylesheet" type="text/css">
+<link href="./androdeb-for-lwn_files/css(1)" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://localhost:4000" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">androdeb: Running Powerful Linux tracing tools like BCC in Android</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2018-05-10T00:00:00-07:00" pubdate="" data-updated="true">May 10, 2018</time>
+        
+           | <a href="http://127.0.0.1:4000/linuxinternals/2018/05/10/15-androdeb-running-BCC-on-android.html#disqus_thread" data-disqus-identifier="http://localhost:4000">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>As a part of my work in the Android kernel team, I have been attempting to get
+eBPF based BCC tracing tools working for our kernel developers. Recently we
+developed and open sourced an eBPF daemon called BPFd and wrote about it on
+LWN. A few users having been using it since. In this article we present another
+solution called androdeb, which has many more advantages to BPFd: feature
+completeness and easy of setup to name a few, while also having a few drawbacks
+compared to BPFd. We go over an example androdeb workflow, talk about its
+design, and discuss its advantages over BPFd, as well its drawbacks.</p>
+
+<p>Android is the most popular Linux kernel based OS in the world. As successful
+as it is, its userspace is more tailored towards running the Android framework
+and Android apps efficiently, than being useful for a kernel or systems
+developer to compile, develop and run kernel debugging tools.</p>
+
+<p>The existing environment is also not suitable for running BCC/eBPF based tools
+due to the fact the dependencies such as LLVM, clang and Python are not
+available on device, as they are not needed for the operation of Android
+userspace itself. Further, due to the recent security issues, there isn’t much
+of an incentive for security teams to support these tools on-device natively.</p>
+
+<p>While I was developing BPFd, I also indepdently developed androdeb which tries
+to solve the same problems BPFd does. It turned out that this technique is much
+more powerful than BPFd and is now the preferred way of running BCC/eBPF tools
+on Android that we recommend. It takes advantage of Android’s design and layout
+to easily run a custom userspace in it. This gives the systems engineer an
+experience of developing and debugging similar to that of a regular Linux
+desktop or server system. Further, no stoppage of the Android system is needed
+inorder for this to work.</p>
+
+<p><code class="highlighter-rouge">androdeb</code> prepares an Android device with a debian based filesystem,
+customizes and configures it according to the user’s needs. Once the device is
+prepared, <code class="highlighter-rouge">androdeb</code> starts a shell interface using the ADB protocol and gets
+the user into a Linux shell environment that looks and feels like a typical
+Linux server shell.</p>
+
+<p>Once an Android device is connected to a host PC, the user clones androdeb
+project and runs androdeb’s prepare stage on their host like so:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>androdeb prepare --download --bcc &lt;path-to-kernel-source&gt;
+</code></pre></div></div>
+<p>This is the quickest way to install androdeb, the typical output looks like:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Preparing device...
+
+Downloading Androdeb from the web...
+
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100   606    0   606    0     0   1911      0 --:--:-- --:--:-- --:--:--  1905
+100  293M  100  293M    0     0  11.9M      0  0:00:24  0:00:24 --:--:-- 15.1M
+Using archive at /tmp/tmp.UrWBTv4cCq/androdeb-fs.tgz for filesystem preparation
+Unpack of rootfs successful!
+All done! Run "androdeb shell" to enter environment
+</code></pre></div></div>
+
+<p>This does a couple of things. It downloads a rootfs from <code class="highlighter-rouge">androdeb</code> project’s
+github page. Extracts the rootfs onto the device, and copies several setup
+scripts into it. It then extracts kernel headers required for BCC to run from
+<code class="highlighter-rouge">&lt;path-to-kernel-sources&gt;</code> and copies them over to the device. <code class="highlighter-rouge">androdeb</code> then
+sets up environment variables to help BCC find the kernel headers on device. At
+this point the preparion of the device is completed.</p>
+
+<p>If one desires to build their custom own filesystem tailored for their needs,
+They can :</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>androdeb prepare --editors --compilers --bcc
+</code></pre></div></div>
+<p>Notice that the <code class="highlighter-rouge">--download</code> parameter is skipped. This causes androdeb to
+prepare a custom rootfs based on the configured options instead of pulling one
+from github. For BCC, instead of packages I am cloning BCC master and building
+it from source.</p>
+
+<p>Once the device is prepared, the user runs <code class="highlighter-rouge">androdeb shell</code> to spawn a shell.</p>
+
+<p>From the shell, The user can now see the list BCC tools available by running:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ls -l /usr/share/bcc/tools/
+</code></pre></div></div>
+
+<h1 id="how-it-all-works">How it all works</h1>
+<p>Lets go through the all the components that make it work.</p>
+
+<h2 id="chroot">chroot</h2>
+<p>The <code class="highlighter-rouge">chroot(2)</code> system call runs a user specified command with a custom root
+directory instead of <code class="highlighter-rouge">/</code>. This lets us run a root filesystem in Android made up
+of a completley different userspace. androdeb’s userspace is stored at
+<code class="highlighter-rouge">/data/androdeb/debian/</code>. In this path, you’ll see the typical directories
+found in a regular Linux distribution such as <code class="highlighter-rouge">usr</code>, <code class="highlighter-rouge">lib</code>.</p>
+
+<p>The <code class="highlighter-rouge">chroot(2)</code> implementation in the Linux kernel is quite simple yet clever.
+Linux simply manages the path look up slightly different in the VFS code to
+account for the new root directory. Luckily the chroot command ships with
+Android by default on all recent Android systems.</p>
+
+<h2 id="debootstrap">debootstrap</h2>
+<p>Debian’s <code class="highlighter-rouge">debootstrap</code> command is what <code class="highlighter-rouge">androdeb</code> uses to build a custom root
+filesystem for a specific architecture.</p>
+
+<p><code class="highlighter-rouge">debootstrap</code> starts by downloading and unpackage packages to build the rootfs,
+as the first stage. However, to run the second stage of the build, the packages
+have to be configured while running in the target architecture’s environment.
+A wrapper <code class="highlighter-rouge">qemu-debootstrap</code> is available which cleverly manages this with the
+help of Qemu’s user binary emulation support. <code class="highlighter-rouge">debootstrap</code> copies over a
+target architecture version of the <code class="highlighter-rouge">debootstrap</code> command itself, and executes
+it using Qemu user emulation. Infact it runs the emulated binary using <code class="highlighter-rouge">chroot</code>
+itself so that the second stage scripts runs with the rootfs being prepared as
+the root, instead of the host’s rootfs!</p>
+
+<h2 id="androids-directory-structure">Android’s directory structure</h2>
+<p>Luckily in Android, the framework binaries such as <code class="highlighter-rouge">surfaceflinger</code> for
+graphics or <code class="highlighter-rouge">system_server</code> for system services, reside in the <code class="highlighter-rouge">/system</code>
+directory partition.</p>
+
+<p>Inorder for debugging tools running in the chrooted environment to be able to
+analyze symbol information from these binaries, it is important that the
+<code class="highlighter-rouge">/system/</code> partition to also appears in the chrooted environment. To make this
+happen, the androdeb startup script does a bind mound of Android’s <code class="highlighter-rouge">/system</code>
+partition to the chrooted path’s <code class="highlighter-rouge">/system</code> partition. Other partitions such as
+<code class="highlighter-rouge">/data/</code> and <code class="highlighter-rouge">/vendor/</code> are also similarly mounted. It would have possibly been
+much trickier to get things to work if Android’s framework binaries were in
+<code class="highlighter-rouge">/usr</code> but thankfully that’s not the case.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>A great advantage of running BCC within <code class="highlighter-rouge">androdeb</code> instead of running BCC with
+<code class="highlighter-rouge">BPFd</code>, is that can run with any front end, not just BCC. This enables tools such
+as <code class="highlighter-rouge">bpftrace</code> to work. Running BCC this way also means no tools to support a
+host/target boundary split like BPFd does, and everything just works naturally.</p>
+
+<p>A drawback would be quite a lot of free space (200-500MB) is needed in the
+<code class="highlighter-rouge">/data/</code> partition for <code class="highlighter-rouge">androdeb</code> to work. This however is not an issue for
+current generation Pixel devices. For devices with much lesser free space, BPFd
+could be used in instead.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2018-05-10T00:00:00-07:00" pubdate="" data-updated="true">May 10, 2018</time>
+      
+
+<span class="categories">
+  
+    linuxinternals
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="http://127.0.0.1:4000/linuxinternals/2018/02/10/usdt-notes.html" title="Previous Post: USDT for reliable Userspace event tracing">« USDT for reliable Userspace event tracing</a>
+      
+      
+        <a class="basic-alignment right" href="http://127.0.0.1:4000/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html" title="Next Post: RCU-preempt: What happens on a context switch">RCU-preempt: What happens on a context switch »</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    <span class="toggle-sidebar"></span></div>
+  </div>
+
+
+</body></html>
