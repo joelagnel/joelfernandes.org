@@ -1626,11 +1626,12 @@ html .gist .gist-file .gist-syntax .highlight pre,
     overflow: scroll;
     overflow-y: hidden;
     display: block;
-    padding: .8em;
+    padding: .4em;
     overflow-x: auto;
+    font-weight:bold;
     line-height: 1.45em;
-    background: #002b36 url('/images/noise.png?1476421264') top left !important;
-    color: #93a1a1 !important
+    background: #fff3cc url('/images/noise.png?1476421264') top left !important;
+    color: #001089 !important
 }
 
 .pre-code span,
