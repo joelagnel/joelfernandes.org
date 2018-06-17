@@ -28,7 +28,6 @@ CFLAGS_core.o := -O0
 This works brilliantly! What do you think? Let me know in the comments.
 
 Some more tips:
-
 * `CONFIG_DEBUG_INFO` is needed to ensure kernel has debug symbols for gdb to
   load, and ofcourse `CONFIG_DEBUG_KERNEL`.
 * `CONFIG_FRAME_POINTER` should be enabled to ensure stack unwinding,
