@@ -8,7 +8,7 @@ category: linux
 Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
 of a RISC-V processor to step through some kernel code.
 
-Turns out that the Linux kernel is compiled with gcc `-O2' flag for
+Turns out that the Linux kernel is compiled with gcc `-O2` flag for
 optimizations it needs during the build. This causes several problems for a
 debugger.  One of them is that the gdb command `info registers` will show
 values as `<optimized out>`. Another issue is that single-stepping will make
@@ -17,7 +17,7 @@ the debugger jump back and forth across lines of code.
 To circumvent this issue, I ended up with a hack that works well. I don't claim
 this recommended or correct, but it makes it through the build and gdb works
 fine. In my debugging, I have wanted to single-step through scheduler code in
-the __`schedule` kernel function. For this purpose, all I have to do is add the
+the `__schedule` kernel function. For this purpose, all I have to do is add the
 following to `kernel/sched/Makefile`.
 
 ```
