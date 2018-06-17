@@ -104,6 +104,10 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 Full list of all posts on this site:
 
 <font face="monospace">
+ <li><span>10 Jun 2018</span> &nbsp; <a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a>  [linux] </li>
+</font>
+
+<font face="monospace">
  <li><span>10 May 2018</span> &nbsp; <a href="/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a>  [linuxinternals rcu] </li>
 </font>
 
@@ -157,7 +161,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a></h1>
+      <h1 class="entry-title"><a href="/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a></h1>
     
     
       <p class="meta">
@@ -171,121 +175,88 @@ Most Recept Post:
 
 
 
-<time datetime="2018-02-10T23:22:39-08:00" pubdate data-updated="true">Feb 10, 2018</time>
+<time datetime="2018-05-10T00:00:00-07:00" pubdate data-updated="true">May 10, 2018</time>
         
-           | <a href="/linuxinternals/2018/02/10/usdt-notes.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2018/02/10/usdt-notes.html">Comments</a>
+           | <a href="/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Userspace program when compiled to native can place tracepoints in them using a USDT (User Statically Defined Tracing), the details of the tracepoints (such as address and arguments) are placed as a note in the ELF binary for other tools to interpret. This at first seems much better than using Uprobes directly on userspace functions, since the latter not only needs symbol information from the binary but is also at the mercy of compiler optimizations and function inlining. In Android we directly write into <code class="highlighter-rouge">tracing_mark_write</code> for userspace tracepoints. While this has its advantages (simplicity), it also means that the only way to “process” the trace information for ALL tracing usecases is by reading back the trace buffer to userspace and processing them offline, thus needing a full user-kernel-user round trip. Further its not possible to easily create triggers on these events (dump the stack or stop tracing when an event fires, for example). Uprobes event tracing on the other hands gets the full benefit that ftrace events do. Also all userspace emitted trace data is a string which has to be parsed and post-processed. USDT seems a nice way to solve some of these problems, since we can then use the user-provided data and create Uprobes at the correct locations, and process these on the fly using BCC without things ever hitting the trace buffer or returning to userspace.</p>
+  <div class="entry-content"><p>Note: This article requires knowledge of RCU (read copy update) basics and its
+different flavors.</p>
 
-<p>This simple article is based on some notes I made while playing with USDT probes. To build a C program with an SDT probe, you can just include <code class="highlighter-rouge">sdt.h</code> and <code class="highlighter-rouge">sdt-config.h</code> from the Ubuntu systemtap-sdt-devel package, which works for both arm64 and x86.</p>
+<p>RCU’s main algorithm is to detect when it is free to reclaim objects that RCU
+readers no longer need. The “RCU-sched” flavor of RCU does this by just
+disabling preemption across the read section. So any time any of the CPUs is
+not running in a preempt disabled section (such as with preemption off, or
+interrupts off), then the CPU is said to be in a “quiescent state” (QS). Once
+all CPUs reach a QS after the reclaimer filed a claim to release an object, the
+object can be safely released. The time from when the request for RCU to
+release an object to when RCU says its Ok to release it, is called the grace
+period.</p>
 
-<p>C program can be as simple as:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include "sdt.h"
-int main() {
-	DTRACE_PROBE("test", "probe1");
-}
-</code></pre></div></div>
-<p>One compiling this, a new <code class="highlighter-rouge">.note.stapsdt</code> ELF section is created, which can be read by:
-<code class="highlighter-rouge">readelf -n &lt;bin-path&gt;</code></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
-  Owner                 Data size	Description
-  stapsdt              0x00000029	NT_STAPSDT (SystemTap probe descriptors)
-    Provider: "test"
-    Name: "probe1"
-    Location: 0x0000000000000664, Base: 0x00000000000006f4, Semaphore: 0x0000000000000000
-    Arguments: 
-</code></pre></div></div>
-<p>Here there are no arguments, however we can use <code class="highlighter-rouge">DTRACE_PROBE2</code> to pass more, for example for 2 of them:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int main() {
-	int a = 1;
-	int b = 2;
+<p>RCU-sched is kind of a big hammer, having readers disable preemption can have
+poor performance effects. After all, read sections are expected to be light in
+RCU. It can also effect real-time response of applications.</p>
 
-	DTRACE_PROBE2("test", "probe1", a, b);
-}
-</code></pre></div></div>
-<p>The <code class="highlighter-rouge">readelf</code> tool now reads:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
-  Owner                 Data size	Description
-  stapsdt              0x00000040	NT_STAPSDT (SystemTap probe descriptors)
-    Provider: "test"
-    Name: "probe1"
-    Location: 0x0000000000000672, Base: 0x0000000000000704, Semaphore: 0x0000000000000000
-    Arguments: -4@-4(%rbp) -4@-8(%rbp)
-</code></pre></div></div>
+<p>For this reason, preemptible RCU came about (also called RCU-preempt).
+Obviously in this flavor, RCU reader sections can get preempted to run
+something else.</p>
 
-<p>Notice how the arguments show exactly how to access the parameters at the location. In this case, we know the arguments are on the stack and at momention offsets from the base pointer.</p>
+<p>A <a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">recent discussion</a>
+on LKML clarified to me that “preempted to run something else” not only covers
+involuntary preemption but also voluntarily sleeping. This design is because,
+with <code class="highlighter-rouge">PREEMPT_RT</code> kernels, “rt” version of spinlocks are actually mutexes that
+can put the RCU reader to sleep.</p>
 
-<p>Compiling with <code class="highlighter-rouge">-f-omit-frame-pointer</code> shows the following in <code class="highlighter-rouge">readelf</code>:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
-  Owner                 Data size	Description
-  stapsdt              0x00000040	NT_STAPSDT (SystemTap probe descriptors)
-    Provider: "test"
-    Name: "probe1"
-    Location: 0x0000000000000670, Base: 0x0000000000000704, Semaphore: 0x0000000000000000
-    Arguments: -4@-4(%rsp) -4@-8(%rsp)
-</code></pre></div></div>
+<p>So coming back to the point of this article, I want to go over what happens on
+a context-switch. When the scheduler is called, we end up in <code class="highlighter-rouge">__schedule</code>
+function. Here in the beginning <code class="highlighter-rouge">rcu_note_context_switch</code> is called with the
+<code class="highlighter-rouge">preempt</code> parameter. The <code class="highlighter-rouge">preempt</code> parameter indicates if task blocked with
+help of <code class="highlighter-rouge">schedule()</code> or if it was a kernel path (such as return from interrupts
+or system calls) that called into the scheduler to preempt the currently
+running task.</p>
 
-<p>Without the base pointer, the compiler relies on the stack pointer for the arguments. However notice that even though the C program is identical to the previous example, the “arguments” in the note section of the ELF has changed. This dynamic nature is one of the key reasons why SDT probes are so much better than say using <code class="highlighter-rouge">perf probe</code> directly to install Uprobes in the wild. With some help userspace and the compiler, we have more reliable information to access arguments without needing any DWARF debug info.</p>
+<p><code class="highlighter-rouge">rcu_note_context_switch</code> first calls <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> for
+RCU-preempt to take note. Lets discuss this function.</p>
 
-<p>Compiling with ARM64 gcc shows a slightly different output for the Arguments. Note that that Arguments is just a string which can be post processed by tools to fetch the probe data.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
-  Owner                 Data size	Description
-  stapsdt              0x0000003f	NT_STAPSDT (SystemTap probe descriptors)
-    Provider: "test"
-    Name: "probe1"
-    Location: 0x000000000000077c, Base: 0x0000000000000820, Semaphore: 0x0000000000000000
-    Arguments: -4@[sp, 12] -4@[sp, 8]
-</code></pre></div></div>
+<p>First note that the RCU-preempt flavor does warn you if you voluntarily sleep inside
+an RCU read side section. I’m not sure how the “RT-spinlock” for RT kernels
+doesn’t get this warning. Probably they delete this warning in PREEMPT_RT
+patchset, idk. The warning is <code class="highlighter-rouge">WARN_ON_ONCE(!preempt &amp;&amp;
+t-&gt;rcu_read_lock_nesting &gt; 0);</code>. But seems pretty clear to me a non-RT kernel
+would scream with this warning if an RCU-preempt read section went to sleep.
+Getting preempted is Ok but not voluntary sleeping according to this code! (see
+side note in last para)</p>
 
-<p>USDT limitations as I see it:</p>
+<p>If the task being preempted is in a read-side RCU section, then (and only then)
+it calls <code class="highlighter-rouge">rcu_preempt_ctxt_queue</code>. Here the task being preempted is added to a
+list of blocked tasks. The reason why we need to add it is, RCU-preempt has 2
+perspectives of Quiescent state (QS). Recall, a QS is reached whenever an
+entity is not blocking the current grace period (GP). RCU-preempt considers 2
+entity perspectives: Either the task, or the CPU. In the RCU-preempt world, if
+a task that is currently in an RCU read section gets preempted, then the CPU
+has reached a QS because it is no longer running the RCU-read section that is
+blocking the GP. But now, the task has reached a non-QS (It is blocking the
+GP). This list basically indicates this fact. If there are blocking tasks, then
+the GP cannot complete even though the CPU reports its QS. <a href="https://lkml.org/lkml/2018/5/4/632">Paul Mckenney explains this here</a>. The other benefit of having a list of tasks is that preempted RCU read sections can be boosted. Paul Mckenney again came to the rescue to <a href="https://lkml.org/lkml/2018/5/4/659">explain this to me</a>.</p>
 
-<ul>
-  <li>
-    <p>No information about types is stored. This is kind of sad, since now inorder to know what do with the values, one needs more information. These tracepoints were used with DTrace and SystemTap and turns out the scripts that probe these tracepoints are where the type information is stored or assumed. Uprobes tracer supports “string” but without knowing that the USDT is a string value, there’s no way a Uprobe can be created on it, since all the stap note tells us is that there’s a pointer there (who knows if its a 64-bit integer or a character pointer, for example).</p>
-  </li>
-  <li>
-    <p>Argument names are also not stored. This means arguments have to be in the same order in the debug script as they are in the program being debugged.</p>
-  </li>
-</ul>
+<p>Finally, you see that <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> does report a QS. This
+is because if the task was in a read section, it has just been added to the
+blocked task list. If its not, then we just reached a QS for the CPU. Either
+way we entered a CPU QS. So is recorded with a call to <code class="highlighter-rouge">rcu_preempt_qs();</code>.</p>
 
-<p>It seems with a little bit of work, both these things can be added. Does that warrant a new section or can the stapsdt section be augment without causing breakage of existing tools? I don’t know yet.</p>
+<p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP document</a> which also explains some of the RCU-preempt behaviors.</p>
 
-<h2 id="sdt-parsing-logic">SDT parsing logic</h2>
-<p>BCC has a USDT parser written to extract probes from the ELF. Read <code class="highlighter-rouge">parse_stapsdt_note</code> in <code class="highlighter-rouge">src/cc/bcc_elf.c</code> in the BCC tree for details.</p>
-
-<h2 id="dynamic-programming-languages">Dynamic programming languages</h2>
-<p>Programs that are interpretted can’t provide this information ahead of time. The <a href="https://github.com/sthima/libstapsdt#how-it-works">libstapsdt</a> tries to solve this by <a href="https://github.com/sthima/libstapsdt/blob/6045277309ff0425322bed5e71393ce5c8fa1344/src/libstapsdt.c#L89">creating a shared library on the fly</a> and linking to it from the dynamic program. This seems a bit fragile but appears to have users. There are wrappers in Python and Nodejs. <a href="https://medium.com/sthima-insights/we-just-got-a-new-super-power-runtime-usdt-comes-to-linux-814dc47e909f">Check this article</a> for more details.</p>
-
-<p>Open question I have:</p>
-<ul>
-  <li>Do any existing Linux tools handle USDT strings? Uprobe tracer does support strings, so the infrastructure seems to be there. I didn’t see any hints of this in <a href="src/cc/usdt/usdt_args.cc">BCC</a>. Neither does <a href="https://github.com/sthima/libstapsdt/blob/6045277309ff0425322bed5e71393ce5c8fa1344/src/libstapsdt.h#L14">libstapsdt</a> seem to have this.</li>
-</ul>
-
-<h2 id="other-ideas">Other ideas</h2>
-<ul>
-  <li>
-    <p>Creating Uprobes on the fly when a process is loaded: Ideally speaking, if the ELF note section had all the information that the kernel needed, then we could create the Uprobe events for the uprobe trace events at load time and keep them disabled without needing userspace to do anything else. This seems crude at first, but in the “default” case, it would still have almost no-overhead. This does mean that all the information Uprobe tracing needs will have to be stored in the note section. The other nice thing about this is, you no longer need to know the PID of all processes with USDTs in them. EDIT: This idea is flawed. Uprobes are created before a process is loaded AFAIU now, using the binary path of the executable and libraries. What’s more useful is to maintain a cache of all executables in the file system, and their respective instrumentation points. Then on boot up, perhaps we can create all necessary uprobes from early userspace.</p>
-  </li>
-  <li>
-    <p>For dynamic languages, <code class="highlighter-rouge">libstapsdt</code> seems great, but it feels a bit hackish since it creates a temporary file for the stub. Perhaps uprobes can be created after the temporary file is dlopen’ed and then the file can be unlinked if it hasn’t been already, so that there aren’t any more references to the temporary file in the file system. Such a temporary file could also probably be in a RAM based file system perhaps.</p>
-  </li>
-</ul>
-
-<h2 id="references">References</h2>
-<ol>
-  <li><a href="http://www.brendangregg.com/blog/2015-07-03/hacking-linux-usdt-ftrace.html">Brendan Gregg’s USDT ftrace page</a></li>
-  <li><a href="https://www.kernel.org/doc/Documentation/trace/uprobetracer.txt">Uprobe tracer in the kernel</a></li>
-  <li><a href="https://medium.com/sthima-insights/we-just-got-a-new-super-power-runtime-usdt-comes-to-linux-814dc47e909f">USDT for dynamic languages</a></li>
-  <li><a href="https://dzone.com/articles/next-generation-linux-tracing">Sasha Goldstein’s “Next Generation Linux Tracing With BPF” article</a></li>
-  <li><a href="https://sourceware.org/systemtap/wiki/UserSpaceProbeImplementation">SystemTap SDT implementation</a></li>
-</ol>
-
+<p>Side note: At the moment, I don’t immediately see why by blocking in a RCU-preempt
+section shouldn’t be allowed.  Since we’re tracking blocked tasks the same way
+as preempted tasks, it should be possible to handle them the same way. They
+both cause a CPU QS and a task non-QS to be entered, they both need priority
+boosting. Perhaps the warning should be removed? Let me know your feedback in
+the comments.</p>
 </div>
   
   

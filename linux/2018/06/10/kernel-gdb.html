@@ -5,14 +5,34 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>JoelFernandes.org</title>
+  <title>Single-stepping the kernel's C code - JoelFernandes.org</title>
   <meta name="author" content="Joel Fernandes">
 
   
   <meta name="description" content="
 
+  
+  
+    
+      Single-stepping the kernel's C code
+    
+    
+      
+        
 
-Hello! I’m Joel and I run this site! I work in the Android kernel team at Google. My interests are scheduler, tracing, synchronization and kerne...">
+
+
+
+
+
+
+
+
+Jun 10, 2018
+        
+           | Comments
+        
+    ...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -21,7 +41,7 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/linux/2018/06/10/kernel-gdb.html">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -89,79 +109,12 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 -->
   <div id="main">
     <div id="content">
-      <div class="blog-index">
-
-<article>
-<p>Hello! I’m Joel and I run this site! I work in the Android kernel team at Google. My interests are scheduler, tracing, synchronization and kernel internals. I also love contributing to the upstream Linux kernel and other open source projects.</p>
-
-<p>Connect with me on <a href="https://twitter.com/joel_linux">Twitter</a>, and <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a>. Or, drop me an email at: joel <em>at</em> joelfernandes <em>dot</em> org</p>
-
-<p><a href="https://patchwork.kernel.org/project/LKML/list/?submitter=170577">Here’s a list</a> of recent kernel patches I submitted. I got <a href="http://hackaday.com/2014/06/08/the-in-circuit-sd-card-switch/">featured on hackaday</a> and <a href="https://lwn.net/Articles/744522/">have written for LWN</a> as well. <a href="/joel/joel-resume.pdf">Check out my resume</a> and also see a list of past <a href="/resources">talks/presentations</a>.</p>
-
-<p><strong><a href="/linuxinternals/">LinuxInternals.org</a></strong> is a resource I created as a collection of articles and resources exploring Linux kernel and internals topics.</p>
-
-
-Full list of all posts on this site:
-
-<font face="monospace">
- <li><span>10 Jun 2018</span> &nbsp; <a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a>  [linux] </li>
-</font>
-
-<font face="monospace">
- <li><span>10 May 2018</span> &nbsp; <a href="/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a>  [linuxinternals rcu] </li>
-</font>
-
-<font face="monospace">
- <li><span>10 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/10/usdt-notes.html">USDT for reliable Userspace event tracing</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>31 Dec 2016</span> &nbsp; <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>18 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a>  [electronics,linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
-</font>
-
-<font face="monospace">
- <li><span>22 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/22/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a>  [linuxinternals] </li>
-</font>
-
-</article>
-
+      <div>
+<article class="hentry" role="article">
   
-  
-  
-    <article>
-Most Recept Post:
-      
   <header>
     
-      <h1 class="entry-title"><a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a></h1>
+      <h1 class="entry-title">Single-stepping the kernel's C code</h1>
     
     
       <p class="meta">
@@ -177,15 +130,15 @@ Most Recept Post:
 
 <time datetime="2018-06-10T00:00:00-07:00" pubdate data-updated="true">Jun 10, 2018</time>
         
-           | <a href="/linux/2018/06/10/kernel-gdb.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linux/2018/06/10/kernel-gdb.html">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
+<div class="entry-content"><p>Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
 of a RISC-V processor to step through some kernel code.</p>
 
 <p>Turns out that the Linux kernel is compiled with gcc <code class="highlighter-rouge">-O2' flag for
@@ -218,20 +171,59 @@ vmlinux is gdb’d.</li>
 </ul>
 
 </div>
-  
-  
 
 
-    </article>
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2018-06-10T00:00:00-07:00" pubdate data-updated="true">Jun 10, 2018</time>
+      
+
+<span class="categories">
   
-  <div class="pagination">
+    linux
+  
+</span>
+
+
+    </p>
     
-      <a class="prev" href="2">&larr; Older</a>
-    
-    <a href="/blog/archives">Blog Archives</a>
-    
-  </div>
+      <div class="sharing">
+  
+  
+  
 </div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/linuxinternals%20rcu/2018/05/10/5-rcu-preempt-context-switch.html" title="Previous Post: RCU-preempt: What happens on a context switch">&laquo; RCU-preempt: What happens on a context switch</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
 <aside class="sidebar">
   
     
@@ -240,6 +232,7 @@ vmlinux is gdb’d.</li>
 
   
 </aside>
+
 
     </div>
   </div>
@@ -255,7 +248,10 @@ vmlinux is gdb’d.</li>
       var disqus_shortname = 'linuxinternals1';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/linux/2018/06/10/kernel-gdb.html';
+        var disqus_url = 'http://www.linuxinternals.org/linux/2018/06/10/kernel-gdb.html';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
