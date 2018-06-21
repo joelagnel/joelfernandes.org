@@ -33,6 +33,18 @@ tick_sched_handle
 ```
 
 If the CPU is idle while it was interrupted, then both bh and sched RCU
-variants are marked to be in a QS on that CPU. For the preempt RCU variant, we
+variants are marked to be in a QS on that CPU.
+
+Note: In the `rcu_check_callbacks` function, for the preempt RCU variant, we
 don't do this kind of an idle check, we simply check if the read-lock nesting
-is 0 and if it is, then its a QS (I don't know why).
+is 0 and if it is, then its a QS. This is because the read-lock nesting counter
+is how RCU-preempt enters a read section.  So whether we're in the idle loop or
+not doesn't matter, all we've to do is check the nesting counter. For the bh
+and sched variants though, we disable preempt or bh when entering the read-side
+so for those, we need to rely on other methods (see optimization idea below).
+
+Idea: Can we report a QS for -sched variant faster?  What if a tick is received
+during a long running kernel section that didn't disable preemption. Can we
+detect from the tick path how deep was the preemption disabled nesting and use
+that info to report a QS for RCU-sched ?
+
