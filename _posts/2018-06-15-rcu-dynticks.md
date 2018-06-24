@@ -44,6 +44,24 @@ not. i.e. a non-zero value means we transitioned into process context.
 An EQS can be exited due to interrupt or NMI entry, but this doesn't really
 track that. We'll talk about tracking those later.
 
+A note about dynticks counters: In general the dynticks counters track the
+number of reasons why we're not in an EQS (that is RCU is not "idle"). A value
+of zero thus means we ARE in an EQS. The `rdtp->dynticks_nesting` counter
+tracks the number of process-level (non-idle kernel process context)-level
+reasons why RCU is non-idle.
+
+When I traced `rdtp->dynticks_nesting`, I could only find its value to be
+either a 0 or a 1. However looking back at [old kernel
+sources](https://elixir.bootlin.com/linux/v3.19.8/source/kernel/rcu/rcu.h#L33),
+it appears that these can be nested becaues of so called "half-interrupts". I
+believe these are basically interrupts that cause a transition to usermode due
+to usermode upcalls (usermode helper subsystem).
+So a nesting situation could be something like: 1. Transition from idle to
+process context which makes dynticks_nesting == 1. Next, an interrupt comes in
+which makes a usermode upcall. This usermode call now makes a system call
+causing entry back into process context, which increments the dynticks_nesting
+counter to 2. Such a crazy situation is perhaps possible.
+
 Another way to see if we are in an EQS or not
 ---------------------------------------------
 The `rdtp->dynticks` counter is used to track transitions to/from dyntick-idle
@@ -71,7 +89,14 @@ bool rcu_dynticks_curr_cpu_in_eqs(void)
 
 ```
 Any time the rdtp->dynticks counter's lower most bit is not set, we are in an
-EQS, and if its set, then we are not.
+EQS, and if its set, then we are not. This function is not useful to check if
+we're in an EQS from a timer tick though, because its possible the timer tick
+interrupt entry caused an EQS exit which updated the counter. IOW, the
+'dynticks' counter is not capable of checking if we had already exited the EQS
+before. To check if we were in an EQS or not from the timer tick, we instead
+must use `dynticks_nesting` counter. More on that later. The above function is
+probably just useful to make sure that interrupt entry/exit is properly
+updating the dynticks counter.
 
 Entry and exit into an EQS due to interrupts
 ------------------------------------------
