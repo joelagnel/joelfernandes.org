@@ -350,10 +350,7 @@ the outer <code class="highlighter-rouge">rcu_nmi_enter</code> hasn’t incremen
 mode (incremented dynticks to odd), only the outer <code class="highlighter-rouge">rcu_nmi_exit</code> should make
 it even (and mark an entry back into dynticks-idle mode).</p>
 
-<p>The fix is an algorithm like the following <a href="http://lkml.kernel.org/r/CALCETrXSY9JpW3uE6H8WYk81sg56qasA2aqmjMPsq5dOtzso=g@mail.gmail.com">proposed by Andy
-Luto</a>
-and <a href="https://lkml.kernel.org/r/20141122234157.GB5050@linux.vnet.ibm.com">formally written and verified by
-Paul</a>:</p>
+<p>The fix is an algorithm like the following <a href="http://lkml.kernel.org/r/CALCETrXSY9JpW3uE6H8WYk81sg56qasA2aqmjMPsq5dOtzso=g@mail.gmail.com">proposed by Andy Luto</a> and <a href="https://lkml.kernel.org/r/20141122234157.GB5050@linux.vnet.ibm.com">formally written and verified by Paul</a>:</p>
 <div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rcu_nmi_enter(void)
 {
 	int incby = 2;
