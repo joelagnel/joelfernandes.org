@@ -222,10 +222,7 @@ The desired behavior is, because the outer `rcu_nmi_enter` exited dynticks-idle
 mode (incremented dynticks to odd), only the outer `rcu_nmi_exit` should make
 it even (and mark an entry back into dynticks-idle mode).
 
-The fix is an algorithm like the following [proposed by Andy
-Luto](http://lkml.kernel.org/r/CALCETrXSY9JpW3uE6H8WYk81sg56qasA2aqmjMPsq5dOtzso=g@mail.gmail.com)
-and [formally written and verified by
-Paul](https://lkml.kernel.org/r/20141122234157.GB5050@linux.vnet.ibm.com):
+The fix is an algorithm like the following [proposed by Andy Luto](http://lkml.kernel.org/r/CALCETrXSY9JpW3uE6H8WYk81sg56qasA2aqmjMPsq5dOtzso=g@mail.gmail.com) and [formally written and verified by Paul](https://lkml.kernel.org/r/20141122234157.GB5050@linux.vnet.ibm.com):
 ```
 void rcu_nmi_enter(void)
 {
