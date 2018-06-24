@@ -3,7 +3,7 @@ layout: post
 published: true
 title: "RCU-preempt: What happens on a context switch"
 comments: true
-category: linuxinternals rcu
+category: linuxinternals
 ---
 Note: This article requires knowledge of RCU (read copy update) basics and its
 different flavors.
