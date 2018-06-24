@@ -3,7 +3,7 @@ layout: post
 published: true
 title: "RCU and dynticks-idle mode"
 comments: true
-category: linux
+category: linuxinternals
 ---
 Note 1: RCU is an extremely complex topic and I make no claims of accuracy,
 correctness and don't make any claims that this document is to be used as a
