@@ -104,6 +104,10 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 Full list of all posts on this site:
 
 <font face="monospace">
+ <li><span>15 Jun 2018</span> &nbsp; <a href="/linux/2018/06/15/rcu-dynticks.html">RCU and dynticks-idle mode</a>  [linux] </li>
+</font>
+
+<font face="monospace">
  <li><span>10 Jun 2018</span> &nbsp; <a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a>  [linux] </li>
 </font>
 
@@ -161,7 +165,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Ftrace events mechanism</a></h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a></h1>
     
     
       <p class="meta">
@@ -175,119 +179,62 @@ Most Recept Post:
 
 
 
-<time datetime="2016-06-18T22:29:26-07:00" pubdate data-updated="true">Jun 18, 2016</time>
+<time datetime="2016-12-31T21:29:26-08:00" pubdate data-updated="true">Dec 31, 2016</time>
         
-           | <a href="/linuxinternals/2016/06/18/ftrace-events-mechanism.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2016/06/18/ftrace-events-mechanism.html">Comments</a>
+           | <a href="/linuxinternals/2016/12/31/nmi-perf-armv8.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2016/12/31/nmi-perf-armv8.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Ftrace events are a mechanism that allows different pieces of code in the kernel to ‘broadcast’ events of interest. Such as a scheduler context-switch <code class="highlighter-rouge">sched_switch</code> for example. In the scheduler core’s <code class="highlighter-rouge">__schedule</code> function, you’ll see something like: <code class="highlighter-rouge">trace_sched_switch(preempt, prev, next);</code>
-This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).</p>
+  <div class="entry-content"><p>Non-maskable interrupts (NMI) is a really useful feature for debugging, that hardware can provide. Unfortunately ARM doesn’t provide an out-of-the-box NMI interrupt mechanism. This post shows a flamegraph issue due to missing NMI support, and the upstream work being done to simulate NMI in ARMv8.</p>
 
-<p>Under the hood, these ftrace events are actually implemented using tracepoints. The terms events are tracepoints appear to be used interchangeably, but it appears one could use a trace point if desired without having to do anything with ftrace. Events on the other hand use ftrace.</p>
+<p>Some great Linux kernel features that rely on NMI to work properly are:</p>
 
-<p>Let’s discuss a bit about how a tracepoint works. Tracepoints are hooks that are inserted into points of code of interest and call a certain function of your choice (also known as a function probe). Inorder for the tracepoint to do anything, you have to register a function using <code class="highlighter-rouge">tracepoint_probe_register</code>. Multiple functions can be registered in a single hook. Once your tracepoint is hit, all functions registered to the tracepoint are executed. Also note that if no function is registered to the tracepoint, then the tracepoint is essentially a NOP with zero-overhead. Actually that’s a lie, there is a branch (and some space) overhead only although negligible.</p>
+<ul>
+  <li>
+    <p>Backtrace from all CPUs: A number of places in the kernel rely on dumping the stacks of all CPUs at the time of a failure to determine what was going on. Some of them are <a href="http://lxr.free-electrons.com/source/kernel/hung_task.c">Hung Task detection</a>, <a href="http://lxr.free-electrons.com/source/Documentation/lockup-watchdogs.txt">Hard/soft lockup detector</a> and spinlock debugging code.</p>
+  </li>
+  <li>
+    <p>Perf profiling and flamegraphs: To be able to profile code that runs in interrupt handlers, or in sections of code that disable interrupts, Perf relies on NMI support in the architecture. <a href="http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html">flamegraphs</a> are a great visual representation of perf profile output. Below is a flamegraph I generated from perf profile output, that shows just what happens on an architecture like ARMv8 with missing NMI support. Perf is using maskable-interrupts on this platform for profiling:</p>
+  </li>
+</ul>
 
-<p>Here is the heart of the code that executes when a tracepoint is hit:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
-        extern struct tracepoint __tracepoint_##name;                   \
-        static inline void trace_##name(proto)                          \
-        {                                                               \
-                if (static_key_false(&amp;__tracepoint_##name.key))         \
-                        __DO_TRACE(&amp;__tracepoint_##name,                \
-                                TP_PROTO(data_proto),                   \
-                                TP_ARGS(data_args),                     \
-                                TP_CONDITION(cond),,);                  \
-                if (IS_ENABLED(CONFIG_LOCKDEP) &amp;&amp; (cond)) {             \
-                        rcu_read_lock_sched_notrace();                  \
-                        rcu_dereference_sched(__tracepoint_##name.funcs);\
-                        rcu_read_unlock_sched_notrace();                \
-                }                                                       \
-        }                                                   
+<p><img src="/images/nmi/flamegraph.png" /></p>
+
+<p>As you can see in the area of the flamegraph where the arrow is pointed, a large amount of time is spent in <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>. It can baffle anyone looking at this data for the first time, and make them think that most of the time is spent in the unlock function. What’s actually happenning is because perf is using a maskable interrupt in ARMv8 to do its profiling, any section of code that disables interrupts will not be see in the flamegraph (not be profiled). In other words perf is unable to peek into sections of code where interrupts are disabled. As a result, when interrupts are reenabled during the <code class="highlighter-rouge">_raw_spin_unlock_irqrestore</code>, the perf interrupt routine then kicks in and records the large number of samples that elapsed in the interrupt-disable section but falsely accounts it to the _raw_spin_unlock_restore function during which the perf interrupt got a chance to run. Hence the flamegraph anomaly. It is indeed quite sad that ARM still doesn’t have a true NMI which perf would love to make use of.</p>
+
+<p>BUT! <a href="https://lkml.org/lkml/2016/8/19/583">Daniel Thompson</a> has been hard at work trying to simulate Non-maskable interrupts on ARMv8. The idea is <a href="/misc/arm-irq-priortization-white-paper.pdf">based on using interrupt priorities</a> and is the subject of the rest of this post.</p>
+
+<h2 id="nmi-simulation-using-priorities">NMI Simulation using priorities</h2>
+<p>To simulate an NMI, Daniel creates 2 groups of interrupts in his patchset. One group is for all ‘normal’ interrupts, and the other for non-maskable interrupts (NMI). Non-maskable interrupts are assigned a higher priority than the normal interrupt group. Inorder to ‘mask’ interrupts in this approach, Daniel replaces the regular interrupt masking scheme in the kernel which happens at the CPU-core level, with setting of the interrupt controller’s PMR (priority mask register). When the PMR is set to a certain value, only interrupts which have a higher priority than what’s in the PMR will be signaled to a CPU core, all other interrupts will be silenced (masked). By using this technique, it is possible to mask normal interrupts while keeping the NMI unmasked all the time.</p>
+
+<p>Just how does he do this? So, a small primer on interrupts in the ARM world.
+ARM uses the GIC <a href="http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dai0176c/ar01s03s01.html">Generic interrupt controller</a> to prioritize and route interrupts to CPU cores. GIC interrupt priorties go from 0 to 255. 0 being highest and 255 being the lowest. By default, the kernel <a href="http://lxr.free-electrons.com/source/include/linux/irqchip/arm-gic.h?v=4.8#L57">assigns priority 0xa0 (192)</a> to all interrupts. He changes this default priority from 0xa0 to 0xc0 (you’ll see why).
+He then defines what values of PMR would be consider as “unmasked” vs “masked”. Masked is 0xb0 and unmasked is 0xf0. This results in the following priorities (greater numbers are lower priority).</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0xf0 (240 decimal)  (11110000 binary) - Interrupts Unmasked (enabled)
+0xc0 (192 decimal)  (11000000 binary) - Normal interrupt priority
+0xb0 (176 decimal)  (10110000 binary) - Interrupts masked   (disabled)
+0x80 (128 decimal)  (10000000 binary) - Non-maskable interrupts
 </code></pre></div></div>
-<p>The <code class="highlighter-rouge">static_key_false</code> in the above code will evaluate to false if there’s no probe registered to the tracepoint.</p>
+<p>In this new scheme, when interrupts are to be masked (disabled), the PMR is set to 0xf0 and when they are unmasked (enabled), the PMR is set to 0xb0. As you can see, setting the PMR to 0xb0 indeed masks normal interrupts, because 0xb0(PMR) &lt; 0xc0(Normal), however non-maskable interrupts still stay unmasked as 0x80(NMI) &lt; 0xb0(PMR). Also notice that inorder to mask/unmask interrupts, all that needs to be done is flip bit 7 in the PMR (0xb0 -&gt; 0xf0). Daniel largely uses Bit 7 as the mask bit in the patchset.</p>
 
-<p>Digging further, <code class="highlighter-rouge">__DO_TRACE</code> does the following in <code class="highlighter-rouge">include/linux/tracepoint.h</code></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DO_TRACE(tp, proto, args, cond, prercu, postrcu)              \
-        do {                                                            \
-                struct tracepoint_func *it_func_ptr;                    \
-                void *it_func;                                          \
-                void *__data;                                           \
-                                                                        \
-                if (!(cond))                                            \
-                        return;                                         \
-                prercu;                                                 \
-                rcu_read_lock_sched_notrace();                          \
-                it_func_ptr = rcu_dereference_sched((tp)-&gt;funcs);       \
-                if (it_func_ptr) {                                      \
-                        do {                                            \
-                                it_func = (it_func_ptr)-&gt;func;          \
-                                __data = (it_func_ptr)-&gt;data;           \
-                                ((void(*)(proto))(it_func))(args);      \
-                        } while ((++it_func_ptr)-&gt;func);                \
-                }                                                       \
-                rcu_read_unlock_sched_notrace();                        \
-                postrcu;                                                \
-        } while (0)
-</code></pre></div></div>
-<p>There’s a lot going on there, but main part is the loop that goes through all function pointers (probes) that were registered to the tracepoint and calls them one after the other.</p>
+<h2 id="quirk-1-saving-of-the-pmr-context-during-traps">Quirk 1: Saving of the PMR context during traps</h2>
+<p>Its suggested in the patchset that during traps, the priority value set in the PMR needs to be saved because it may change during traps. To facilitate this, Daniel found a dummy bit in the PSTATE register (PSR). During any exception, Bit 7 of of the PMR is saved into a PSR bit (he calls it the G bit) and restores it on return from the exception. Look at the changes to <code class="highlighter-rouge">kernel_entry</code> macro in the set for this code.</p>
 
-<p>Now, here’s some secrets. Since all ftrace events are tracepoints under the hood, you can piggy back onto interesting events in your kernel with your own probes. This allows you to write interesting tracers. Infact this is precisely how blktrace works, and also is how SystemTap hooks into ftrace events.
-<a href="https://github.com/joelagnel/joel-snips/blob/master/k-patches/cpuhists.diff">Checkout a module I wrote</a> that hooks onto <code class="highlighter-rouge">sched_switch</code> to build some histograms. The code there is still buggy but if you mess with it and improve it please share your work.</p>
+<h2 id="quirk-2-ack-of-masked-interrupts">Quirk 2: Ack of masked interrupts</h2>
+<p>Note that interrupts are masked before the GIC interrupt controller code can even identify the source of the interrupt. When the GIC code eventually runs, it is tasked with identifying the interrupt source. It does so by reading the <code class="highlighter-rouge">IAR</code> register. This read also has the affecting of “Acking” the interrupt - in other words, telling the GIC that the kernel has acknowledged the interrupt request for that particular source. Daniel points out that, because the new scheme uses PMR for interrupt masking, its no longer possible to ACK interrupts without first unmasking them (by resetting the PMR) so he temporarily resets PMR, does the <code class="highlighter-rouge">IAR</code> read, and restores it. Look for the code in <code class="highlighter-rouge">gic_read_iar_common</code> in his patchset to handle this case.</p>
 
-<p>Now that we know a good amount about tracepoints, ftrace events are easy.</p>
+<h2 id="open-questions-i-have">Open questions I have</h2>
+<ul>
+  <li>Where in the patchset does Daniel mask NMIs once an NMI is in progress, or is this even needed?</li>
+</ul>
 
-<p>An ftrace event being based on tracepoints, makes full use of it but it has to do more. Ofcourse, it has to write events out to the ring buffer.
-When you enable an ftrace event using debug-fs, at that instant the ftrace events framework registers an “event probe” function at the tracepoint that represents the event. How? Using <code class="highlighter-rouge">tracepoint_probe_register</code> just as we discussed.</p>
+<h2 id="future-work">Future work</h2>
+<p>Daniel has tested his patchset only on the foundation model yet, but it appears that the patch series with modifications should work on the newer Qualcomm chipsets that have the necessary GIC (Generic interrupt controller) access from the core to mess with IRQ priorities. Also, currently Daniel has only implemented CPU backtrace, more work needs to be done for perf support which I’ll look into if I can get backtraces working properly on real silicon first.</p>
 
-<p>The code for this is in the file <code class="highlighter-rouge">kernel/trace/trace_events.c</code> in function <code class="highlighter-rouge">trace_event_reg</code>.</p>
-
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int trace_event_reg(struct trace_event_call *call,
-                    enum trace_reg type, void *data)
-{
-        struct trace_event_file *file = data;
-
-        WARN_ON(!(call-&gt;flags &amp; TRACE_EVENT_FL_TRACEPOINT));
-        switch (type) {
-        case TRACE_REG_REGISTER:
-                return tracepoint_probe_register(call-&gt;tp,
-                                                 call-&gt;class-&gt;probe,
-                                                 file);
-...
-</code></pre></div></div>
-<p>The probe function <code class="highlighter-rouge">call-&gt;class-&gt;probe</code> for trace events is defined in the file <code class="highlighter-rouge">include/trace/trace_events.h</code> and does the job of writing to the ring buffer. In a nutshell, the code gets a handle into the ring buffer, does assignment of the values to the entry structure and writes it out. There is some magic going on here to accomodate arbitrary number of arguments but I am yet to figure that out.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static notrace void                                                     \
-trace_event_raw_event_##call(void *__data, proto)                       \
-{                                                                       \
-        struct trace_event_file *trace_file = __data;                   \
-        struct trace_event_data_offsets_##call __maybe_unused __data_offsets;\
-        struct trace_event_buffer fbuffer;                              \
-        struct trace_event_raw_##call *entry;                           \
-        int __data_size;                                                \
-                                                                        \
-        if (trace_trigger_soft_disabled(trace_file))                    \
-                return;                                                 \
-                                                                        \
-        __data_size = trace_event_get_offsets_##call(&amp;__data_offsets, args); \
-                                                                        \
-        entry = trace_event_buffer_reserve(&amp;fbuffer, trace_file,        \
-                                 sizeof(*entry) + __data_size);         \
-                                                                        \
-        if (!entry)                                                     \
-                return;                                                 \
-                                                                        \
-        tstruct                                                         \
-                                                                        \
-        { assign; }                                                     \
-                                                                        \
-        trace_event_buffer_commit(&amp;fbuffer);                            \
-}
-</code></pre></div></div>
-<p>Let me know any comments you have or any other ftrace event behavior you’d like explained.</p>
 </div>
   
   
