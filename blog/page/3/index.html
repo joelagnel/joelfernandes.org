@@ -201,9 +201,9 @@ and the scheduler clock tick has been turned off to save power and let the CPU
 go into a lower power state. Also known as NO_HZ.</p>
 
 <p>A CPU in this mode presents some challenges to RCU. This is because an RCU
-grace period completion depends on the CPU reporting that it is in a quiescent
-state even when its idle. When the CPU is idle but the scheduling clock tick is
-not turned off, RCU on that idle-but-ticking-CPU can simply report from the
+grace period completion depends on RCU knowing that a CPU has transitioned
+through a quiescent state. When the CPU is idle but the scheduling clock tick
+is not turned off, RCU on that idle-but-ticking-CPU can simply report from the
 tick path that the CPU is in a quiescent state. However in dynticks-idle mode
 this isn’t possible, so something more clever is needed. The same complications
 arise due to the turning off of the tick in user mode (adaptive-ticks support).
@@ -222,7 +222,7 @@ other need for the tick other than RCU (for example if only 1 task is running).<
 <p>By defining certain contexts as an EQS, RCU will work no matter how aggressive
 the dynticks-idle implementation.</p>
 
-<p>AFAICT, there are 2 EQS states: idle-loop and usermode. In both these states,
+<p>AFAICT, there are 2 EQS states: dynticks-idle and usermode. In both these states,
 the tick may be turned off and the CPU is considered to be in a quiescent state
 and RCU is considered “idle”.</p>
 
