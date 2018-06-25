@@ -16,7 +16,7 @@ Note 2: The article is a WIP and not fully finished (thought it is almost).
 
 The kernel's `dynticks-idle` mode is a mode of a CPU in which the CPU is idle
 and the scheduler clock tick has been turned off to save power and let the CPU
-go into a lower power state. Also known as NO_HZ.
+to continue to be in lower power state for a long time. Also known as NO_HZ.
 
 A CPU in this mode presents some challenges to RCU. This is because an RCU
 grace period completion depends on RCU knowing that a CPU has transitioned
