@@ -1,0 +1,5 @@
+Things to narrow down:
+
+- What exactly happens in RCU_SOFTIRQ and why is it happening in softirq?
+
+- What is rcu_read_unlock_special?
