@@ -1,13 +1,11 @@
 ---
 layout: post
 title: "Dumping User and Kernel stacks on Kernel events"
-date: 2014-04-24 20:28:24 -0500
+date: 2018-12-22 20:28:24 -0500
 comments: true
+sidebar: false
 categories: linuxinternals
 ---
-
-# Dumping User and Kernel stacks on Kernel events
-
 Dumping the native kernel and userspace stack when a certain path in the kernel
 or userspace occurs, can be useful to understand which code paths triggered a
 certain behavior that you're trying to debug, such as an error you found in the
@@ -26,6 +24,8 @@ point where an SELinux denial is logged. If not cleanly applying, patch it in
 manually.
 
 ```
+Diff to add a tracepoint for selinux denials
+
 diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
 new file mode 100644
 index 000000000000..dac185062634
