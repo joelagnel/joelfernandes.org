@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 rm -rf _site
 git clone git@github.com:joelagnel/joelfernandes.org.git _site -b gh-pages
