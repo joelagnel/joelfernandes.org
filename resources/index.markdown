@@ -1,55 +1,27 @@
 ---
 layout: page
-title: "technical resources"
-date: 2014-04-25 13:29
-comments: true
 sharing: true
-footer: true
-published: false
+layout: page
+published: true
 ---
-#### My Presentations
-[ELCE 2016: Debugging Real-Time issues in Linux](/technical-resources/elce2016-debug-rt.pdf)
+## Conference Presentations
+- Debugging Real-Time issues in Linux. Conference: ELCE 2016 (Berlin, 10/16): : [slides](/resources/elce2016-debug-rt.pdf), [video](https://s3.amazonaws.com/connect.linaro.org/yvr18/videos/yvr18-pmw10.mp4). Also presented at Embedded Systems Conference (ESC) Silicon Valley (12/16).
 
-#### Low-level, ASM
-* [Tim Bird's Ftrace function-graph paper](http://elinux.org/images/0/0c/Bird-LS-2009-Measuring-function-duration-with-ftrace.pdf)
+- adeb: The better adb shell. Conference: Linaro Connect 2018 (Vancouver, 09/18). [slides](/resources/adeb-lc18.pdf).
 
-#### Memory Management
-##### Ordering and Barriers
-Basics
+- BPFd: Powerful Linux Tracing for Remote targets using eBPF. Conference: SCALE16x (Pasadena, 3/18):  [slides](/resources/bcc-scale.pdf), [video](https://www.youtube.com/watch?v=bPrY3ZKvQfM), [article](https://lwn.net/Articles/744522/). Also at OS Power Management (OSPM) conference on 4/18 (Italy).
 
-- [Paul M's paper on Why memory barriers](http://joelagnel.github.com/papers/whymb.2010.07.23a.pdf)
-- [Linux DMA basics (ARM perspective)](http://infocenter.arm.com/help/topic/com.arm.doc.dai0228a/index.html)
-- [ARM A8  architecture  - memory subsystem](http://www.arm.com/files/pdf/A8_Paper.pdf)
-- [Leif L. at ELC - more barrier references at end of slide](http://elinux.org/images/f/fa/Software_implications_memory_systems.pdf)
-- [Leif L. on arm.com blogs](http://community.arm.com/groups/processors/blog/2011/03/22/memory-access-ordering--an-introduction)
-- [LWN on ACCESS_ONCE](http://lwn.net/Articles/508991/)
-- [C11 atomic variables and the kernel](http://lwn.net/Articles/586838/)
-- [C11 memory models](http://en.cppreference.com/w/cpp/atomic/memory_order)
-- [C11 memory models - gcc wiki](http://gcc.gnu.org/wiki/Atomic/GCCMM/AtomicSync)
-- [SMP Primer for Android](http://developer.android.com/training/articles/smp.html)
-- [Effect of Write Combining in L1 Buffers](http://mechanical-sympathy.blogspot.com/2011/07/write-combining.html)
-- [Shared Memory Consistency Models:A Tutorial](http://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf)
+- Flattened Image Tree (FIT). Conference: ELC 2013 (Sanfrancisco, USA 12/13): [slides](/resources/FIT-talk.pdf) [video](https://www.youtube.com/watch?v=cVSEfOfb6rs).
 
-Advanced
+## Recently Published Work
+- Energy-Efficient Low-latency Audio on Android. Journal of Systems and Software Volume 152, June 2019, Pages 182-195 ELSEVIER. [link](https://www.sciencedirect.com/science/article/pii/S0164121219300585)
 
-* [Paul M's article explaining the memory modeling tools - validating memory barriers](http://lwn.net/Articles/470681/)
-* [Paper on POWER memory model, similar to ARM](http://www.cl.cam.ac.uk/~pes20/ppc-supplemental/pldi105-sarkar.pdf)
+- LWN Journal (Linux Weekly News). BPFd: Running BCC tools remotely across systems and architectures. [publication link](https://lwn.net/Articles/744522/)
 
-Linking Loading, shared libraries
+## Free classes organized in San Jose for education purposes (on MeetUp.com)
+- What is the kernel upto? Exploring Linux internals with tracing tools. Date: 05/16. [slides](/resources/wiku-slides.pdf)
+- Linux Scheduler Process wakeup path Date: 01/17. [slides](/resources/wakeup-slides.pdf)
+- Introduction to Embedded Linux. Date: 12/16. [slides](/resources/ie-slides.pdf)
+- Introduction to OpenEmbedded. Date: 01/17. [slides](/resources/oe-slides.pdf)
 
-* [Hands-on dissection of PLT and GOT](https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html)
 
-Misc
-
-* [ACP (Accelerator Coherency Port) for coherent access by ARM-external Masters](http://www.googoolia.com/downloads/papers/sadri_fpgaworld_ver2.pdf)
-
-#### Electronics
-* [NAND flash internals - great primer](http://vjswami.com/2013/11/11/a-primer-on-flash-and-a-look-into-the-challenges-of-designing-an-all-flash-array/)
-* [NAND flash Organization - lots of info](http://www.lostcircuits.com/mambo//index.php?option=com_content&task=view&id=72&Itemid=46&limit=1&limitstart=4)
-
-##### Super capacitors
-* [Good video on Super Cap + Boost Converter circuits](http://www.instructables.com/id/The-Forever-Rechargeable-VARIABLE-Super-Capacitor-/)
-* [Capacitor Basics](http://www.schoolphysics.co.uk/age16-19/Electricity%20and%20magnetism/Electrostatics/text/Capacitor_charge_and_discharge/index.html)
-
-#### Drones
-* [Linux and UAVs, a great overview of some of the projects](https://www.linux.com/news/embedded-mobile/mobile-linux/773231-linux-takes-to-the-skies-in-drones)
