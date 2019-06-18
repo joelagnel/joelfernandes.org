@@ -18,7 +18,7 @@ published: true
 
 - LWN Journal (Linux Weekly News). BPFd: Running BCC tools remotely across systems and architectures. [publication link](https://lwn.net/Articles/744522/)
 
-## Free classes organized in San Jose for education purposes (on MeetUp.com)
+## Taught several classes on Operating Systems at San Jose (meetup.com)
 - What is the kernel upto? Exploring Linux internals with tracing tools. Date: 05/16. [slides](/resources/wiku-slides.pdf)
 - Linux Scheduler Process wakeup path Date: 01/17. [slides](/resources/wakeup-slides.pdf)
 - Introduction to Embedded Linux. Date: 12/16. [slides](/resources/ie-slides.pdf)
