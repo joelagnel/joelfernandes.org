@@ -1,0 +1,257 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>technical resources - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    technical resources
+    
+
+
+
+
+
+
+
+
+
+Apr 25, 2014
+  
+  
+  #### My Presentations
+[ELCE 2016: Debugging Real-Time issues in Linux](/technica...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/resources/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+    <h2>My dumping ground for what I've been upto</h2>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <a href="/linuxinternals/">Linux Internals Articles</a><br>
+ <a href="/blog/archives/">All blog posts</a><br>
+ <a href="/resources">Talks and resources</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+
+<!-- div style="position:absolute; top: 170px" class="hnavtitle" -->
+<!-- a><font size="2">If you solve world hunger, and make a driver that cures people of cancer, by all means enable it by default.
+— Linus Torvalds</font></a -->
+<!-- a href="http://www.meetup.com/LinuxInternals-org-Embedded-Linux-Training/">Join the internals meetup! -->
+<!-- a href="http://www.meetup.com/LinuxInternals-org-Embedded-Linux-Training/">Join the internals meetup! -->
+<!-- /div -->
+
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article role="article">
+  
+  <header>
+    <h1 class="entry-title">technical resources</h1>
+    <p class="meta">
+
+
+
+
+
+
+
+
+
+<time datetime="2014-04-25T13:29:00-04:00" pubdate data-updated="true">Apr 25, 2014</time></p>
+  </header>
+  
+  #### My Presentations
+[ELCE 2016: Debugging Real-Time issues in Linux](/technical-resources/elce2016-debug-rt.pdf)
+
+#### Low-level, ASM
+* [Tim Bird's Ftrace function-graph paper](http://elinux.org/images/0/0c/Bird-LS-2009-Measuring-function-duration-with-ftrace.pdf)
+
+#### Memory Management
+##### Ordering and Barriers
+Basics
+
+- [Paul M's paper on Why memory barriers](http://joelagnel.github.com/papers/whymb.2010.07.23a.pdf)
+- [Linux DMA basics (ARM perspective)](http://infocenter.arm.com/help/topic/com.arm.doc.dai0228a/index.html)
+- [ARM A8  architecture  - memory subsystem](http://www.arm.com/files/pdf/A8_Paper.pdf)
+- [Leif L. at ELC - more barrier references at end of slide](http://elinux.org/images/f/fa/Software_implications_memory_systems.pdf)
+- [Leif L. on arm.com blogs](http://community.arm.com/groups/processors/blog/2011/03/22/memory-access-ordering--an-introduction)
+- [LWN on ACCESS_ONCE](http://lwn.net/Articles/508991/)
+- [C11 atomic variables and the kernel](http://lwn.net/Articles/586838/)
+- [C11 memory models](http://en.cppreference.com/w/cpp/atomic/memory_order)
+- [C11 memory models - gcc wiki](http://gcc.gnu.org/wiki/Atomic/GCCMM/AtomicSync)
+- [SMP Primer for Android](http://developer.android.com/training/articles/smp.html)
+- [Effect of Write Combining in L1 Buffers](http://mechanical-sympathy.blogspot.com/2011/07/write-combining.html)
+- [Shared Memory Consistency Models:A Tutorial](http://www.hpl.hp.com/techreports/Compaq-DEC/WRL-95-7.pdf)
+
+Advanced
+
+* [Paul M's article explaining the memory modeling tools - validating memory barriers](http://lwn.net/Articles/470681/)
+* [Paper on POWER memory model, similar to ARM](http://www.cl.cam.ac.uk/~pes20/ppc-supplemental/pldi105-sarkar.pdf)
+
+Linking Loading, shared libraries
+
+* [Hands-on dissection of PLT and GOT](https://www.technovelty.org/linux/plt-and-got-the-key-to-code-sharing-and-dynamic-libraries.html)
+
+Misc
+
+* [ACP (Accelerator Coherency Port) for coherent access by ARM-external Masters](http://www.googoolia.com/downloads/papers/sadri_fpgaworld_ver2.pdf)
+
+#### Electronics
+* [NAND flash internals - great primer](http://vjswami.com/2013/11/11/a-primer-on-flash-and-a-look-into-the-challenges-of-designing-an-all-flash-array/)
+* [NAND flash Organization - lots of info](http://www.lostcircuits.com/mambo//index.php?option=com_content&task=view&id=72&Itemid=46&limit=1&limitstart=4)
+
+##### Super capacitors
+* [Good video on Super Cap + Boost Converter circuits](http://www.instructables.com/id/The-Forever-Rechargeable-VARIABLE-Super-Capacitor-/)
+* [Capacitor Basics](http://www.schoolphysics.co.uk/age16-19/Electricity%20and%20magnetism/Electrostatics/text/Capacitor_charge_and_discharge/index.html)
+
+#### Drones
+* [Linux and UAVs, a great overview of some of the projects](https://www.linux.com/news/embedded-mobile/mobile-linux/773231-linux-takes-to-the-skies-in-drones)
+
+  
+    <footer>
+      <p class="meta">
+        
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2014-04-25T13:29:00-04:00" pubdate data-updated="true">Apr 25, 2014</time>
+        
+      </p>
+      
+        <div class="sharing">
+  
+  
+  
+</div>
+
+      
+    </footer>
+  
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2019 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/resources/';
+        var disqus_url = 'http://www.linuxinternals.org/resources/';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
