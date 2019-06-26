@@ -9,7 +9,7 @@ Note 1: RCU is an extremely complex topic and I make no claims of accuracy,
 correctness and don't make any claims that this document is to be used as a
 defacto reference for any purpose. You have been warned! For more accurate and
 standard references, I will refer you to the kernel RCU documentation.  Please
-consider this post as rough notes. That said, your corrections and comments are
+consider this post as rough notes. That said, your corrections, and comments are
 welcomed.
 
 Note 2: The article is a WIP and not fully finished (thought it is almost).
