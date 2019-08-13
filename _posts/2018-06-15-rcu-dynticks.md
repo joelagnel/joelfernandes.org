@@ -200,20 +200,23 @@ void rcu_nmi_exit(void)
 ```
 
 The problem with this algorithm is if you have an NMI come in while
-rcu_nmi_enter is running, bad things can happen.
+rcu_nmi_enter is running, bad things can happen. Specifically, the inner
+rcu_nmi_enter/exit pair, can result in premature exit from an EQS state.
 
-Lets take the case where an NMI comes in before dynticks is incremented in the
-outer rcu_nmi_enter. In this case nothing bad will happen. But say the NMI
-comes in after dynticks is incremented in the outer `rcu_nmi_enter` but before
-`dynticks_nmi_nesting` is incremented. The what will happen is:
+To see this let us take the case where an NMI comes in before dynticks is
+incremented in the outer rcu_nmi_enter. In this case nothing bad will happen.
+But say the NMI comes in after dynticks is incremented in the outer
+`rcu_nmi_enter` but before `dynticks_nmi_nesting` is incremented. Then what will
+happen is:
 
-The steps (lets call this sequence BAD-STEPS):
+The steps would look like:
 1. The outer rcu_nmi_enter will update dynticks to be odd.
 2. An NMI comes in after dynticks is made odd by dynticks++, but before dynticks_nmi_nesting is updated.
 3. The second `rcu_nmi_enter` comes in and it will leave `dynticks` alone but increase `dynticks_nmi_nesting` to 1.
 4. Now on the corresponding inner `rcu_nmi_exit`, it will notice
   `dynticks_nmi_nesting` is 1 so it will set it to 0.
-5. Next it will wrongly increment `dynticks` messing it up completely.
+5. Next it will wrongly increment `dynticks` messing it up completely. The
+   inner rcu_nmi_exit is never supposed to exit EQS. Only the outer one is.
 
 The problem here is the inner `rcu_nmi_exit` increments the dynticks counter
 (thus marking the dynticks-idle mode as exited even though we're still in the
