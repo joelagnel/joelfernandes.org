@@ -334,24 +334,21 @@ void rcu_nmi_exit(void)
 </code></pre></div></div>
 
 <p>The problem with this algorithm is if you have an NMI come in while
-rcu_nmi_enter is running, bad things can happen. Specifically, the inner
-rcu_nmi_enter/exit pair, can result in premature exit from an EQS state.</p>
+rcu_nmi_enter is running, bad things can happen.</p>
 
-<p>To see this let us take the case where an NMI comes in before dynticks is
-incremented in the outer rcu_nmi_enter. In this case nothing bad will happen.
-But say the NMI comes in after dynticks is incremented in the outer
-<code class="highlighter-rouge">rcu_nmi_enter</code> but before <code class="highlighter-rouge">dynticks_nmi_nesting</code> is incremented. Then what will
-happen is:</p>
+<p>Lets take the case where an NMI comes in before dynticks is incremented in the
+outer rcu_nmi_enter. In this case nothing bad will happen. But say the NMI
+comes in after dynticks is incremented in the outer <code class="highlighter-rouge">rcu_nmi_enter</code> but before
+<code class="highlighter-rouge">dynticks_nmi_nesting</code> is incremented. The what will happen is:</p>
 
-<p>The steps would look like:</p>
+<p>The steps (lets call this sequence BAD-STEPS):</p>
 <ol>
   <li>The outer rcu_nmi_enter will update dynticks to be odd.</li>
   <li>An NMI comes in after dynticks is made odd by dynticks++, but before dynticks_nmi_nesting is updated.</li>
   <li>The second <code class="highlighter-rouge">rcu_nmi_enter</code> comes in and it will leave <code class="highlighter-rouge">dynticks</code> alone but increase <code class="highlighter-rouge">dynticks_nmi_nesting</code> to 1.</li>
   <li>Now on the corresponding inner <code class="highlighter-rouge">rcu_nmi_exit</code>, it will notice
   <code class="highlighter-rouge">dynticks_nmi_nesting</code> is 1 so it will set it to 0.</li>
-  <li>Next it will wrongly increment <code class="highlighter-rouge">dynticks</code> messing it up completely. The
-inner rcu_nmi_exit is never supposed to exit EQS. Only the outer one is.</li>
+  <li>Next it will wrongly increment <code class="highlighter-rouge">dynticks</code> messing it up completely.</li>
 </ol>
 
 <p>The problem here is the inner <code class="highlighter-rouge">rcu_nmi_exit</code> increments the dynticks counter
