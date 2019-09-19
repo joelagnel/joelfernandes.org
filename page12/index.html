@@ -304,6 +304,12 @@ unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
         return flags;                                                   \
 }                                                                       \
 </code></pre></div></div>
+<p>Update:
+Further clean up of break_lock has happened <a href="https://lore.kernel.org/patchwork/patch/856271/">in this
+patch</a>. If caller needs to
+know if lock is contended, they can do so directly by using
+arch_spin_is_contended. So there’s no longer a need for the break_lock variable
+in the lock structure.</p>
 
 <p>Hope this post made a few things more clear, there’s a lot more to spinlocking. A good reference is <a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/">Rusty’s Unreliable Guide To Locking</a>.</p>
 </div>
