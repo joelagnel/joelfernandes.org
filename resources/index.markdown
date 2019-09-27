@@ -5,6 +5,8 @@ layout: page
 published: true
 ---
 ## Conference Presentations
+- RCU in 2019: KernelRecipes 2019 (Paris, 09/19): [slides](/resources/RCU_in_2019_KernelRecipes.pdf), [video (third speaker)](https://youtu.be/dvtZsBlSECk).
+
 - Debugging Real-Time issues in Linux. Conference: ELCE 2016 (Berlin, 10/16): : [slides](/resources/elce2016-debug-rt.pdf), [video](https://s3.amazonaws.com/connect.linaro.org/yvr18/videos/yvr18-pmw10.mp4). Also presented at Embedded Systems Conference (ESC) Silicon Valley (12/16).
 
 - adeb: The better adb shell. Conference: Linaro Connect 2018 (Vancouver, 09/18). [slides](/resources/adeb-lc18.pdf).
