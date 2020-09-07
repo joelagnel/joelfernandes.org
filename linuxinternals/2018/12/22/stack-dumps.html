@@ -162,15 +162,15 @@ and regular Linux kernels.</p>
 point where an SELinux denial is logged. If not cleanly applying, patch it in
 manually.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Diff to add a tracepoint for selinux denials
-
-<span class="gh">diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
-</span>new file mode 100644
-<span class="gh">index 000000000000..dac185062634
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">Diff to add a tracepoint for selinux denials
+</span>
+diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
+<span class="p">new file mode 100644
+</span><span class="gh">index 000000000000..dac185062634
 </span><span class="gd">--- /dev/null
 </span><span class="gi">+++ b/include/trace/events/selinux.h
-</span><span class="gu">@@ -0,0 +1,34 @@
-</span><span class="gi">+#undef TRACE_SYSTEM
+</span><span class="p">@@ -0,0 +1,34 @@</span>
+<span class="gi">+#undef TRACE_SYSTEM
 +#define TRACE_SYSTEM selinux
 +
 +#if !defined(_TRACE_SELINUX_H) || defined(TRACE_HEADER_MULTI_READ)
@@ -208,8 +208,8 @@ manually.</p>
 index 84d9a2e2bbaf..ab04b7c2dd01 100644
 </span><span class="gd">--- a/security/selinux/avc.c
 </span><span class="gi">+++ b/security/selinux/avc.c
-</span><span class="gu">@@ -34,6 +34,9 @@
-</span> #include "avc_ss.h"
+</span><span class="p">@@ -34,6 +34,9 @@</span>
+ #include "avc_ss.h"
  #include "classmap.h"
  
 <span class="gi">+#define CREATE_TRACE_POINTS
@@ -218,8 +218,8 @@ index 84d9a2e2bbaf..ab04b7c2dd01 100644
 </span> #define AVC_CACHE_SLOTS			512
  #define AVC_DEF_CACHE_THRESHOLD		512
  #define AVC_CACHE_RECLAIM		16
-<span class="gu">@@ -713,6 +716,12 @@ static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
-</span> 	struct common_audit_data *ad = a;
+<span class="p">@@ -713,6 +716,12 @@</span> static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
+ 	struct common_audit_data *ad = a;
  	audit_log_format(ab, "avc:  %s ",
  			 ad-&gt;selinux_audit_data-&gt;denied ? "denied" : "granted");
 <span class="gi">+
@@ -339,7 +339,7 @@ functions using kprobes and more! Just change the arguments passed to the
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2019 - Joel Fernandes -
+  Copyright &copy; 2020 - Joel Fernandes -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
