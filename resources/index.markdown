@@ -18,7 +18,7 @@ published: true
 - Flattened Image Tree (FIT). Conference: ELC 2013 (Sanfrancisco, USA 12/13): [slides](/resources/FIT-talk.pdf) [video](https://www.youtube.com/watch?v=cVSEfOfb6rs).
 
 ## Recently Published Work
-- RCU Usage In the Linux Kernel: Eighteen Years Later, ACM SIGOPS Operating Systems Review, August 2020.
+- RCU Usage In the Linux Kernel: Eighteen Years Later, ACM SIGOPS Operating Systems Review, August 2020. (Latest [version in PDF](/resources/rcu_usage_09_2020.pdf)).
 
 - Energy-Efficient Low-latency Audio on Android. Journal of Systems and Software Volume 152, June 2019, Pages 182-195 ELSEVIER. [link](https://www.sciencedirect.com/science/article/pii/S0164121219300585)
 
