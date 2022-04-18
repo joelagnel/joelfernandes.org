@@ -135,7 +135,7 @@ May 10, 2018
 
 
 
-<time datetime="2018-05-10T00:00:00-04:00" pubdate data-updated="true">May 10, 2018</time>
+<time datetime="2018-05-10T00:00:00+00:00" pubdate data-updated="true">May 10, 2018</time>
         
            | <a href="#disqus_thread"
              data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
@@ -169,31 +169,31 @@ something else.</p>
 <p>A <a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">recent discussion</a>
 on LKML clarified to me that “preempted to run something else” not only covers
 involuntary preemption but also voluntarily sleeping. This design is because,
-with <code class="highlighter-rouge">PREEMPT_RT</code> kernels, “rt” version of spinlocks are actually mutexes that
+with <code class="language-plaintext highlighter-rouge">PREEMPT_RT</code> kernels, “rt” version of spinlocks are actually mutexes that
 can put the RCU reader to sleep.</p>
 
 <p>So coming back to the point of this article, I want to go over what happens on
-a context-switch. When the scheduler is called, we end up in <code class="highlighter-rouge">__schedule</code>
-function. Here in the beginning <code class="highlighter-rouge">rcu_note_context_switch</code> is called with the
-<code class="highlighter-rouge">preempt</code> parameter. The <code class="highlighter-rouge">preempt</code> parameter indicates if task blocked with
-help of <code class="highlighter-rouge">schedule()</code> or if it was a kernel path (such as return from interrupts
+a context-switch. When the scheduler is called, we end up in <code class="language-plaintext highlighter-rouge">__schedule</code>
+function. Here in the beginning <code class="language-plaintext highlighter-rouge">rcu_note_context_switch</code> is called with the
+<code class="language-plaintext highlighter-rouge">preempt</code> parameter. The <code class="language-plaintext highlighter-rouge">preempt</code> parameter indicates if task blocked with
+help of <code class="language-plaintext highlighter-rouge">schedule()</code> or if it was a kernel path (such as return from interrupts
 or system calls) that called into the scheduler to preempt the currently
 running task.</p>
 
-<p><code class="highlighter-rouge">rcu_note_context_switch</code> first calls <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> for
+<p><code class="language-plaintext highlighter-rouge">rcu_note_context_switch</code> first calls <code class="language-plaintext highlighter-rouge">rcu_preempt_note_context_switch</code> for
 RCU-preempt to take note. Lets discuss this function.</p>
 
 <p>First note that the RCU-preempt flavor does warn you if you voluntarily sleep inside
 an RCU read side section. I’m not sure how the “RT-spinlock” for RT kernels
 doesn’t get this warning. Probably they delete this warning in PREEMPT_RT
-patchset, idk. The warning is <code class="highlighter-rouge">WARN_ON_ONCE(!preempt &amp;&amp;
+patchset, idk. The warning is <code class="language-plaintext highlighter-rouge">WARN_ON_ONCE(!preempt &amp;&amp;
 t-&gt;rcu_read_lock_nesting &gt; 0);</code>. But seems pretty clear to me a non-RT kernel
 would scream with this warning if an RCU-preempt read section went to sleep.
 Getting preempted is Ok but not voluntary sleeping according to this code! (see
 side note in last para)</p>
 
 <p>If the task being preempted is in a read-side RCU section, then (and only then)
-it calls <code class="highlighter-rouge">rcu_preempt_ctxt_queue</code>. Here the task being preempted is added to a
+it calls <code class="language-plaintext highlighter-rouge">rcu_preempt_ctxt_queue</code>. Here the task being preempted is added to a
 list of blocked tasks. The reason why we need to add it is, RCU-preempt has 2
 perspectives of Quiescent state (QS). Recall, a QS is reached whenever an
 entity is not blocking the current grace period (GP). RCU-preempt considers 2
@@ -204,10 +204,10 @@ blocking the GP. But now, the task has reached a non-QS (It is blocking the
 GP). This list basically indicates this fact. If there are blocking tasks, then
 the GP cannot complete even though the CPU reports its QS. <a href="https://lkml.org/lkml/2018/5/4/632">Paul Mckenney explains this here</a>. The other benefit of having a list of tasks is that preempted RCU read sections can be boosted. Paul Mckenney again came to the rescue to <a href="https://lkml.org/lkml/2018/5/4/659">explain this to me</a>.</p>
 
-<p>Finally, you see that <code class="highlighter-rouge">rcu_preempt_note_context_switch</code> does report a QS. This
+<p>Finally, you see that <code class="language-plaintext highlighter-rouge">rcu_preempt_note_context_switch</code> does report a QS. This
 is because if the task was in a read section, it has just been added to the
 blocked task list. If its not, then we just reached a QS for the CPU. Either
-way we entered a CPU QS. So is recorded with a call to <code class="highlighter-rouge">rcu_preempt_qs();</code>.</p>
+way we entered a CPU QS. So is recorded with a call to <code class="language-plaintext highlighter-rouge">rcu_preempt_qs();</code>.</p>
 
 <p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP document</a> which also explains some of the RCU-preempt behaviors.</p>
 
@@ -235,7 +235,7 @@ the comments.</p>
 
 
 
-<time datetime="2018-05-10T00:00:00-04:00" pubdate data-updated="true">May 10, 2018</time>
+<time datetime="2018-05-10T00:00:00+00:00" pubdate data-updated="true">May 10, 2018</time>
       
 
 <span class="categories">
@@ -286,7 +286,7 @@ the comments.</p>
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2020 - Joel Fernandes -
+  Copyright &copy; 2022 - Joel Fernandes -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 

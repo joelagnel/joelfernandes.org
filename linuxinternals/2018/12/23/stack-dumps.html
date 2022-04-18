@@ -28,7 +28,7 @@
 
 
 
-Dec 22, 2018
+Dec 23, 2018
         
            | Comments
  ...">
@@ -40,7 +40,7 @@ Dec 22, 2018
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2018/12/22/stack-dumps.html">
+  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -135,7 +135,7 @@ Dec 22, 2018
 
 
 
-<time datetime="2018-12-22T20:28:24-05:00" pubdate data-updated="true">Dec 22, 2018</time>
+<time datetime="2018-12-23T01:28:24+00:00" pubdate data-updated="true">Dec 23, 2018</time>
         
            | <a href="#disqus_thread"
              data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
@@ -162,15 +162,15 @@ and regular Linux kernels.</p>
 point where an SELinux denial is logged. If not cleanly applying, patch it in
 manually.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">Diff to add a tracepoint for selinux denials
-</span>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Diff to add a tracepoint for selinux denials
+
 diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
-<span class="p">new file mode 100644
-</span><span class="gh">index 000000000000..dac185062634
-</span><span class="gd">--- /dev/null
-</span><span class="gi">+++ b/include/trace/events/selinux.h
-</span><span class="p">@@ -0,0 +1,34 @@</span>
-<span class="gi">+#undef TRACE_SYSTEM
+new file mode 100644
+index 000000000000..dac185062634
+--- /dev/null
++++ b/include/trace/events/selinux.h
+@@ -0,0 +1,34 @@
++#undef TRACE_SYSTEM
 +#define TRACE_SYSTEM selinux
 +
 +#if !defined(_TRACE_SELINUX_H) || defined(TRACE_HEADER_MULTI_READ)
@@ -204,38 +204,38 @@ diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
 +
 +/* This part ust be outside protection */
 +#include &lt;trace/define_trace.h&gt;
-</span><span class="gh">diff --git a/security/selinux/avc.c b/security/selinux/avc.c
+diff --git a/security/selinux/avc.c b/security/selinux/avc.c
 index 84d9a2e2bbaf..ab04b7c2dd01 100644
-</span><span class="gd">--- a/security/selinux/avc.c
-</span><span class="gi">+++ b/security/selinux/avc.c
-</span><span class="p">@@ -34,6 +34,9 @@</span>
+--- a/security/selinux/avc.c
++++ b/security/selinux/avc.c
+@@ -34,6 +34,9 @@
  #include "avc_ss.h"
  #include "classmap.h"
  
-<span class="gi">+#define CREATE_TRACE_POINTS
++#define CREATE_TRACE_POINTS
 +#include &lt;trace/events/selinux.h&gt;
 +
-</span> #define AVC_CACHE_SLOTS			512
+ #define AVC_CACHE_SLOTS			512
  #define AVC_DEF_CACHE_THRESHOLD		512
  #define AVC_CACHE_RECLAIM		16
-<span class="p">@@ -713,6 +716,12 @@</span> static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
+@@ -713,6 +716,12 @@ static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
  	struct common_audit_data *ad = a;
  	audit_log_format(ab, "avc:  %s ",
  			 ad-&gt;selinux_audit_data-&gt;denied ? "denied" : "granted");
-<span class="gi">+
++
 +	if (ad-&gt;selinux_audit_data-&gt;denied) {
 +		trace_selinux_denied(ad-&gt;selinux_audit_data-&gt;tclass,
 +				     ad-&gt;selinux_audit_data-&gt;audited);
 +	}
 +
-</span> 	avc_dump_av(ab, ad-&gt;selinux_audit_data-&gt;tclass,
+ 	avc_dump_av(ab, ad-&gt;selinux_audit_data-&gt;tclass,
  			ad-&gt;selinux_audit_data-&gt;audited);
  	audit_log_format(ab, " for ");
 </code></pre></div></div>
 
 <h3 id="step-2-install-adeb">Step 2: Install <a href="https://github.com/joelagnel/adeb">adeb</a></h3>
 <p>Run the command:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb prepare --full
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb prepare --full
 </code></pre></div></div>
 <p>This also installs BCC on the Android device which contains the ‘trace’ utility
 we need for the next step. For regular Linux kernels, you may have to <a href="https://github.com/joelagnel/bcc/blob/master/README.md">manually
@@ -244,12 +244,12 @@ package for it.</p>
 
 <h3 id="step-3-start-tracing-the-user-and-kernel-stacks">Step 3: Start tracing the user and kernel stacks</h3>
 <p>Running the following command:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb shell
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb shell
 trace -K -U 't:selinux:selinux_denial'
 </code></pre></div></div>
 
 <p>You should see something like this when denials are triggered:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2286    2434    Binder:2286_4   selinux_denied   
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2286    2434    Binder:2286_4   selinux_denied   
 
         avc_audit_pre_callback+0xd8 [kernel]
         avc_audit_pre_callback+0xd8 [kernel]
@@ -299,7 +299,7 @@ functions using kprobes and more! Just change the arguments passed to the
 
 
 
-<time datetime="2018-12-22T20:28:24-05:00" pubdate data-updated="true">Dec 22, 2018</time>
+<time datetime="2018-12-23T01:28:24+00:00" pubdate data-updated="true">Dec 23, 2018</time>
       
 
 <span class="categories">
@@ -339,7 +339,7 @@ functions using kprobes and more! Just change the arguments passed to the
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2020 - Joel Fernandes -
+  Copyright &copy; 2022 - Joel Fernandes -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
@@ -351,8 +351,8 @@ functions using kprobes and more! Just change the arguments passed to the
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2018/12/22/stack-dumps.html';
-        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2018/12/22/stack-dumps.html';
+        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html';
+        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html';
         var disqus_script = 'embed.js';
       
     (function () {

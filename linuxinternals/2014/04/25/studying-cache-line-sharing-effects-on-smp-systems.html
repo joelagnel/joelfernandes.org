@@ -28,7 +28,7 @@
 
 
 
-Apr 24, 2014
+Apr 25, 2014
         
            | Comment...">
   
@@ -39,7 +39,7 @@ Apr 24, 2014
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">
+  <link rel="canonical" href="http://www.linuxinternals.org/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -134,7 +134,7 @@ Apr 24, 2014
 
 
 
-<time datetime="2014-04-24T21:28:24-04:00" pubdate data-updated="true">Apr 24, 2014</time>
+<time datetime="2014-04-25T01:28:24+00:00" pubdate data-updated="true">Apr 25, 2014</time>
         
            | <a href="#disqus_thread"
              data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
@@ -150,9 +150,9 @@ Apr 24, 2014
 
 <p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core’s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
 
-<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
+<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="language-plaintext highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
 
-<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
+<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="language-plaintext highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
 
 <p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
 
@@ -192,7 +192,7 @@ Apr 24, 2014
 
 
 
-<time datetime="2014-04-24T21:28:24-04:00" pubdate data-updated="true">Apr 24, 2014</time>
+<time datetime="2014-04-25T01:28:24+00:00" pubdate data-updated="true">Apr 25, 2014</time>
       
 
 <span class="categories">
@@ -216,7 +216,7 @@ Apr 24, 2014
         <a class="basic-alignment left" href="/linuxinternals/2014/04/23/design-of-fork-followed-by-exec-in-linux.html" title="Previous Post: Design of fork followed by exec in Linux">&laquo; Design of fork followed by exec in Linux</a>
       
       
-        <a class="basic-alignment right" href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html" title="Next Post: Linux Spinlock Internals">Linux Spinlock Internals &raquo;</a>
+        <a class="basic-alignment right" href="/linuxinternals/2014/05/08/spinlock-implementation-in-linux-kernel.html" title="Next Post: Linux Spinlock Internals">Linux Spinlock Internals &raquo;</a>
       
     </p>
   </footer>
@@ -243,7 +243,7 @@ Apr 24, 2014
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2020 - Joel Fernandes -
+  Copyright &copy; 2022 - Joel Fernandes -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
@@ -255,8 +255,8 @@ Apr 24, 2014
       
         
         // var disqus_developer = 1;
-        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html';
-        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html';
+        var disqus_identifier = 'http://www.linuxinternals.org/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html';
+        var disqus_url = 'http://www.linuxinternals.org/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html';
         var disqus_script = 'embed.js';
       
     (function () {
