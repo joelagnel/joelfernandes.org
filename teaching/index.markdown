@@ -6,6 +6,11 @@ published: true
 ---
 ## Teaching and Mentoring
 
+I have 15 years of experience in the computer science industry and am an avid
+public speaker. I have given numerous talks at conferences around the world. I
+am particularly excited about breaking down difficult topics into easy to
+understand sessions.
+
 I enjoy providing 1:1 sessions with graduate students who have reached out to
 me over the years. I strongly believe teaching is re-learning! My style is
 often practical as I have both industry and academic experiences.
