@@ -118,7 +118,7 @@ among the reader CPUs. percpu-rwsem solves this problem by making using a
 per-cpu counter for each CPU.</p>
 
 <p>A percpu-rwsem structure looks like:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>struct percpu_rw_semaphore {
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>struct percpu_rw_semaphore {
         struct rcu_sync         rss;
         unsigned int __percpu   *read_count;
         struct rw_semaphore     rw_sem;
@@ -127,12 +127,12 @@ per-cpu counter for each CPU.</p>
 };
 </code></pre></div></div>
 
-<p>The <code class="language-plaintext highlighter-rouge">read_count</code> element is a percpu counter keeping track of how many readers
+<p>The <code class="highlighter-rouge">read_count</code> element is a percpu counter keeping track of how many readers
 are currently in their reader section.</p>
 
 <h2 id="the-fast-path">The fast path</h2>
 <p>In the common case, where no writers are involved and a reader tries to acquire
-the lock, all it needs to is increment its per-cpu <code class="language-plaintext highlighter-rouge">read_count</code> variable, and
+the lock, all it needs to is increment its per-cpu <code class="highlighter-rouge">read_count</code> variable, and
 enter the reader section. This involves no cacheline bouncing or contention
 thus solving the first problem discussed (about L1 cacheline bouncing).</p>
 
@@ -140,27 +140,27 @@ thus solving the first problem discussed (about L1 cacheline bouncing).</p>
 <p>If there is already a ‘writer’ that acquired the lock however, then the reader
 must enter the slow path in order to acquire the lock. The slow path involves
 acquiring a traditional reader-writer semaphore (rw_sem) in the
-<code class="language-plaintext highlighter-rouge">percpu_rw_semaphore</code> object. Note that a writer acquiring the
-<code class="language-plaintext highlighter-rouge">percpu_rw_sempahore</code> implies that it has also already acquired the traditional
+<code class="highlighter-rouge">percpu_rw_semaphore</code> object. Note that a writer acquiring the
+<code class="highlighter-rouge">percpu_rw_sempahore</code> implies that it has also already acquired the traditional
 reader-writer semaphore (rw_sem) as well. Because of this the reader will block
 and be awakened later once the writer releases the rw_sem.</p>
 
 <h2 id="how-does-the-reader-switch-between-fast-and-slow-paths">How does the reader switch between fast and slow paths?</h2>
 <p>Before a writer acquires a lock, it must notify readers that they must now
-switch to their slow paths. This notification is done using the <code class="language-plaintext highlighter-rouge">readers_block</code>
-flag in <code class="language-plaintext highlighter-rouge">percpu_rw_sempahore</code>.</p>
+switch to their slow paths. This notification is done using the <code class="highlighter-rouge">readers_block</code>
+flag in <code class="highlighter-rouge">percpu_rw_sempahore</code>.</p>
 
-<p>One way to achieve this notification is: A writer atomically update <code class="language-plaintext highlighter-rouge">readers_block</code>.
-flag. Readers then atomically read <code class="language-plaintext highlighter-rouge">readers_block</code> and make note that they must
+<p>One way to achieve this notification is: A writer atomically update <code class="highlighter-rouge">readers_block</code>.
+flag. Readers then atomically read <code class="highlighter-rouge">readers_block</code> and make note that they must
 now enter their slow paths to acquire the lock.  Atomic reads are expensive
 though and would defeat the scalability goals mentioned earlier.</p>
 
 <p>Another way to achieve this synchronization between readers and writers, is
-using the kernel’s rcu-sync framework. The <code class="language-plaintext highlighter-rouge">rss</code> element in
-<code class="language-plaintext highlighter-rouge">percpu_rw_semaphore</code> is used for the purposes of this.</p>
+using the kernel’s rcu-sync framework. The <code class="highlighter-rouge">rss</code> element in
+<code class="highlighter-rouge">percpu_rw_semaphore</code> is used for the purposes of this.</p>
 
 <p>When a writer wants the readers to enter their slow path, it sets some state in
-the <code class="language-plaintext highlighter-rouge">rss</code> element. For simplicity, let us assume that if the state is 1, then
+the <code class="highlighter-rouge">rss</code> element. For simplicity, let us assume that if the state is 1, then
 the reader must enter their slow path and if the state is 0, then a reader must
 enter its fast path.</p>
 
@@ -174,18 +174,18 @@ this point, will only enter their slow paths.</p>
 <p>However, some readers might have already entered their fast paths. Before
 entering its critical section, the writer must ensure that there are no readers
 active (readers and writers are mutually exclusive in a reader-writer
-sempahore). To do this, it first acquires the internal <code class="language-plaintext highlighter-rouge">rwsem</code> and then scans
-the per-cpu <code class="language-plaintext highlighter-rouge">read_count</code> variable and ensures they are all 0.</p>
+sempahore). To do this, it first acquires the internal <code class="highlighter-rouge">rwsem</code> and then scans
+the per-cpu <code class="highlighter-rouge">read_count</code> variable and ensures they are all 0.</p>
 
 <p>Quiz:
 What if a reader has noticed that state is 0 and thinks that it needs to enter
-the fast path, but has not yet incremented the <code class="language-plaintext highlighter-rouge">read_count</code>? Will the writer
+the fast path, but has not yet incremented the <code class="highlighter-rouge">read_count</code>? Will the writer
 falsely think that there are no more readers active and enter its critical section?
 Ans:
 This cannot happen because in the slow path, the reader’s increment of
-<code class="language-plaintext highlighter-rouge">read_count</code> actually happens while the internal <code class="language-plaintext highlighter-rouge">rw_sem</code> is held. Since the
+<code class="highlighter-rouge">read_count</code> actually happens while the internal <code class="highlighter-rouge">rw_sem</code> is held. Since the
 writer acquires the internal rwsem right after the grace period, the reader’s
-update of the <code class="language-plaintext highlighter-rouge">read_count</code> will block until the writer releases the <code class="language-plaintext highlighter-rouge">rw_sem</code> in
+update of the <code class="highlighter-rouge">read_count</code> will block until the writer releases the <code class="highlighter-rouge">rw_sem</code> in
 the unlock path.</p>
 
 <h2 id="performance-of-rwsem-vs-percpu-rwsem">Performance of rwsem vs percpu-rwsem</h2>

@@ -21,7 +21,7 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page10/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -112,7 +112,7 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 Full list of all posts on this site:
 
 <font face="monospace">
- <li><span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
+ <li><span>22 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/22/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
@@ -156,11 +156,11 @@ Full list of all posts on this site:
 </font>
 
 <font face="monospace">
- <li><span>08 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
- <li><span>25 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
@@ -177,7 +177,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a></h1>
+      <h1 class="entry-title"><a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a></h1>
     
     
       <p class="meta">
@@ -191,152 +191,52 @@ Most Recept Post:
 
 
 
-<time datetime="2018-12-23T01:28:24+00:00" pubdate data-updated="true">Dec 23, 2018</time>
+<time datetime="2015-12-25T15:51:29-05:00" pubdate data-updated="true">Dec 25, 2015</time>
         
-           | <a href="/linuxinternals/2018/12/23/stack-dumps.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html">Comments</a>
+           | <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Dumping the native kernel and userspace stack when a certain path in the kernel
-or userspace occurs, can be useful to understand which code paths triggered a
-certain behavior that you’re trying to debug, such as an error you found in the
-log. One such case is when you notice Selinux denial messages in logs but want
-to know which path triggered it.</p>
+  <div class="entry-content"><p>Recently I <a href="http://electronics.stackexchange.com/questions/207492/how-are-conflicts-between-voltage-sources-or-signals-resolved/207496">asked</a> a question on StackExchange about what happens when 2 voltage signals are tied together. What’s the resultant voltage and what decides this voltage? The whole train of thought started when I was trying to contemplate what happens when you use pull-ups on signals that are not Open Drain.</p>
 
-<p>In this article we will show you how to use kernel instrumentation and BCC to
-dump the both the user and kernel stack. The article applies both to Android
-and regular Linux kernels.</p>
+<p>I create and simulated a Circuit with the same scenario in LTSpice. “V” is the voltage between the “+” terminals of V1 and V2 and its shown on the right of the simulation. We will confirm the simulation result by doing some math later.<img src="/images/voltage-conflict/voltage-conflict-1.png" /></p>
 
-<h2 id="example-understanding-which-path-triggered-an-selinux-denial">Example: Understanding which path triggered an SELinux denial</h2>
+<p>The question is what is the voltage across the load after hooking them up together. And what do the currents look like? Is there a current flowing between the 2 sources as well (apart from the current flowing to the load) because 5v &gt; 1.8v?
+The simulator refuses to do a simulation without your author adding an internal resistance to the voltage sources first. All voltages sources have certain internal resistances, so that’s fair. This can be considered analogous to having a voltage signal with a certain resistance along its path which limits its current sourcing (or sinking) capabilities.</p>
 
-<h3 id="step-1-add-a-tracepoint-to-the-kernel">Step 1: Add a tracepoint to the kernel</h3>
-<p>Apply the following diff to your kernel. It adds a tracepoint at precisely the
-point where an SELinux denial is logged. If not cleanly applying, patch it in
-manually.</p>
+<p>So I added 1k resistances internally, normally the resistance of a voltage source is far less than this. AA batteries have just 0.1-0.2ohms.
+Now the circuit looks something like this: <img src="/images/voltage-conflict/voltage-conflict-2.png" /></p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Diff to add a tracepoint for selinux denials
+<p>One can simply apply <a href="https://en.wikipedia.org/wiki/Kirchhoff%27s_circuit_laws#Kirchhoff.27s_current_law_.28KCL.29">Kirchoff’s current law</a> to the above circuit, the direction of currents would be as in the circuit. I1 and I2 are the currents flowing through R2 and R1 respectively.</p>
 
-diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
-new file mode 100644
-index 000000000000..dac185062634
---- /dev/null
-+++ b/include/trace/events/selinux.h
-@@ -0,0 +1,34 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM selinux
-+
-+#if !defined(_TRACE_SELINUX_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_SELINUX_H
-+
-+#include &lt;linux/ktime.h&gt;
-+#include &lt;linux/tracepoint.h&gt;
-+
-+TRACE_EVENT(selinux_denied,
-+
-+	TP_PROTO(int cls, int av),
-+
-+	TP_ARGS(cls, av),
-+
-+	TP_STRUCT__entry(
-+		__field(	int,		cls	)
-+		__field(	int,		av	)
-+	),
-+
-+	TP_fast_assign(
-+		__entry-&gt;cls = cls;
-+		__entry-&gt;av = av;
-+	),
-+
-+	TP_printk("denied %d %d",
-+		__entry-&gt;cls,
-+		__entry-&gt;av)
-+);
-+
-+#endif /* _TRACE_SELINUX_H */
-+
-+/* This part ust be outside protection */
-+#include &lt;trace/define_trace.h&gt;
-diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index 84d9a2e2bbaf..ab04b7c2dd01 100644
---- a/security/selinux/avc.c
-+++ b/security/selinux/avc.c
-@@ -34,6 +34,9 @@
- #include "avc_ss.h"
- #include "classmap.h"
- 
-+#define CREATE_TRACE_POINTS
-+#include &lt;trace/events/selinux.h&gt;
-+
- #define AVC_CACHE_SLOTS			512
- #define AVC_DEF_CACHE_THRESHOLD		512
- #define AVC_CACHE_RECLAIM		16
-@@ -713,6 +716,12 @@ static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
- 	struct common_audit_data *ad = a;
- 	audit_log_format(ab, "avc:  %s ",
- 			 ad-&gt;selinux_audit_data-&gt;denied ? "denied" : "granted");
-+
-+	if (ad-&gt;selinux_audit_data-&gt;denied) {
-+		trace_selinux_denied(ad-&gt;selinux_audit_data-&gt;tclass,
-+				     ad-&gt;selinux_audit_data-&gt;audited);
-+	}
-+
- 	avc_dump_av(ab, ad-&gt;selinux_audit_data-&gt;tclass,
- 			ad-&gt;selinux_audit_data-&gt;audited);
- 	audit_log_format(ab, " for ");
+<p>By Kirchoff’s law, All the current entering the node labeled V will be equal to the current exiting it even if the currents are not in the actual direction shown above. From this we see:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1 = (1.8 - V) / 1k
+I2 = (5 - V)   / 1k
+I3 = (V - 0)   / 10k
+
+I3 = I2 + I1
+V / 10k  = ((1.8 - V) / 1k) + ((5 - V) / 1k)
+V = 3.2381v
 </code></pre></div></div>
 
-<h3 id="step-2-install-adeb">Step 2: Install <a href="https://github.com/joelagnel/adeb">adeb</a></h3>
-<p>Run the command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb prepare --full
+<p>Fom this we see the voltage at V is somewhere between 5 and 1.8v. Infact, where it is between 5 and 1.8 depends on how strong or weak the resistances associated with the sources are. If the resistances are lower, then the sources have more of an influence and vice versa. An interesting observation is I1 is negative if you plug V=3.2v in the above equation. This means the current for voltage source V2 (the 1.8v voltage source) is actually flowing into it rather than out of it (its being sinked) and so I1 is actually opposite in direction to the picture shown above.</p>
+
+<p>A simpler case is having 2 voltage sources of the exact same voltage values, in this case the circuit would look like:<img src="/images/voltage-conflict/voltage-conflict-3.png" /></p>
+
+<p><a href="https://en.wikipedia.org/wiki/Th%C3%A9venin%27s_theorem">Thevenin’s theorem</a>  provides an easy simplication into the following, where the equivalent voltage source value is the same but the series resistance is now halved. This results in the following circuit:
+<img src="/images/voltage-conflict/voltage-conflict-4.png" /></p>
+
+<p>Now you can use the <a href="https://en.wikipedia.org/wiki/Voltage_divider">Voltage divider</a> concept and easily solve this:</p>
+<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>V = V2 * (R2 / (R1 + R2) )
+  = 1.8v * ( 10k / (10k + 0.5k) )
+  = 1.7142v
 </code></pre></div></div>
-<p>This also installs BCC on the Android device which contains the ‘trace’ utility
-we need for the next step. For regular Linux kernels, you may have to <a href="https://github.com/joelagnel/bcc/blob/master/README.md">manually
-install BCC</a> or find a
-package for it.</p>
-
-<h3 id="step-3-start-tracing-the-user-and-kernel-stacks">Step 3: Start tracing the user and kernel stacks</h3>
-<p>Running the following command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb shell
-trace -K -U 't:selinux:selinux_denial'
-</code></pre></div></div>
-
-<p>You should see something like this when denials are triggered:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2286    2434    Binder:2286_4   selinux_denied   
-
-        avc_audit_pre_callback+0xd8 [kernel]
-        avc_audit_pre_callback+0xd8 [kernel]
-        common_lsm_audit+0x64 [kernel]
-        slow_avc_audit+0x74 [kernel]
-        avc_has_perm+0xb8 [kernel]
-        selinux_binder_transfer_file+0x158 [kernel]
-        security_binder_transfer_file+0x50 [kernel]
-        binder_translate_fd+0xcc [kernel]
-        binder_transaction+0x1b64 [kernel]
-        binder_ioctl+0xadc [kernel]
-        do_vfs_ioctl+0x5c8 [kernel]
-        sys_ioctl+0x88 [kernel]
-        __sys_trace_return+0x0 [kernel]
-        __ioctl+0x8 [libc.so]
-        android::IPCThreadState::talkWithDriver(bool)+0x104 [libbinder.so]
-        android::IPCThreadState::waitForResponse(android::Parcel*, int*)+0x40
-                                                            [libbinder.so]
-        android::IPCThreadState::executeCommand(int)+0x460 [libbinder.so]
-        android::IPCThreadState::getAndExecuteCommand()+0xa0 [libbinder.so]
-        android::IPCThreadState::joinThreadPool(bool)+0x40 [libbinder.so]
-        [unknown] [libbinder.so]
-        android::Thread::_threadLoop(void*)+0x12c [libutils.so]
-        android::AndroidRuntime::javaThreadShell(void*)+0x90 [libandroid_runtime.so]
-        __pthread_start(void*)+0x28 [libc.so]
-        __start_thread+0x48 [libc.so]
-</code></pre></div></div>
-
-<p>The same trick can be used for dumping the stack on syscalls, random kernel
-functions using kprobes and more! Just change the arguments passed to the
-‘trace’ command.</p>
+<p>As you would notice, the 1k resistance dropped around 0.085v of voltage before getting to the 10k load.
+Thanks for reading. Please leave your comments or inputs below.</p>
 </div>
   
   
@@ -346,9 +246,11 @@ functions using kprobes and more! Just change the arguments passed to the
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
+      <a class="prev" href="11">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="9">Newer &rarr;</a>
     
   </div>
 </div>

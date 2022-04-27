@@ -21,7 +21,7 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page13/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -112,7 +112,7 @@ Hello! I’m Joel and I run this site! I work in the Android kernel team at Goog
 Full list of all posts on this site:
 
 <font face="monospace">
- <li><span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
+ <li><span>22 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/22/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
@@ -156,11 +156,11 @@ Full list of all posts on this site:
 </font>
 
 <font face="monospace">
- <li><span>08 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
+ <li><span>07 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
- <li><span>25 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
+ <li><span>24 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
 </font>
 
 <font face="monospace">
@@ -177,7 +177,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a></h1>
+      <h1 class="entry-title"><a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a></h1>
     
     
       <p class="meta">
@@ -191,152 +191,46 @@ Most Recept Post:
 
 
 
-<time datetime="2018-12-23T01:28:24+00:00" pubdate data-updated="true">Dec 23, 2018</time>
+<time datetime="2014-04-24T21:28:24-04:00" pubdate data-updated="true">Apr 24, 2014</time>
         
-           | <a href="/linuxinternals/2018/12/23/stack-dumps.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html">Comments</a>
+           | <a href="/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Dumping the native kernel and userspace stack when a certain path in the kernel
-or userspace occurs, can be useful to understand which code paths triggered a
-certain behavior that you’re trying to debug, such as an error you found in the
-log. One such case is when you notice Selinux denial messages in logs but want
-to know which path triggered it.</p>
+  <div class="entry-content"><p>Having read the chapter on counting and per-CPU counters in <a href="http://www.lulu.com/shop/paul-e-mckenney/is-parallel-programming-hard-and-if-so-what-can-you-do-about-it-first-bw-print-edition/paperback/product-21562459.html">Paul Mckenney’s recent book</a>, I thought I would do a small experiment to check how good or bad it would be if those per-CPU counters were close to each other in memory.</p>
 
-<p>In this article we will show you how to use kernel instrumentation and BCC to
-dump the both the user and kernel stack. The article applies both to Android
-and regular Linux kernels.</p>
+<p>Paul talks about using one global shared counter for N threads on N CPUs, and the effects it can have on the cache. Each CPU core’s cache in an SMP system will need exclusive rights on a specific cache line of memory, before it can do the write. This means that, at any given time <em>only one</em> CPU can and should do a write to that part of memory.</p>
 
-<h2 id="example-understanding-which-path-triggered-an-selinux-denial">Example: Understanding which path triggered an SELinux denial</h2>
+<p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core’s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
 
-<h3 id="step-1-add-a-tracepoint-to-the-kernel">Step 1: Add a tracepoint to the kernel</h3>
-<p>Apply the following diff to your kernel. It adds a tracepoint at precisely the
-point where an SELinux denial is logged. If not cleanly applying, patch it in
-manually.</p>
+<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Diff to add a tracepoint for selinux denials
+<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
 
-diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
-new file mode 100644
-index 000000000000..dac185062634
---- /dev/null
-+++ b/include/trace/events/selinux.h
-@@ -0,0 +1,34 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM selinux
-+
-+#if !defined(_TRACE_SELINUX_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_SELINUX_H
-+
-+#include &lt;linux/ktime.h&gt;
-+#include &lt;linux/tracepoint.h&gt;
-+
-+TRACE_EVENT(selinux_denied,
-+
-+	TP_PROTO(int cls, int av),
-+
-+	TP_ARGS(cls, av),
-+
-+	TP_STRUCT__entry(
-+		__field(	int,		cls	)
-+		__field(	int,		av	)
-+	),
-+
-+	TP_fast_assign(
-+		__entry-&gt;cls = cls;
-+		__entry-&gt;av = av;
-+	),
-+
-+	TP_printk("denied %d %d",
-+		__entry-&gt;cls,
-+		__entry-&gt;av)
-+);
-+
-+#endif /* _TRACE_SELINUX_H */
-+
-+/* This part ust be outside protection */
-+#include &lt;trace/define_trace.h&gt;
-diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index 84d9a2e2bbaf..ab04b7c2dd01 100644
---- a/security/selinux/avc.c
-+++ b/security/selinux/avc.c
-@@ -34,6 +34,9 @@
- #include "avc_ss.h"
- #include "classmap.h"
- 
-+#define CREATE_TRACE_POINTS
-+#include &lt;trace/events/selinux.h&gt;
-+
- #define AVC_CACHE_SLOTS			512
- #define AVC_DEF_CACHE_THRESHOLD		512
- #define AVC_CACHE_RECLAIM		16
-@@ -713,6 +716,12 @@ static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
- 	struct common_audit_data *ad = a;
- 	audit_log_format(ab, "avc:  %s ",
- 			 ad-&gt;selinux_audit_data-&gt;denied ? "denied" : "granted");
-+
-+	if (ad-&gt;selinux_audit_data-&gt;denied) {
-+		trace_selinux_denied(ad-&gt;selinux_audit_data-&gt;tclass,
-+				     ad-&gt;selinux_audit_data-&gt;audited);
-+	}
-+
- 	avc_dump_av(ab, ad-&gt;selinux_audit_data-&gt;tclass,
- 			ad-&gt;selinux_audit_data-&gt;audited);
- 	audit_log_format(ab, " for ");
-</code></pre></div></div>
+<p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
 
-<h3 id="step-2-install-adeb">Step 2: Install <a href="https://github.com/joelagnel/adeb">adeb</a></h3>
-<p>Run the command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb prepare --full
-</code></pre></div></div>
-<p>This also installs BCC on the Android device which contains the ‘trace’ utility
-we need for the next step. For regular Linux kernels, you may have to <a href="https://github.com/joelagnel/bcc/blob/master/README.md">manually
-install BCC</a> or find a
-package for it.</p>
+<p>Below are the results of running the program on 3 different SMP systems (2 threads on 2 CPUs, sorry I don’t have better multi-core hardware ATM):</p>
 
-<h3 id="step-3-start-tracing-the-user-and-kernel-stacks">Step 3: Start tracing the user and kernel stacks</h3>
-<p>Running the following command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb shell
-trace -K -U 't:selinux:selinux_denial'
-</code></pre></div></div>
+<p>Effect of running on a reference ARM dual-core Cortex-A9 system:
+<img src="/images/cache-sharing/a9-counts.jpeg" /></p>
 
-<p>You should see something like this when denials are triggered:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2286    2434    Binder:2286_4   selinux_denied   
+<p>Notice the jump in through-put once the separation changes from 16 to 32 bytes. That gives us a good idea that the L1 cache line size on Cortex-A9 systems is 32 bytes (8 words). Something the author didn’t know for sure in advance (I initially thought it was 64-bytes).</p>
 
-        avc_audit_pre_callback+0xd8 [kernel]
-        avc_audit_pre_callback+0xd8 [kernel]
-        common_lsm_audit+0x64 [kernel]
-        slow_avc_audit+0x74 [kernel]
-        avc_has_perm+0xb8 [kernel]
-        selinux_binder_transfer_file+0x158 [kernel]
-        security_binder_transfer_file+0x50 [kernel]
-        binder_translate_fd+0xcc [kernel]
-        binder_transaction+0x1b64 [kernel]
-        binder_ioctl+0xadc [kernel]
-        do_vfs_ioctl+0x5c8 [kernel]
-        sys_ioctl+0x88 [kernel]
-        __sys_trace_return+0x0 [kernel]
-        __ioctl+0x8 [libc.so]
-        android::IPCThreadState::talkWithDriver(bool)+0x104 [libbinder.so]
-        android::IPCThreadState::waitForResponse(android::Parcel*, int*)+0x40
-                                                            [libbinder.so]
-        android::IPCThreadState::executeCommand(int)+0x460 [libbinder.so]
-        android::IPCThreadState::getAndExecuteCommand()+0xa0 [libbinder.so]
-        android::IPCThreadState::joinThreadPool(bool)+0x40 [libbinder.so]
-        [unknown] [libbinder.so]
-        android::Thread::_threadLoop(void*)+0x12c [libutils.so]
-        android::AndroidRuntime::javaThreadShell(void*)+0x90 [libandroid_runtime.so]
-        __pthread_start(void*)+0x28 [libc.so]
-        __start_thread+0x48 [libc.so]
-</code></pre></div></div>
+<p>Effect of running on a reference ARM dual-core Cortex-A15 system:
+<img src="/images/cache-sharing/a15-counts.jpeg" /></p>
 
-<p>The same trick can be used for dumping the stack on syscalls, random kernel
-functions using kprobes and more! Just change the arguments passed to the
-‘trace’ command.</p>
+<p>L1 Cache-line size of Cortex A-15 is 64 bytes (8 words). Expected jump for a separation of 64 bytes.</p>
+
+<p>Effect of running on a x86-64 i7-3687U dual-core CPU:
+<img src="/images/cache-sharing/x86-counts.jpeg" />.</p>
+
+<p>L1 Cache-line size of this CPU is 64 bytes too (8 words). Expected jump for a separation of 64 bytes.</p>
+
+<p>This shows your parallel programs need to take care of cache-line alignment to avoid false-sharing effects. Also, doing something like this in your program is an indirect way to find out what the cache-line size is for your CPU, or a direct way to get fired, whichever way you want to look at it. ;)</p>
 </div>
   
   
@@ -346,9 +240,11 @@ functions using kprobes and more! Just change the arguments passed to the
   
   <div class="pagination">
     
-      <a class="prev" href="/blog/page/2/">&larr; Older</a>
+      <a class="prev" href="14">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="12">Newer &rarr;</a>
     
   </div>
 </div>
