@@ -11,25 +11,28 @@ public speaker. I have given numerous talks at conferences around the world. I
 am particularly excited about breaking down difficult topics into easy to
 understand sessions.
 
-I enjoy providing 1:1 sessions with graduate students who have reached out to
-me over the years. I strongly believe teaching is re-learning! My style is
-often practical as I have both industry and academic experiences.
+I enjoy providing weekly online one-to-one sessions with students who have
+reached out to me over the years. Each session is 1 to 1.5 hours and customize
+to the student's needs. I strongly believe teaching is re-learning! My style
+is often practical as I have both industry and academic experiences.
 
 The following are classes I teach:
 
-* Computer Architecture
+* Computer Architecture.
 
-* Operating Systems
+* Operating Systems.
 
-* C, C++, Assembler, Firmware, Python Programming
+* Advanced Algorithms.
 
-* Computer Networks
+* C, C++, Assembler, Firmware, Python Programming.
 
-* Digital design and Embedded Systems.
+* Computer Networks.
+
+* Digital design, Circuit Design and Embedded Systems.
 
 * Circuit Design, Verilog, VHDL programming.
 
-* Database Design
+* Database Design.
 
 If there is a Computer Engineering topic above that is not mentioned, or if
 there is a academic paper you are reading that you need help with, feel free to
