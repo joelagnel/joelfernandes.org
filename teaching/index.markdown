@@ -19,26 +19,21 @@ is often practical as I have both industry and academic experiences.
 The following include but are not limited to the classes I teach:
 
 * Computer Architecture.
-
 * Operating Systems.
-
+* Algorithms and Data Structures.
 * Advanced Algorithms.
-
+* Basics of Computer Programming.
 * C, C++, Assembler, Firmware, Python Programming.
-
 * Computer Networks.
-
 * Digital design, Circuit Design and Embedded Systems.
-
 * Circuit Design, Verilog, VHDL programming.
-
 * Database Design.
 
 If there is a Computer Engineering topic above that is not mentioned, or if
 there is a academic paper you are reading that you need help with, feel free to
 reach out to me to check if I can cover that.
 
-I charge $49/hour for my time, but I can charge a bit less if you would like to
+I charge $39/hour for my time, but I can charge a bit less if you would like to
 book a group of sessions. Reach out to me on joel @ joelfernandes.org if you
 are interested. My contact information is also in my <a href="/joel/joel-resume.pdf">resume</a>.
 
