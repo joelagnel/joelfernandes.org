@@ -3,6 +3,7 @@ layout: teach_page
 sharing: true
 published: true
 ---
+
 ## Teaching and Mentoring
 
 I have 15 years of experience in the computer science industry and am an avid
@@ -15,7 +16,7 @@ reached out to me over the years. Each session is 1 to 1.5 hours and customize
 to the student's needs. I strongly believe teaching is re-learning! My style
 is often practical as I have both industry and academic experiences.
 
-The following are classes I teach:
+The following include but are not limited to the classes I teach:
 
 * Computer Architecture.
 
