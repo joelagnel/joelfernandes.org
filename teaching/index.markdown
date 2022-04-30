@@ -2,6 +2,7 @@
 layout: teach_page
 sharing: true
 published: true
+footer: false
 ---
 
 ## Teaching and Mentoring
@@ -36,4 +37,3 @@ I charge $39/hour for my time, but I can charge a bit less if you would like to
 book a group of sessions. I am also open to group classes. Reach out to me on
 joel @ joelfernandes.org if you are interested. My contact information is also
 in my <a href="/joel/joel-resume.pdf">resume</a>.
-
