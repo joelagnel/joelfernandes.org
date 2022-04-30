@@ -68,7 +68,7 @@ Apr 24, 2014
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>When in doubt, turn it inside out.</h2>
+    <h2>My dumping ground for what I've been upto</h2>
   
 </div>
 <div style="float:left;" class="hnav">
@@ -151,9 +151,9 @@ Apr 24, 2014
 
 <p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core’s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
 
-<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
+<p>Then Paul goes about saying, OK- let’s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That’s guaranteed, when one uses the <code class="language-plaintext highlighter-rouge">__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
 
-<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
+<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code class="language-plaintext highlighter-rouge">__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
 
 <p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
 

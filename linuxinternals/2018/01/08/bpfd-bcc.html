@@ -69,7 +69,7 @@ Jan 08, 2018
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>When in doubt, turn it inside out.</h2>
+    <h2>My dumping ground for what I've been upto</h2>
   
 </div>
 <div style="float:left;" class="hnav">
@@ -174,11 +174,11 @@ tools on arm64</a>, but..</p>
 on the ever-changing kernel API in order to get their data. Such callbacks are registered using the
 <a href="https://lwn.net/Articles/132196/">kprobe</a> infrastructure. When a BCC tool is run, BCC switches its current directory
 into the kernel source directory before compilation starts, and compiles the C program that embodies the BCC tool’s
-logic. The C program is free to include kernel headers for <code class="highlighter-rouge">kprobes</code> to work and to use kernel data structures.</p>
+logic. The C program is free to include kernel headers for <code class="language-plaintext highlighter-rouge">kprobes</code> to work and to use kernel data structures.</p>
 
-<p>Even if one were not to use <code class="highlighter-rouge">kprobes</code>, BCC also implicity adds a common <code class="highlighter-rouge">helpers.h</code> include directive  whenever an eBPF
-C program is being compiled, found in <code class="highlighter-rouge">src/cc/export/helpers.h</code> in the BCC sources. This <code class="highlighter-rouge">helpers.h</code> header uses the
-<code class="highlighter-rouge">LINUX_VERSION_CODE</code> macro to create a “version” section in the compiled output. <code class="highlighter-rouge">LINUX_VERSION_CODE</code> is available only
+<p>Even if one were not to use <code class="language-plaintext highlighter-rouge">kprobes</code>, BCC also implicity adds a common <code class="language-plaintext highlighter-rouge">helpers.h</code> include directive  whenever an eBPF
+C program is being compiled, found in <code class="language-plaintext highlighter-rouge">src/cc/export/helpers.h</code> in the BCC sources. This <code class="language-plaintext highlighter-rouge">helpers.h</code> header uses the
+<code class="language-plaintext highlighter-rouge">LINUX_VERSION_CODE</code> macro to create a “version” section in the compiled output. <code class="language-plaintext highlighter-rouge">LINUX_VERSION_CODE</code> is available only
 in the specific kernel’s sources being targeted and is used during eBPF program loading to make sure the BPF program is
 being loaded into a kernel with the right version. As you can see, kernel sources quickly become mandatory for compiling
 eBPF programs.</p>
@@ -216,28 +216,28 @@ machine and architecture boundaries. For instance, kernel sources that the BCC t
 machine, with eBPF code being loaded onto a remote machine. This partioning is illustrated in the following diagram:
 <img src="images/bcc-with-bpfd-arch.png" alt="BCC architecture with BPFd" /></p>
 
-<p>The design of BPFd is quite simple, it expects commands on <code class="highlighter-rouge">stdin</code> (standard input) and provides the results over
-<code class="highlighter-rouge">stdout</code> (standard output). Every command a single line always, no matter how big the command is. This allows easy
-testing using <code class="highlighter-rouge">cat</code>, since one could simply <code class="highlighter-rouge">cat</code> a file with commands, and check if BPFd’s <code class="highlighter-rouge">stdout</code> contain the
+<p>The design of BPFd is quite simple, it expects commands on <code class="language-plaintext highlighter-rouge">stdin</code> (standard input) and provides the results over
+<code class="language-plaintext highlighter-rouge">stdout</code> (standard output). Every command a single line always, no matter how big the command is. This allows easy
+testing using <code class="language-plaintext highlighter-rouge">cat</code>, since one could simply <code class="language-plaintext highlighter-rouge">cat</code> a file with commands, and check if BPFd’s <code class="language-plaintext highlighter-rouge">stdout</code> contain the
 expected results. Results from a command, however can be multiple lines.</p>
 
 <p>BPF maps are data structures that a BPF program uses to store data which can be
 retrieved at a later time. Maps are represented by file descriptor returned by
-the <code class="highlighter-rouge">bpf</code> system call once the map has been successfully created.
+the <code class="language-plaintext highlighter-rouge">bpf</code> system call once the map has been successfully created.
 For example, following is a command to BPFd for creating a BPF hashtable map.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>BPF_CREATE_MAP 1 count 8 40 10240 0
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>BPF_CREATE_MAP 1 count 8 40 10240 0
 </code></pre></div></div>
 <p>And the result from BPFd is:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bpf_create_map: ret=3
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bpf_create_map: ret=3
 </code></pre></div></div>
 <p>Since BPFd is proxying the map creation, the file descriptor (3 in this example) is
- mapped into <code class="highlighter-rouge">BPFd's</code> file descriptor table. The file descriptor can be used later to
+ mapped into <code class="language-plaintext highlighter-rouge">BPFd's</code> file descriptor table. The file descriptor can be used later to
 look up entries that the BPF program in the kernel may have created, or to clear all
 entries in the map, as is done by tools that periodically clear the accounting done
 by a BPF program.</p>
 
-<p>The <code class="highlighter-rouge">BPF_CREATE_MAP</code> command in this example tells BPFd to create a map named
-<code class="highlighter-rouge">count</code> with map type 1 (<a href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h#L101">type 1 is a hashtable
+<p>The <code class="language-plaintext highlighter-rouge">BPF_CREATE_MAP</code> command in this example tells BPFd to create a map named
+<code class="language-plaintext highlighter-rouge">count</code> with map type 1 (<a href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h#L101">type 1 is a hashtable
 map</a>),
 with a key size of 8 bytes and a value size of 40, maximum of 10240 entries and
 no special flags. BPFd created a map and identified by file descriptor 3.</p>
@@ -256,28 +256,28 @@ upstream soon.</p>
 <p>Following are all the BCC modifications that have been made:</p>
 
 <h4 id="support-for-remote-communication-with-bpfd-such-as-over-the-network">Support for remote communication with BPFd such as over the network</h4>
-<p>A new <code class="highlighter-rouge">remotes</code> module has been added to BCC tools with an abstraction that
+<p>A new <code class="language-plaintext highlighter-rouge">remotes</code> module has been added to BCC tools with an abstraction that
 different remote types, such as networking or USB must implement. This keeps
 code duplication to a minimum. By implementing <a href="https://github.com/joelagnel/bcc/blob/bcc-bpfd/src/python/bcc/remote/base.py">the functions
 needed</a>
 for a remote, a new communication method can be easily added. Currently an
-<code class="highlighter-rouge">adb</code> remote and a <code class="highlighter-rouge">process</code> remote are provided. The <code class="highlighter-rouge">adb</code> remote is for
+<code class="language-plaintext highlighter-rouge">adb</code> remote and a <code class="language-plaintext highlighter-rouge">process</code> remote are provided. The <code class="language-plaintext highlighter-rouge">adb</code> remote is for
 communication with the target device over USB or TCP/IP using the <a href="https://developer.android.com/studio/command-line/adb.html">Android
 Debug Bridge</a>. The
-<code class="highlighter-rouge">process</code> remote is probably useful just for local testing. With the <code class="highlighter-rouge">process</code> remote,
+<code class="language-plaintext highlighter-rouge">process</code> remote is probably useful just for local testing. With the <code class="language-plaintext highlighter-rouge">process</code> remote,
 BPFd is forked on the same machine running BCC and communicates with it over
-<code class="highlighter-rouge">stdin</code> and <code class="highlighter-rouge">stdout</code>.</p>
+<code class="language-plaintext highlighter-rouge">stdin</code> and <code class="language-plaintext highlighter-rouge">stdout</code>.</p>
 
 <h4 id="changes-to-bcc-to-send-commands-to-the-remote-bpfd">Changes to BCC to send commands to the remote BPFd</h4>
 <p><a href="https://github.com/iovisor/bcc/blob/master/src/cc/libbpf.c">libbpf.c</a> is the
 main C file in the BCC project that talks to the kernel for all things BPF.
 This is illustrated in the diagram above. Inorder to make BCC perform BPF
 operations on the remote machine instead of the local machine, parts of BCC
-that make calls to the local <code class="highlighter-rouge">libbpf.c</code> are now instead channeled to the remote
+that make calls to the local <code class="language-plaintext highlighter-rouge">libbpf.c</code> are now instead channeled to the remote
 BPFd on the target. BPFd on the target then perform the commands on behalf of
-BCC running locally, by calling into its copy of <code class="highlighter-rouge">libbpf.c</code>.</p>
+BCC running locally, by calling into its copy of <code class="language-plaintext highlighter-rouge">libbpf.c</code>.</p>
 
-<p>One of the tricky parts to making this work is, not only calls to <code class="highlighter-rouge">libbpf.c</code>
+<p>One of the tricky parts to making this work is, not only calls to <code class="language-plaintext highlighter-rouge">libbpf.c</code>
 but certain other paths need to be channeled to the remote machine. For example, to
 attach to a tracepoint, BCC needs a list of all available tracepoints on the
 system. This list has to be obtained on the remote system, not the local one and is
@@ -305,26 +305,26 @@ to make it faster to run tools like offcputime. I am submitting this patch to LK
 <h3 id="bpf-demos-examples-of-bcc-tools-running-on-android">BPF Demos: examples of BCC tools running on Android</h3>
 
 <h4 id="running-filetop">Running filetop</h4>
-<p><code class="highlighter-rouge">filetop</code> is a BCC tool which shows you all read/write I/O operations with a similar experience to the <code class="highlighter-rouge">top</code> tool.
+<p><code class="language-plaintext highlighter-rouge">filetop</code> is a BCC tool which shows you all read/write I/O operations with a similar experience to the <code class="language-plaintext highlighter-rouge">top</code> tool.
 It refreshes every few seconds, giving you a live view of these operations.
 Goto your bcc directory and set the environment variables needed. For Android running on Hikey960, I run:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# source arm64-adb.rc
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# source arm64-adb.rc
 </code></pre></div></div>
 <p>which basically sets the following environment variables:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  export ARCH=arm64
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  export ARCH=arm64
   export BCC_KERNEL_SOURCE=/home/joel/sdb/hikey-kernel/
   export BCC_REMOTE=adb
 </code></pre></div></div>
 <p>You could also use the convenient bcc-set script provided in BPFd sources to set these environment variables for you.
 Check <a href="https://github.com/joelagnel/bpfd/blob/master/INSTALL.md">INSTALL.md</a> file in BPFd sources for more information.</p>
 
-<p>Next I start <code class="highlighter-rouge">filetop</code>:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/filetop.py 5
+<p>Next I start <code class="language-plaintext highlighter-rouge">filetop</code>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/filetop.py 5
 </code></pre></div></div>
 <p>This tells the tool to monitor file I/O every 5 seconds.</p>
 
-<p>While <code class="highlighter-rouge">filetop</code> is running, I start the stock email app in Android and the output looks like:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  Tracing... Output every 5 secs. Hit Ctrl-C to end
+<p>While <code class="language-plaintext highlighter-rouge">filetop</code> is running, I start the stock email app in Android and the output looks like:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  Tracing... Output every 5 secs. Hit Ctrl-C to end
   13:29:25 loadavg: 0.33 0.23 0.15 2/446 2931
  
   TID    COMM             READS  WRITES R_Kb    W_Kb    T FILE
@@ -344,9 +344,9 @@ accounting.</p>
 
 <h4 id="running-biosnoop">Running biosnoop</h4>
 <p>Biosnoop is another great tool shows you block level I/O operations (bio) happening on the system along with the latency
-and size of the operation. Following is a sample output of running <code class="highlighter-rouge">tools/biosnoop.py</code> while doing random things in the
+and size of the operation. Following is a sample output of running <code class="language-plaintext highlighter-rouge">tools/biosnoop.py</code> while doing random things in the
 Android system.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  TIME(s)        COMM           PID    DISK    T  SECTOR    BYTES   LAT(ms)
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  TIME(s)        COMM           PID    DISK    T  SECTOR    BYTES   LAT(ms)
   0.000000000    jbd2/sdd13-8   2135   sdd     W  37414248  28672      1.90
   0.001563000    jbd2/sdd13-8   2135   sdd     W  37414304  4096       0.43
   0.003715000    jbd2/sdd13-8   2135   sdd     R  20648736  4096       1.94
@@ -358,11 +358,11 @@ Android system.</p>
 <p>This tool measures the total time taken by different hardirqs in the systems. Excessive time spent in hardirq can result
 in poor real-time performance of the system.</p>
 
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/hardirqs.py
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/hardirqs.py
 </code></pre></div></div>
 
 <p>Output:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  Tracing hard irq event time... Hit Ctrl-C to end.
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  Tracing hard irq event time... Hit Ctrl-C to end.
   HARDIRQ                    TOTAL_usecs
   wl18xx                             232
   dw-mci                            1066
@@ -373,10 +373,10 @@ in poor real-time performance of the system.</p>
 
 <h4 id="running-biotop">Running biotop</h4>
 <p>Run biotop while launching the android Gallery app and doing random stuff:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/biotop.py
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bcc# ./tools/biotop.py
 </code></pre></div></div>
 <p>Output:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PID    COMM             D MAJ MIN DISK       I/O  Kbytes  AVGms
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PID    COMM             D MAJ MIN DISK       I/O  Kbytes  AVGms
 4524   droid.gallery3d  R 8   48  ?           33    1744   0.51
 2135   jbd2/sdd13-8     W 8   48  ?           15     356   0.32
 4313   kworker/u16:4    W 8   48  ?           26     232   1.61
@@ -393,7 +393,7 @@ tracker</a> and contribute patches or help by testing.</p>
 <p>While the main usecase at the moment is easier use of BCC tools on cross-development models, another potential usecase
 that’s gaining interest is easy loading of a BPF program. The BPFd code can be stored on disk in base64 format and sent
 to bpfd using something as simple as:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bpfprogs# cat my_bpf_prog.base64 | bpfd
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>joel@ubuntu:~/bpfprogs# cat my_bpf_prog.base64 | bpfd
 </code></pre></div></div>
 <p>In the Android kernel team, we are also expermenting for certain usecases that need eBPF, with loading a program with a
 forked BPFd instance, creating maps, and then pinning them for use at a later time once BPFd exits and then kill the

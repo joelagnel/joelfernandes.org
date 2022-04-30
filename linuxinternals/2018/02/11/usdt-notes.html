@@ -69,7 +69,7 @@ Feb 11, 2018
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>When in doubt, turn it inside out.</h2>
+    <h2>My dumping ground for what I've been upto</h2>
   
 </div>
 <div style="float:left;" class="hnav">
@@ -146,19 +146,19 @@ Feb 11, 2018
   </header>
 
 
-<div class="entry-content"><p>Userspace program when compiled to native can place tracepoints in them using a USDT (User Statically Defined Tracing), the details of the tracepoints (such as address and arguments) are placed as a note in the ELF binary for other tools to interpret. This at first seems much better than using Uprobes directly on userspace functions, since the latter not only needs symbol information from the binary but is also at the mercy of compiler optimizations and function inlining. In Android we directly write into <code class="highlighter-rouge">tracing_mark_write</code> for userspace tracepoints. While this has its advantages (simplicity), it also means that the only way to “process” the trace information for ALL tracing usecases is by reading back the trace buffer to userspace and processing them offline, thus needing a full user-kernel-user round trip. Further its not possible to easily create triggers on these events (dump the stack or stop tracing when an event fires, for example). Uprobes event tracing on the other hands gets the full benefit that ftrace events do. Also all userspace emitted trace data is a string which has to be parsed and post-processed. USDT seems a nice way to solve some of these problems, since we can then use the user-provided data and create Uprobes at the correct locations, and process these on the fly using BCC without things ever hitting the trace buffer or returning to userspace.</p>
+<div class="entry-content"><p>Userspace program when compiled to native can place tracepoints in them using a USDT (User Statically Defined Tracing), the details of the tracepoints (such as address and arguments) are placed as a note in the ELF binary for other tools to interpret. This at first seems much better than using Uprobes directly on userspace functions, since the latter not only needs symbol information from the binary but is also at the mercy of compiler optimizations and function inlining. In Android we directly write into <code class="language-plaintext highlighter-rouge">tracing_mark_write</code> for userspace tracepoints. While this has its advantages (simplicity), it also means that the only way to “process” the trace information for ALL tracing usecases is by reading back the trace buffer to userspace and processing them offline, thus needing a full user-kernel-user round trip. Further its not possible to easily create triggers on these events (dump the stack or stop tracing when an event fires, for example). Uprobes event tracing on the other hands gets the full benefit that ftrace events do. Also all userspace emitted trace data is a string which has to be parsed and post-processed. USDT seems a nice way to solve some of these problems, since we can then use the user-provided data and create Uprobes at the correct locations, and process these on the fly using BCC without things ever hitting the trace buffer or returning to userspace.</p>
 
-<p>This simple article is based on some notes I made while playing with USDT probes. To build a C program with an SDT probe, you can just include <code class="highlighter-rouge">sdt.h</code> and <code class="highlighter-rouge">sdt-config.h</code> from the Ubuntu systemtap-sdt-devel package, which works for both arm64 and x86.</p>
+<p>This simple article is based on some notes I made while playing with USDT probes. To build a C program with an SDT probe, you can just include <code class="language-plaintext highlighter-rouge">sdt.h</code> and <code class="language-plaintext highlighter-rouge">sdt-config.h</code> from the Ubuntu systemtap-sdt-devel package, which works for both arm64 and x86.</p>
 
 <p>C program can be as simple as:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include "sdt.h"
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include "sdt.h"
 int main() {
 	DTRACE_PROBE("test", "probe1");
 }
 </code></pre></div></div>
-<p>One compiling this, a new <code class="highlighter-rouge">.note.stapsdt</code> ELF section is created, which can be read by:
-<code class="highlighter-rouge">readelf -n &lt;bin-path&gt;</code></p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
+<p>One compiling this, a new <code class="language-plaintext highlighter-rouge">.note.stapsdt</code> ELF section is created, which can be read by:
+<code class="language-plaintext highlighter-rouge">readelf -n &lt;bin-path&gt;</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
   Owner                 Data size	Description
   stapsdt              0x00000029	NT_STAPSDT (SystemTap probe descriptors)
     Provider: "test"
@@ -166,16 +166,16 @@ int main() {
     Location: 0x0000000000000664, Base: 0x00000000000006f4, Semaphore: 0x0000000000000000
     Arguments: 
 </code></pre></div></div>
-<p>Here there are no arguments, however we can use <code class="highlighter-rouge">DTRACE_PROBE2</code> to pass more, for example for 2 of them:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int main() {
+<p>Here there are no arguments, however we can use <code class="language-plaintext highlighter-rouge">DTRACE_PROBE2</code> to pass more, for example for 2 of them:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int main() {
 	int a = 1;
 	int b = 2;
 
 	DTRACE_PROBE2("test", "probe1", a, b);
 }
 </code></pre></div></div>
-<p>The <code class="highlighter-rouge">readelf</code> tool now reads:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
+<p>The <code class="language-plaintext highlighter-rouge">readelf</code> tool now reads:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
   Owner                 Data size	Description
   stapsdt              0x00000040	NT_STAPSDT (SystemTap probe descriptors)
     Provider: "test"
@@ -186,8 +186,8 @@ int main() {
 
 <p>Notice how the arguments show exactly how to access the parameters at the location. In this case, we know the arguments are on the stack and at momention offsets from the base pointer.</p>
 
-<p>Compiling with <code class="highlighter-rouge">-f-omit-frame-pointer</code> shows the following in <code class="highlighter-rouge">readelf</code>:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
+<p>Compiling with <code class="language-plaintext highlighter-rouge">-f-omit-frame-pointer</code> shows the following in <code class="language-plaintext highlighter-rouge">readelf</code>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
   Owner                 Data size	Description
   stapsdt              0x00000040	NT_STAPSDT (SystemTap probe descriptors)
     Provider: "test"
@@ -196,10 +196,10 @@ int main() {
     Arguments: -4@-4(%rsp) -4@-8(%rsp)
 </code></pre></div></div>
 
-<p>Without the base pointer, the compiler relies on the stack pointer for the arguments. However notice that even though the C program is identical to the previous example, the “arguments” in the note section of the ELF has changed. This dynamic nature is one of the key reasons why SDT probes are so much better than say using <code class="highlighter-rouge">perf probe</code> directly to install Uprobes in the wild. With some help userspace and the compiler, we have more reliable information to access arguments without needing any DWARF debug info.</p>
+<p>Without the base pointer, the compiler relies on the stack pointer for the arguments. However notice that even though the C program is identical to the previous example, the “arguments” in the note section of the ELF has changed. This dynamic nature is one of the key reasons why SDT probes are so much better than say using <code class="language-plaintext highlighter-rouge">perf probe</code> directly to install Uprobes in the wild. With some help userspace and the compiler, we have more reliable information to access arguments without needing any DWARF debug info.</p>
 
 <p>Compiling with ARM64 gcc shows a slightly different output for the Arguments. Note that that Arguments is just a string which can be post processed by tools to fetch the probe data.</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Displaying notes found in: .note.stapsdt
   Owner                 Data size	Description
   stapsdt              0x0000003f	NT_STAPSDT (SystemTap probe descriptors)
     Provider: "test"
@@ -222,7 +222,7 @@ int main() {
 <p>It seems with a little bit of work, both these things can be added. Does that warrant a new section or can the stapsdt section be augment without causing breakage of existing tools? I don’t know yet.</p>
 
 <h2 id="sdt-parsing-logic">SDT parsing logic</h2>
-<p>BCC has a USDT parser written to extract probes from the ELF. Read <code class="highlighter-rouge">parse_stapsdt_note</code> in <code class="highlighter-rouge">src/cc/bcc_elf.c</code> in the BCC tree for details.</p>
+<p>BCC has a USDT parser written to extract probes from the ELF. Read <code class="language-plaintext highlighter-rouge">parse_stapsdt_note</code> in <code class="language-plaintext highlighter-rouge">src/cc/bcc_elf.c</code> in the BCC tree for details.</p>
 
 <h2 id="dynamic-programming-languages">Dynamic programming languages</h2>
 <p>Programs that are interpretted can’t provide this information ahead of time. The <a href="https://github.com/sthima/libstapsdt#how-it-works">libstapsdt</a> tries to solve this by <a href="https://github.com/sthima/libstapsdt/blob/6045277309ff0425322bed5e71393ce5c8fa1344/src/libstapsdt.c#L89">creating a shared library on the fly</a> and linking to it from the dynamic program. This seems a bit fragile but appears to have users. There are wrappers in Python and Nodejs. <a href="https://medium.com/sthima-insights/we-just-got-a-new-super-power-runtime-usdt-comes-to-linux-814dc47e909f">Check this article</a> for more details.</p>
@@ -238,7 +238,7 @@ int main() {
     <p>Creating Uprobes on the fly when a process is loaded: Ideally speaking, if the ELF note section had all the information that the kernel needed, then we could create the Uprobe events for the uprobe trace events at load time and keep them disabled without needing userspace to do anything else. This seems crude at first, but in the “default” case, it would still have almost no-overhead. This does mean that all the information Uprobe tracing needs will have to be stored in the note section. The other nice thing about this is, you no longer need to know the PID of all processes with USDTs in them. EDIT: This idea is flawed. Uprobes are created before a process is loaded AFAIU now, using the binary path of the executable and libraries. What’s more useful is to maintain a cache of all executables in the file system, and their respective instrumentation points. Then on boot up, perhaps we can create all necessary uprobes from early userspace.</p>
   </li>
   <li>
-    <p>For dynamic languages, <code class="highlighter-rouge">libstapsdt</code> seems great, but it feels a bit hackish since it creates a temporary file for the stub. Perhaps uprobes can be created after the temporary file is dlopen’ed and then the file can be unlinked if it hasn’t been already, so that there aren’t any more references to the temporary file in the file system. Such a temporary file could also probably be in a RAM based file system perhaps.</p>
+    <p>For dynamic languages, <code class="language-plaintext highlighter-rouge">libstapsdt</code> seems great, but it feels a bit hackish since it creates a temporary file for the stub. Perhaps uprobes can be created after the temporary file is dlopen’ed and then the file can be unlinked if it hasn’t been already, so that there aren’t any more references to the temporary file in the file system. Such a temporary file could also probably be in a RAM based file system perhaps.</p>
   </li>
 </ul>
 

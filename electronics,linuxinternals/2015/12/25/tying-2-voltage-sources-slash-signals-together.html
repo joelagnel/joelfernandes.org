@@ -69,7 +69,7 @@ Dec 25, 2015
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>When in doubt, turn it inside out.</h2>
+    <h2>My dumping ground for what I've been upto</h2>
   
 </div>
 <div style="float:left;" class="hnav">
@@ -159,7 +159,7 @@ Now the circuit looks something like this: <img src="/images/voltage-conflict/vo
 <p>One can simply apply <a href="https://en.wikipedia.org/wiki/Kirchhoff%27s_circuit_laws#Kirchhoff.27s_current_law_.28KCL.29">Kirchoff’s current law</a> to the above circuit, the direction of currents would be as in the circuit. I1 and I2 are the currents flowing through R2 and R1 respectively.</p>
 
 <p>By Kirchoff’s law, All the current entering the node labeled V will be equal to the current exiting it even if the currents are not in the actual direction shown above. From this we see:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1 = (1.8 - V) / 1k
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>I1 = (1.8 - V) / 1k
 I2 = (5 - V)   / 1k
 I3 = (V - 0)   / 10k
 
@@ -176,7 +176,7 @@ V = 3.2381v
 <img src="/images/voltage-conflict/voltage-conflict-4.png" /></p>
 
 <p>Now you can use the <a href="https://en.wikipedia.org/wiki/Voltage_divider">Voltage divider</a> concept and easily solve this:</p>
-<div class="highlighter-rouge"><div class="highlight"><pre class="highlight"><code>V = V2 * (R2 / (R1 + R2) )
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>V = V2 * (R2 / (R1 + R2) )
   = 1.8v * ( 10k / (10k + 0.5k) )
   = 1.7142v
 </code></pre></div></div>
