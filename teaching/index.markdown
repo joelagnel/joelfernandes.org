@@ -1,7 +1,6 @@
 ---
-layout: page
+layout: teach_page
 sharing: true
-layout: page
 published: true
 ---
 ## Teaching and Mentoring
