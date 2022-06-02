@@ -28,12 +28,14 @@ The following include but are not limited to the classes I teach:
 * Digital design, Circuit Design and Embedded Systems.
 * Circuit Design, Verilog, VHDL programming.
 * Database Design.
+* Interview preparation and mock interviews.
+* Paper writing.
 
 If there is a Computer Engineering topic above that is not mentioned, or if
 there is a academic paper you are reading that you need help with, feel free to
 reach out to me to check if I can cover that.
 
-I charge $39/hour for my time, but I can charge a bit less if you would like to
+I charge $70/hour for my time, but I can charge a lower fee if you would like to
 book a group of sessions. I am also open to group classes. Reach out to me on
 joel @ joelfernandes.org if you are interested. My contact information is also
 in my <a href="/joel/joel-resume.pdf">resume</a>.
