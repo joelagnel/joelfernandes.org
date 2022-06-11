@@ -19,14 +19,13 @@ is often practical as I have both industry and academic experiences.
 
 The following include but are not limited to the classes I teach:
 * Computer Architecture.
-* Operating Systems.
+* Operating Systems and Concurrency.
 * Algorithms and Data Structures.
 * Advanced Algorithms.
-* Basics of Computer Programming.
 * C, C++, Assembler, Firmware, Python Programming.
+* Basics of Computer Programming.
 * Computer Networks.
 * Digital design, Circuit Design and Embedded Systems.
-* Circuit Design, Verilog, VHDL programming.
 * Database Design.
 * Interview preparation and mock interviews.
 * Paper writing.
@@ -36,6 +35,8 @@ there is a academic paper you are reading that you need help with, feel free to
 reach out to me to check if I can cover that.
 
 I charge $70/hour for my time, but I can charge a lower fee if you would like to
-book a group of sessions. I am also open to group classes. Reach out to me on
-joel @ joelfernandes.org if you are interested. My contact information is also
-in my <a href="/joel/joel-resume.pdf">resume</a>.
+book a group of sessions. I am also open to group classes with more than 1 student.
+
+Email: [tutoring@joelfernandes.org](mailto:tutoring@joelfernandes.org)
+
+Call: 434-771-6187
