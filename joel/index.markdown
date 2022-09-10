@@ -6,7 +6,7 @@ sharing: false
 sidebar: false
 footer: true
 ---
-Hi! I'm Joel and I run this site! I'm a Linux kernel developer and work in the Android kernel team at Google. My interests are scheduler, tracing, synchronization and kernel internals. I am a permanent Linux kernel contributor.
+Hi! I'm Joel and I run this site! I'm a Linux kernel developer and work at Google. My interests are scheduler, tracing, synchronization and kernel internals.
 
 Follow me on [Twitter](https://twitter.com/joel_linux), [Google+](https://plus.google.com/102415785508850230338) and [LinkedIn](https://www.linkedin.com/in/joelagnel). Email me at: [joel@linuxinternals.org](mailto:joel@linuxinternals.org)
 

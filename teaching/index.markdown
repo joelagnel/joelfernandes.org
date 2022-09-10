@@ -1,7 +1,7 @@
 ---
 layout: teach_page
-sharing: true
-published: true
+sharing: false
+published: false
 footer: false
 ---
 

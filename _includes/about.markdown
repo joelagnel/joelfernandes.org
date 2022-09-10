@@ -1,4 +1,4 @@
-Hello! I'm Joel and I run this site! I work in the Android kernel team at Google. My interests are scheduler, tracing, synchronization and kernel internals. I also love contributing to the upstream Linux kernel and other open source projects.
+Hello! I'm Joel and I run this site! I work at Google. My interests are scheduler, tracing, synchronization and kernel internals. I also love contributing to the upstream Linux kernel and other open source projects.
 
 Connect with me on [Twitter](https://twitter.com/joel_linux), and [LinkedIn](https://www.linkedin.com/in/joelagnel). Or, drop me an email at: joel _at_ joelfernandes _dot_ org
 
