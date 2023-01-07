@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# For background and instructions, see /j/rcfiles/ssh-files/README
+
 spath="$(dirname "$(readlink -f "$0")")"
 
 echo "Setting up machine"
