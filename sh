@@ -1,5 +1,10 @@
 #!/bin/bash
-set -x
+# This script should be copied from my snips/rcfiles/sh
+# Do not modify
+
+if [ ! -z $1 ] && [ $1 == "--debug" ]; then
+	set -x
+fi
 set -e
 
 # For background and instructions, see /j/rcfiles/ssh-files/README
@@ -19,13 +24,14 @@ rm -rf $spath/tmp-ssh-files/
 
 mkdir -p $HOME/repo/
 if [ -d $HOME/repo/joel-snips ]; then
+	rm -rf $HOME/repo/joel-snips.bak
 	mv $HOME/repo/joel-snips $HOME/repo/joel-snips.bak
 fi
 
 pushd $HOME/repo/
 git clone git@github.com:joelagnel/joel-snips.git
 pushd joel-snips
-sudo ./rcfiles/setuprc
+sudo ./rcfiles/setuprc $*
 
 popd
 popd
