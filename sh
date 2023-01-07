@@ -23,7 +23,7 @@ fi
 pushd $HOME/repo/
 git clone git@github.com:joelagnel/joel-snips.git
 pushd joel-snips
-sudo ./setuprc
+sudo ./rcfiles/setuprc
 
 popd
 popd
