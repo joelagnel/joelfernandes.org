@@ -239,46 +239,31 @@ P1(int *x) {
 <p>Here there are 6 possible candidate executions:</p>
 
 <ol>
-  <li>Final value is 4.</li>
+  <li>Final value is 4.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
+</code></pre></div>    </div>
+  </li>
+  <li>Final value is 4.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
+</code></pre></div>    </div>
+  </li>
+  <li>Final value is 2.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
+</code></pre></div>    </div>
+  </li>
+  <li>Final value is 3.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
+</code></pre></div>    </div>
+  </li>
+  <li>Final value is 3.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
+</code></pre></div>    </div>
+  </li>
+  <li>Final value is 2.
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
+</code></pre></div>    </div>
+  </li>
 </ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div></div>
-
-<ol>
-  <li>Final value is 4.</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div></div>
-
-<ol>
-  <li>Final value is 2.</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
-</code></pre></div></div>
-
-<ol>
-  <li>Final value is 3.</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div></div>
-
-<ol>
-  <li>Final value is 3.</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div></div>
-
-<ol>
-  <li>Final value is 2.</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div></div>
 
 <p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
 
@@ -359,12 +344,12 @@ Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
 <p>And the graph for the forbidden case is as follows:
 <img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
 
-<p>It is easy to see here that a cycle exists between either <code class="language-plaintext highlighter-rouge">co, rf and fr</code>, or
-<code class="language-plaintext highlighter-rouge">po-loc, rf and fr</code>.</p>
+<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
 
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should be included in the acyclic
-relation as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case.</p>
+<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
+property as well. Hence to avoid the problematic candidate execution, the SCPV
+property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
+the Linux kernel’s memory model.</p>
 </div>
 
 
