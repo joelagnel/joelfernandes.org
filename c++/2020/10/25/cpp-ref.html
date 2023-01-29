@@ -1,0 +1,391 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>C++ rvalue references - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      C++ rvalue references
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+Oct 25, 2020
+        
+           | Comments
+        
+      
+    
+  
+
+
+T...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/c++/2020/10/25/cpp-ref.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+    <h2>My dumping ground for what I've been upto</h2>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <a href="/linuxinternals/">Linux Internals Articles</a><br>
+ <a href="/blog/archives/">All blog posts</a><br>
+ <a href="/resources">Talks and resources</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">C++ rvalue references</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2020-10-25T00:00:00+00:00" pubdate data-updated="true">Oct 25, 2020</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The author works in the ChromeOS kernel team, where most of the system
+libraries, low-level components and user space is written in C++. Thus the
+writer has no choice but to be familiar with C++. It is not that hard, but some
+things are confusing. rvalue references are definitely confusing.</p>
+
+<p>In this post, I wish to document rvalue references by simple examples, before I forget it.</p>
+
+<p>Refer to <a href="https://www.chromium.org/rvalue-references">this article</a> for in-depth coverage on rvalue references.</p>
+
+<p>In a nutshell: An rvalue reference can be used to construct a C++ object
+efficiently using a “move constructor”. This efficiency is achieved by the
+object’s move constructor by <em>moving</em> the underlying memory of the object
+efficiently to the destination instead of a full copy. Typically the move
+constructor of the object will copy pointers within the source object into the
+destination object, and null the pointer within the source object.</p>
+
+<p>An rvalue reference is denoted by a double ampersand (&amp;&amp;) when you want to
+create an rvalue reference as a variable.</p>
+
+<p>For example <code class="language-plaintext highlighter-rouge">T &amp;&amp;y;</code> defines a variable y which holds an rvalue reference of
+type T. I have almost never seen an rvalue reference variable created this way
+in real code. I also have no idea when it can be useful. Almost always they are
+created by either of the 2 methods in the next section. These methods create an
+“unnamed” rvalue reference which can be passed to a class’s move constructor.</p>
+
+<h2 id="when-is-an-rvalue-reference-created">When is an rvalue reference created?</h2>
+
+<p>In the below example, we create an rvalue reference to a vector, and create
+another vector object from this.</p>
+
+<p>This can happen in 2 ways (that I know off):</p>
+<h3 id="1-using-stdmove">1. Using std::move</h3>
+<p>This converts an lvalue reference to an rvalue reference.</p>
+
+<p>Example:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+int main()
+{
+    int *px, *py;
+    std::vector&lt;int&gt; x = {4,3};
+    px = &amp;(x[0]);
+ 
+    // Convert lvalue 'x' to rvalue reference and pass
+    // it to vector's overloaded move constructor.
+    std::vector&lt;int&gt; y(std::move(x)); 
+    py = &amp;(y[0]);
+
+    // Confirm the new vector uses same storage
+    printf("same vector? : %d\n", px == py); // prints 1
+}
+</code></pre></div></div>
+
+<h3 id="2-when-returning-something-from-a-function">2. When returning something from a function</h3>
+<p>The returned object from the function can be caught as an rvalue reference to that object.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+int *pret;
+int *py;
+
+std::vector&lt;int&gt; myf(int a)
+{
+    vector&lt;int&gt; ret;
+
+    ret.push_back(a * a);
+
+    pret = &amp;(ret[0]);
+
+    // Return is caught as an rvalue ref: vector&lt;int&gt; &amp;&amp;
+    return ret;
+}
+
+int main()
+{
+    // Invoke vector's move constructor.
+    std::vector&lt;int&gt; y(myf(4)); 
+    py = &amp;(y[0]);
+
+    // Confirm the vectors share the same underlying storage
+    printf("same vector? : %d\n", pret == py); // prints 1
+}
+</code></pre></div></div>
+
+<h3 id="note-on-move-asssignment">Note on move asssignment</h3>
+<p><a href="https://stackoverflow.com/questions/4986673/c11-rvalues-and-move-semantics-confusion-return-statement">Interestingly</a>,
+if you construct vector ‘y’ using the assignment operator: <code class="language-plaintext highlighter-rouge">std::vector&lt;int&gt; y
+= myf(4);</code>, the compiler may decide to use the move constructor automatically
+even though assignment is chosen. I believe this is because of vector’s <a href="https://en.cppreference.com/w/cpp/language/move_assignment">move
+assignment operator
+overload</a>.</p>
+
+<p>Further, the compiler may even not invoke a constructor at all and just perform
+RVO (Return Value Optimization).</p>
+
+<h2 id="quiz">Quiz</h2>
+<h4 id="question">Question:</h4>
+<p>If I create a named rvalue reference using std::move and then use this to
+create a vector, the underlying storage of the new vector is different. Why?</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+int *pret;
+int *py;
+
+std::vector&lt;int&gt; myf(int a)
+{
+    vector&lt;int&gt; ret;
+
+    ret.push_back(a * a);
+
+    pret = &amp;(ret[0]);
+
+    // Return is caught as an rvalue ref: vector&lt;int&gt; &amp;&amp;
+    return ret;
+}
+
+int main()
+{
+    // Invoke vector's move constructor.
+    std::vector&lt;int&gt;&amp;&amp; ref = myf(4);
+    std::vector&lt;int&gt; y(ref); 
+    py = &amp;(y[0]);
+
+    // Confirm the vectors share the same underlying storage
+    printf("same vector? : %d\n", pret == py); // prints 0
+}
+</code></pre></div></div>
+<h4 id="answer">Answer</h4>
+<p>The answer is: because the value category of the id-expression ‘ref’ is lvalue,
+the copy constructor will be chosen. To use the move constructor, it has to be
+<code class="language-plaintext highlighter-rouge">std::vector&lt;int&gt; y(std::move(ref));</code>.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>rvalue references are confusing and sometimes the compiler can do different
+optimizations to cause further confusion. It is best to follow well known
+design patterns when designing your code. It may be best to also try to avoid
+rvalue references altogether but hopefully this article helps you understand it
+a bit more when you come across large C++ code bases.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2020-10-25T00:00:00+00:00" pubdate data-updated="true">Oct 25, 2020</time>
+      
+
+<span class="categories">
+  
+    C++
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/srcu,/rcu,/synchronization/2020/03/06/srcu-scan.html" title="Previous Post: SRCU state double scan">&laquo; SRCU state double scan</a>
+      
+      
+        <a class="basic-alignment right" href="/timers,/linux,/kernel/2022/11/13/hrtimer.html" title="Next Post: On workings of hrtimer's slack time functionality">On workings of hrtimer's slack time functionality &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2023 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/c++/2020/10/25/cpp-ref.html';
+        var disqus_url = 'http://www.linuxinternals.org/c++/2020/10/25/cpp-ref.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

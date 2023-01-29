@@ -1,0 +1,315 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>SRCU state double scan - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      SRCU state double scan
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+Mar 06, 2020
+        
+           | Comments
+        
+      
+    
+  
+
+
+...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/srcu,/rcu,/synchronization/2020/03/06/srcu-scan.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+    <h2>My dumping ground for what I've been upto</h2>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <a href="/linuxinternals/">Linux Internals Articles</a><br>
+ <a href="/blog/archives/">All blog posts</a><br>
+ <a href="/resources">Talks and resources</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">SRCU state double scan</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2020-03-06T00:00:00+00:00" pubdate data-updated="true">Mar 06, 2020</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>The SRCU flavor of RCU uses per-cpu counters to detect that every CPU has
+passed through a quiescent state for a particular SRCU lock instance
+(<code class="language-plaintext highlighter-rouge">srcu_struct</code>).</p>
+
+<p>There’s are total of 4 counters per-cpu. One pair for locks, and another for
+unlocks. You can think of the SRCU instance to be split into 2 parts. The
+readers sample <code class="language-plaintext highlighter-rouge">srcu_idx</code> and decided which part to use. Each part corresponds
+to one pair of lock and unlock counters. A reader increments a part’s lock
+counter during locking and likewise for unlock.</p>
+
+<p>During an update, the updater flips <code class="language-plaintext highlighter-rouge">srcu_idx</code> (thus attempting to force new
+readers to use the other part) and waits for the lock/unlock counters on the
+previous value of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to match.  Once the sum of the lock counters of
+all CPUs match that of unlock, the system knows all pre-existing read-side
+critical sections have completed.</p>
+
+<p>Things are not that simple, however. It is possible that a reader samples the
+<code class="language-plaintext highlighter-rouge">srcu_idx</code>, but before it can increment the lock counter corresponding to it,
+it undergoes a long delay. We thus we end up in a situation where there are
+readers in both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code>.</p>
+
+<p>To prevent such a situation, a writer has to wait for readers corresponding to
+both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code> to complete. This depicted with ‘A MUST’
+in the below pseudo-code:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        reader 1        writer                        reader 2
+        -------------------------------------------------------
+        // read_lock
+        // enter
+        Read: idx = 0;
+        &lt;long delay&gt;    // write_lock
+                        // enter
+                        wait_for lock[1]==unlock[1]
+                        idx = 1; /* flip */
+                        wait_for lock[0]==unlock[0]
+                        done.
+                                                      Read: idx = 1;
+        lock[0]++;
+                                                      lock[1]++;
+                        // write_lock
+                        // return
+        // read_lock
+        // return
+        /**** NOW BOTH lock[0] and lock[1] are non-zero!! ****/
+                        // write_lock
+                        // enter
+                        wait_for lock[0]==unlock[0] &lt;- A MUST!
+                        idx = 0; /* flip */
+                        wait_for lock[1]==unlock[1] &lt;- A MUST!
+</code></pre></div></div>
+<p>NOTE: QRCU has a similar issue. However it overcomes such a race in the reader
+by retrying the sampling of its <code class="language-plaintext highlighter-rouge">srcu_idx</code> equivalent.</p>
+
+<p>Q: If you have to wait for readers of both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code>, and <code class="language-plaintext highlighter-rouge">1</code>, then why
+not just have a single counter and do away with the “flipping” logic?</p>
+
+<p>Ans:
+Because of updater forward progress. If we had a single counter, then it is
+possible that new readers would constantly increment the lock counter, thus
+updaters would be waiting all the time. By using the ‘flip’ logic, we are able
+to drain pre-existing readers using the inactive part of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to be
+drained in a bounded time. The number of readers of a ‘flipped’ part would only
+monotonically decrease since new readers go to its counterpart.</p>
+
+<p>2023 update:
+I have more detailed notes with diagrams and such on this and other cases. Just
+reach out to me if you want to take a look at those.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2020-03-06T00:00:00+00:00" pubdate data-updated="true">Mar 06, 2020</time>
+      
+
+<span class="categories">
+  
+    SRCU,RCU,synchronization
+  
+</span>
+
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/linuxinternals/2018/12/23/stack-dumps.html" title="Previous Post: Dumping User and Kernel stacks on Kernel events">&laquo; Dumping User and Kernel stacks on Kernel events</a>
+      
+      
+        <a class="basic-alignment right" href="/c++/2020/10/25/cpp-ref.html" title="Next Post: C++ rvalue references">C++ rvalue references &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2023 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/srcu,/rcu,/synchronization/2020/03/06/srcu-scan.html';
+        var disqus_url = 'http://www.linuxinternals.org/srcu,/rcu,/synchronization/2020/03/06/srcu-scan.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>
