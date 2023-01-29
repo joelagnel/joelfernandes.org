@@ -4,7 +4,7 @@ title: "Understanding critical section behavior with ftrace output"
 date: 2016-03-12 11:08:38 -0800
 comments: true
 published: false
-categories: linuxinternals
+categories: [linux, kernel, tracing]
 ---
 
 The ftrace irqsoff, preempt and preemptirqsoff tracers are amazing tools identify paths in Linux kernel code that block tasks from getting CPU-time. Essentially during these paths, the scheduler has its hands tied behind its back. There are mainly 2 cases where this can happen.
