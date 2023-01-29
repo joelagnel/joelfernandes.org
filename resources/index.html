@@ -56,14 +56,21 @@
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>My dumping ground for what I've been upto</h2>
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
   
 </div>
 <div style="float:left;" class="hnav">
  <br>
- <a href="/linuxinternals/">Linux Internals Articles</a><br>
- <a href="/blog/archives/">All blog posts</a><br>
- <a href="/resources">Talks and resources</a><br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Posts by category</a><br>
+ <a href="/blog/archives/">Archive of all posts</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
 </div>
 <div style="float:right;">
 <img src="/images/peng.png" height=100 width=100>
@@ -104,16 +111,26 @@
     <p>Core Scheduling: Taming Hyper-Threads to be secure (Linux Plumbers Conference, 08/20).</p>
   </li>
   <li>
-    <p>RCU in 2019: KernelRecipes 2019 (Paris, 09/19): <a href="/resources/RCU_in_2019_KernelRecipes.pdf">slides</a>, <a href="https://youtu.be/dvtZsBlSECk">video (third speaker)</a>.</p>
+    <p>RCU in 2019: KernelRecipes 2019 (Paris, 09/19):
+<a href="/resources/RCU_in_2019_KernelRecipes.pdf">slides</a>, <a href="https://youtu.be/dvtZsBlSECk">video (third
+speaker)</a>.</p>
   </li>
   <li>
-    <p>Debugging Real-Time issues in Linux. Conference: ELCE 2016 (Berlin, 10/16): : <a href="/resources/elce2016-debug-rt.pdf">slides</a>, <a href="https://s3.amazonaws.com/connect.linaro.org/yvr18/videos/yvr18-pmw10.mp4">video</a>. Also presented at Embedded Systems Conference (ESC) Silicon Valley (12/16).</p>
+    <p>Debugging Real-Time issues in Linux. Conference: ELCE 2016 (Berlin, 10/16): :
+<a href="/resources/elce2016-debug-rt.pdf">slides</a>,
+<a href="https://s3.amazonaws.com/connect.linaro.org/yvr18/videos/yvr18-pmw10.mp4">video</a>.
+Also presented at Embedded Systems Conference (ESC) Silicon Valley (12/16).</p>
   </li>
   <li>
-    <p>adeb: The better adb shell. Conference: Linaro Connect 2018 (Vancouver, 09/18). <a href="/resources/adeb-lc18.pdf">slides</a>.</p>
+    <p>adeb: The better adb shell. Conference: Linaro Connect 2018 (Vancouver,
+09/18). <a href="/resources/adeb-lc18.pdf">slides</a>.</p>
   </li>
   <li>
-    <p>BPFd: Powerful Linux Tracing for Remote targets using eBPF. Conference: SCALE16x (Pasadena, 3/18):  <a href="/resources/bcc-scale.pdf">slides</a>, <a href="https://www.youtube.com/watch?v=bPrY3ZKvQfM">video</a>, <a href="https://lwn.net/Articles/744522/">article</a>. Also at OS Power Management (OSPM) conference on 4/18 (Italy).</p>
+    <p>BPFd: Powerful Linux Tracing for Remote targets using eBPF. Conference:
+SCALE16x (Pasadena, 3/18):  <a href="/resources/bcc-scale.pdf">slides</a>,
+<a href="https://www.youtube.com/watch?v=bPrY3ZKvQfM">video</a>,
+<a href="https://lwn.net/Articles/744522/">article</a>. Also at OS Power Management (OSPM)
+conference on 4/18 (Italy).</p>
   </li>
   <li>
     <p>Flattened Image Tree (FIT). Conference: ELC 2013 (Sanfrancisco, USA 12/13): <a href="/resources/FIT-talk.pdf">slides</a> <a href="https://www.youtube.com/watch?v=cVSEfOfb6rs">video</a>.</p>
@@ -123,10 +140,20 @@
 <h2 id="recently-published-work">Recently Published Work</h2>
 <ul>
   <li>
-    <p>RCU Usage In the Linux Kernel: Eighteen Years Later, ACM SIGOPS Operating Systems Review, August 2020. (Latest <a href="/resources/rcu_usage_09_2020.pdf">version in PDF</a>).</p>
+    <p>RCU Usage In the Linux Kernel: Eighteen Years Later, ACM SIGOPS Operating
+Systems Review, August 2020. (Latest <a href="/resources/rcu_usage_09_2020.pdf">version in PDF</a>).</p>
   </li>
   <li>
-    <p>Energy-Efficient Low-latency Audio on Android. Journal of Systems and Software Volume 152, June 2019, Pages 182-195 ELSEVIER. <a href="https://www.sciencedirect.com/science/article/pii/S0164121219300585">link</a></p>
+    <p>Full and efficient protection of kernel mode from hyper-threading attacks,
+August 2020. Defensively published: IDF-304986. <a href="/resources/defensive_pub_ht.pdf">link</a>.</p>
+  </li>
+  <li>
+    <p>Garbage Collection using Userfaultfd (Lokesh Gidra, Joel Fernandes, Hans
+Boehm). Defensively published: IDF-300892.</p>
+  </li>
+  <li>
+    <p>Energy-Efficient Low-latency Audio on Android. Journal of Systems and
+Software Volume 152, June 2019, Pages 182-195 ELSEVIER. <a href="https://www.sciencedirect.com/science/article/pii/S0164121219300585">link</a></p>
   </li>
   <li>
     <p>LWN Journal (Linux Weekly News). BPFd: Running BCC tools remotely across systems and architectures. <a href="https://lwn.net/Articles/744522/">publication link</a></p>
