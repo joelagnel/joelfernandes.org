@@ -104,6 +104,10 @@ Hello! I’m Joel and I run this site! I work at Google. My interests are schedu
 Full list of all posts on this site:
 
 <font face="monospace">
+ <li><span>29 Jan 2023</span> &nbsp; <a href="/herd7/2023/01/29/figuring-out-herd7.html">Figuring out herd7 models</a>  [herd7] </li>
+</font>
+
+<font face="monospace">
  <li><span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
 </font>
 
@@ -169,7 +173,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a></h1>
+      <h1 class="entry-title"><a href="/herd7/2023/01/29/figuring-out-herd7.html">Figuring out herd7 models</a></h1>
     
     
       <p class="meta">
@@ -183,152 +187,157 @@ Most Recept Post:
 
 
 
-<time datetime="2018-12-23T01:28:24+00:00" pubdate data-updated="true">Dec 23, 2018</time>
+<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
         
-           | <a href="/linuxinternals/2018/12/23/stack-dumps.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linuxinternals/2018/12/23/stack-dumps.html">Comments</a>
+           | <a href="/herd7/2023/01/29/figuring-out-herd7.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/herd7/2023/01/29/figuring-out-herd7.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Dumping the native kernel and userspace stack when a certain path in the kernel
-or userspace occurs, can be useful to understand which code paths triggered a
-certain behavior that you’re trying to debug, such as an error you found in the
-log. One such case is when you notice Selinux denial messages in logs but want
-to know which path triggered it.</p>
+  <div class="entry-content"><p>[Article is under construction]</p>
 
-<p>In this article we will show you how to use kernel instrumentation and BCC to
-dump the both the user and kernel stack. The article applies both to Android
-and regular Linux kernels.</p>
+<p>The herd7 memory consistency tool is used to verify if certain (mostly
+undesirable) outcomes (memory-related) of concurrent programs exist, given a
+memory model. A memory-model restricts possible candidate executions. After
+such restriction, if certain undesirable still exist, the user is notified
+via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
 
-<h2 id="example-understanding-which-path-triggered-an-selinux-denial">Example: Understanding which path triggered an SELinux denial</h2>
+<p>This is an advanced article that goes through the different parts of the
+linux-kernel.cat code, and tries to explain with examples about how/why
+properties are defined the way they are. The motivation to understand this
+deeply is, by understanding how to read a memory model written in CAT, it
+should be possible to get a deep understanding of how memory consistency and
+ordering works and how a memory model behaves. Even though the herd7 memory
+model is abstract in some sense (it does not describe CPU implementation but
+just a set of properites and rules on memory ordering and program execution),
+it can still be considered to model of how a CPU should behave. Thus it can be
+argued that you are formally defining how memory accesses in CPUs should
+typically behave, if such CPUs are expected to run concurrent Linux kernel
+code.</p>
 
-<h3 id="step-1-add-a-tracepoint-to-the-kernel">Step 1: Add a tracepoint to the kernel</h3>
-<p>Apply the following diff to your kernel. It adds a tracepoint at precisely the
-point where an SELinux denial is logged. If not cleanly applying, patch it in
-manually.</p>
+<p>It is assumed that the reader is already familiar with how to use the tool, as
+well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
+described in much detail in the
+<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
+articles and conference papers on the herd7 tools which we will not replicate
+here.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Diff to add a tracepoint for selinux denials
+<ol>
+  <li>Sequential consistency per-variable (SCPV)</li>
+</ol>
 
-diff --git a/include/trace/events/selinux.h b/include/trace/events/selinux.h
-new file mode 100644
-index 000000000000..dac185062634
---- /dev/null
-+++ b/include/trace/events/selinux.h
-@@ -0,0 +1,34 @@
-+#undef TRACE_SYSTEM
-+#define TRACE_SYSTEM selinux
-+
-+#if !defined(_TRACE_SELINUX_H) || defined(TRACE_HEADER_MULTI_READ)
-+#define _TRACE_SELINUX_H
-+
-+#include &lt;linux/ktime.h&gt;
-+#include &lt;linux/tracepoint.h&gt;
-+
-+TRACE_EVENT(selinux_denied,
-+
-+	TP_PROTO(int cls, int av),
-+
-+	TP_ARGS(cls, av),
-+
-+	TP_STRUCT__entry(
-+		__field(	int,		cls	)
-+		__field(	int,		av	)
-+	),
-+
-+	TP_fast_assign(
-+		__entry-&gt;cls = cls;
-+		__entry-&gt;av = av;
-+	),
-+
-+	TP_printk("denied %d %d",
-+		__entry-&gt;cls,
-+		__entry-&gt;av)
-+);
-+
-+#endif /* _TRACE_SELINUX_H */
-+
-+/* This part ust be outside protection */
-+#include &lt;trace/define_trace.h&gt;
-diff --git a/security/selinux/avc.c b/security/selinux/avc.c
-index 84d9a2e2bbaf..ab04b7c2dd01 100644
---- a/security/selinux/avc.c
-+++ b/security/selinux/avc.c
-@@ -34,6 +34,9 @@
- #include "avc_ss.h"
- #include "classmap.h"
- 
-+#define CREATE_TRACE_POINTS
-+#include &lt;trace/events/selinux.h&gt;
-+
- #define AVC_CACHE_SLOTS			512
- #define AVC_DEF_CACHE_THRESHOLD		512
- #define AVC_CACHE_RECLAIM		16
-@@ -713,6 +716,12 @@ static void avc_audit_pre_callback(struct audit_buffer *ab, void *a)
- 	struct common_audit_data *ad = a;
- 	audit_log_format(ab, "avc:  %s ",
- 			 ad-&gt;selinux_audit_data-&gt;denied ? "denied" : "granted");
-+
-+	if (ad-&gt;selinux_audit_data-&gt;denied) {
-+		trace_selinux_denied(ad-&gt;selinux_audit_data-&gt;tclass,
-+				     ad-&gt;selinux_audit_data-&gt;audited);
-+	}
-+
- 	avc_dump_av(ab, ad-&gt;selinux_audit_data-&gt;tclass,
- 			ad-&gt;selinux_audit_data-&gt;audited);
- 	audit_log_format(ab, " for ");
+<p>This property is fundamental in modern processors, and it basically means that
+reads and writes to a certain variable happen in a total-order. In other words,
+for a specific variable, it is not possible to observe a sequence of writes to
+that variable in an order different from the order in which its values were
+written.</p>
+
+<p>This also applies to the writes happening on the same CPU. In a single CPU, the
+writes happenning on the same variable happen in program order execution.</p>
+
+<p>The way the memory model can enforce this is by defining a rule forbidding a
+certain property. Let us see if we can define the violations of SCPV as a cycle
+in a particular candidate execution, and then tell the model that such execution
+candidates are forbidden.</p>
+
+<p>Consider a program doing 2 writes to a variable:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
+  WRITE_ONCE(*x, 2);            // event W1
+  WRITE_ONCE(*x, 3);            // event W2
+}
 </code></pre></div></div>
 
-<h3 id="step-2-install-adeb">Step 2: Install <a href="https://github.com/joelagnel/adeb">adeb</a></h3>
-<p>Run the command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb prepare --full
-</code></pre></div></div>
-<p>This also installs BCC on the Android device which contains the ‘trace’ utility
-we need for the next step. For regular Linux kernels, you may have to <a href="https://github.com/joelagnel/bcc/blob/master/README.md">manually
-install BCC</a> or find a
-package for it.</p>
+<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
 
-<h3 id="step-3-start-tracing-the-user-and-kernel-stacks">Step 3: Start tracing the user and kernel stacks</h3>
-<p>Running the following command:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>adeb shell
-trace -K -U 't:selinux:selinux_denial'
-</code></pre></div></div>
+<ol>
+  <li>The final value of x is 2. This happens because of the following candidate execution:
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
+</code></pre></div>    </div>
+  </li>
+  <li>The final value of x is 3. This happens because of the following candidate execution:
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
+</code></pre></div>    </div>
+  </li>
+</ol>
 
-<p>You should see something like this when denials are triggered:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2286    2434    Binder:2286_4   selinux_denied   
+<p>We wish to forbid the pattern in #1. How do we do that?</p>
 
-        avc_audit_pre_callback+0xd8 [kernel]
-        avc_audit_pre_callback+0xd8 [kernel]
-        common_lsm_audit+0x64 [kernel]
-        slow_avc_audit+0x74 [kernel]
-        avc_has_perm+0xb8 [kernel]
-        selinux_binder_transfer_file+0x158 [kernel]
-        security_binder_transfer_file+0x50 [kernel]
-        binder_translate_fd+0xcc [kernel]
-        binder_transaction+0x1b64 [kernel]
-        binder_ioctl+0xadc [kernel]
-        do_vfs_ioctl+0x5c8 [kernel]
-        sys_ioctl+0x88 [kernel]
-        __sys_trace_return+0x0 [kernel]
-        __ioctl+0x8 [libc.so]
-        android::IPCThreadState::talkWithDriver(bool)+0x104 [libbinder.so]
-        android::IPCThreadState::waitForResponse(android::Parcel*, int*)+0x40
-                                                            [libbinder.so]
-        android::IPCThreadState::executeCommand(int)+0x460 [libbinder.so]
-        android::IPCThreadState::getAndExecuteCommand()+0xa0 [libbinder.so]
-        android::IPCThreadState::joinThreadPool(bool)+0x40 [libbinder.so]
-        [unknown] [libbinder.so]
-        android::Thread::_threadLoop(void*)+0x12c [libutils.so]
-        android::AndroidRuntime::javaThreadShell(void*)+0x90 [libandroid_runtime.so]
-        __pthread_start(void*)+0x28 [libc.so]
-        __start_thread+0x48 [libc.so]
+<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
+
+<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
+the same CPU.</p>
+
+<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
+(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
+the 2:
+<code class="language-plaintext highlighter-rouge">po-loc | co</code>
+This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
+words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
+execution.</p>
+
+<p>Another possibility is, there are writes happening on different CPUs:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
+  WRITE_ONCE(*x, 2);            // event W1
+  WRITE_ONCE(*x, 3);            // event W2
+}
+
+P1(int *x) {
+  WRITE_ONCE(*x, 4);            // event W3
+}
 </code></pre></div></div>
 
-<p>The same trick can be used for dumping the stack on syscalls, random kernel
-functions using kprobes and more! Just change the arguments passed to the
-‘trace’ command.</p>
+<p>Here there are 6 possible candidate executions:
+1.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
+</code></pre></div></div>
+<p>Final value is 4.</p>
+
+<p>2.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
+</code></pre></div></div>
+<p>Final value is 4.</p>
+
+<p>3.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
+</code></pre></div></div>
+<p>Final value is 2.</p>
+
+<p>4.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
+</code></pre></div></div>
+<p>Final value is 3.</p>
+
+<p>5.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
+</code></pre></div></div>
+<p>Final value is 3.</p>
+
+<p>6.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
+</code></pre></div></div>
+<p>Final value is 2.</p>
+
+<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
+
+<p>#3 has the following relations:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
+W3 -&gt;co W1
+W1 -&gt;po-loc W2
+</code></pre></div></div>
+<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
+
+<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
+
+<p>So far we have only considered stores, however we must order the reads from
+these stores as well, and such reads cannot observe the stores to the same
+variable out of order. Let us next look at some examples, where the above
+acyclic definition is incomplete.</p>
+
+<p>WIP.</p>
 </div>
   
   
