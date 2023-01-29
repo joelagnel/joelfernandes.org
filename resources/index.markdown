@@ -42,6 +42,8 @@ conference on 4/18 (Italy).
 
 - LWN Journal (Linux Weekly News). BPFd: Running BCC tools remotely across systems and architectures. [publication link](https://lwn.net/Articles/744522/)
 
+- The In-circuit SD card switch, published on Hackaday. [link](http://hackaday.com/2014/06/08/the-in-circuit-sd-card-switch/).
+
 ## Taught several classes on Operating Systems at San Jose (meetup.com)
 - What is the kernel upto? Exploring Linux internals with tracing tools. Date: 05/16. [slides](/resources/wiku-slides.pdf)
 
