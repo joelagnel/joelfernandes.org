@@ -15,11 +15,20 @@ echo "Setting up machine"
 
 rm -rf $spath/tmp-ssh-files/
 mkdir $spath/tmp-ssh-files/
-curl -sL http://joelfernandes.org/ssh-files/ssh-files.tgz.asc -o $spath/tmp-ssh-files/ssh-files.tgz.asc
+curl -sL http://joelfernandes.org/ssh-files/dot_ssh.7z -o $spath/tmp-ssh-files/dot_ssh.7z
 
-sudo gpg -o $spath/tmp-ssh-files/ssh-files.tgz -d $spath/tmp-ssh-files/ssh-files.tgz.asc
+echo -n Password:
+read -s password
+
 mkdir -p $HOME/.ssh
-tar -C $HOME/.ssh/ -xvf $spath/tmp-ssh-files/ssh-files.tgz
+# TODO: On devices with root, like a chroot, this causes weird UID/GID in
+# /root/.ssh and causes git clone to fail, find a better way?
+pushd $HOME
+rm -rf $HOME/.ssh.bak/
+mv $HOME/.ssh/ $HOME/.ssh.bak || true
+7z -p$password x $spath/tmp-ssh-files/dot_ssh.7z
+popd
+
 rm -rf $spath/tmp-ssh-files/
 
 mkdir -p $HOME/repo/
@@ -31,8 +40,7 @@ fi
 pushd $HOME/repo/
 git clone git@github.com:joelagnel/joel-snips.git
 pushd joel-snips
-sudo ./rcfiles/setuprc $*
+sudo ./rcfiles/setuprc $password
 
 popd
 popd
-
