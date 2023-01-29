@@ -3,7 +3,7 @@ layout: post
 published: false
 title: "androdeb: Running Powerful Linux tracing tools like BCC in Android"
 comments: true
-category: linuxinternals
+category: [linux, android, debian, tracing]
 ---
 As a part of my work in the Android kernel team, I have been attempting to get
 eBPF based BCC tracing tools working for our kernel developers. Recently we
