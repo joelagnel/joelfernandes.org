@@ -101,37 +101,31 @@ P1(int *x) {
 Here there are 6 possible candidate executions:
 
 1. Final value is 4.
-
 ```
 W1->W2->W3
 ```
 
 2. Final value is 4.
-
 ```
 W2->W1->W3
 ```
 
 3. Final value is 2.
-
 ```
 W2->W3->W1
 ```
 
 4. Final value is 3.
-
 ```
 W1->W3->W2
 ```
 
 5. Final value is 3.
-
 ```
 W3->W1->W2
 ```
 
 6. Final value is 2.
-
 ```
 W3->W2->W1
 ```
@@ -221,9 +215,9 @@ Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
 And the graph for the forbidden case is as follows:
 ![A graph showing failure of read sequential consistency](/images/herd7/scpv/scpvrf.svg)
 
-It is easy to see here that a cycle exists between either `co, rf and fr`, or
-`po-loc, rf and fr`.
+As you can see, there is a cycle between `->po-loc`, `->rf` and `->fr`.
 
-This shows that both `->rf` and `->fr` should be included in the acyclic
-relation as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be `acyclic po-loc | co | rf | fr`. That is indeed the case.
+This shows that both `->rf` and `->fr` should also included in the acyclic
+property as well. Hence to avoid the problematic candidate execution, the SCPV
+property should be `acyclic po-loc | co | rf | fr`. That is indeed the case in
+the Linux kernel's memory model.
