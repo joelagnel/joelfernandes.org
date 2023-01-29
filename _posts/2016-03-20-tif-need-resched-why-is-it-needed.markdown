@@ -3,7 +3,7 @@ layout: post
 title: "TIF_NEED_RESCHED: why is it needed"
 date: 2016-03-20 01:44:32 -0700
 comments: true
-categories: linuxinternals
+categories: [linux, kernel, scheduler]
 ---
 
 `TIF_NEED_RESCHED` is one of the many "thread information flags" stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is `TIF_NEED_RESCHED`. Inorder to explain why its important and how it works, I will go over 2 cases where `TIF_NEED_RESCHED` is used.
