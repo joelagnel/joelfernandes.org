@@ -3,7 +3,7 @@ layout: post
 title: "MicroSD card remote switch"
 date: 2014-06-04 06:12:55 -0500
 comments: true
-categories: linuxinternals
+categories: [linux, embedded, electronics]
 ---
 Recently, I've been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem *without* removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what's going on.
 
