@@ -890,6 +890,13 @@ body>header h2 {
     font-weight: normal
 }
 
+body>header h6 {
+    margin: .2em 0 0;
+    font-size: 0.8em;
+    color: #bac7da;
+    font-weight: normal
+}
+
 body>header .hnav a {
     color: #ffc;
     font-family: "Verdana", sans-serif;

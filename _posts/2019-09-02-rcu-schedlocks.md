@@ -2,7 +2,7 @@
 layout: post
 title: "Making sense of scheduler deadlocks in RCU"
 comments: true
-categories: rcu, scheduler, locking
+categories: [rcu, scheduler, locking]
 ---
 Note: At the time of this writing, it is kernel v5.3 release. RCU moves fast
 and can change in the future, so some details in this article may be obsolete.

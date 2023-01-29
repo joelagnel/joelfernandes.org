@@ -2,14 +2,21 @@
 <div style="margin-right:50px;float:left;">
   <h1><a href="{{ root_url }}/">{{ site.title }}</a></h1>
   {% if site.subtitle %}
-    <h2>{{ site.subtitle }}</h2>
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>{{ site.subtitle }}</h6>
   {% endif %}
 </div>
 <div style="float:left;" class="hnav">
  <br>
- <a href="/linuxinternals/">Linux Internals Articles</a><br>
- <a href="/blog/archives/">All blog posts</a><br>
- <a href="/resources">Talks and resources</a><br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Posts by category</a><br>
+ <a href="/blog/archives/">Archive of all posts</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
 </div>
 <div style="float:right;">
 <img src="/images/peng.png" height=100 width=100>

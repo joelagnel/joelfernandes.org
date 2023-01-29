@@ -2,7 +2,7 @@
 layout: post
 title: "Figuring out herd7 memory models"
 comments: true
-categories: herd7, lkmm, formalmethods
+categories: [herd7, lkmm, formalmethods]
 ---
 [Article is under construction]
 

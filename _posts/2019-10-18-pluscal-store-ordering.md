@@ -2,7 +2,7 @@
 layout: post
 title: "Modeling (lack of) store ordering using PlusCal - and a wishlist"
 comments: true
-categories: pluscal, tla+, formalmethods
+categories: [pluscal, tla+, formalmethods]
 ---
 The Message Passing pattern (MP pattern) is shown in the snippet below
 (borrowed from LKMM docs). Here, P0 and P1 are 2 CPUs executing some code. P0
