@@ -100,47 +100,41 @@ P1(int *x) {
 
 Here there are 6 possible candidate executions:
 
-1.
+1. Final value is 4.
 
 ```
 W1->W2->W3
 ```
-Final value is 4.
 
-2.
+2. Final value is 4.
 
 ```
 W2->W1->W3
 ```
-Final value is 4.
 
-3.
+3. Final value is 2.
 
 ```
 W2->W3->W1
 ```
-Final value is 2.
 
-4.
+4. Final value is 3.
 
 ```
 W1->W3->W2
 ```
-Final value is 3.
 
-5.
+5. Final value is 3.
 
 ```
 W3->W1->W2
 ```
-Final value is 3.
 
-6.
+6. Final value is 2.
 
 ```
 W3->W2->W1
 ```
-Final value is 2.
 
 
 Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.
