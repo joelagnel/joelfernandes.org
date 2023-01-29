@@ -50,14 +50,21 @@ Hello! I’m Joel and I run this site! I work at Google. My interests are schedu
 <div style="margin-right:50px;float:left;">
   <h1><a href="/">JoelFernandes.org</a></h1>
   
-    <h2>My dumping ground for what I've been upto</h2>
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
   
 </div>
 <div style="float:left;" class="hnav">
  <br>
- <a href="/linuxinternals/">Linux Internals Articles</a><br>
- <a href="/blog/archives/">All blog posts</a><br>
- <a href="/resources">Talks and resources</a><br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Posts by category</a><br>
+ <a href="/blog/archives/">Archive of all posts</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
 </div>
 <div style="float:right;">
 <img src="/images/peng.png" height=100 width=100>
@@ -104,83 +111,283 @@ Hello! I’m Joel and I run this site! I work at Google. My interests are schedu
 Full list of all posts on this site:
 
 <font face="monospace">
- <li><span>29 Jan 2023</span> &nbsp; <a href="/herd7,/lkmm,/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a>  [herd7,lkmm,formalmethods] </li>
+ <li>
+   <span>29 Jan 2023</span> &nbsp; <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [herd7lkmmformalmethods]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>13 Nov 2022</span> &nbsp; <a href="/timers,/linux,/kernel/2022/11/13/hrtimer.html">On workings of hrtimer's slack time functionality</a>  [timers,linux,kernel] </li>
+ <li>
+   <span>13 Nov 2022</span> &nbsp; <a href="/timers/linux/kernel/2022/11/13/hrtimer.html">On workings of hrtimer's slack time functionality</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [timerslinuxkernel]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>25 Oct 2020</span> &nbsp; <a href="/c++/2020/10/25/cpp-ref.html">C++ rvalue references</a>  [c++] </li>
+ <li>
+   <span>25 Oct 2020</span> &nbsp; <a href="/c++/2020/10/25/cpp-ref.html">C++ rvalue references</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [c++]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>06 Mar 2020</span> &nbsp; <a href="/srcu,/rcu,/synchronization/2020/03/06/srcu-scan.html">SRCU state double scan</a>  [SRCU,RCU,synchronization] </li>
+ <li>
+   <span>06 Mar 2020</span> &nbsp; <a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">SRCU state double scan</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [rcusrcusynchronization]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>18 Oct 2019</span> &nbsp; <a href="/pluscal,/tla+,/formalmethods/2019/10/18/pluscal-store-ordering.html">Modeling (lack of) store ordering using PlusCal - and a wishlist</a>  [pluscal,tla+,formalmethods] </li>
+ <li>
+   <span>18 Oct 2019</span> &nbsp; <a href="/pluscal/tla+/formalmethods/2019/10/18/pluscal-store-ordering.html">Modeling (lack of) store ordering using PlusCal - and a wishlist</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [pluscaltla+formalmethods]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>02 Sep 2019</span> &nbsp; <a href="/rcu,/scheduler,/locking/2019/09/02/rcu-schedlocks.html">Making sense of scheduler deadlocks in RCU</a>  [rcu,scheduler,locking] </li>
+ <li>
+   <span>02 Sep 2019</span> &nbsp; <a href="/rcu/scheduler/locking/2019/09/02/rcu-schedlocks.html">Making sense of scheduler deadlocks in RCU</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [rcuschedulerlocking]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a>  [linuxinternals] </li>
+ <li>
+   <span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>15 Jun 2018</span> &nbsp; <a href="/linuxinternals/2018/06/15/rcu-dynticks.html">RCU and dynticks-idle mode</a>  [linuxinternals] </li>
+ <li>
+   <span>15 Jun 2018</span> &nbsp; <a href="/linuxinternals/2018/06/15/rcu-dynticks.html">RCU and dynticks-idle mode</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>10 Jun 2018</span> &nbsp; <a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a>  [linux] </li>
+ <li>
+   <span>10 Jun 2018</span> &nbsp; <a href="/linux/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linux]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>10 May 2018</span> &nbsp; <a href="/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a>  [linuxinternals] </li>
+ <li>
+   <span>10 May 2018</span> &nbsp; <a href="/linuxinternals/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>11 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/11/usdt-notes.html">USDT for reliable Userspace event tracing</a>  [linuxinternals] </li>
+ <li>
+   <span>11 Feb 2018</span> &nbsp; <a href="/linuxinternals/2018/02/11/usdt-notes.html">USDT for reliable Userspace event tracing</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems</a>  [linuxinternals] </li>
+ <li>
+   <span>08 Jan 2018</span> &nbsp; <a href="/linuxinternals/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>01 Jan 2017</span> &nbsp; <a href="/linuxinternals/2017/01/01/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a>  [linuxinternals] </li>
+ <li>
+   <span>01 Jan 2017</span> &nbsp; <a href="/linuxinternals/2017/01/01/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>19 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/19/ftrace-events-mechanism.html">Ftrace events mechanism</a>  [linuxinternals] </li>
+ <li>
+   <span>19 Jun 2016</span> &nbsp; <a href="/linuxinternals/2016/06/19/ftrace-events-mechanism.html">Ftrace events mechanism</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a>  [linuxinternals] </li>
+ <li>
+   <span>20 Mar 2016</span> &nbsp; <a href="/linuxinternals/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a>  [electronics,linuxinternals] </li>
+ <li>
+   <span>25 Dec 2015</span> &nbsp; <a href="/electronics,linuxinternals/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [electronics,linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a>  [linuxinternals] </li>
+ <li>
+   <span>04 Jun 2014</span> &nbsp; <a href="/linuxinternals/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>08 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a>  [linuxinternals] </li>
+ <li>
+   <span>08 May 2014</span> &nbsp; <a href="/linuxinternals/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>25 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a>  [linuxinternals] </li>
+ <li>
+   <span>25 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 <font face="monospace">
- <li><span>23 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/23/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a>  [linuxinternals] </li>
+ <li>
+   <span>23 Apr 2014</span> &nbsp; <a href="/linuxinternals/2014/04/23/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [linuxinternals]
+
+     !-->
+ </li>
 </font>
 
 </article>
@@ -193,7 +400,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7,/lkmm,/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
     
     
       <p class="meta">
@@ -209,8 +416,8 @@ Most Recept Post:
 
 <time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
         
-           | <a href="/herd7,/lkmm,/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7,/lkmm,/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
         
       </p>
     
