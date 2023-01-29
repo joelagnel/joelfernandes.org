@@ -3,7 +3,7 @@ layout: post
 published: true
 title: "Single-stepping the kernel's C code"
 comments: true
-category: linux
+category: [linux, kernel, debugging]
 ---
 Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
 of a RISC-V processor to step through some kernel code.
