@@ -3,7 +3,7 @@ layout: post
 title: "Design of fork followed by exec in Linux"
 date: 2014-04-22 23:06:11 -0500
 comments: true
-categories: linuxinternals
+categories: [linux, kernel]
 ---
 A lot of folks ask *why do you have to do fork and then an exec, to execute a new program?* and *why can't it be done in one step?*, or *why does fork [create a copy-on-writed address space](http://man7.org/linux/man-pages/man2/fork.2.html), to only have it thrown away later when you do an exec?*. So I decided do a small write up about this topic.
  
