@@ -60,11 +60,13 @@ P0(int *x) {
 Without `SCPV`, this program has 2 outcomes:
 
 1. The final value of x is 2. This happens because of the following candidate execution:
+
 ```
 W2 ->co W1
 ```
 
 2. The final value of x is 3. This happens because of the following candidate execution:
+
 ```
 W1 ->co W2
 ```
@@ -97,37 +99,44 @@ P1(int *x) {
 ```
 
 Here there are 6 possible candidate executions:
+
 1.
+
 ```
 W1->W2->W3
 ```
 Final value is 4.
 
 2.
+
 ```
 W2->W1->W3
 ```
 Final value is 4.
 
 3.
+
 ```
 W2->W3->W1
 ```
 Final value is 2.
 
 4.
+
 ```
 W1->W3->W2
 ```
 Final value is 3.
 
 5.
+
 ```
 W3->W1->W2
 ```
 Final value is 3.
 
 6.
+
 ```
 W3->W2->W1
 ```
@@ -148,7 +157,79 @@ Thus `acyclic po-loc | co` can again be used to forbid the candidate executions 
 
 So far we have only considered stores, however we must order the reads from
 these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at some examples, where the above
+variable out of order. Let us next look at an example, where the above
 acyclic definition is incomplete.
 
-WIP.
+Consider the following Litmus test involving read accesses:
+```
+C scpv-rf
+
+{}
+
+P0(int *x)
+{
+        WRITE_ONCE(*x, 2);
+        WRITE_ONCE(*x, 3);
+}
+
+P1(int *x)
+{
+        int r1;
+        int r2;
+
+        r1 = READ_ONCE(*x);
+        r2 = READ_ONCE(*x);
+}
+
+exists (1:r1=3 /\ 1:r2=2)
+```
+
+Here, we hope that the reads to variable `x` are observed by P1 in the
+program-order that were written in P0. So the forbidden exists clause should
+never occur.
+
+However, if you were to build a CAT model as follows, using the previously
+determined acyclic property, then the forbidden case indeed happens.
+
+Here is the CAT code:
+```
+include "cos.cat"
+
+acyclic po-loc | co
+```
+
+This can be run using herd7 as follows, with the `-show prop` options to generate a DOT graph file of the forbidden case:
+```
+herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
+```
+
+Running this shows:
+```
+Test scpv-rf Allowed
+States 9
+1:r1=0; 1:r2=0;
+1:r1=0; 1:r2=2;
+1:r1=0; 1:r2=3;
+1:r1=2; 1:r2=0;
+1:r1=2; 1:r2=2;
+1:r1=2; 1:r2=3;
+1:r1=3; 1:r2=0;
+1:r1=3; 1:r2=2;
+1:r1=3; 1:r2=3;
+Ok
+Witnesses
+Positive: 1 Negative: 8
+Condition exists (1:r1=3 /\ 1:r2=2)
+Observation scpv-rf Sometimes 1 8
+Time scpv-rf 0.00
+Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
+```
+And the graph for the forbidden case is as follows:
+![A graph showing failure of read sequential consistency](images/herd7/scpv/scpvrf.svg)
+
+It is easy to see here that a cycle exists between either `co, rf and fr`, or
+`po-loc, rf and fr`.
+
+This shows that both `->rf` and `->fr` should be included in the acyclic
+relation as well. Hence to avoid the problematic candidate execution, the SCPV
+property should be `acyclic po-loc | co | rf | fr`. That is indeed the case.
