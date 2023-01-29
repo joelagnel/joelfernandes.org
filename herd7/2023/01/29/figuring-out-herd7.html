@@ -238,41 +238,47 @@ P1(int *x) {
 
 <p>Here there are 6 possible candidate executions:</p>
 
-<p>1.</p>
+<ol>
+  <li>Final value is 4.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
 </code></pre></div></div>
-<p>Final value is 4.</p>
 
-<p>2.</p>
+<ol>
+  <li>Final value is 4.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
 </code></pre></div></div>
-<p>Final value is 4.</p>
 
-<p>3.</p>
+<ol>
+  <li>Final value is 2.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
 </code></pre></div></div>
-<p>Final value is 2.</p>
 
-<p>4.</p>
+<ol>
+  <li>Final value is 3.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
 </code></pre></div></div>
-<p>Final value is 3.</p>
 
-<p>5.</p>
+<ol>
+  <li>Final value is 3.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
 </code></pre></div></div>
-<p>Final value is 3.</p>
 
-<p>6.</p>
+<ol>
+  <li>Final value is 2.</li>
+</ol>
 
 <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
 </code></pre></div></div>
-<p>Final value is 2.</p>
 
 <p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
 
