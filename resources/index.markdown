@@ -5,7 +5,10 @@ layout: page
 published: true
 ---
 ## Conference Presentations
-- Core Scheduling: Taming Hyper-Threads to be secure (Linux Plumbers Conference, 08/20).
+- Make RCU do less to save power (Lazy RCU). (Linux Plumbers Conference,
+  September 2023). [link](/resources/lpc2022-rcu-do-less.pdf)
+
+- Core Scheduling: Taming Hyper-Threads to be secure (Linux Plumbers Conference, August 2020).
 
 - RCU in 2019: KernelRecipes 2019 (Paris, 09/19):
   [slides](/resources/RCU_in_2019_KernelRecipes.pdf), [video (third
