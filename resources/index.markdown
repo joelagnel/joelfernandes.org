@@ -48,6 +48,8 @@ conference on 4/18 (Italy).
 
 - The In-circuit SD card switch, published on Hackaday. [link](http://hackaday.com/2014/06/08/the-in-circuit-sd-card-switch/).
 
+{::comment}
+
 ## Taught several classes on Operating Systems at San Jose (meetup.com)
 - What is the kernel upto? Exploring Linux internals with tracing tools. Date: 05/16. [slides](/resources/wiku-slides.pdf)
 
@@ -57,3 +59,4 @@ conference on 4/18 (Italy).
 
 - Introduction to OpenEmbedded. Date: 01/17. [slides](/resources/oe-slides.pdf)
 
+{::/comment}
