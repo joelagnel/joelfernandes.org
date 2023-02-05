@@ -1,7 +1,6 @@
 ---
 layout: page
 sharing: true
-layout: page
 published: true
 ---
 ## Conference Presentations
@@ -36,6 +35,8 @@ conference on 4/18 (Italy).
 
 - Full and efficient protection of kernel mode from hyper-threading attacks,
   August 2020. Defensively published: IDF-304986. [link](/resources/defensive_pub_ht.pdf).
+
+- Improving ChromeOS performance with core scheduling (I am primary author). Published on ChromeOS blog: [link](https://chromeos.dev/en/posts/improving-chromeos-performance-with-core-scheduling).
 
 - Garbage Collection using Userfaultfd (Lokesh Gidra, Joel Fernandes, Hans
   Boehm). Defensively published: IDF-300892.
