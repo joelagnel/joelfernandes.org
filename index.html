@@ -23,24 +23,46 @@ Full list of all blog posts on this site:
 {% endfor %}
 </article>
 
-  {% assign index = true %}
-  {% for post in paginator.posts %}
-  {% assign content = post.content %}
+
+ <!-- This loops through the paginated posts -->
+
+{% assign index = true %}
+{% for post in paginator.posts %}
+{% assign content = post.content %}
     <article>
 Most Recept Post:
       {% include article.html %}
     </article>
+{% endfor %}
+
+{% if paginator.total_pages > 1 %}
+<div class="pagination">
+  {% if paginator.previous_page %}
+    <a href="{{ paginator.previous_page_path | relative_url }}">&laquo; Previous Post</a> &nbsp; &nbsp; &nbsp;
+  {% endif %}
+
+  <!-- Don't want numbers.
+  {% for page in (1..paginator.total_pages) %}
+    {% if page == paginator.page %}
+      <em>{{ page }}</em>
+    {% elsif page == 1 %}
+      <a href="{{ '/' | relative_url }}">{{ page }}</a>
+    {% else %}
+      <a href="{{ site.paginate_path | relative_url | replace: ':num', page }}">{{ page }}</a>
+    {% endif %}
   {% endfor %}
-  <div class="pagination">
-    {% if paginator.next_page %}
-      <a class="prev" href="{{paginator.next_page}}">&larr; Older</a>
-    {% endif %}
-    <a href="/blog/archives">Blog Archives</a>
-    {% if paginator.previous_page %}
-    <a class="next" href="{{paginator.previous_page}}">Newer &rarr;</a>
-    {% endif %}
-  </div>
+  -->
+
+  {% if paginator.next_page %}
+    <a href="{{ paginator.next_page_path | relative_url }}">Next Post&raquo;</a>
+  {% endif %}
 </div>
+{% endif %}
+
+<!-- div blog-index -->
+</div>
+
+
 <aside class="sidebar">
   {% if site.blog_index_asides.size %}
     {% include_array blog_index_asides %}

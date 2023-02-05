@@ -1409,7 +1409,7 @@ article>footer .byline ~ .categories:before {
 
 #content div.pagination a {
     text-decoration: none;
-    color: #aaa
+    color: #000
 }
 
 #content div.pagination a.prev {
