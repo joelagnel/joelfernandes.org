@@ -22,7 +22,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page18/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -406,7 +406,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/linux/kernel/locking/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a></h1>
     
     
       <p class="meta">
@@ -420,226 +420,127 @@ Most Recept Post:
 
 
 
-<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
+<time datetime="2014-05-08T03:42:45+00:00" pubdate data-updated="true">May 08, 2014</time>
         
-           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/linux/kernel/locking/2014/05/08/spinlock-implementation-in-linux-kernel.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/locking/2014/05/08/spinlock-implementation-in-linux-kernel.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>[Article is under construction]</p>
+  <div class="entry-content"><p>This article tries to clarify how spinlocks are implemented in the Linux kernel and how they should be used correctly in the face of preemption and interrupts. The focus of this article will be more on basic concepts than details, as details tend to be forgotten more easily and shouldn’t be too hard to look up although attention is paid to it to the extent that it helps understanding.</p>
 
-<p>The herd7 memory consistency tool is used to verify if certain (mostly
-undesirable) outcomes (memory-related) of concurrent programs exist, given a
-memory model. A memory-model restricts possible candidate executions. After
-such restriction, if certain undesirable still exist, the user is notified
-via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
+<p>Fundamentally somewhere in <code class="language-plaintext highlighter-rouge">include/linux/spinlock.h</code>, a decision is made on which spinlock header to pull based on whether SMP is enabled or not:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+# include &lt;linux/spinlock_api_smp.h&gt;
+#else
+# include &lt;linux/spinlock_api_up.h&gt;
+#endif
+</code></pre></div></div>
 
-<p>This is an advanced article that goes through the different parts of the
-linux-kernel.cat code, and tries to explain with examples about how/why
-properties are defined the way they are. The motivation to understand this
-deeply is, by understanding how to read a memory model written in CAT, it
-should be possible to get a deep understanding of how memory consistency and
-ordering works and how a memory model behaves. Even though the herd7 memory
-model is abstract in some sense (it does not describe CPU implementation but
-just a set of properites and rules on memory ordering and program execution),
-it can still be considered to model of how a CPU should behave. Thus it can be
-argued that you are formally defining how memory accesses in CPUs should
-typically behave, if such CPUs are expected to run concurrent Linux kernel
-code.</p>
+<p>We’ll go over how things are implemented in both the SMP (Symmetric Multi-Processor) and UP (Uni-Processor) cases.</p>
 
-<p>It is assumed that the reader is already familiar with how to use the tool, as
-well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
-described in much detail in the
-<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
-articles and conference papers on the herd7 tools which we will not replicate
-here.</p>
+<p>For the SMP case, <code class="language-plaintext highlighter-rouge">__raw_spin_lock*</code> functions in <code class="language-plaintext highlighter-rouge">kernel/locking/spinlock.c</code> are called when one calls some version of a <code class="language-plaintext highlighter-rouge">spin_lock</code>.</p>
+
+<p>Following is the definition of the most basic version defined with a macro:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+void __lockfunc __raw_##op##_lock(locktype##_t *lock)                   \
+{                                                                       \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+}                                                                       \
+</code></pre></div></div>
+
+<p>The function has several imporant bits. First it disables preemption on line 5, then tries to <em>atomically</em> acquire the spinlock on line 6. If it succeeds it breaks from the <code class="language-plaintext highlighter-rouge">for</code> loop on line 7, leaving preemption disabled for the duration of crticial section being protected by the lock. If it didn’t succeed in acquiring the lock (maybe some other CPU grabbed the lock already), it enables preemption back and spins till it can acquire the lock keeping <em>preemption enabled during this period</em>. Each time it detects that the lock can’t be acquired in the <code class="language-plaintext highlighter-rouge">while</code> loop, it calls an architecture specific relax function which has the effect executing some variant of a <code class="language-plaintext highlighter-rouge">no-operation</code> instruction that causes the CPU to execute such an instruction efficiently in a lower power state. We’ll talk about the <code class="language-plaintext highlighter-rouge">break_lock</code> usage in a bit. Soon as it knows the lock is free, say the <code class="language-plaintext highlighter-rouge">raw_spin_can_lock(lock)</code> function returned 1, it goes back to the beginning of the <code class="language-plaintext highlighter-rouge">for</code> loop and tries to acquire the lock again.</p>
+
+<p>What’s important to note here is the reason for keeping preemption enabled (we’ll see in a bit that for UP configurations, this is not done). While the kernel is spinning on a lock, other processes shouldn’t be kept from preempting the spinning thread. The lock in these cases have been acquired on a <em>different CPU</em> because (assuming bug free code) it’s impossible the current CPU which is trying to grab the lock has already acquired it, because preemption is disabled on acquiral. So it makes sense for the spinning kernel thread to be preempted giving others CPU time.
+It is also possible that more than one process on the current CPU is trying to acquire the same lock and spinning on it, in this case the kernel gets continuously preempted between the 2 threads fighting for the lock, while some other CPU in the cluster happily holds the lock, hopefully for not too long.</p>
+
+<p>That’s where the <code class="language-plaintext highlighter-rouge">break_lock</code> element in the lock structure comes in. Its used to signal to the lock-holding processor in the cluster that there is someone else trying to acquire the lock. This can cause the lock to released early by the holder if required.</p>
+
+<p>Now lets see what happens in the UP (Uni-Processor) case.</p>
+
+<p>Believe it or not, it’s really this simple:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define ___LOCK(lock) \
+  do { __acquire(lock); (void)(lock); } while (0)
+
+#define __LOCK(lock) \
+  do { preempt_disable(); ___LOCK(lock); } while (0)
+
+// ....skipped some lines.....
+#define _raw_spin_lock(lock)                    __LOCK(lock)
+</code></pre></div></div>
+
+<p>All that needs to be done is to disable preemption and acquire the lock. The code really doesn’t do anything other than disable preemption. The references to the <code class="language-plaintext highlighter-rouge">lock</code> variable are just to suppress compiler warnings as mentioned in comments in the source file.</p>
+
+<p>There’s no spinning at all here like the UP case and the reason is simple: in the SMP case, remember we had agreed that while a lock is <em>acquired</em> by a particular CPU (in this case just the 1 CPU), no other process on that CPU should have acquired the lock. How could it have gotten a chance to do so with preemption disabled on that CPU to begin with?</p>
+
+<p>Even if the code is buggy, (say the same process tries to acquires the lock twice), it’s still impossible that 2 <em>different processes</em> try to acquire the same lock on a Uni-Processor system considering preemption is disabled on lock acquiral. Following that idea, in the Uni-processor case, since we are running on only 1 CPU, all that needs to be done is to disable preemption, since the fact that we are being allowed to disable preemption to begin with, means that no one else has acquired the lock. Works really well!</p>
+
+<h2 id="sharing-spinlocks-between-interrupt-and-process-context">Sharing spinlocks between interrupt and process-context</h2>
+<p>It is possible that a critical section needs to be protected by the same lock in both an interrupt and in non-interrupt (process) execution context in the kernel. In this case <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> and the <code class="language-plaintext highlighter-rouge">spin_unlock_irqrestore</code> variants have to be used to protect the critical section. This has the effect of disabling interrupts on the  executing CPU. Imagine what would happen if you just used <code class="language-plaintext highlighter-rouge">spin_lock</code> in the process context?</p>
+
+<p>Picture the following:</p>
 
 <ol>
-  <li>Sequential consistency per-variable (SCPV)</li>
+  <li>Process context kernel code acquires <em>lock A</em> using <code class="language-plaintext highlighter-rouge">spin_lock</code>.</li>
+  <li>While the lock is held, an interrupt comes in on the same CPU and executes.</li>
+  <li>Interrupt Service Routing (ISR) tries to acquire <em>lock A</em>, and spins continuously waiting for it.</li>
+  <li>For the duration of the ISR, the Process context is blocked and never gets a chance to run and free the lock.</li>
+  <li>Hard lock up condition on the CPU!</li>
 </ol>
 
-<p>This property is fundamental in modern processors, and it basically means that
-reads and writes to a certain variable happen in a total-order. In other words,
-for a specific variable, it is not possible to observe a sequence of writes to
-that variable in an order different from the order in which its values were
-written.</p>
+<p>To prevent this, the process context code needs call <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> which has the effect of disabling interrupts on that particular CPU along with the regular disabling of preemption we saw earlier <em>before</em> trying to grab the lock.</p>
 
-<p>This also applies to the writes happening on the same CPU. In a single CPU, the
-writes happenning on the same variable happen in program order execution.</p>
+<p>Note that the ISR can still just call <code class="language-plaintext highlighter-rouge">spin_lock</code> instead of <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> because interrupts are disabled anyway during ISR execution. Often times people use <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> in an ISR, that’s not necessary.</p>
 
-<p>The way the memory model can enforce this is by defining a rule forbidding a
-certain property. Let us see if we can define the violations of SCPV as a cycle
-in a particular candidate execution, and then tell the model that such execution
-candidates are forbidden.</p>
+<p>Also note that during the executing of the critical section protected by <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code>, the interrupts are only disabled on the executing CPU. The same interrupt can come in on a different CPU and the ISR will be executed there, but that will not trigger the hard lock condition I talked about, because the process-context code is not blocked and can finish executing the locked critical section and release the lock while the ISR spins on the lock on a different CPU waiting for it. The process context does get a chance to finish and free the lock causing no hard lock up.</p>
 
-<p>Consider a program doing 2 writes to a variable:</p>
+<p>Following is what the <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> code looks like for the SMP case, UP case is similar, look it up. BTW, the only difference here compared to the regular <code class="language-plaintext highlighter-rouge">spin_lock</code> I described in the beginning are the <code class="language-plaintext highlighter-rouge">local_irq_save</code> and <code class="language-plaintext highlighter-rouge">local_irq_restore</code> that accompany the <code class="language-plaintext highlighter-rouge">preempt_disable</code> and <code class="language-plaintext highlighter-rouge">preempt_enable</code> in the lock code:</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
+{                                                                       \
+        unsigned long flags;                                            \
+                                                                        \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                local_irq_save(flags);                                  \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                local_irq_restore(flags);                               \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+        return flags;                                                   \
+}                                                                       \
 </code></pre></div></div>
+<p>Update:
+Further clean up of break_lock has happened <a href="https://lore.kernel.org/patchwork/patch/856271/">in this
+patch</a>. If caller needs to
+know if lock is contended, they can do so directly by using
+arch_spin_is_contended. So there’s no longer a need for the break_lock variable
+in the lock structure.</p>
 
-<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
-
-<ol>
-  <li>The final value of x is 2. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
-</code></pre></div></div>
-
-<ol>
-  <li>The final value of x is 3. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
-</code></pre></div></div>
-
-<p>We wish to forbid the pattern in #1. How do we do that?</p>
-
-<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
-the same CPU.</p>
-
-<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
-(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
-the 2:
-<code class="language-plaintext highlighter-rouge">po-loc | co</code>
-This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
-words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
-execution.</p>
-
-<p>Another possibility is, there are writes happening on different CPUs:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-
-P1(int *x) {
-  WRITE_ONCE(*x, 4);            // event W3
-}
-</code></pre></div></div>
-
-<p>Here there are 6 possible candidate executions:</p>
-
-<ol>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div>    </div>
-  </li>
-</ol>
-
-<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
-
-<p>#3 has the following relations:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
-W3 -&gt;co W1
-W1 -&gt;po-loc W2
-</code></pre></div></div>
-<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
-
-<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
-
-<p>So far we have only considered stores, however we must order the reads from
-these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at an example, where the above
-acyclic definition is incomplete.</p>
-
-<p>Consider the following Litmus test involving read accesses:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C scpv-rf
-
-{}
-
-P0(int *x)
-{
-        WRITE_ONCE(*x, 2);
-        WRITE_ONCE(*x, 3);
-}
-
-P1(int *x)
-{
-        int r1;
-        int r2;
-
-        r1 = READ_ONCE(*x);
-        r2 = READ_ONCE(*x);
-}
-
-exists (1:r1=3 /\ 1:r2=2)
-</code></pre></div></div>
-
-<p>Here, we hope that the reads to variable <code class="language-plaintext highlighter-rouge">x</code> are observed by P1 in the
-program-order that were written in P0. So the forbidden exists clause should
-never occur.</p>
-
-<p>However, if you were to build a CAT model as follows, using the previously
-determined acyclic property, then the forbidden case indeed happens.</p>
-
-<p>Here is the CAT code:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include "cos.cat"
-
-acyclic po-loc | co
-</code></pre></div></div>
-
-<p>This can be run using herd7 as follows, with the <code class="language-plaintext highlighter-rouge">-show prop</code> options to generate a DOT graph file of the forbidden case:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
-</code></pre></div></div>
-
-<p>Running this shows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Test scpv-rf Allowed
-States 9
-1:r1=0; 1:r2=0;
-1:r1=0; 1:r2=2;
-1:r1=0; 1:r2=3;
-1:r1=2; 1:r2=0;
-1:r1=2; 1:r2=2;
-1:r1=2; 1:r2=3;
-1:r1=3; 1:r2=0;
-1:r1=3; 1:r2=2;
-1:r1=3; 1:r2=3;
-Ok
-Witnesses
-Positive: 1 Negative: 8
-Condition exists (1:r1=3 /\ 1:r2=2)
-Observation scpv-rf Sometimes 1 8
-Time scpv-rf 0.00
-Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
-</code></pre></div></div>
-<p>And the graph for the forbidden case is as follows:
-<img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
-
-<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
-
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
-property as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
-the Linux kernel’s memory model.</p>
+<p>Hope this post made a few things more clear, there’s a lot more to spinlocking. A good reference is <a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/">Rusty’s Unreliable Guide To Locking</a>.</p>
 </div>
   
   
@@ -649,9 +550,11 @@ the Linux kernel’s memory model.</p>
   
   <div class="pagination">
     
-      <a class="prev" href="2">&larr; Older</a>
+      <a class="prev" href="19">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="17">Newer &rarr;</a>
     
   </div>
 </div>

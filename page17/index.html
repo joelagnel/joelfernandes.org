@@ -22,7 +22,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page17/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -406,7 +406,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/linux/embedded/electronics/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a></h1>
     
     
       <p class="meta">
@@ -420,226 +420,30 @@ Most Recept Post:
 
 
 
-<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
+<time datetime="2014-06-04T11:12:55+00:00" pubdate data-updated="true">Jun 04, 2014</time>
         
-           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/linux/embedded/electronics/2014/06/04/a-microsd-card-remote-switcher.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/embedded/electronics/2014/06/04/a-microsd-card-remote-switcher.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>[Article is under construction]</p>
+  <div class="entry-content"><p>Recently, I’ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem <em>without</em> removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what’s going on.</p>
 
-<p>The herd7 memory consistency tool is used to verify if certain (mostly
-undesirable) outcomes (memory-related) of concurrent programs exist, given a
-memory model. A memory-model restricts possible candidate executions. After
-such restriction, if certain undesirable still exist, the user is notified
-via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
+<p>The base board requires two <a href="https://www.sparkfun.com/products/9419">SparkFun MicroSD sniffers</a>. The card cage on the sniffer is unused for my purposes. The switcher is controlled through an <a href="https://www.sparkfun.com/products/9717">FTDI cable</a>. 
+I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switch.c">wrote up</a> a <code class="language-plaintext highlighter-rouge">switch</code> program to control the switcher with libftdi. You just have to pass to it the FTDI’s serial number and whether you want to switch to host-mode (for programming the card) or target-mode (for booting the programmed card).
+<a href="https://github.com/joelagnel/microsd-switch">Hardware design files</a> are available under a CC-BY-NC-SA 3.0 license.</p>
 
-<p>This is an advanced article that goes through the different parts of the
-linux-kernel.cat code, and tries to explain with examples about how/why
-properties are defined the way they are. The motivation to understand this
-deeply is, by understanding how to read a memory model written in CAT, it
-should be possible to get a deep understanding of how memory consistency and
-ordering works and how a memory model behaves. Even though the herd7 memory
-model is abstract in some sense (it does not describe CPU implementation but
-just a set of properites and rules on memory ordering and program execution),
-it can still be considered to model of how a CPU should behave. Thus it can be
-argued that you are formally defining how memory accesses in CPUs should
-typically behave, if such CPUs are expected to run concurrent Linux kernel
-code.</p>
+<p>Screencast&lt;iframe width="100%" height="515" src="http://www.youtube.com/embed/StpIihVQ7oM " frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen&gt;&lt;/iframe&gt;</p>
 
-<p>It is assumed that the reader is already familiar with how to use the tool, as
-well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
-described in much detail in the
-<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
-articles and conference papers on the herd7 tools which we will not replicate
-here.</p>
+<p>Pictures
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo5.jpg" />
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo2.jpg" />
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/front.png" /></p>
 
-<ol>
-  <li>Sequential consistency per-variable (SCPV)</li>
-</ol>
-
-<p>This property is fundamental in modern processors, and it basically means that
-reads and writes to a certain variable happen in a total-order. In other words,
-for a specific variable, it is not possible to observe a sequence of writes to
-that variable in an order different from the order in which its values were
-written.</p>
-
-<p>This also applies to the writes happening on the same CPU. In a single CPU, the
-writes happenning on the same variable happen in program order execution.</p>
-
-<p>The way the memory model can enforce this is by defining a rule forbidding a
-certain property. Let us see if we can define the violations of SCPV as a cycle
-in a particular candidate execution, and then tell the model that such execution
-candidates are forbidden.</p>
-
-<p>Consider a program doing 2 writes to a variable:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-</code></pre></div></div>
-
-<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
-
-<ol>
-  <li>The final value of x is 2. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
-</code></pre></div></div>
-
-<ol>
-  <li>The final value of x is 3. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
-</code></pre></div></div>
-
-<p>We wish to forbid the pattern in #1. How do we do that?</p>
-
-<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
-the same CPU.</p>
-
-<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
-(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
-the 2:
-<code class="language-plaintext highlighter-rouge">po-loc | co</code>
-This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
-words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
-execution.</p>
-
-<p>Another possibility is, there are writes happening on different CPUs:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-
-P1(int *x) {
-  WRITE_ONCE(*x, 4);            // event W3
-}
-</code></pre></div></div>
-
-<p>Here there are 6 possible candidate executions:</p>
-
-<ol>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div>    </div>
-  </li>
-</ol>
-
-<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
-
-<p>#3 has the following relations:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
-W3 -&gt;co W1
-W1 -&gt;po-loc W2
-</code></pre></div></div>
-<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
-
-<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
-
-<p>So far we have only considered stores, however we must order the reads from
-these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at an example, where the above
-acyclic definition is incomplete.</p>
-
-<p>Consider the following Litmus test involving read accesses:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C scpv-rf
-
-{}
-
-P0(int *x)
-{
-        WRITE_ONCE(*x, 2);
-        WRITE_ONCE(*x, 3);
-}
-
-P1(int *x)
-{
-        int r1;
-        int r2;
-
-        r1 = READ_ONCE(*x);
-        r2 = READ_ONCE(*x);
-}
-
-exists (1:r1=3 /\ 1:r2=2)
-</code></pre></div></div>
-
-<p>Here, we hope that the reads to variable <code class="language-plaintext highlighter-rouge">x</code> are observed by P1 in the
-program-order that were written in P0. So the forbidden exists clause should
-never occur.</p>
-
-<p>However, if you were to build a CAT model as follows, using the previously
-determined acyclic property, then the forbidden case indeed happens.</p>
-
-<p>Here is the CAT code:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include "cos.cat"
-
-acyclic po-loc | co
-</code></pre></div></div>
-
-<p>This can be run using herd7 as follows, with the <code class="language-plaintext highlighter-rouge">-show prop</code> options to generate a DOT graph file of the forbidden case:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
-</code></pre></div></div>
-
-<p>Running this shows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Test scpv-rf Allowed
-States 9
-1:r1=0; 1:r2=0;
-1:r1=0; 1:r2=2;
-1:r1=0; 1:r2=3;
-1:r1=2; 1:r2=0;
-1:r1=2; 1:r2=2;
-1:r1=2; 1:r2=3;
-1:r1=3; 1:r2=0;
-1:r1=3; 1:r2=2;
-1:r1=3; 1:r2=3;
-Ok
-Witnesses
-Positive: 1 Negative: 8
-Condition exists (1:r1=3 /\ 1:r2=2)
-Observation scpv-rf Sometimes 1 8
-Time scpv-rf 0.00
-Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
-</code></pre></div></div>
-<p>And the graph for the forbidden case is as follows:
-<img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
-
-<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
-
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
-property as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
-the Linux kernel’s memory model.</p>
+<p>Hope you enjoyed it, let me know what yout think in the comments:)</p>
 </div>
   
   
@@ -649,9 +453,11 @@ the Linux kernel’s memory model.</p>
   
   <div class="pagination">
     
-      <a class="prev" href="2">&larr; Older</a>
+      <a class="prev" href="18">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="16">Newer &rarr;</a>
     
   </div>
 </div>

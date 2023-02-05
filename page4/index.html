@@ -22,7 +22,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page4/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -406,7 +406,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">SRCU state double scan</a></h1>
     
     
       <p class="meta">
@@ -420,226 +420,82 @@ Most Recept Post:
 
 
 
-<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
+<time datetime="2020-03-06T00:00:00+00:00" pubdate data-updated="true">Mar 06, 2020</time>
         
-           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>[Article is under construction]</p>
+  <div class="entry-content"><p>The SRCU flavor of RCU uses per-cpu counters to detect that every CPU has
+passed through a quiescent state for a particular SRCU lock instance
+(<code class="language-plaintext highlighter-rouge">srcu_struct</code>).</p>
 
-<p>The herd7 memory consistency tool is used to verify if certain (mostly
-undesirable) outcomes (memory-related) of concurrent programs exist, given a
-memory model. A memory-model restricts possible candidate executions. After
-such restriction, if certain undesirable still exist, the user is notified
-via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
+<p>There’s are total of 4 counters per-cpu. One pair for locks, and another for
+unlocks. You can think of the SRCU instance to be split into 2 parts. The
+readers sample <code class="language-plaintext highlighter-rouge">srcu_idx</code> and decided which part to use. Each part corresponds
+to one pair of lock and unlock counters. A reader increments a part’s lock
+counter during locking and likewise for unlock.</p>
 
-<p>This is an advanced article that goes through the different parts of the
-linux-kernel.cat code, and tries to explain with examples about how/why
-properties are defined the way they are. The motivation to understand this
-deeply is, by understanding how to read a memory model written in CAT, it
-should be possible to get a deep understanding of how memory consistency and
-ordering works and how a memory model behaves. Even though the herd7 memory
-model is abstract in some sense (it does not describe CPU implementation but
-just a set of properites and rules on memory ordering and program execution),
-it can still be considered to model of how a CPU should behave. Thus it can be
-argued that you are formally defining how memory accesses in CPUs should
-typically behave, if such CPUs are expected to run concurrent Linux kernel
-code.</p>
+<p>During an update, the updater flips <code class="language-plaintext highlighter-rouge">srcu_idx</code> (thus attempting to force new
+readers to use the other part) and waits for the lock/unlock counters on the
+previous value of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to match.  Once the sum of the lock counters of
+all CPUs match that of unlock, the system knows all pre-existing read-side
+critical sections have completed.</p>
 
-<p>It is assumed that the reader is already familiar with how to use the tool, as
-well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
-described in much detail in the
-<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
-articles and conference papers on the herd7 tools which we will not replicate
-here.</p>
+<p>Things are not that simple, however. It is possible that a reader samples the
+<code class="language-plaintext highlighter-rouge">srcu_idx</code>, but before it can increment the lock counter corresponding to it,
+it undergoes a long delay. We thus we end up in a situation where there are
+readers in both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code>.</p>
 
-<ol>
-  <li>Sequential consistency per-variable (SCPV)</li>
-</ol>
-
-<p>This property is fundamental in modern processors, and it basically means that
-reads and writes to a certain variable happen in a total-order. In other words,
-for a specific variable, it is not possible to observe a sequence of writes to
-that variable in an order different from the order in which its values were
-written.</p>
-
-<p>This also applies to the writes happening on the same CPU. In a single CPU, the
-writes happenning on the same variable happen in program order execution.</p>
-
-<p>The way the memory model can enforce this is by defining a rule forbidding a
-certain property. Let us see if we can define the violations of SCPV as a cycle
-in a particular candidate execution, and then tell the model that such execution
-candidates are forbidden.</p>
-
-<p>Consider a program doing 2 writes to a variable:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
+<p>To prevent such a situation, a writer has to wait for readers corresponding to
+both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code> to complete. This depicted with ‘A MUST’
+in the below pseudo-code:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        reader 1        writer                        reader 2
+        -------------------------------------------------------
+        // read_lock
+        // enter
+        Read: idx = 0;
+        &lt;long delay&gt;    // write_lock
+                        // enter
+                        wait_for lock[1]==unlock[1]
+                        idx = 1; /* flip */
+                        wait_for lock[0]==unlock[0]
+                        done.
+                                                      Read: idx = 1;
+        lock[0]++;
+                                                      lock[1]++;
+                        // write_lock
+                        // return
+        // read_lock
+        // return
+        /**** NOW BOTH lock[0] and lock[1] are non-zero!! ****/
+                        // write_lock
+                        // enter
+                        wait_for lock[0]==unlock[0] &lt;- A MUST!
+                        idx = 0; /* flip */
+                        wait_for lock[1]==unlock[1] &lt;- A MUST!
 </code></pre></div></div>
+<p>NOTE: QRCU has a similar issue. However it overcomes such a race in the reader
+by retrying the sampling of its <code class="language-plaintext highlighter-rouge">srcu_idx</code> equivalent.</p>
 
-<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
+<p>Q: If you have to wait for readers of both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code>, and <code class="language-plaintext highlighter-rouge">1</code>, then why
+not just have a single counter and do away with the “flipping” logic?</p>
 
-<ol>
-  <li>The final value of x is 2. This happens because of the following candidate execution:</li>
-</ol>
+<p>Ans:
+Because of updater forward progress. If we had a single counter, then it is
+possible that new readers would constantly increment the lock counter, thus
+updaters would be waiting all the time. By using the ‘flip’ logic, we are able
+to drain pre-existing readers using the inactive part of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to be
+drained in a bounded time. The number of readers of a ‘flipped’ part would only
+monotonically decrease since new readers go to its counterpart.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
-</code></pre></div></div>
-
-<ol>
-  <li>The final value of x is 3. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
-</code></pre></div></div>
-
-<p>We wish to forbid the pattern in #1. How do we do that?</p>
-
-<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
-the same CPU.</p>
-
-<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
-(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
-the 2:
-<code class="language-plaintext highlighter-rouge">po-loc | co</code>
-This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
-words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
-execution.</p>
-
-<p>Another possibility is, there are writes happening on different CPUs:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-
-P1(int *x) {
-  WRITE_ONCE(*x, 4);            // event W3
-}
-</code></pre></div></div>
-
-<p>Here there are 6 possible candidate executions:</p>
-
-<ol>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div>    </div>
-  </li>
-</ol>
-
-<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
-
-<p>#3 has the following relations:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
-W3 -&gt;co W1
-W1 -&gt;po-loc W2
-</code></pre></div></div>
-<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
-
-<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
-
-<p>So far we have only considered stores, however we must order the reads from
-these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at an example, where the above
-acyclic definition is incomplete.</p>
-
-<p>Consider the following Litmus test involving read accesses:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C scpv-rf
-
-{}
-
-P0(int *x)
-{
-        WRITE_ONCE(*x, 2);
-        WRITE_ONCE(*x, 3);
-}
-
-P1(int *x)
-{
-        int r1;
-        int r2;
-
-        r1 = READ_ONCE(*x);
-        r2 = READ_ONCE(*x);
-}
-
-exists (1:r1=3 /\ 1:r2=2)
-</code></pre></div></div>
-
-<p>Here, we hope that the reads to variable <code class="language-plaintext highlighter-rouge">x</code> are observed by P1 in the
-program-order that were written in P0. So the forbidden exists clause should
-never occur.</p>
-
-<p>However, if you were to build a CAT model as follows, using the previously
-determined acyclic property, then the forbidden case indeed happens.</p>
-
-<p>Here is the CAT code:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include "cos.cat"
-
-acyclic po-loc | co
-</code></pre></div></div>
-
-<p>This can be run using herd7 as follows, with the <code class="language-plaintext highlighter-rouge">-show prop</code> options to generate a DOT graph file of the forbidden case:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
-</code></pre></div></div>
-
-<p>Running this shows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Test scpv-rf Allowed
-States 9
-1:r1=0; 1:r2=0;
-1:r1=0; 1:r2=2;
-1:r1=0; 1:r2=3;
-1:r1=2; 1:r2=0;
-1:r1=2; 1:r2=2;
-1:r1=2; 1:r2=3;
-1:r1=3; 1:r2=0;
-1:r1=3; 1:r2=2;
-1:r1=3; 1:r2=3;
-Ok
-Witnesses
-Positive: 1 Negative: 8
-Condition exists (1:r1=3 /\ 1:r2=2)
-Observation scpv-rf Sometimes 1 8
-Time scpv-rf 0.00
-Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
-</code></pre></div></div>
-<p>And the graph for the forbidden case is as follows:
-<img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
-
-<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
-
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
-property as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
-the Linux kernel’s memory model.</p>
+<p>2023 update:
+I have more detailed notes with diagrams and such on this and other cases. Just
+reach out to me if you want to take a look at those.</p>
 </div>
   
   
@@ -649,9 +505,11 @@ the Linux kernel’s memory model.</p>
   
   <div class="pagination">
     
-      <a class="prev" href="2">&larr; Older</a>
+      <a class="prev" href="5">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="3">Newer &rarr;</a>
     
   </div>
 </div>

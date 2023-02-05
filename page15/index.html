@@ -22,7 +22,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page15/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -406,7 +406,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></h1>
     
     
       <p class="meta">
@@ -420,226 +420,78 @@ Most Recept Post:
 
 
 
-<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
+<time datetime="2016-03-20T08:44:32+00:00" pubdate data-updated="true">Mar 20, 2016</time>
         
-           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>[Article is under construction]</p>
+  <div class="entry-content"><p><code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is one of the many “thread information flags” stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Inorder to explain why its important and how it works, I will go over 2 cases where <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is used.</p>
 
-<p>The herd7 memory consistency tool is used to verify if certain (mostly
-undesirable) outcomes (memory-related) of concurrent programs exist, given a
-memory model. A memory-model restricts possible candidate executions. After
-such restriction, if certain undesirable still exist, the user is notified
-via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
+<h2 id="preemption">Preemption</h2>
+<p>Preemption is the process of forceably grabbing CPU from a user or kernel context and giving it to someone else (user or kernel). It is the means for timesharing a CPU between competing tasks (I will use task as terminology for process).
+In Linux, the way it works is a timer interrupt (called the tick) interrupts the task that is running and makes a decision about whether a task or a kernel code path (executing on behalf of a task like in a syscall) is to be preempted. This decision is based on whether the task has been running long-enough and something higher priority woke up and needs CPU now, or is ready to run.</p>
 
-<p>This is an advanced article that goes through the different parts of the
-linux-kernel.cat code, and tries to explain with examples about how/why
-properties are defined the way they are. The motivation to understand this
-deeply is, by understanding how to read a memory model written in CAT, it
-should be possible to get a deep understanding of how memory consistency and
-ordering works and how a memory model behaves. Even though the herd7 memory
-model is abstract in some sense (it does not describe CPU implementation but
-just a set of properites and rules on memory ordering and program execution),
-it can still be considered to model of how a CPU should behave. Thus it can be
-argued that you are formally defining how memory accesses in CPUs should
-typically behave, if such CPUs are expected to run concurrent Linux kernel
-code.</p>
+<p>These things happen in <code class="language-plaintext highlighter-rouge">scheduler_tick()</code>, the exact path is <em>TIMER HARDWARE INTERRUPT</em> -&gt; <code class="language-plaintext highlighter-rouge">scheduler_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">task_tick_fair</code> -&gt; <code class="language-plaintext highlighter-rouge">entity_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">check_preempt_tick</code>.
+<code class="language-plaintext highlighter-rouge">entity_tick()</code> updates various run time statistics of the task, and <code class="language-plaintext highlighter-rouge">check_preempt_tick()</code> is where TIF_NEED_RESCHED is set.</p>
 
-<p>It is assumed that the reader is already familiar with how to use the tool, as
-well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
-described in much detail in the
-<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
-articles and conference papers on the herd7 tools which we will not replicate
-here.</p>
-
-<ol>
-  <li>Sequential consistency per-variable (SCPV)</li>
-</ol>
-
-<p>This property is fundamental in modern processors, and it basically means that
-reads and writes to a certain variable happen in a total-order. In other words,
-for a specific variable, it is not possible to observe a sequence of writes to
-that variable in an order different from the order in which its values were
-written.</p>
-
-<p>This also applies to the writes happening on the same CPU. In a single CPU, the
-writes happenning on the same variable happen in program order execution.</p>
-
-<p>The way the memory model can enforce this is by defining a rule forbidding a
-certain property. Let us see if we can define the violations of SCPV as a cycle
-in a particular candidate execution, and then tell the model that such execution
-candidates are forbidden.</p>
-
-<p>Consider a program doing 2 writes to a variable:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-</code></pre></div></div>
-
-<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
-
-<ol>
-  <li>The final value of x is 2. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
-</code></pre></div></div>
-
-<ol>
-  <li>The final value of x is 3. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
-</code></pre></div></div>
-
-<p>We wish to forbid the pattern in #1. How do we do that?</p>
-
-<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
-the same CPU.</p>
-
-<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
-(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
-the 2:
-<code class="language-plaintext highlighter-rouge">po-loc | co</code>
-This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
-words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
-execution.</p>
-
-<p>Another possibility is, there are writes happening on different CPUs:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-
-P1(int *x) {
-  WRITE_ONCE(*x, 4);            // event W3
-}
-</code></pre></div></div>
-
-<p>Here there are 6 possible candidate executions:</p>
-
-<ol>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div>    </div>
-  </li>
-</ol>
-
-<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
-
-<p>#3 has the following relations:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
-W3 -&gt;co W1
-W1 -&gt;po-loc W2
-</code></pre></div></div>
-<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
-
-<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
-
-<p>So far we have only considered stores, however we must order the reads from
-these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at an example, where the above
-acyclic definition is incomplete.</p>
-
-<p>Consider the following Litmus test involving read accesses:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C scpv-rf
-
-{}
-
-P0(int *x)
+<p>Here’s a small bit of code in <code class="language-plaintext highlighter-rouge">check_preempt_tick</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr)
 {
-        WRITE_ONCE(*x, 2);
-        WRITE_ONCE(*x, 3);
+        unsigned long ideal_runtime, delta_exec;
+        struct sched_entity *se;
+        s64 delta;
+
+        ideal_runtime = sched_slice(cfs_rq, curr);
+        delta_exec = curr-&gt;sum_exec_runtime - curr-&gt;prev_sum_exec_runtime;
+        if (delta_exec &gt; ideal_runtime) {
+                resched_curr(rq_of(cfs_rq));
+                /*
+                 * The current task ran long enough, ensure it doesn't get
+                 * re-elected due to buddy favours.
+                 */
+                clear_buddies(cfs_rq, curr);
+                return;
+        }
+</code></pre></div></div>
+<p>Here you see a decision is made that the process ran long enough based on its runtime and if so call <code class="language-plaintext highlighter-rouge">resched_curr</code>. Turns out <code class="language-plaintext highlighter-rouge">resched_curr</code> sets the <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> for the current task! This informs whoever looks at the flag, that this process should be scheduled out soon.</p>
+
+<p>Even though this flag is set at this point, the task is not going to be preempted yet. This is because preemption happens at specific points such as exit of interrupts. If the flag is set because the timer interrupt (scheduler decided) decided that something of higher priority needs CPU now and sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>, then at the exit of the timer interrupt (interrupt exit path), <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is checked, and because it is set - <code class="language-plaintext highlighter-rouge">schedule()</code> is called causing context switch to happen to another process of higher priority, instead of just returning to the existing process that the timer interrupted normally would.
+Lets examine where this happens.</p>
+
+<p>For return from interrupt to user-mode:</p>
+
+<p>If the tick interrupt happened user-mode code was running, then in somewhere in the interrupt exit path for x86, this call chain calls schedule <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_user</code> -&gt; <code class="language-plaintext highlighter-rouge">prepare_exit_to_usermode</code>. Here the need_reched flag is checked, and if true <code class="language-plaintext highlighter-rouge">schedule()</code> is called.</p>
+
+<p>For return from interrupt to kernel mode, things are a bit different (skip this para if you think it’ll confuse you).</p>
+
+<p>This feature requires kernel preemption to be enabled. The call chain doing the preemption is: <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_kernel</code> -&gt; <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> (see <code class="language-plaintext highlighter-rouge">arch/x86/entry/entry_64.S</code>) which calls <code class="language-plaintext highlighter-rouge">schedule</code>.
+Note that, for return to kernel mode, I see that <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> calls <code class="language-plaintext highlighter-rouge">schedule</code> anyway whether need_resched flag is set or not, this is probably Ok but I am wondering if need_resched should be checked here before <code class="language-plaintext highlighter-rouge">schedule</code> is called. Perhaps it would be an optimiziation to avoid unecessarily calling <code class="language-plaintext highlighter-rouge">schedule</code>. One reason for not doing so would be, say any other interrupt other than timer tick is returning to the interrupted kernel space, then in these cases for example - if the timer tick didn’t get a chance to run (because all other local interrupts are disabled in Linux until an interrupt finishes, in this case our non-timer interrupt), then we’d want the exit path of the non-timer interrupt to behave just like the exit path of the timer tick interrupt would behave, whether need_resched is set or not.</p>
+
+<h2 id="critical-sections-in-kernel-code-where-preemption-is-off">Critical sections in kernel code where preemption is off</h2>
+<p>One nice example of a code path where preemption is off is the <code class="language-plaintext highlighter-rouge">mutex_lock</code> path in the kernel. In the kernel, there is an optimization where if a mutex is already locked and not available, but if the lock owner (the task currently holding the lock) is running on another CPU, then the mutex temporarily becomes a spinlock (which means it will spin until it can get the lock) instead of behaving like a mutex (which sleeps until the lock is available). The pseudo code looks like this:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mutex_lock() {
+  disable_preempt();
+  if (lock can't be acquired and the lock holding task is currently running) {
+	while (lock_owner_running &amp;&amp; !need_resched()) {
+		cpu_relax();
+	}
+  }
+  enable_preempt();
+  acquire_lock_or_sleep();
 }
-
-P1(int *x)
-{
-        int r1;
-        int r2;
-
-        r1 = READ_ONCE(*x);
-        r2 = READ_ONCE(*x);
-}
-
-exists (1:r1=3 /\ 1:r2=2)
 </code></pre></div></div>
 
-<p>Here, we hope that the reads to variable <code class="language-plaintext highlighter-rouge">x</code> are observed by P1 in the
-program-order that were written in P0. So the forbidden exists clause should
-never occur.</p>
+<p>The lock path does exactly what I described. <code class="language-plaintext highlighter-rouge">cpu_relax()</code> is arch specific which is called when the CPU has to do nothing but wait. It gives hints to the CPU that it can put itself into an idle state or use its resources for someone else. For x86, it involves calling the <a href="https://en.wikipedia.org/wiki/HLT">halt instruction</a>.</p>
 
-<p>However, if you were to build a CAT model as follows, using the previously
-determined acyclic property, then the forbidden case indeed happens.</p>
+<p>What I noticed is the Ftrace latency tracer complained about a long delay in the preempt disabled path of mutex_lock for one of my tests, and I made some <a href="http://www.spinics.net/lists/linux-rt-users/msg15022.html">noise</a> about it on the mailing list. Disabling preemption for long periods is generally a bad thing to do because during this duration, no other task can be scheduled on the CPU. However, Steven <a href="http://www.spinics.net/lists/linux-rt-users/msg15025.html">pointed out that</a> for this particular case, since we’re checking for need_resched() and breaking out of the loop, we should be Ok. What would happen is, the scheduling timer interrupt (which calls <code class="language-plaintext highlighter-rouge">scheduler_tick()</code> I mentioned earlier) comes in and checks if higher priority tasks need CPU, and if they do, it sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Once the timer interrupt returns to our tightly spinning loop in mutex_lock, we would break out of the loop having noticed <code class="language-plaintext highlighter-rouge">need_resched()</code> and, re-enable preemption as shown in the code above. Thus the long duration of preemption doesn’t turn out to be a problem as long tasks that need CPU are prioritized correctly. <code class="language-plaintext highlighter-rouge">need_resched()</code> achieved this fairness.</p>
 
-<p>Here is the CAT code:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include "cos.cat"
+<p>Next time you see <code class="language-plaintext highlighter-rouge">if (need_resched())</code> in kernel code, you’ll have a better idea why its there :). Let me know your comments if any.</p>
 
-acyclic po-loc | co
-</code></pre></div></div>
-
-<p>This can be run using herd7 as follows, with the <code class="language-plaintext highlighter-rouge">-show prop</code> options to generate a DOT graph file of the forbidden case:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
-</code></pre></div></div>
-
-<p>Running this shows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Test scpv-rf Allowed
-States 9
-1:r1=0; 1:r2=0;
-1:r1=0; 1:r2=2;
-1:r1=0; 1:r2=3;
-1:r1=2; 1:r2=0;
-1:r1=2; 1:r2=2;
-1:r1=2; 1:r2=3;
-1:r1=3; 1:r2=0;
-1:r1=3; 1:r2=2;
-1:r1=3; 1:r2=3;
-Ok
-Witnesses
-Positive: 1 Negative: 8
-Condition exists (1:r1=3 /\ 1:r2=2)
-Observation scpv-rf Sometimes 1 8
-Time scpv-rf 0.00
-Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
-</code></pre></div></div>
-<p>And the graph for the forbidden case is as follows:
-<img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
-
-<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
-
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
-property as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
-the Linux kernel’s memory model.</p>
 </div>
   
   
@@ -649,9 +501,11 @@ the Linux kernel’s memory model.</p>
   
   <div class="pagination">
     
-      <a class="prev" href="2">&larr; Older</a>
+      <a class="prev" href="16">&larr; Older</a>
     
     <a href="/blog/archives">Blog Archives</a>
+    
+    <a class="next" href="14">Newer &rarr;</a>
     
   </div>
 </div>
