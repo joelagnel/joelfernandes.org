@@ -272,7 +272,6 @@ edges using the sequence operator (semicolon) as follows:
 ```
 (fr; co)
 ```
-
 The only thing left to form an intersection between this relation and the
 relation consisting of the rmw operation, to form a new relation, and then
 forbid then forbid that such a relation exists in any candidate execution.
