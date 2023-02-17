@@ -254,7 +254,8 @@ P1(int *x)
 exists (0:r0=0 /\ x=1)
 ```
 The below graph shows the case that exists:
-![RMW operation being interferred with by a write](/images/herd7/rmw/rmw.svg)
+
+![RMW operation being interferred with by a write](/images/herd7/rmw/rmw.svg){: width="90%" }
 
 The `Rmw` edge in the graph illustrates the data-dependent relation between the
 read and the write, with the additional implication that it is to be atomic.
