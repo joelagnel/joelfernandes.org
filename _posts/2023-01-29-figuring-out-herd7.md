@@ -32,7 +32,7 @@ described in much detail in the
 articles and conference papers on the herd7 tools which we will not replicate
 here.
 
-1. Sequential consistency per-variable (SCPV)
+## 1. Sequential consistency per-variable (SCPV)
 
 This property is fundamental in modern processors, and it basically means that
 reads and writes to a certain variable happen in a total-order. In other words,
@@ -186,7 +186,8 @@ include "cos.cat"
 acyclic po-loc | co
 ```
 
-This can be run using herd7 as follows, with the `-show prop` options to generate a DOT graph file of the forbidden case:
+This can be run using herd7 as follows, with the `-show prop` options to
+generate a DOT graph file of the forbidden case:
 ```
 herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
 ```
@@ -221,3 +222,62 @@ This shows that both `->rf` and `->fr` should also included in the acyclic
 property as well. Hence to avoid the problematic candidate execution, the SCPV
 property should be `acyclic po-loc | co | rf | fr`. That is indeed the case in
 the Linux kernel's memory model.
+
+## 2. Atomicity
+
+Atomicity can be defined as a read-modify-write (RMW) operation on a memory
+location which happens atomically, that is no write from another CPU can happen
+between the read and the write. In other words, the read and write operation in
+the RMW operation are one (atomic).
+
+First let us see what happens if we have an RMW on CPU 0 being interleaved with
+a write from another CPU 1. Consider the litmus test we will use to generate a
+graph from:
+```
+C rmw-1
+
+{}
+
+P0(int *x)
+{
+        int r0;
+
+        r0 = xchg(x, 1);
+}
+
+P1(int *x)
+{
+        WRITE_ONCE(*x, 2);
+}
+
+
+exists (0:r0=0 /\ x=1)
+```
+The below graph shows the case that exists:
+![RMW operation being interferred with by a write](/images/herd7/rmw/rmw.svg)
+
+The `Rmw` edge in the graph illustrates the data-dependent relation between the
+read and the write, with the additional implication that it is to be atomic.
+The `fr` edge shows that a write on another CPU happened after the read
+operation of the RMW. The `co` edge shows that another write overwrote that
+write.
+
+This is precisely what we want our model to prevent -- another write should not
+be allowed to interleave in such a fashion, and all modern CPU architectures
+have hardware support to prevent such interleaving. We expect APIs like
+`xchg()` in the Linux kernel, that does use RMW instructions to work correctly.
+
+To prevent the above case, we first build a relation linking the `fr` and `co`
+edges using the sequence operator (semicolon) as follows:
+```
+(fr; co)
+```
+
+The only thing left to form an intersection between this relation and the
+relation consisting of the rmw operation, to form a new relation, and then
+forbid then forbid that such a relation exists in any candidate execution.
+These candidates will be rejected, as our model cannot possibly support them
+(just like the underlying hardware cannot).
+```
+empty rmw & (fr; co)
+```
