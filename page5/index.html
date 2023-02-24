@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>24 Feb 2023</span> &nbsp; <a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development with vim</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [vimproductivity]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>29 Jan 2023</span> &nbsp; <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -409,7 +423,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/pluscal/tla+/formalmethods/2019/10/18/pluscal-store-ordering.html">Modeling (lack of) store ordering using PlusCal - and a wishlist</a></h1>
+      <h1 class="entry-title"><a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">SRCU state double scan</a></h1>
     
     
       <p class="meta">
@@ -423,110 +437,82 @@ Most Recept Post:
 
 
 
-<time datetime="2019-10-18T00:00:00+00:00" pubdate data-updated="true">Oct 18, 2019</time>
+<time datetime="2020-03-06T00:00:00+00:00" pubdate data-updated="true">Mar 06, 2020</time>
         
-           | <a href="/pluscal/tla+/formalmethods/2019/10/18/pluscal-store-ordering.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/pluscal/tla+/formalmethods/2019/10/18/pluscal-store-ordering.html">Comments</a>
+           | <a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>The Message Passing pattern (MP pattern) is shown in the snippet below
-(borrowed from LKMM docs). Here, P0 and P1 are 2 CPUs executing some code. P0
-stores a message in <code class="language-plaintext highlighter-rouge">buf</code> and then signals to consumers like P1 that the
-message is available – by doing a store to <code class="language-plaintext highlighter-rouge">flag</code>. P1 reads <code class="language-plaintext highlighter-rouge">flag</code> and if it
-is set, knows that some data is available in <code class="language-plaintext highlighter-rouge">buf</code> and goes ahead and reads it.
-However, if <code class="language-plaintext highlighter-rouge">flag</code> is not set, then P1 does nothing else. Without memory
-barriers between P0’s stores and P1’s loads, the stores can appear out of order
-to P1 (on some systems), thus breaking the pattern. The condition <code class="language-plaintext highlighter-rouge">r1 == 0 and
-r2 == 1</code> is a failure in the below code and would violate the condition. Only
-after the <code class="language-plaintext highlighter-rouge">flag</code> variable is updated, should P1 be allowed to read the <code class="language-plaintext highlighter-rouge">buf</code>
-(“message”).</p>
+  <div class="entry-content"><p>The SRCU flavor of RCU uses per-cpu counters to detect that every CPU has
+passed through a quiescent state for a particular SRCU lock instance
+(<code class="language-plaintext highlighter-rouge">srcu_struct</code>).</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        int buf = 0, flag = 0;
+<p>There’s are total of 4 counters per-cpu. One pair for locks, and another for
+unlocks. You can think of the SRCU instance to be split into 2 parts. The
+readers sample <code class="language-plaintext highlighter-rouge">srcu_idx</code> and decided which part to use. Each part corresponds
+to one pair of lock and unlock counters. A reader increments a part’s lock
+counter during locking and likewise for unlock.</p>
 
-        P0()
-        {
-                WRITE_ONCE(buf, 1);
-                WRITE_ONCE(flag, 1);
-        }
+<p>During an update, the updater flips <code class="language-plaintext highlighter-rouge">srcu_idx</code> (thus attempting to force new
+readers to use the other part) and waits for the lock/unlock counters on the
+previous value of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to match.  Once the sum of the lock counters of
+all CPUs match that of unlock, the system knows all pre-existing read-side
+critical sections have completed.</p>
 
-        P1()
-        {
-                int r1;
-                int r2 = 0;
+<p>Things are not that simple, however. It is possible that a reader samples the
+<code class="language-plaintext highlighter-rouge">srcu_idx</code>, but before it can increment the lock counter corresponding to it,
+it undergoes a long delay. We thus we end up in a situation where there are
+readers in both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code>.</p>
 
-                r1 = READ_ONCE(flag);
-                if (r1)
-                        r2 = READ_ONCE(buf);
-        }
+<p>To prevent such a situation, a writer has to wait for readers corresponding to
+both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code> and <code class="language-plaintext highlighter-rouge">srcu_idx = 1</code> to complete. This depicted with ‘A MUST’
+in the below pseudo-code:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        reader 1        writer                        reader 2
+        -------------------------------------------------------
+        // read_lock
+        // enter
+        Read: idx = 0;
+        &lt;long delay&gt;    // write_lock
+                        // enter
+                        wait_for lock[1]==unlock[1]
+                        idx = 1; /* flip */
+                        wait_for lock[0]==unlock[0]
+                        done.
+                                                      Read: idx = 1;
+        lock[0]++;
+                                                      lock[1]++;
+                        // write_lock
+                        // return
+        // read_lock
+        // return
+        /**** NOW BOTH lock[0] and lock[1] are non-zero!! ****/
+                        // write_lock
+                        // enter
+                        wait_for lock[0]==unlock[0] &lt;- A MUST!
+                        idx = 0; /* flip */
+                        wait_for lock[1]==unlock[1] &lt;- A MUST!
 </code></pre></div></div>
+<p>NOTE: QRCU has a similar issue. However it overcomes such a race in the reader
+by retrying the sampling of its <code class="language-plaintext highlighter-rouge">srcu_idx</code> equivalent.</p>
 
-<p>Below is a simple program in PlusCal to model the “Message passing” access
-pattern and check whether the failure scenario <code class="language-plaintext highlighter-rouge">r1 == 0 and r2 == 1</code> could ever
-occur. In PlusCal, we can model the non deterministic out-of-order stores to
-<code class="language-plaintext highlighter-rouge">buf</code> and <code class="language-plaintext highlighter-rouge">flag</code> using an <code class="language-plaintext highlighter-rouge">either or</code> block. This makes PlusCal evaluate both
-scenarios of stores (store to <code class="language-plaintext highlighter-rouge">buf</code> first and then <code class="language-plaintext highlighter-rouge">flag</code>, or viceversa) during
-model checking. The technique used for modeling this non-determinism is similar
-to how it is done in Promela/Spin using an “if block” (Refer to Paul McKenney’s
-perfbook for details on that).</p>
+<p>Q: If you have to wait for readers of both <code class="language-plaintext highlighter-rouge">srcu_idx = 0</code>, and <code class="language-plaintext highlighter-rouge">1</code>, then why
+not just have a single counter and do away with the “flipping” logic?</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>EXTENDS Integers, TLC
-(*--algorithm mp_pattern
-variables
-    buf = 0,
-    flag = 0;
+<p>Ans:
+Because of updater forward progress. If we had a single counter, then it is
+possible that new readers would constantly increment the lock counter, thus
+updaters would be waiting all the time. By using the ‘flip’ logic, we are able
+to drain pre-existing readers using the inactive part of <code class="language-plaintext highlighter-rouge">srcu_idx</code> to be
+drained in a bounded time. The number of readers of a ‘flipped’ part would only
+monotonically decrease since new readers go to its counterpart.</p>
 
-process Writer = 1
-variables
-    begin
-e0:
-       either
-e1:        buf := 1;
-e2:        flag := 1;
-        or
-e3:        flag := 1;
-e4:        buf := 1;
-        end either;
-end process;
-
-process Reader = 2
-variables
-    r1 = 0,
-    r2 = 0;  
-    begin
-e5:     r1 := flag;
-e6:     if r1 = 1 then
-e7:         r2 := buf;
-        end if;
-e8:     assert r1 = 0 \/ r2 = 1;
-end process;
-
-end algorithm;*)
-</code></pre></div></div>
-
-<p>Sure enough, the <code class="language-plaintext highlighter-rouge">assert r1 = 0 \/ r2 = 1;</code>  fires when the PlusCal program is run through the TLC model checker.</p>
-
-<p>I do find the <code class="language-plaintext highlighter-rouge">either or</code> block clunky, and wish I could just do something like:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>non_deterministic {
-        buf := 1;
-        flag := 1;
-}
-</code></pre></div></div>
-<p>And then, PlusCal should evaluate both store orders. In fact, if I wanted more than 2 stores, then it can get crazy pretty quickly without such a construct. I should try to hack the PlusCal sources soon if I get time, to do exactly this. Thankfully it is open source software.</p>
-
-<p>Other notes:</p>
-
-<ul>
-  <li>
-    <p>PlusCal is a powerful language that translates to TLA+. TLA+ is to PlusCal what assembler is to C. I do find PlusCal’s syntax to be non-intuitive but that could just be because I am new to it. In particular, I hate having to mark statements with labels if I don’t want them to atomically execute with neighboring statements. In PlusCal, a label is used to mark a statement as an “atomic” entity. A group of statements under a label are all atomic. However, if you don’t specific labels on every statement like I did above (<code class="language-plaintext highlighter-rouge">eX</code>), then everything goes under a neighboring label. I wish PlusCal had an option, where a programmer could add implict labels to all statements, and then add explicit <code class="language-plaintext highlighter-rouge">atomic { }</code> blocks around statements that were indeed atomic. This is similar to how it is done in Promela/Spin.</p>
-  </li>
-  <li>
-    <p>I might try to hack up my own compiler to TLA+ if I can find the time to, or better yet modify PlusCal itself to do what I want. Thankfully the code for the PlusCal translator is open source software.</p>
-  </li>
-</ul>
+<p>2023 update:
+I have more detailed notes with diagrams and such on this and other cases. Just
+reach out to me if you want to take a look at those.</p>
 </div>
   
   
@@ -621,6 +607,10 @@ end algorithm;*)
   
     
       <a href="/page20">20</a>
+    
+  
+    
+      <a href="/page21">21</a>
     
   
   -->
