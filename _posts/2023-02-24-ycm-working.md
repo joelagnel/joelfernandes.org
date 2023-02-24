@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Getting YouCompleteMe working for kernel development with vim"
+title: "Getting YouCompleteMe working for kernel development"
 comments: true
 categories: [vim, productivity]
 ---
