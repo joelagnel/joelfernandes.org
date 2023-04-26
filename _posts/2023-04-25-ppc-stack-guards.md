@@ -2,33 +2,47 @@
 layout: post
 title: "PowerPC stack guard false positives in Linux kernel"
 comments: true
-categories: [kernel, stack ]
+categories: [kernel, stack]
 ---
-# PowerPC stack guard false positives in Linux kernel
+Recently, the RCU mailing list
+[received](https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t)
+a report about an SRCU function failing stack guard checks.
 
-Recently, the RCU mailing list [received](https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t) a report about an SRCU function failing stack guard checks.
+Stack guard canaries are a security mechanism used to detect stack buffer
+overflows. This mechanism works by placing a random value, called a canary,
+between the local variables and the return address on the stack. If a buffer
+overflow occurs, the canary value will be overwritten and the stack guard check
+will fail, indicating that the program is being attacked. False positives can
+occur if the canary value is overwritten by a legitimate write operation, such
+as when a large structure is copied onto the stack.
 
-Stack guard canaries are a security mechanism used to detect stack buffer overflows. This mechanism works by placing a random value, called a canary, between the local variables and the return address on the stack. If a buffer overflow occurs, the canary value will be overwritten and the stack guard check will fail, indicating that the program is being attacked. False positives can occur if the canary value is overwritten by a legitimate write operation, such as when a large structure is copied onto the stack.
+Closer inspection of the function (`srcu_gp_start_if_needed`) did not reveal
+any buffers that may be overflowed.
 
-Closer inspection of the function (`srcu_gp_start_if_needed`) did not reveal any buffers that may be overflowed.
+After discussions with a number of kernel developers, it is clear what the
+issue is. Firstly, credit to Boqun Feng for looking through disassembly and
+pointing things out which led to the whole email chain and discovery of the
+issue.
 
-After discussions with a number of kernel developers, it is clear what the issue is. Firstly, credit to Boqun Feng for looking through disassembly and pointing things out which led to the whole email chain and discovery of the issue.
+A significant hint came from Christophe who is the kernel author of PPC’s stack
+protection, he mentioned:
 
-A significant hint came from Christophe who is the kernel author of PPC’s stack protection, he mentioned:
+```
+Each task has its own canary, stored in task struct :
 
-<aside>
-💡 Each task has its own canary, stored in task struct :
-kernel/fork.c:1012:     tsk->stack_canary = get_random_canary();
+kernel/fork.c:1012:
+tsk->stack_canary = get_random_canary();
+
 On PPC32 we have register 'r2' that points to task struct at all time, 
 so GCC is instructed to find canary at an offset from r2.
-But on PPC64 we have no such register. Instead we have r13 that points 
-to the PACA struct which is a per-cpu structure, and we have a pointer 
-to 'current' task struct in the PACA struct. So in order to be able to 
-have the canary as an offset of a fixed register as expected by GCC, we 
-copy the task canary into the cpu's PACA struct during _switch():
-</aside>
+But on PPC64 we have no such register.
 
-```jsx
+Instead we have r13 that points to the PACA struct which is a per-cpu
+structure, and we have a pointer to 'current' task struct in the PACA struct.
+So in order to be able to have the canary as an offset of a fixed register as
+expected by GCC, we copy the task canary into the cpu's PACA struct during
+_switch():
+
 	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
 	std	r6,PACACURRENT(r13)	/* Set new 'current' */
   #if defined(CONFIG_STACKPROTECTOR)
