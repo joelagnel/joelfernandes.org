@@ -109,9 +109,18 @@ contains CPU 1's canary which is that of task B!
 So the issue is precisely in #2.  The issue is in the compiler that it
 does not treat r13 as volatile as Boqun had initially mentioned.
 ```
-
 ## How do we fix it?
 
 My / our current take on it is it appears to be a compiler bug where the register `r13` is not considered volatile (which works for user land but not for the kernel). Seher Boessenkool who has worked on similar PPC64 issues before is on the email chain and can hopefully fix it in the compiler but lets see where it goes.
 
 As a quick hack to fix this (as shown by Boqun above),`r13` can be added to an extended inline asm statement, which instructs the compiler that `r13` may be clobbered by the asm statement, hopefully preventing the compiler from caching its value before exiting the function.
+
+## Can we fix it in the kernel?
+
+According to Michael Ellerman, a possible solution would be to keep current in a register (GPR) on 64-bit, but we'd need to do that in addition to the register reserved for the PACA, so that would consume another GPR which we'd need to think hard about.
+
+There's another reason to have the canary in the PACA, according to him: The PACA is
+
+always accessible, even when the MMU is off (because it is in a register), whereas `current` isn't (in some situations).
+
+Even though, we prefer not to use stack protector in code that runs with the MMU off — if the canary wasn't in the PACA to begin with, then we'd have a hard requirement to not use stack protector in code paths where the MMU is off.
