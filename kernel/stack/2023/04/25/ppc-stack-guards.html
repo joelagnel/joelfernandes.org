@@ -143,28 +143,40 @@ Apr 25, 2023
   </header>
 
 
-<div class="entry-content"><h1 id="powerpc-stack-guard-false-positives-in-linux-kernel">PowerPC stack guard false positives in Linux kernel</h1>
+<div class="entry-content"><p>Recently, the RCU mailing list
+<a href="https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t">received</a>
+a report about an SRCU function failing stack guard checks.</p>
 
-<p>Recently, the RCU mailing list <a href="https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t">received</a> a report about an SRCU function failing stack guard checks.</p>
+<p>Stack guard canaries are a security mechanism used to detect stack buffer
+overflows. This mechanism works by placing a random value, called a canary,
+between the local variables and the return address on the stack. If a buffer
+overflow occurs, the canary value will be overwritten and the stack guard check
+will fail, indicating that the program is being attacked. False positives can
+occur if the canary value is overwritten by a legitimate write operation, such
+as when a large structure is copied onto the stack.</p>
 
-<p>Stack guard canaries are a security mechanism used to detect stack buffer overflows. This mechanism works by placing a random value, called a canary, between the local variables and the return address on the stack. If a buffer overflow occurs, the canary value will be overwritten and the stack guard check will fail, indicating that the program is being attacked. False positives can occur if the canary value is overwritten by a legitimate write operation, such as when a large structure is copied onto the stack.</p>
+<p>Closer inspection of the function (<code class="language-plaintext highlighter-rouge">srcu_gp_start_if_needed</code>) did not reveal
+any buffers that may be overflowed.</p>
 
-<p>Closer inspection of the function (<code class="language-plaintext highlighter-rouge">srcu_gp_start_if_needed</code>) did not reveal any buffers that may be overflowed.</p>
+<p>After discussions with a number of kernel developers, it is clear what the
+issue is. Firstly, credit to Boqun Feng for looking through disassembly and
+pointing things out which led to the whole email chain and discovery of the
+issue.</p>
 
-<p>After discussions with a number of kernel developers, it is clear what the issue is. Firstly, credit to Boqun Feng for looking through disassembly and pointing things out which led to the whole email chain and discovery of the issue.</p>
-
-<p>A significant hint came from Christophe who is the kernel author of PPC’s stack protection, he mentioned:</p>
+<p>A significant hint came from Christophe who is the kernel author of PPC’s stack
+protection, he mentioned:</p>
 
 <aside>
-💡 Each task has its own canary, stored in task struct :
-kernel/fork.c:1012:     tsk-&gt;stack_canary = get_random_canary();
+💡 Each task has its own canary, stored in task struct : kernel/fork.c:1012:
+tsk-&gt;stack_canary = get_random_canary();
 On PPC32 we have register 'r2' that points to task struct at all time, 
 so GCC is instructed to find canary at an offset from r2.
-But on PPC64 we have no such register. Instead we have r13 that points 
-to the PACA struct which is a per-cpu structure, and we have a pointer 
-to 'current' task struct in the PACA struct. So in order to be able to 
-have the canary as an offset of a fixed register as expected by GCC, we 
-copy the task canary into the cpu's PACA struct during _switch():
+But on PPC64 we have no such register.
+Instead we have r13 that points to the PACA struct which is a per-cpu
+structure, and we have a pointer to 'current' task struct in the PACA struct.
+So in order to be able to have the canary as an offset of a fixed register as
+expected by GCC, we copy the task canary into the cpu's PACA struct during
+_switch():
 </aside>
 
 <div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="nx">addi</span>	<span class="nx">r6</span><span class="p">,</span><span class="nx">r4</span><span class="p">,</span><span class="o">-</span><span class="nx">THREAD</span>	<span class="cm">/* Convert THREAD to 'current' */</span>
