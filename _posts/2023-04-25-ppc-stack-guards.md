@@ -4,73 +4,58 @@ title: "PowerPC stack guard false positives in Linux kernel"
 comments: true
 categories: [kernel, stack ]
 ---
-Recently, the RCU mailing list
-[received](https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t)
-a report about an SRCU function failing stack guard checks.
+# PowerPC stack guard false positives in Linux kernel
 
-Stack guard canaries are a security mechanism used to detect stack buffer
-overflows. This mechanism works by placing a random value, called a canary,
-between the local variables and the return address on the stack. If a buffer
-overflow occurs, the canary value will be overwritten and the stack guard check
-will fail, indicating that the program is being attacked. False positives can
-occur if the canary value is overwritten by a legitimate write operation, such
-as when a large structure is copied onto the stack.
+Recently, the RCU mailing list [received](https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t) a report about an SRCU function failing stack guard checks.
 
-Closer inspection of the function (`srcu_gp_start_if_needed`) did not reveal
-any buffers that may be overflowed.
+Stack guard canaries are a security mechanism used to detect stack buffer overflows. This mechanism works by placing a random value, called a canary, between the local variables and the return address on the stack. If a buffer overflow occurs, the canary value will be overwritten and the stack guard check will fail, indicating that the program is being attacked. False positives can occur if the canary value is overwritten by a legitimate write operation, such as when a large structure is copied onto the stack.
 
-After discussions with a number of kernel developers, it is clear what the
-issue is. Firstly, credit to Boqun Feng for looking through disassembly and
-pointing things out which led to the whole email chain and discovery of the
-issue.
+Closer inspection of the function (`srcu_gp_start_if_needed`) did not reveal any buffers that may be overflowed.
 
-A significant hint came from Christophe who is the kernel author of PPC’s stack
-protection, he mentioned:
+After discussions with a number of kernel developers, it is clear what the issue is. Firstly, credit to Boqun Feng for looking through disassembly and pointing things out which led to the whole email chain and discovery of the issue.
 
-> Each task has its own canary, stored in task struct :
+A significant hint came from Christophe who is the kernel author of PPC’s stack protection, he mentioned:
 
+<aside>
+💡 Each task has its own canary, stored in task struct :
 kernel/fork.c:1012:     tsk->stack_canary = get_random_canary();
-
 On PPC32 we have register 'r2' that points to task struct at all time, 
 so GCC is instructed to find canary at an offset from r2.
-
 But on PPC64 we have no such register. Instead we have r13 that points 
 to the PACA struct which is a per-cpu structure, and we have a pointer 
 to 'current' task struct in the PACA struct. So in order to be able to 
 have the canary as an offset of a fixed register as expected by GCC, we 
 copy the task canary into the cpu's PACA struct during _switch():
-> 
+</aside>
 
 ```jsx
 	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
 	std	r6,PACACURRENT(r13)	/* Set new 'current' */
-#if defined(CONFIG_STACKPROTECTOR)
-	ld	r6, TASK_CANARY(r6)
-	std	r6, PACA_CANARY(r13)
-#endif
+  #if defined(CONFIG_STACKPROTECTOR)
+	  ld	r6, TASK_CANARY(r6)
+	  std	r6, PACA_CANARY(r13)
+  #endif
 ```
+
 ---
-In 32-bit PPC, the TLS (Thread local storage) is pointed to by register `r2`.
-In this kernel, this `r2` register points to the current `task_struct`, again
-on 32-bit PPC. But on 64-bit PPC, `r2` is not available, so the currently
-running `task_struct` is saved in the per-CPU area pointed to by `r13` instead.
-This is clear from the assembly code above
+
+In 64-bit PPC, the TLS (Thread Local Storage) cannot be pointed to by register `r2` as it is used to store the TOC (Table of Contents) pointer instead, which is used for accessing global and static data. Therefore, the kernel saves the currently running `task_struct` in the per-CPU area pointed to by `r13` instead. This is known as the Processor Access Control Area (PACA). The PACA is a per-CPU memory area that stores information about the CPU's context. One of the users of this data structure is to save the current instruction location prior to interrupt processing.
+
+On PPC64, each task has its own stack canary, stored in the task struct. However, unlike PPC32, there is no fixed register that points to the currently running `task_struct` at all times. Instead, the per-CPU PACA struct contains a pointer to the current `task_struct`. Therefore, in order to be able to have the canary as an offset of a fixed register as expected by GCC, the task canary is copied into the PACA struct during `_switch()`. False positives can occur if GCC keeps an old value of the per-CPU struct pointer, which then gets the canary from the wrong CPU struct, leading to a different task.
+
+This issue with storing canaries of the currently running task is related to the issue of not being able to use `r2` to point to the TLS on 64-bit PPC. The kernel must use the per-CPU area to store the currently running `task_struct`, which leads to the need to copy the task canary into the PACA struct during `_switch()`. The compiler optimization that causes the register `r13` to be cached into `r10` can then lead to false positives if GCC keeps an old value of the per-CPU struct pointer. 
 
 ### So what the heck is PACA?
 
-This `r13` register points to a structure in the kernel called PACA which is a
-per-CPU memory area storing information about the CPU’s context.
+This `r13` register points to a structure in the kernel called PACA which is a per-CPU memory area storing information about the CPU’s context.
 
 Per the PPC64 [paper](https://www.kernel.org/doc/ols/2001/ppc64.pdf):
 
-This structure contains information unique to each processor; therefore an
-array of PACAs are created, one for each logical processor. One of the users of
-this data structure to save the current instruction location prior to interrupt
-processing.
+This structure contains information unique to each processor; therefore an array of PACAs are created, one for each logical processor. One of the users of this data structure to save the current instruction location prior to interrupt processing.
 
 ### So what’s up with the Canary?
 
-Christpophe later answered this for me:
+As explained earlier in the article and as Christpophe answered this for me:
 
 ```jsx
 PPC64 uses a per-task canary. But unlike PPC32, PPC64 doesn't have a fixed 
@@ -83,12 +68,7 @@ the canary from the wrong CPU struct so from a different task.
 
 ### Compiler optimizations
 
-What Christophe refers to in the last line is exactly a Compilter optimization.
-It turns out that from the reporter’s email, the `r10` register was used as a
-base pointer to the per-CPU PACA area. This means the compiler must have cached
-`r13` into `r10`, perhaps because it wanted to use `r13` for something else.
-Boqun Feng provided the following snippet which Zhouyi verified fixes the
-issue:
+What Christophe refers to in the last line is exactly a Compilter optimization. It turns out that from the reporter’s email, the `r10` register was used as a base pointer to the per-CPU PACA area. This means the compiler must have cached `r13` into `r10`, perhaps because it wanted to use `r13` for something else. Boqun Feng provided the following snippet which Zhouyi verified fixes the issue:
 
 ```jsx
 diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
@@ -104,19 +84,13 @@ diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
          EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
 ```
 
-In this snippet, `r13` is added to an extended inline asm statement, which
-instructs the compiler that `r13` may be clobbered by the asm statement, which
-hopefully prevents the compiler from caching its value before exiting the
-function. In fact this is exactly what prevents the issue.
+In this snippet, `r13` is added to an extended inline asm statement, which instructs the compiler that `r13` may be clobbered by the asm statement, which hopefully prevents the compiler from caching its value before exiting the function. In fact this is exactly what prevents the issue.
 
-Boqun also included a `memory` clobber which is equivalent to `barrier()` and
-is additional step which hopefully ensures memory access compiler optimizations
-don’t span the inline assembly statement.
+Boqun also included a `memory` clobber which is equivalent to `barrier()` and is additional step which hopefully ensures memory access compiler optimizations don’t span the inline assembly statement.
 
 ### Finally the issue is clear
 
-Later in the email chain, I mentioned the series of events as outlined by
-Christophe and Boqun which could lead to the issue:
+Later in the email chain, I mentioned the series of events as outlined by Christophe and Boqun which could lead to the issue:
 
 ```jsx
 The issue requires the following ingredients:
@@ -138,8 +112,6 @@ does not treat r13 as volatile as Boqun had initially mentioned.
 
 ## How do we fix it?
 
-My / our current take on it is it appears to be a compiler bug where the
-register `r13` is not considered volatile (which works for user land but not
-for the kernel). Seher Boessenkool who has worked on similar PPC64 issues
-before is on the email chain and can hopefully fix it but lets see where it
-goes.
+My / our current take on it is it appears to be a compiler bug where the register `r13` is not considered volatile (which works for user land but not for the kernel). Seher Boessenkool who has worked on similar PPC64 issues before is on the email chain and can hopefully fix it in the compiler but lets see where it goes.
+
+As a quick hack to fix this (as shown by Boqun above),`r13` can be added to an extended inline asm statement, which instructs the compiler that `r13` may be clobbered by the asm statement, hopefully preventing the compiler from caching its value before exiting the function.
