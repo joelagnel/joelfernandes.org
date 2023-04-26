@@ -71,7 +71,7 @@ This structure contains information unique to each processor; therefore an array
 
 As explained earlier in the article and as Christpophe answered this for me:
 
-```jsx
+```
 PPC64 uses a per-task canary. But unlike PPC32, PPC64 doesn't have a fixed 
 register pointing to 'current' at all time so the canary is copied into 
 a per-cpu struct (PACA) during _switch().
@@ -84,7 +84,7 @@ the canary from the wrong CPU struct so from a different task.
 
 What Christophe refers to in the last line is exactly a Compilter optimization. It turns out that from the reporter’s email, the `r10` register was used as a base pointer to the per-CPU PACA area. This means the compiler must have cached `r13` into `r10`, perhaps because it wanted to use `r13` for something else. Boqun Feng provided the following snippet which Zhouyi verified fixes the issue:
 
-```jsx
+```
 diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
         index ab4ee58af84b..f5ae3be3d04d 100644
         --- a/kernel/rcu/srcutree.c
@@ -106,7 +106,7 @@ Boqun also included a `memory` clobber which is equivalent to `barrier()` and is
 
 Later in the email chain, I mentioned the series of events as outlined by Christophe and Boqun which could lead to the issue:
 
-```jsx
+```
 The issue requires the following ingredients:
 1. Task A is running on CPU 1, and the task's canary is copied into
 the CPU1's per-cpu area pointed to by r13.
