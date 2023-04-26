@@ -119,8 +119,6 @@ As a quick hack to fix this (as shown by Boqun above),`r13` can be added to an e
 
 According to Michael Ellerman, a possible solution would be to keep current in a register (GPR) on 64-bit, but we'd need to do that in addition to the register reserved for the PACA, so that would consume another GPR which we'd need to think hard about.
 
-There's another reason to have the canary in the PACA, according to him: The PACA is
-
-always accessible, even when the MMU is off (because it is in a register), whereas `current` isn't (in some situations).
+There's another reason to have the canary in the PACA, according to him: The PACA is always accessible, even when the MMU is off (because it is in a register), whereas `current` isn't (in some situations).
 
 Even though, we prefer not to use stack protector in code that runs with the MMU off — if the canary wasn't in the PACA to begin with, then we'd have a hard requirement to not use stack protector in code paths where the MMU is off.
