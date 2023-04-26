@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>25 Apr 2023</span> &nbsp; <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [kernelstack]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>24 Feb 2023</span> &nbsp; <a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -423,7 +437,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a></h1>
+      <h1 class="entry-title"><a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></h1>
     
     
       <p class="meta">
@@ -437,281 +451,83 @@ Most Recept Post:
 
 
 
-<time datetime="2023-01-29T00:00:00+00:00" pubdate data-updated="true">Jan 29, 2023</time>
+<time datetime="2023-02-24T00:00:00+00:00" pubdate data-updated="true">Feb 24, 2023</time>
         
-           | <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Comments</a>
+           | <a href="/vim/productivity/2023/02/24/ycm-working.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/vim/productivity/2023/02/24/ycm-working.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>[Article is under construction]</p>
+  <div class="entry-content"><p><a href="https://github.com/Valloric/YouCompleteMe">YCM</a> is a pretty neat tool for
+speedy kernel development in vim. Especially when you don’t want to write a
+whole bunch of code, and then deal with 100s of compiler errors. It is better
+to fix the errors on the spot, as you write the code.  That’s exactly what YCM
+is best at since it constantly builds the code on the fly. The other great
+thing about it among other things being, it will show you function prototypes
+and so forth as you type, so you can call functions correctly with the right
+set of parameters and types. YCM uses <a href="https://clangd.llvm.org/">clangd</a> under
+the hood which understands code navigation, helps with code completion, and so
+forth. <code class="language-plaintext highlighter-rouge">clangd</code> is used by a whole plehtora of IDEs and tools. I remember using
+it when I tried to get <code class="language-plaintext highlighter-rouge">vscode</code> working with ChromeOS source navigation (which
+is actually a bigger project in terms of lines of code, than the Linux
+kernel!).</p>
 
-<p>The herd7 memory consistency tool is used to verify if certain (mostly
-undesirable) outcomes (memory-related) of concurrent programs exist, given a
-memory model. A memory-model restricts possible candidate executions. After
-such restriction, if certain undesirable still exist, the user is notified
-via their assertions in the <code class="language-plaintext highlighter-rouge">exists</code> clause of a litmus test.</p>
+<p>Interestingly YCM does not use <code class="language-plaintext highlighter-rouge">cscope</code> even if it is available, and they do
+not want to support it. Further, they reluctantly support <code class="language-plaintext highlighter-rouge">ctags</code>. Since I
+don’t use <code class="language-plaintext highlighter-rouge">ctags</code>, I am not sure how having tags available changes YCM
+behavior and how it works with <code class="language-plaintext highlighter-rouge">clangd</code>. But that is something worth trying.</p>
 
-<p>This is an advanced article that goes through the different parts of the
-linux-kernel.cat code, and tries to explain with examples about how/why
-properties are defined the way they are. The motivation to understand this
-deeply is, by understanding how to read a memory model written in CAT, it
-should be possible to get a deep understanding of how memory consistency and
-ordering works and how a memory model behaves. Even though the herd7 memory
-model is abstract in some sense (it does not describe CPU implementation but
-just a set of properites and rules on memory ordering and program execution),
-it can still be considered to model of how a CPU should behave. Thus it can be
-argued that you are formally defining how memory accesses in CPUs should
-typically behave, if such CPUs are expected to run concurrent Linux kernel
-code.</p>
+<p>Getting YCM working with vim is pretty easy, but requires a few steps.</p>
 
-<p>It is assumed that the reader is already familiar with how to use the tool, as
-well is familiar with various notations such as <code class="language-plaintext highlighter-rouge">-&gt;po</code>, <code class="language-plaintext highlighter-rouge">-&gt;co</code> etc. This is
-described in much detail in the
-<code class="language-plaintext highlighter-rouge">tools/memory-model/Documentation/explanation.txt</code>. There are also several LWN
-articles and conference papers on the herd7 tools which we will not replicate
-here.</p>
-
-<h2 id="1-sequential-consistency-per-variable-scpv">1. Sequential consistency per-variable (SCPV)</h2>
-
-<p>This property is fundamental in modern processors, and it basically means that
-reads and writes to a certain variable happen in a total-order. In other words,
-for a specific variable, it is not possible to observe a sequence of writes to
-that variable in an order different from the order in which its values were
-written.</p>
-
-<p>This also applies to the writes happening on the same CPU. In a single CPU, the
-writes happenning on the same variable happen in program order execution.</p>
-
-<p>The way the memory model can enforce this is by defining a rule forbidding a
-certain property. Let us see if we can define the violations of SCPV as a cycle
-in a particular candidate execution, and then tell the model that such execution
-candidates are forbidden.</p>
-
-<p>Consider a program doing 2 writes to a variable:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
+<p>First you have to build a <code class="language-plaintext highlighter-rouge">compile_commands.json</code> file in the kernel root. To
+do so, run:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bear -- make -j99 CC=clang
 </code></pre></div></div>
+<p>Note the <code class="language-plaintext highlighter-rouge">CC</code> variable passed to Make. It has to be <code class="language-plaintext highlighter-rouge">clang</code>, otherwise YCM
+throws a tonne of errors when it is in use. I believe that is because clangd
+incorrectly passes gcc-specific options to clang, which are not all supported.</p>
 
-<p>Without <code class="language-plaintext highlighter-rouge">SCPV</code>, this program has 2 outcomes:</p>
+<p>Following
+<a href="https://stackoverflow.com/questions/30180064/how-to-setup-youcompleteme-for-kernel-and-device-driver-development">this</a>
+stackoverflow post shows how to avoid some issues. This post is how I learnt to
+use <code class="language-plaintext highlighter-rouge">bear</code>. Just use <code class="language-plaintext highlighter-rouge">bear</code> and ignore all other posts or articles that ask you
+to create a <code class="language-plaintext highlighter-rouge">.ycm_extra_conf.py</code> file. I did not need to do that at all.</p>
 
+<p>I faced the following issues:</p>
 <ol>
-  <li>The final value of x is 2. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W1
-</code></pre></div></div>
-
-<ol>
-  <li>The final value of x is 3. This happens because of the following candidate execution:</li>
-</ol>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1 -&gt;co W2
-</code></pre></div></div>
-
-<p>We wish to forbid the pattern in #1. How do we do that?</p>
-
-<p>Observe that because of program ordering, there is a relation: <code class="language-plaintext highlighter-rouge">W1 -&gt; W2</code>.</p>
-
-<p>The <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code> relation links to program-ordered memory accesses happening on
-the same CPU.</p>
-
-<p>We can combine program ordering (<code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>) and cache coherent ordering
-(<code class="language-plaintext highlighter-rouge">-&gt;co</code>) to build a cycle. We can build a new relation by taking the union of
-the 2:
-<code class="language-plaintext highlighter-rouge">po-loc | co</code>
-This relation becomes <code class="language-plaintext highlighter-rouge">W1 -&gt; po-loc -&gt; W2 -&gt; co -&gt; W1</code> for case #1 or in other
-words, a cycle. So we can say <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> to forbid the bad candidate
-execution.</p>
-
-<p>Another possibility is, there are writes happening on different CPUs:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>P0(int *x) {
-  WRITE_ONCE(*x, 2);            // event W1
-  WRITE_ONCE(*x, 3);            // event W2
-}
-
-P1(int *x) {
-  WRITE_ONCE(*x, 4);            // event W3
-}
-</code></pre></div></div>
-
-<p>Here there are 6 possible candidate executions:</p>
-
-<ol>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W2-&gt;W3
-</code></pre></div>    </div>
+  <li>
+    <p>First, there might some warnings in the code that arise when clangd/clang
+try to build your code on the fly. In case these warnings are not legit, it is
+best to ignore them. For that the <code class="language-plaintext highlighter-rouge">g:ycm_filter_diagnostics</code> vim variable can
+be defined.  The above post shows an example.</p>
   </li>
-  <li>Final value is 4.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W1-&gt;W3
-</code></pre></div>    </div>
+  <li>
+    <p>Editing header files may not work well: This happens because header files
+cannot really be “built”. Further, sometimes header files require other header
+files to be included, which may be done in the actual C file that includes the
+header but not the header itself. However, vim/YCM does not know about that.
+This issue can simply be fixed by including other header dependencies into the
+header file being edited.</p>
   </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2-&gt;W3-&gt;W1
+  <li>
+    <p>Kernel config macro dependencies: If a build has not happened yet, or you are
+writing C code that depends on a new CONFIG option, a build may not have
+happened yet, so the <code class="language-plaintext highlighter-rouge">autoconf</code> headers may not yet be available. This causes
+YCM to not build those sections of code. A quick fix might be to add something
+like this in the sources:</p>
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#ifndef CONFIG_FOO_BAR
+#define CONFIG_FOO_BAR
+#endif
 </code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W1-&gt;W3-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 3.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W1-&gt;W2
-</code></pre></div>    </div>
-  </li>
-  <li>Final value is 2.
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W3-&gt;W2-&gt;W1
-</code></pre></div>    </div>
+    <p>Similar tricks can be employed to satisfy macros such as <code class="language-plaintext highlighter-rouge">IS_ENABLED(CONFIG_FOO_BAR)</code>.</p>
   </li>
 </ol>
 
-<p>Here cases #3 and #6 should be forbidden. The only allowed outcomes should be 3 or 4.</p>
-
-<p>#3 has the following relations:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W2 -&gt;co W3
-W3 -&gt;co W1
-W1 -&gt;po-loc W2
-</code></pre></div></div>
-<p>A cycle can be observed when uniting all of these relations using <code class="language-plaintext highlighter-rouge">po-loc | co</code></p>
-
-<p>Thus <code class="language-plaintext highlighter-rouge">acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p>
-
-<p>So far we have only considered stores, however we must order the reads from
-these stores as well, and such reads cannot observe the stores to the same
-variable out of order. Let us next look at an example, where the above
-acyclic definition is incomplete.</p>
-
-<p>Consider the following Litmus test involving read accesses:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C scpv-rf
-
-{}
-
-P0(int *x)
-{
-        WRITE_ONCE(*x, 2);
-        WRITE_ONCE(*x, 3);
-}
-
-P1(int *x)
-{
-        int r1;
-        int r2;
-
-        r1 = READ_ONCE(*x);
-        r2 = READ_ONCE(*x);
-}
-
-exists (1:r1=3 /\ 1:r2=2)
-</code></pre></div></div>
-
-<p>Here, we hope that the reads to variable <code class="language-plaintext highlighter-rouge">x</code> are observed by P1 in the
-program-order that were written in P0. So the forbidden exists clause should
-never occur.</p>
-
-<p>However, if you were to build a CAT model as follows, using the previously
-determined acyclic property, then the forbidden case indeed happens.</p>
-
-<p>Here is the CAT code:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>include "cos.cat"
-
-acyclic po-loc | co
-</code></pre></div></div>
-
-<p>This can be run using herd7 as follows, with the <code class="language-plaintext highlighter-rouge">-show prop</code> options to
-generate a DOT graph file of the forbidden case:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/
-</code></pre></div></div>
-
-<p>Running this shows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Test scpv-rf Allowed
-States 9
-1:r1=0; 1:r2=0;
-1:r1=0; 1:r2=2;
-1:r1=0; 1:r2=3;
-1:r1=2; 1:r2=0;
-1:r1=2; 1:r2=2;
-1:r1=2; 1:r2=3;
-1:r1=3; 1:r2=0;
-1:r1=3; 1:r2=2;
-1:r1=3; 1:r2=3;
-Ok
-Witnesses
-Positive: 1 Negative: 8
-Condition exists (1:r1=3 /\ 1:r2=2)
-Observation scpv-rf Sometimes 1 8
-Time scpv-rf 0.00
-Hash=f2f1ffdc787b0e923ae8cf087fcd5b12
-</code></pre></div></div>
-<p>And the graph for the forbidden case is as follows:
-<img src="/images/herd7/scpv/scpvrf.svg" alt="A graph showing failure of read sequential consistency" /></p>
-
-<p>As you can see, there is a cycle between <code class="language-plaintext highlighter-rouge">-&gt;po-loc</code>, <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code>.</p>
-
-<p>This shows that both <code class="language-plaintext highlighter-rouge">-&gt;rf</code> and <code class="language-plaintext highlighter-rouge">-&gt;fr</code> should also included in the acyclic
-property as well. Hence to avoid the problematic candidate execution, the SCPV
-property should be <code class="language-plaintext highlighter-rouge">acyclic po-loc | co | rf | fr</code>. That is indeed the case in
-the Linux kernel’s memory model.</p>
-
-<h2 id="2-atomicity">2. Atomicity</h2>
-
-<p>Atomicity can be defined as a read-modify-write (RMW) operation on a memory
-location which happens atomically, that is no write from another CPU can happen
-between the read and the write. In other words, the read and write operation in
-the RMW operation are one (atomic).</p>
-
-<p>First let us see what happens if we have an RMW on CPU 0 being interleaved with
-a write from another CPU 1. Consider the litmus test we will use to generate a
-graph from:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>C rmw-1
-
-{}
-
-P0(int *x)
-{
-        int r0;
-
-        r0 = xchg(x, 1);
-}
-
-P1(int *x)
-{
-        WRITE_ONCE(*x, 2);
-}
-
-
-exists (0:r0=0 /\ x=1)
-</code></pre></div></div>
-<p>The below graph shows the case that exists:</p>
-
-<p><img src="/images/herd7/rmw/rmw.svg" alt="RMW operation being interferred with by a write" width="90%" /></p>
-
-<p>The <code class="language-plaintext highlighter-rouge">Rmw</code> edge in the graph illustrates the data-dependent relation between the
-read and the write, with the additional implication that it is to be atomic.
-The <code class="language-plaintext highlighter-rouge">fr</code> edge shows that a write on another CPU happened after the read
-operation of the RMW. The <code class="language-plaintext highlighter-rouge">co</code> edge shows that another write overwrote that
-write.</p>
-
-<p>This is precisely what we want our model to prevent – another write should not
-be allowed to interleave in such a fashion, and all modern CPU architectures
-have hardware support to prevent such interleaving. We expect APIs like
-<code class="language-plaintext highlighter-rouge">xchg()</code> in the Linux kernel, that does use RMW instructions to work correctly.</p>
-
-<p>To prevent the above case, we first build a relation linking the <code class="language-plaintext highlighter-rouge">fr</code> and <code class="language-plaintext highlighter-rouge">co</code>
-edges using the sequence operator (semicolon) as follows:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(fr; co)
-</code></pre></div></div>
-<p>The only thing left to form an intersection between this relation and the
-relation consisting of the rmw operation, to form a new relation, and then
-forbid then forbid that such a relation exists in any candidate execution.
-These candidates will be rejected, as our model cannot possibly support them
-(just like the underlying hardware cannot).</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>empty rmw &amp; (fr; co)
-</code></pre></div></div>
+<p>Hope this helps, do you have any other tips or ideas to use YCM better? If so,
+let me know in the comments!</p>
 </div>
   
   
@@ -810,6 +626,10 @@ These candidates will be rejected, as our model cannot possibly support them
   
     
       <a href="/page21">21</a>
+    
+  
+    
+      <a href="/page22">22</a>
     
   
   -->
