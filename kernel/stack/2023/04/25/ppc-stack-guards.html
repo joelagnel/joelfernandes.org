@@ -166,25 +166,27 @@ issue.</p>
 <p>A significant hint came from Christophe who is the kernel author of PPC’s stack
 protection, he mentioned:</p>
 
-<aside>
-💡 Each task has its own canary, stored in task struct : kernel/fork.c:1012:
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Each task has its own canary, stored in task struct :
+
+kernel/fork.c:1012:
 tsk-&gt;stack_canary = get_random_canary();
+
 On PPC32 we have register 'r2' that points to task struct at all time, 
 so GCC is instructed to find canary at an offset from r2.
 But on PPC64 we have no such register.
+
 Instead we have r13 that points to the PACA struct which is a per-cpu
 structure, and we have a pointer to 'current' task struct in the PACA struct.
 So in order to be able to have the canary as an offset of a fixed register as
 expected by GCC, we copy the task canary into the cpu's PACA struct during
 _switch():
-</aside>
 
-<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="nx">addi</span>	<span class="nx">r6</span><span class="p">,</span><span class="nx">r4</span><span class="p">,</span><span class="o">-</span><span class="nx">THREAD</span>	<span class="cm">/* Convert THREAD to 'current' */</span>
-	<span class="nx">std</span>	<span class="nx">r6</span><span class="p">,</span><span class="nx">PACACURRENT</span><span class="p">(</span><span class="nx">r13</span><span class="p">)</span>	<span class="cm">/* Set new 'current' */</span>
-  <span class="err">#</span><span class="k">if</span> <span class="nx">defined</span><span class="p">(</span><span class="nx">CONFIG_STACKPROTECTOR</span><span class="p">)</span>
-	  <span class="nx">ld</span>	<span class="nx">r6</span><span class="p">,</span> <span class="nx">TASK_CANARY</span><span class="p">(</span><span class="nx">r6</span><span class="p">)</span>
-	  <span class="nx">std</span>	<span class="nx">r6</span><span class="p">,</span> <span class="nx">PACA_CANARY</span><span class="p">(</span><span class="nx">r13</span><span class="p">)</span>
-  <span class="err">#</span><span class="nx">endif</span>
+	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
+	std	r6,PACACURRENT(r13)	/* Set new 'current' */
+  #if defined(CONFIG_STACKPROTECTOR)
+	  ld	r6, TASK_CANARY(r6)
+	  std	r6, PACA_CANARY(r13)
+  #endif
 </code></pre></div></div>
 
 <hr />
