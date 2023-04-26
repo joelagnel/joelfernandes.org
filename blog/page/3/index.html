@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>25 Apr 2023</span> &nbsp; <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [kernelstack]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>24 Feb 2023</span> &nbsp; <a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -423,7 +437,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></h1>
+      <h1 class="entry-title"><a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></h1>
     
     
       <p class="meta">
@@ -437,83 +451,155 @@ Most Recept Post:
 
 
 
-<time datetime="2023-02-24T00:00:00+00:00" pubdate data-updated="true">Feb 24, 2023</time>
+<time datetime="2023-04-25T00:00:00+00:00" pubdate data-updated="true">Apr 25, 2023</time>
         
-           | <a href="/vim/productivity/2023/02/24/ycm-working.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/vim/productivity/2023/02/24/ycm-working.html">Comments</a>
+           | <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/kernel/stack/2023/04/25/ppc-stack-guards.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p><a href="https://github.com/Valloric/YouCompleteMe">YCM</a> is a pretty neat tool for
-speedy kernel development in vim. Especially when you don’t want to write a
-whole bunch of code, and then deal with 100s of compiler errors. It is better
-to fix the errors on the spot, as you write the code.  That’s exactly what YCM
-is best at since it constantly builds the code on the fly. The other great
-thing about it among other things being, it will show you function prototypes
-and so forth as you type, so you can call functions correctly with the right
-set of parameters and types. YCM uses <a href="https://clangd.llvm.org/">clangd</a> under
-the hood which understands code navigation, helps with code completion, and so
-forth. <code class="language-plaintext highlighter-rouge">clangd</code> is used by a whole plehtora of IDEs and tools. I remember using
-it when I tried to get <code class="language-plaintext highlighter-rouge">vscode</code> working with ChromeOS source navigation (which
-is actually a bigger project in terms of lines of code, than the Linux
-kernel!).</p>
+  <div class="entry-content"><p>Recently, the RCU mailing list
+<a href="https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t">received</a>
+a report about an SRCU function failing stack guard checks.</p>
 
-<p>Interestingly YCM does not use <code class="language-plaintext highlighter-rouge">cscope</code> even if it is available, and they do
-not want to support it. Further, they reluctantly support <code class="language-plaintext highlighter-rouge">ctags</code>. Since I
-don’t use <code class="language-plaintext highlighter-rouge">ctags</code>, I am not sure how having tags available changes YCM
-behavior and how it works with <code class="language-plaintext highlighter-rouge">clangd</code>. But that is something worth trying.</p>
+<p>Stack guard canaries are a security mechanism used to detect stack buffer
+overflows. This mechanism works by placing a random value, called a canary,
+between the local variables and the return address on the stack. If a buffer
+overflow occurs, the canary value will be overwritten and the stack guard check
+will fail, indicating that the program is being attacked. False positives can
+occur if the canary value is overwritten by a legitimate write operation, such
+as when a large structure is copied onto the stack.</p>
 
-<p>Getting YCM working with vim is pretty easy, but requires a few steps.</p>
+<p>Closer inspection of the function (<code class="language-plaintext highlighter-rouge">srcu_gp_start_if_needed</code>) did not reveal
+any buffers that may be overflowed.</p>
 
-<p>First you have to build a <code class="language-plaintext highlighter-rouge">compile_commands.json</code> file in the kernel root. To
-do so, run:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>bear -- make -j99 CC=clang
+<p>After discussions with a number of kernel developers, it is clear what the
+issue is. Firstly, credit to Boqun Feng for looking through disassembly and
+pointing things out which led to the whole email chain and discovery of the
+issue.</p>
+
+<p>A significant hint came from Christophe who is the kernel author of PPC’s stack
+protection, he mentioned:</p>
+
+<blockquote>
+  <p>Each task has its own canary, stored in task struct :</p>
+</blockquote>
+
+<p>kernel/fork.c:1012:     tsk-&gt;stack_canary = get_random_canary();</p>
+
+<p>On PPC32 we have register ‘r2’ that points to task struct at all time, 
+so GCC is instructed to find canary at an offset from r2.</p>
+
+<p>But on PPC64 we have no such register. Instead we have r13 that points 
+to the PACA struct which is a per-cpu structure, and we have a pointer 
+to ‘current’ task struct in the PACA struct. So in order to be able to 
+have the canary as an offset of a fixed register as expected by GCC, we 
+copy the task canary into the cpu’s PACA struct during _switch():</p>
+<blockquote>
+
+</blockquote>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code>	<span class="nx">addi</span>	<span class="nx">r6</span><span class="p">,</span><span class="nx">r4</span><span class="p">,</span><span class="o">-</span><span class="nx">THREAD</span>	<span class="cm">/* Convert THREAD to 'current' */</span>
+	<span class="nx">std</span>	<span class="nx">r6</span><span class="p">,</span><span class="nx">PACACURRENT</span><span class="p">(</span><span class="nx">r13</span><span class="p">)</span>	<span class="cm">/* Set new 'current' */</span>
+<span class="err">#</span><span class="k">if</span> <span class="nx">defined</span><span class="p">(</span><span class="nx">CONFIG_STACKPROTECTOR</span><span class="p">)</span>
+	<span class="nx">ld</span>	<span class="nx">r6</span><span class="p">,</span> <span class="nx">TASK_CANARY</span><span class="p">(</span><span class="nx">r6</span><span class="p">)</span>
+	<span class="nx">std</span>	<span class="nx">r6</span><span class="p">,</span> <span class="nx">PACA_CANARY</span><span class="p">(</span><span class="nx">r13</span><span class="p">)</span>
+<span class="err">#</span><span class="nx">endif</span>
 </code></pre></div></div>
-<p>Note the <code class="language-plaintext highlighter-rouge">CC</code> variable passed to Make. It has to be <code class="language-plaintext highlighter-rouge">clang</code>, otherwise YCM
-throws a tonne of errors when it is in use. I believe that is because clangd
-incorrectly passes gcc-specific options to clang, which are not all supported.</p>
+<hr />
+<p>In 32-bit PPC, the TLS (Thread local storage) is pointed to by register <code class="language-plaintext highlighter-rouge">r2</code>.
+In this kernel, this <code class="language-plaintext highlighter-rouge">r2</code> register points to the current <code class="language-plaintext highlighter-rouge">task_struct</code>, again
+on 32-bit PPC. But on 64-bit PPC, <code class="language-plaintext highlighter-rouge">r2</code> is not available, so the currently
+running <code class="language-plaintext highlighter-rouge">task_struct</code> is saved in the per-CPU area pointed to by <code class="language-plaintext highlighter-rouge">r13</code> instead.
+This is clear from the assembly code above</p>
 
-<p>Following
-<a href="https://stackoverflow.com/questions/30180064/how-to-setup-youcompleteme-for-kernel-and-device-driver-development">this</a>
-stackoverflow post shows how to avoid some issues. This post is how I learnt to
-use <code class="language-plaintext highlighter-rouge">bear</code>. Just use <code class="language-plaintext highlighter-rouge">bear</code> and ignore all other posts or articles that ask you
-to create a <code class="language-plaintext highlighter-rouge">.ycm_extra_conf.py</code> file. I did not need to do that at all.</p>
+<h3 id="so-what-the-heck-is-paca">So what the heck is PACA?</h3>
 
-<p>I faced the following issues:</p>
-<ol>
-  <li>
-    <p>First, there might some warnings in the code that arise when clangd/clang
-try to build your code on the fly. In case these warnings are not legit, it is
-best to ignore them. For that the <code class="language-plaintext highlighter-rouge">g:ycm_filter_diagnostics</code> vim variable can
-be defined.  The above post shows an example.</p>
-  </li>
-  <li>
-    <p>Editing header files may not work well: This happens because header files
-cannot really be “built”. Further, sometimes header files require other header
-files to be included, which may be done in the actual C file that includes the
-header but not the header itself. However, vim/YCM does not know about that.
-This issue can simply be fixed by including other header dependencies into the
-header file being edited.</p>
-  </li>
-  <li>
-    <p>Kernel config macro dependencies: If a build has not happened yet, or you are
-writing C code that depends on a new CONFIG option, a build may not have
-happened yet, so the <code class="language-plaintext highlighter-rouge">autoconf</code> headers may not yet be available. This causes
-YCM to not build those sections of code. A quick fix might be to add something
-like this in the sources:</p>
-    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#ifndef CONFIG_FOO_BAR
-#define CONFIG_FOO_BAR
-#endif
-</code></pre></div>    </div>
-    <p>Similar tricks can be employed to satisfy macros such as <code class="language-plaintext highlighter-rouge">IS_ENABLED(CONFIG_FOO_BAR)</code>.</p>
-  </li>
-</ol>
+<p>This <code class="language-plaintext highlighter-rouge">r13</code> register points to a structure in the kernel called PACA which is a
+per-CPU memory area storing information about the CPU’s context.</p>
 
-<p>Hope this helps, do you have any other tips or ideas to use YCM better? If so,
-let me know in the comments!</p>
+<p>Per the PPC64 <a href="https://www.kernel.org/doc/ols/2001/ppc64.pdf">paper</a>:</p>
+
+<p>This structure contains information unique to each processor; therefore an
+array of PACAs are created, one for each logical processor. One of the users of
+this data structure to save the current instruction location prior to interrupt
+processing.</p>
+
+<h3 id="so-whats-up-with-the-canary">So what’s up with the Canary?</h3>
+
+<p>Christpophe later answered this for me:</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">PPC64</span> <span class="nx">uses</span> <span class="nx">a</span> <span class="nx">per</span><span class="o">-</span><span class="nx">task</span> <span class="nx">canary</span><span class="p">.</span> <span class="nx">But</span> <span class="nx">unlike</span> <span class="nx">PPC32</span><span class="p">,</span> <span class="nx">PPC64</span> <span class="nx">doesn</span><span class="dl">'</span><span class="s1">t have a fixed 
+register pointing to </span><span class="dl">'</span><span class="nx">current</span><span class="dl">'</span><span class="s1"> at all time so the canary is copied into 
+a per-cpu struct (PACA) during _switch().
+
+If GCC keeps an old value of the per-cpu struct pointer, it then gets 
+the canary from the wrong CPU struct so from a different task.
+</span></code></pre></div></div>
+
+<h3 id="compiler-optimizations">Compiler optimizations</h3>
+
+<p>What Christophe refers to in the last line is exactly a Compilter optimization.
+It turns out that from the reporter’s email, the <code class="language-plaintext highlighter-rouge">r10</code> register was used as a
+base pointer to the per-CPU PACA area. This means the compiler must have cached
+<code class="language-plaintext highlighter-rouge">r13</code> into <code class="language-plaintext highlighter-rouge">r10</code>, perhaps because it wanted to use <code class="language-plaintext highlighter-rouge">r13</code> for something else.
+Boqun Feng provided the following snippet which Zhouyi verified fixes the
+issue:</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">diff</span> <span class="o">--</span><span class="nx">git</span> <span class="nx">a</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span> <span class="nx">b</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
+        <span class="nx">index</span> <span class="nx">ab4ee58af84b</span><span class="p">..</span><span class="nx">f5ae3be3d04d</span> <span class="mi">100644</span>
+        <span class="o">---</span> <span class="nx">a</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
+        <span class="o">+++</span> <span class="nx">b</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
+        <span class="p">@@</span> <span class="o">-</span><span class="mi">747</span><span class="p">,</span><span class="mi">6</span> <span class="o">+</span><span class="mi">747</span><span class="p">,</span><span class="mi">7</span> <span class="p">@@</span> <span class="k">void</span> <span class="nx">__srcu_read_unlock_nmisafe</span><span class="p">(</span><span class="nx">struct</span> <span class="nx">srcu_struct</span> <span class="o">*</span><span class="nx">ssp</span><span class="p">,</span> <span class="nx">int</span> <span class="nx">idx</span><span class="p">)</span>
+
+                <span class="nx">smp_mb__before_atomic</span><span class="p">();</span> <span class="cm">/* C */</span>  <span class="cm">/* Avoid leaking the critical section. */</span>
+                <span class="nx">atomic_long_inc</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">sdp</span><span class="o">-&gt;</span><span class="nx">srcu_unlock_count</span><span class="p">[</span><span class="nx">idx</span><span class="p">]);</span>
+        <span class="o">+</span>       <span class="nx">asm</span> <span class="nx">volatile</span><span class="p">(</span><span class="dl">""</span> <span class="p">:</span> <span class="p">:</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">r13</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">memory</span><span class="dl">"</span><span class="p">);</span>
+         <span class="p">}</span>
+         <span class="nx">EXPORT_SYMBOL_GPL</span><span class="p">(</span><span class="nx">__srcu_read_unlock_nmisafe</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>In this snippet, <code class="language-plaintext highlighter-rouge">r13</code> is added to an extended inline asm statement, which
+instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, which
+hopefully prevents the compiler from caching its value before exiting the
+function. In fact this is exactly what prevents the issue.</p>
+
+<p>Boqun also included a <code class="language-plaintext highlighter-rouge">memory</code> clobber which is equivalent to <code class="language-plaintext highlighter-rouge">barrier()</code> and
+is additional step which hopefully ensures memory access compiler optimizations
+don’t span the inline assembly statement.</p>
+
+<h3 id="finally-the-issue-is-clear">Finally the issue is clear</h3>
+
+<p>Later in the email chain, I mentioned the series of events as outlined by
+Christophe and Boqun which could lead to the issue:</p>
+
+<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">The</span> <span class="nx">issue</span> <span class="nx">requires</span> <span class="nx">the</span> <span class="nx">following</span> <span class="nx">ingredients</span><span class="p">:</span>
+<span class="mi">1</span><span class="p">.</span> <span class="nx">Task</span> <span class="nx">A</span> <span class="nx">is</span> <span class="nx">running</span> <span class="nx">on</span> <span class="nx">CPU</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">and</span> <span class="nx">the</span> <span class="nx">task</span><span class="dl">'</span><span class="s1">s canary is copied into
+the CPU1</span><span class="dl">'</span><span class="nx">s</span> <span class="nx">per</span><span class="o">-</span><span class="nx">cpu</span> <span class="nx">area</span> <span class="nx">pointed</span> <span class="nx">to</span> <span class="nx">by</span> <span class="nx">r13</span><span class="p">.</span>
+<span class="mi">2</span><span class="p">.</span> <span class="nx">r13</span> <span class="nx">is</span> <span class="nx">now</span> <span class="nx">cached</span> <span class="nx">into</span> <span class="nx">r10</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">offending</span> <span class="kd">function</span> <span class="nx">due</span> <span class="nx">to</span> <span class="nx">the</span> <span class="nx">compiler</span><span class="p">.</span>
+<span class="mi">3</span><span class="p">.</span> <span class="nx">Task</span> <span class="nx">A</span> <span class="nx">running</span> <span class="nx">on</span> <span class="nx">CPU</span> <span class="mi">1</span> <span class="nx">now</span> <span class="nx">gets</span> <span class="nx">preempted</span> <span class="nx">right</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">middle</span> <span class="k">of</span>
+<span class="nx">the</span> <span class="nx">offending</span> <span class="nx">SRCU</span> <span class="kd">function</span> <span class="nx">and</span> <span class="nx">gets</span> <span class="nx">migrated</span> <span class="nx">to</span> <span class="nx">CPU</span> <span class="mi">2</span><span class="p">.</span>
+<span class="mi">4</span><span class="p">.</span>  <span class="nx">CPU</span> <span class="mi">2</span><span class="dl">'</span><span class="s1">s per-cpu canary is updated to that of task A since task A
+is the current task now.
+5. Task B now runs on CPU 1 and the per-cpu canary on CPU 1 is now that of B.
+6. Task A exits the function, but stack checking code reads r10 which
+contains CPU 1</span><span class="dl">'</span><span class="nx">s</span> <span class="nx">canary</span> <span class="nx">which</span> <span class="nx">is</span> <span class="nx">that</span> <span class="k">of</span> <span class="nx">task</span> <span class="nx">B</span><span class="o">!</span>
+<span class="mi">7</span><span class="p">.</span> <span class="nx">Boom</span><span class="p">.</span>
+
+<span class="nx">So</span> <span class="nx">the</span> <span class="nx">issue</span> <span class="nx">is</span> <span class="nx">precisely</span> <span class="k">in</span> <span class="err">#</span><span class="mi">2</span><span class="p">.</span>  <span class="nx">The</span> <span class="nx">issue</span> <span class="nx">is</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">compiler</span> <span class="nx">that</span> <span class="nx">it</span>
+<span class="nx">does</span> <span class="nx">not</span> <span class="nx">treat</span> <span class="nx">r13</span> <span class="k">as</span> <span class="nx">volatile</span> <span class="k">as</span> <span class="nx">Boqun</span> <span class="nx">had</span> <span class="nx">initially</span> <span class="nx">mentioned</span><span class="p">.</span>
+</code></pre></div></div>
+
+<h2 id="how-do-we-fix-it">How do we fix it?</h2>
+
+<p>My / our current take on it is it appears to be a compiler bug where the
+register <code class="language-plaintext highlighter-rouge">r13</code> is not considered volatile (which works for user land but not
+for the kernel). Seher Boessenkool who has worked on similar PPC64 issues
+before is on the email chain and can hopefully fix it but lets see where it
+goes.</p>
 </div>
   
   
@@ -610,6 +696,10 @@ let me know in the comments!</p>
   
     
       <a href="/page21">21</a>
+    
+  
+    
+      <a href="/page22">22</a>
     
   
   -->
