@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>28 Apr 2023</span> &nbsp; <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [rcusynchronization]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>25 Apr 2023</span> &nbsp; <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -437,7 +451,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linux/kernel/rcu/scheduler/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a></h1>
+      <h1 class="entry-title"><a href="/linux/kernel/debugging/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a></h1>
     
     
       <p class="meta">
@@ -451,88 +465,46 @@ Most Recept Post:
 
 
 
-<time datetime="2018-05-10T00:00:00+00:00" pubdate data-updated="true">May 10, 2018</time>
+<time datetime="2018-06-10T00:00:00+00:00" pubdate data-updated="true">Jun 10, 2018</time>
         
-           | <a href="/linux/kernel/rcu/scheduler/2018/05/10/5-rcu-preempt-context-switch.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/rcu/scheduler/2018/05/10/5-rcu-preempt-context-switch.html">Comments</a>
+           | <a href="/linux/kernel/debugging/2018/06/10/kernel-gdb.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/debugging/2018/06/10/kernel-gdb.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Note: This article requires knowledge of RCU (read copy update) basics and its
-different flavors.</p>
+  <div class="entry-content"><p>Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
+of a RISC-V processor to step through some kernel code.</p>
 
-<p>RCU’s main algorithm is to detect when it is free to reclaim objects that RCU
-readers no longer need. The “RCU-sched” flavor of RCU does this by just
-disabling preemption across the read section. So any time any of the CPUs is
-not running in a preempt disabled section (such as with preemption off, or
-interrupts off), then the CPU is said to be in a “quiescent state” (QS). Once
-all CPUs reach a QS after the reclaimer filed a claim to release an object, the
-object can be safely released. The time from when the request for RCU to
-release an object to when RCU says its Ok to release it, is called the grace
-period.</p>
+<p>Turns out that the Linux kernel is compiled with gcc <code class="language-plaintext highlighter-rouge">-O2</code> flag for
+optimizations it needs during the build. This causes several problems for a
+debugger.  One of them is that the gdb command <code class="language-plaintext highlighter-rouge">info registers</code> will show
+values as <code class="language-plaintext highlighter-rouge">&lt;optimized out&gt;</code>. Another issue is that single-stepping will make
+the debugger appear to jump back and forth across lines of code as code is
+stepped through with <code class="language-plaintext highlighter-rouge">next</code> or <code class="language-plaintext highlighter-rouge">step</code> gdb commands.</p>
 
-<p>RCU-sched is kind of a big hammer, having readers disable preemption can have
-poor performance effects. After all, read sections are expected to be light in
-RCU. It can also effect real-time response of applications.</p>
+<p>To circumvent this issue, I ended up with a hack that works well. I don’t claim
+this is recommended or correct, but it makes it through the build and gdb works
+fine. In my debugging, I have wanted to single-step through scheduler code in
+the <code class="language-plaintext highlighter-rouge">__schedule</code> kernel function. For this purpose, all I have to do is add the
+following to <code class="language-plaintext highlighter-rouge">kernel/sched/Makefile</code>.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CFLAGS_REMOVE_core.o := -O2
+CFLAGS_core.o := -O0
+</code></pre></div></div>
+<p>This works brilliantly! What do you think? Let me know in the comments.</p>
 
-<p>For this reason, preemptible RCU came about (also called RCU-preempt).
-Obviously in this flavor, RCU reader sections can get preempted to run
-something else.</p>
+<p>Some more tips:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">CONFIG_DEBUG_INFO</code> is needed to ensure kernel has debug symbols for gdb to
+load, and ofcourse <code class="language-plaintext highlighter-rouge">CONFIG_DEBUG_KERNEL</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">CONFIG_FRAME_POINTER</code> should be enabled to ensure stack unwinding,
+backtraces work correctly.</li>
+  <li><code class="language-plaintext highlighter-rouge">CONFIG_GDB_SCRIPTS</code> is a bunch of useful gdb scripts automatically load when a
+vmlinux is gdb’d.</li>
+</ul>
 
-<p>A <a href="https://www.mail-archive.com/linux-kernel@vger.kernel.org/msg1682346.html">recent discussion</a>
-on LKML clarified to me that “preempted to run something else” not only covers
-involuntary preemption but also voluntarily sleeping. This design is because,
-with <code class="language-plaintext highlighter-rouge">PREEMPT_RT</code> kernels, “rt” version of spinlocks are actually mutexes that
-can put the RCU reader to sleep.</p>
-
-<p>So coming back to the point of this article, I want to go over what happens on
-a context-switch. When the scheduler is called, we end up in <code class="language-plaintext highlighter-rouge">__schedule</code>
-function. Here in the beginning <code class="language-plaintext highlighter-rouge">rcu_note_context_switch</code> is called with the
-<code class="language-plaintext highlighter-rouge">preempt</code> parameter. The <code class="language-plaintext highlighter-rouge">preempt</code> parameter indicates if task blocked with
-help of <code class="language-plaintext highlighter-rouge">schedule()</code> or if it was a kernel path (such as return from interrupts
-or system calls) that called into the scheduler to preempt the currently
-running task.</p>
-
-<p><code class="language-plaintext highlighter-rouge">rcu_note_context_switch</code> first calls <code class="language-plaintext highlighter-rouge">rcu_preempt_note_context_switch</code> for
-RCU-preempt to take note. Lets discuss this function.</p>
-
-<p>First note that the RCU-preempt flavor does warn you if you voluntarily sleep inside
-an RCU read side section. I’m not sure how the “RT-spinlock” for RT kernels
-doesn’t get this warning. Probably they delete this warning in PREEMPT_RT
-patchset, idk. The warning is <code class="language-plaintext highlighter-rouge">WARN_ON_ONCE(!preempt &amp;&amp;
-t-&gt;rcu_read_lock_nesting &gt; 0);</code>. But seems pretty clear to me a non-RT kernel
-would scream with this warning if an RCU-preempt read section went to sleep.
-Getting preempted is Ok but not voluntary sleeping according to this code! (see
-side note in last para)</p>
-
-<p>If the task being preempted is in a read-side RCU section, then (and only then)
-it calls <code class="language-plaintext highlighter-rouge">rcu_preempt_ctxt_queue</code>. Here the task being preempted is added to a
-list of blocked tasks. The reason why we need to add it is, RCU-preempt has 2
-perspectives of Quiescent state (QS). Recall, a QS is reached whenever an
-entity is not blocking the current grace period (GP). RCU-preempt considers 2
-entity perspectives: Either the task, or the CPU. In the RCU-preempt world, if
-a task that is currently in an RCU read section gets preempted, then the CPU
-has reached a QS because it is no longer running the RCU-read section that is
-blocking the GP. But now, the task has reached a non-QS (It is blocking the
-GP). This list basically indicates this fact. If there are blocking tasks, then
-the GP cannot complete even though the CPU reports its QS. <a href="https://lkml.org/lkml/2018/5/4/632">Paul Mckenney explains this here</a>. The other benefit of having a list of tasks is that preempted RCU read sections can be boosted. Paul Mckenney again came to the rescue to <a href="https://lkml.org/lkml/2018/5/4/659">explain this to me</a>.</p>
-
-<p>Finally, you see that <code class="language-plaintext highlighter-rouge">rcu_preempt_note_context_switch</code> does report a QS. This
-is because if the task was in a read section, it has just been added to the
-blocked task list. If its not, then we just reached a QS for the CPU. Either
-way we entered a CPU QS. So is recorded with a call to <code class="language-plaintext highlighter-rouge">rcu_preempt_qs();</code>.</p>
-
-<p>Please go through the <a href="https://www.kernel.org/doc/Documentation/RCU/Design/Expedited-Grace-Periods/Expedited-Grace-Periods.html">Expedited GP document</a> which also explains some of the RCU-preempt behaviors.</p>
-
-<p>Side note: At the moment, I don’t immediately see why by blocking in a RCU-preempt
-section shouldn’t be allowed.  Since we’re tracking blocked tasks the same way
-as preempted tasks, it should be possible to handle them the same way. They
-both cause a CPU QS and a task non-QS to be entered, they both need priority
-boosting. Perhaps the warning should be removed? Let me know your feedback in
-the comments.</p>
 </div>
   
   
@@ -635,6 +607,10 @@ the comments.</p>
   
     
       <a href="/page22">22</a>
+    
+  
+    
+      <a href="/page23">23</a>
     
   
   -->

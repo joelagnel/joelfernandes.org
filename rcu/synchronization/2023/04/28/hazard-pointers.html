@@ -5,15 +5,35 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>JoelFernandes.org</title>
+  <title>Understanding Hazard Pointers - JoelFernandes.org</title>
   <meta name="author" content="Joel Fernandes">
 
   
   <meta name="description" content="
 
+  
+  
+    
+      Understanding Hazard Pointers
+    
+    
+      
+        
 
-Hello! I’m Joel and this my personal website built with Jekyll! I currently
-work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
+
+
+
+
+
+
+
+
+Apr 28, 2023
+        
+           | Comments
+        
+      
+   ...">
   
 
   <!-- http://t.co/dKP3o1e -->
@@ -22,7 +42,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -97,361 +117,12 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
 -->
   <div id="main">
     <div id="content">
-      <div class="blog-index">
-
-<article>
-<p>Hello! I’m Joel and this my personal website built with Jekyll! I currently
-work at Google. My interests are scheduler, RCU, tracing, synchronization,
-memory models and other kernel internals. I also love contributing to the
-upstream Linux kernel and other open source projects.</p>
-
-<p>Connect with me on <a href="https://twitter.com/joel_linux">Twitter</a>, and
-<a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a>. Or, drop me an email at:
-joel <em>at</em> joelfernandes <em>dot</em> org</p>
-
-<p>Look for my name in the kernel git log to find my upstream kernel patches.
-Check out <a href="/joel/joel-resume.pdf">my resume</a> for full details of my work
-experience. I also actively present at conferences, see a list of my past
-<a href="/resources">talks, presentations and publications</a>.</p>
-
-Full list of all blog posts on this site:
-
-<font face="monospace">
- <li>
-   <span>28 Apr 2023</span> &nbsp; <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [rcusynchronization]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>25 Apr 2023</span> &nbsp; <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [kernelstack]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>24 Feb 2023</span> &nbsp; <a href="/vim/productivity/2023/02/24/ycm-working.html">Getting YouCompleteMe working for kernel development</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [vimproductivity]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>29 Jan 2023</span> &nbsp; <a href="/herd7/lkmm/formalmethods/2023/01/29/figuring-out-herd7.html">Figuring out herd7 memory models</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [herd7lkmmformalmethods]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>13 Nov 2022</span> &nbsp; <a href="/timers/linux/kernel/2022/11/13/hrtimer.html">On workings of hrtimer's slack time functionality</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [timerslinuxkernel]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>25 Oct 2020</span> &nbsp; <a href="/c++/2020/10/25/cpp-ref.html">C++ rvalue references</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [c++]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>06 Mar 2020</span> &nbsp; <a href="/rcu/srcu/synchronization/2020/03/06/srcu-scan.html">SRCU state double scan</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [rcusrcusynchronization]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>18 Oct 2019</span> &nbsp; <a href="/pluscal/tla+/formalmethods/2019/10/18/pluscal-store-ordering.html">Modeling (lack of) store ordering using PlusCal - and a wishlist</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [pluscaltla+formalmethods]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>02 Sep 2019</span> &nbsp; <a href="/rcu/scheduler/locking/2019/09/02/rcu-schedlocks.html">Making sense of scheduler deadlocks in RCU</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [rcuschedulerlocking]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxinternals]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>15 Jun 2018</span> &nbsp; <a href="/linux/kernel/rcu/2018/06/15/rcu-dynticks.html">RCU and dynticks-idle mode</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkernelrcu]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>10 Jun 2018</span> &nbsp; <a href="/linux/kernel/debugging/2018/06/10/kernel-gdb.html">Single-stepping the kernel's C code</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkerneldebugging]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>10 May 2018</span> &nbsp; <a href="/linux/kernel/rcu/scheduler/2018/05/10/5-rcu-preempt-context-switch.html">RCU-preempt: What happens on a context switch</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkernelrcuscheduler]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>11 Feb 2018</span> &nbsp; <a href="/linux/kernel/tracing/2018/02/11/usdt-notes.html">USDT for reliable Userspace event tracing</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkerneltracing]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>08 Jan 2018</span> &nbsp; <a href="/linux/kernel/tracing/2018/01/08/bpfd-bcc.html">BPFd- Running BCC tools remotely across systems</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkerneltracing]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>01 Jan 2017</span> &nbsp; <a href="/linux/kernel/tracing/armv8/2017/01/01/nmi-perf-armv8.html">ARMv8: flamegraph and NMI support</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkerneltracingarmv8]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>19 Jun 2016</span> &nbsp; <a href="/linux/kernel/tracing/2016/06/19/ftrace-events-mechanism.html">Ftrace events mechanism</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkerneltracing]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>20 Mar 2016</span> &nbsp; <a href="/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkernelscheduler]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>25 Dec 2015</span> &nbsp; <a href="/electronics/embedded/linux/2015/12/25/tying-2-voltage-sources-slash-signals-together.html">Tying 2 voltage sources/signals together</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [electronicsembeddedlinux]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>04 Jun 2014</span> &nbsp; <a href="/linux/embedded/electronics/2014/06/04/a-microsd-card-remote-switcher.html">MicroSD card remote switch</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxembeddedelectronics]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>08 May 2014</span> &nbsp; <a href="/linux/kernel/locking/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkernellocking]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>25 Apr 2014</span> &nbsp; <a href="/synchronization/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [synchronization]
-
-     !-->
- </li>
-</font>
-
-<font face="monospace">
- <li>
-   <span>23 Apr 2014</span> &nbsp; <a href="/linux/kernel/2014/04/23/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a> 
-   <!--
-     Commenting out categories in square brackets, because it does not work
-     properly. Check posts/category.html if you want to generate linked
-     categories here.
-
-   [linuxkernel]
-
-     !-->
- </li>
-</font>
-
-</article>
-
-
- <!-- This loops through the paginated posts -->
-
-
-
-
-    <article>
-Most Recept Post:
-      
+      <div>
+<article class="hentry" role="article">
+  
   <header>
     
-      <h1 class="entry-title"><a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a></h1>
+      <h1 class="entry-title">Understanding Hazard Pointers</h1>
     
     
       <p class="meta">
@@ -467,15 +138,15 @@ Most Recept Post:
 
 <time datetime="2023-04-28T00:00:00+00:00" pubdate data-updated="true">Apr 28, 2023</time>
         
-           | <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">Comments</a>
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
+<div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
 
 <p>In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with another popular synchronization technique called Read-Copy-Update (RCU). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.</p>
 
@@ -539,122 +210,77 @@ Most Recept Post:
 
 <p>Hazard pointers are an effective synchronization mechanism for managing shared resources in concurrent systems. They offer good read-side performance and may generally better memory footprint than RCU.</p>
 </div>
-  
-  
 
 
-    </article>
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
 
 
 
-<div class="pagination">
-  
 
-  <!-- Don't want numbers.
-  
-    
-      <em>1</em>
-    
-  
-    
-      <a href="/page2">2</a>
-    
-  
-    
-      <a href="/page3">3</a>
-    
-  
-    
-      <a href="/page4">4</a>
-    
-  
-    
-      <a href="/page5">5</a>
-    
-  
-    
-      <a href="/page6">6</a>
-    
-  
-    
-      <a href="/page7">7</a>
-    
-  
-    
-      <a href="/page8">8</a>
-    
-  
-    
-      <a href="/page9">9</a>
-    
-  
-    
-      <a href="/page10">10</a>
-    
-  
-    
-      <a href="/page11">11</a>
-    
-  
-    
-      <a href="/page12">12</a>
-    
-  
-    
-      <a href="/page13">13</a>
-    
-  
-    
-      <a href="/page14">14</a>
-    
-  
-    
-      <a href="/page15">15</a>
-    
-  
-    
-      <a href="/page16">16</a>
-    
-  
-    
-      <a href="/page17">17</a>
-    
-  
-    
-      <a href="/page18">18</a>
-    
-  
-    
-      <a href="/page19">19</a>
-    
-  
-    
-      <a href="/page20">20</a>
-    
-  
-    
-      <a href="/page21">21</a>
-    
-  
-    
-      <a href="/page22">22</a>
-    
-  
-    
-      <a href="/page23">23</a>
-    
-  
-  -->
 
+
+
+
+
+<time datetime="2023-04-28T00:00:00+00:00" pubdate data-updated="true">Apr 28, 2023</time>
+      <!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+  Added on 1/29/2023
+-->
+<div class="post-categories">
   
-    <a href="/page2">Next Post&raquo;</a>
+  
+  <a href="/categories/#rcu">rcu</a>
+  &nbsp;
+  
+  <a href="/categories/#synchronization">synchronization</a>
+  
   
 </div>
 
+<!--
+Commented out on 1/29/2023:
 
-<!-- div blog-index -->
+
+
+<span class="categories">
+  
+    rcusynchronization
+  
+  </span>
+
+ -->
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
 </div>
 
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="/kernel/stack/2023/04/25/ppc-stack-guards.html" title="Previous Post: PowerPC stack guard false positives in Linux kernel">&laquo; PowerPC stack guard false positives in Linux kernel</a>
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
 
 <aside class="sidebar">
   
@@ -664,6 +290,7 @@ Most Recept Post:
 
   
 </aside>
+
 
     </div>
   </div>
@@ -679,7 +306,10 @@ Most Recept Post:
       var disqus_shortname = 'linuxinternals1';
       
         
-        var disqus_script = 'count.js';
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html';
+        var disqus_url = 'http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html';
+        var disqus_script = 'embed.js';
       
     (function () {
       var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;

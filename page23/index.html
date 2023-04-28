@@ -22,7 +22,7 @@ work at Google. My interests are scheduler, RCU, tracing, synchroniz...">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="http://www.linuxinternals.org/">
+  <link rel="canonical" href="http://www.linuxinternals.org/page23/">
   <link href="/favicon.png" rel="icon">
   <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
   <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
@@ -451,7 +451,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a></h1>
+      <h1 class="entry-title"><a href="/linux/kernel/2014/04/23/design-of-fork-followed-by-exec-in-linux.html">Design of fork followed by exec in Linux</a></h1>
     
     
       <p class="meta">
@@ -465,79 +465,63 @@ Most Recept Post:
 
 
 
-<time datetime="2023-04-28T00:00:00+00:00" pubdate data-updated="true">Apr 28, 2023</time>
+<time datetime="2014-04-23T04:06:11+00:00" pubdate data-updated="true">Apr 23, 2014</time>
         
-           | <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">Comments</a>
+           | <a href="/linux/kernel/2014/04/23/design-of-fork-followed-by-exec-in-linux.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/2014/04/23/design-of-fork-followed-by-exec-in-linux.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
+  <div class="entry-content"><p>A lot of folks ask <em>why do you have to do fork and then an exec, to execute a new program?</em> and <em>why can’t it be done in one step?</em>, or <em>why does fork <a href="http://man7.org/linux/man-pages/man2/fork.2.html">create a copy-on-writed address space</a>, to only have it thrown away later when you do an exec?</em>. So I decided do a small write up about this topic.</p>
 
-<p>In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with another popular synchronization technique called Read-Copy-Update (RCU). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.</p>
+<p>On a separate note, firstly it is important to remember that <code class="language-plaintext highlighter-rouge">fork</code> is not used for threading, its primary use is to create a separate process, that is a child of the parent process that called <code class="language-plaintext highlighter-rouge">fork</code>.</p>
 
-<h2 id="example-with-a-singly-linked-list"><strong>Example with a Singly Linked List</strong></h2>
+<p>Normally one might think that doing a <code class="language-plaintext highlighter-rouge">fork</code> and separate <code class="language-plaintext highlighter-rouge">exec</code> can be combined in one step, and it probably should be. But there are applications of maintaining this separation. Here’s a <a href="http://stackoverflow.com/questions/1345320/applications-of-fork-system-call">post that explains</a> why you might need to do just a <code class="language-plaintext highlighter-rouge">fork</code> call. Summarizing the post, you may need to setup some initial data and “fork” a bunch of workers. All these works are supposed to execute in <em>their own</em> address space and share <em>only the initial data</em>. In this case, copy-on-write is extremely useful since the initial data can be shared in physical memory and forking this way would be extremely cheap. The kernel marks all these shared pages as read only, and makes writable copies of shared data when they are written to.</p>
 
-<p>Consider a singly linked list that is shared among multiple threads. In this example, some threads may be traversing the list while others may be adding or removing nodes. The main challenge here is to ensure that a node being accessed by a reader is not deleted or modified by a writer simultaneously.</p>
+<p>There is a small overhead if <code class="language-plaintext highlighter-rouge">fork</code> is followed immediately by an <code class="language-plaintext highlighter-rouge">exec</code> system call, since the copy-on-write shared address space is of no use and is thrown away anyway. Combining both the <code class="language-plaintext highlighter-rouge">fork</code>, <code class="language-plaintext highlighter-rouge">exec</code> in this case might might have some advantages, reducing this overhead.</p>
 
-<p>Hazard pointers provide a mechanism to temporarily “protect” a node while it is being accessed. When a thread wants to access a node, it stores the address of the node in a hazard pointer, signaling that the node is in use. Before a writer can remove or modify a node, it must check all hazard pointers to ensure that the node is not currently being accessed by any other thread.</p>
+<h2 id="linux-implementation-of-copy-on-write-cow-for-shared-virtual-memory-areas">Linux Implementation of Copy-on-write (COW) for shared Virtual Memory Areas</h2>
+<p>Some of this COW code that executes on a fork can be found in <code class="language-plaintext highlighter-rouge">mm/memory.c</code>. There is an is_cow function to detect if a virtual memory area (a region of virtual memory, see <code class="language-plaintext highlighter-rouge">/proc/self/maps</code>) is copy-on-write.</p>
 
-<p>Here’s a step-by-step illustration of how hazard pointers work:</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">static</span> <span class="kr">inline</span> <span class="n">bool</span> <span class="nf">is_cow_mapping</span><span class="p">(</span><span class="n">vm_flags_t</span> <span class="n">flags</span><span class="p">)</span>
+<span class="p">{</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">flags</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">VM_SHARED</span> <span class="o">|</span> <span class="n">VM_MAYWRITE</span><span class="p">))</span> <span class="o">==</span> <span class="n">VM_MAYWRITE</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+<p>A VMA (Virtual Memory Area) is a contiguous segment of virtual memory belonging to a particular process. Every VMA has a bunch of VM_ flags associated with it. <code class="language-plaintext highlighter-rouge">VM_MAYWRITE</code>, relevant to the above code, is used to mark that a mapped region can be changed to writable by mprotect system call. It is possible that a memory region is initially readonly and the user wants to make it writable. <code class="language-plaintext highlighter-rouge">VM_MAYWRITE</code> gives that permission. Note that if if the kernel doesn’t set <code class="language-plaintext highlighter-rouge">VM_MAYWRITE</code>, then the region is automatically not COW because there is no question of writing to it.</p>
 
-<ol>
-  <li>Thread A starts traversing the list and wants to access node B.</li>
-  <li>Thread A stores the address of node B in a hazard pointer, marking it as “in use.”</li>
-  <li>Thread B attempts to remove node B from the list but first checks all hazard pointers.</li>
-  <li>Thread B sees that node B is in use by Thread A (due to the hazard pointer) and must wait before removing it.</li>
-  <li>Thread A finishes accessing node B and clears its hazard pointer.</li>
-  <li>Thread B can now safely remove node B from the list.</li>
-</ol>
+<p>When a memory mapping is created via the mmap system call, and if <code class="language-plaintext highlighter-rouge">MAP_SHARED</code> is passed in flags, the <code class="language-plaintext highlighter-rouge">VM_SHARED</code> bit is set for the VMA and as a result the region is not copy-on-write (The above is_cow_mapping function returns false). By definition, shared memory regions are just that - shared. So no need copy-on-write. In other words, If the VMA is a shared mapping or is a read only mapping, then it isn’t a COW mapping.</p>
 
-<h2 id="a-reader-traversing-a-list-may-need-to-retry">A reader traversing a list may need to retry</h2>
+<p>Let’s take the example of mapping a file using mmap,</p>
 
-<p>This can happen if the reader steps on a list element that was freed. Let’s go through a simple example step by step to see why this might happen:</p>
+<p>By default in the kernel on VMA creation, the VMA flags is set to <code class="language-plaintext highlighter-rouge">VM_SHARED = 0</code> and <code class="language-plaintext highlighter-rouge">VM_MAYWRITE = 1</code>. Now if mmap is asked it to create a shared mapping of a file by passing it <code class="language-plaintext highlighter-rouge">MAP_SHARED</code> flag, for example, that can be shared with other processes that are being forked, then the <code class="language-plaintext highlighter-rouge">VM_SHARED</code> bit is set to 1 for that VMA. Additionally if the file is opened in read only mode, then <code class="language-plaintext highlighter-rouge">VM_MAYWRITE</code> is set to 1. This has the effect of making is_cow_mapping return false. Ofcourse, the shared mapping doesn’t need to be a COW.</p>
 
-<p>Imagine a singly-linked list with three elements: A, B, and C. We have two threads, Thread 0 and Thread 1, which read and modify the list concurrently.</p>
+<p>On the other hand, if <code class="language-plaintext highlighter-rouge">MAP_PRIVATE</code> is passed in the flags to mmap, then <code class="language-plaintext highlighter-rouge">VM_SHARED</code> bit is set to 0, and <code class="language-plaintext highlighter-rouge">VM_MAYWRITE</code> remains at 1 (regardless of whether the file is read or write opened, since writes will not be carried to the underlying file). This makes is_cow_mapping return true. Indeed, private mappings should be copy-on-write enabled.</p>
 
-<ol>
-  <li>Thread 0 wants to read element B. To do this safely, it first records a hazard pointer to element B, indicating that it is about to access B and that B should not be deleted while Thread 0 is using it.</li>
-  <li>Thread 1 wants to delete element B from the list. It removes B from the list by updating A’s next pointer to point to C instead of B. Thread 1 checks for hazard pointers referencing B and sees that Thread 0 has a hazard pointer to B. Since Thread 0 is still using B, Thread 1 cannot delete it yet.</li>
-  <li>Thread 1 now wants to delete element C. It removes C from the list by updating B’s next pointer to be a special value called <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code>, marking the deletion. Since no hazard pointers reference C, Thread 1 can immediately delete C.</li>
-  <li>Thread 0 finishes reading element B and moves on to the next element in the list. It tries to acquire a hazard pointer for B’s successor, which is now marked as <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> due to the deletion of element C. When Thread 0 encounters the <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> value, it knows that the list has been modified concurrently and must restart its traversal from the beginning of the list.</li>
-  <li>Thread 0 starts over, traversing the list again from the beginning. This time, it finds the updated list without elements B and C.</li>
-  <li>Once Thread 0 is done using element B and releases its hazard pointer, Thread 1 is free to delete B as there are no longer any hazard pointers referencing it.</li>
-</ol>
+<p>You can see the code I’m talking about <a href="http://lxr.free-electrons.com/source/mm/mmap.c#L1284">conveniently here</a>.</p>
 
-<h2 id="comparing-hazard-pointers-with-rcu"><strong>Comparing Hazard Pointers with RCU</strong></h2>
+<p>The important point here is that every mapping is either a COW mapping or not a COW mapping. During the <code class="language-plaintext highlighter-rouge">clone</code> system call which is called by <code class="language-plaintext highlighter-rouge">fork</code> library call internally, if the <code class="language-plaintext highlighter-rouge">CLONE_VM</code> flag is not passed to <code class="language-plaintext highlighter-rouge">clone</code> as is the case internally within <code class="language-plaintext highlighter-rouge">fork</code>, then all the VMA mappings of the parent process are copied to the child, including the page table entries. In this case, any writes to COW mappings should trigger a copy on write. The main thing to note is the children <em>inherit</em> the COW property of all the copied VMA mappings of its parent and don’t need to be explictly marked as COW.</p>
 
-<p>Both hazard pointers and RCU are synchronization mechanisms that allow for efficient handling of shared resources. However, they differ in several key aspects:</p>
+<p>However, If <code class="language-plaintext highlighter-rouge">CLONE_VM</code> is passed, then the VMAs are not copied and the memory descriptor of the child and the parent process are the same, in this case the child and parent share the same address space and are thus are threads. <a href="http://lxr.free-electrons.com/source/kernel/fork.c#L879">See for yourself</a>. COW or no COW doesn’t matter here.</p>
 
-<ol>
-  <li>Read-side performance: RCU typically offers better read-side performance than hazard pointers, as it does not require retries. Hazard pointers, on the other hand, may involve read-side retries due to concurrent modifications, which can slow down the read-side performance.</li>
-  <li>Write-side performance: While hazard pointers generally provide better write-side performance than naive reference counting, they may still be slower than RCU. This is because hazard pointers require writers to check all hazard pointers before modifying an object, which can be time-consuming when there are many of them. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are lots of readers storing hazard pointers.</li>
-  <li>Memory footprint: Hazard pointers have a minimal memory footprint, as any object not currently protected by a hazard pointer can be immediately freed. RCU, on the other hand, may require a larger memory footprint due to its deferred reclamation mechanism.</li>
-  <li>Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.</li>
-  <li>Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism.</li>
-</ol>
+<p>So here’s a question for you, For N <code class="language-plaintext highlighter-rouge">clone</code> system calls with <code class="language-plaintext highlighter-rouge">!CLONE_VM</code> passed for spawning N threads, we can just create as many VMA copies as we want each time, the COW mappings will take care of themselves. Right? Almost! There’s more work… the <em>physical pages</em> of both the original VMA and the copy VMA have to be marked as read-only. That’s the only way Copy-on-write of those will be triggered by the CPU when those pages are written to. Here’s the code in <a href="http://lxr.free-electrons.com/source/mm/memory.c#L849">copy_one_pte</a> that sets this up:</p>
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code>         <span class="cm">/*
+          * If it's a COW mapping, write protect it both
+          * in the parent and the child
+          */</span>
+         <span class="k">if</span> <span class="p">(</span><span class="n">is_cow_mapping</span><span class="p">(</span><span class="n">vm_flags</span><span class="p">))</span> <span class="p">{</span>
+                 <span class="n">ptep_set_wrprotect</span><span class="p">(</span><span class="n">src_mm</span><span class="p">,</span> <span class="n">addr</span><span class="p">,</span> <span class="n">src_pte</span><span class="p">);</span>
+                 <span class="n">pte</span> <span class="o">=</span> <span class="n">pte_wrprotect</span><span class="p">(</span><span class="n">pte</span><span class="p">);</span>
+         <span class="p">}</span>
+</code></pre></div></div>
+<p>There you go, now when the COW memory region is written to, a page fault happens, and the page fault handler knows that the VMA of the faulting page is a COW and that’s what triggered the page fault. It can then create a copy of the page and restart the faulting instruction, this time removing the write protection if there aren’t any others sharing the VMA. So in short, fork+exec can be expensive if you had done lots of <code class="language-plaintext highlighter-rouge">fork</code> calls on a process with a lot of large files. Since all this copying business is wasted on doing a subsequent <code class="language-plaintext highlighter-rouge">exec</code> system call.</p>
 
-<h2 id="implementation-of-hazard-pointers"><strong>Implementation of Hazard Pointers</strong></h2>
+<p>There is one optimization however, why should you have to do this marking for pages that are not physically present in memory? Those will fault anyway. So the above code is <em>not run</em> if the page is not present, nicely done by checking for <code class="language-plaintext highlighter-rouge">!pte_present(pte)</code> to be true before the preceding code.</p>
 
-<p>Hazard pointers are maintained in per-CPU or per-thread data structures. This design choice allows for improved cache locality, as each thread or CPU only needs to update its own local data structure when accessing shared resources. Consequently, this reduces contention and cache coherency traffic, leading to good read-side performance. However, the write-side performance of hazard pointers may be slower than RCU, as writers need to check all hazard pointers before modifying an object. This can be time-consuming when there are many hazard pointers to check. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are many readers storing hazard pointers, leading to additional overhead.</p>
-
-<h2 id="virtual-reference-counting-using-hazard-pointers">Virtual Reference Counting using Hazard Pointers</h2>
-
-<p>Virtual reference counting is a technique used to avoid the overhead of maintaining reference counts for each object in a concurrent system. Instead of incrementing and decrementing object reference counts, threads maintain a list of “virtual” reference counts in the form of hazard pointers.</p>
-
-<p>When a thread wants to access an object, it temporarily protects the object using a hazard pointer. This marks the object as “in use” and guarantees that it won’t be freed or modified by any other thread. By counting the number of hazard pointers in the system, it is possible to determine the “value of the virtual refcount.” The absence of hazard pointers implies that the number of references to an object is zero, which means that the object can be destroyed.</p>
-
-<p>Virtual reference counting eliminates the need to maintain reference counts for each object resulting in the object saving space as a separate refcount need to be stored in the object. This is very useful for small objects.</p>
-
-<h2 id="in-summary">In summary</h2>
-
-<p>Hazard pointers are an effective synchronization mechanism for managing shared resources in concurrent systems. They offer good read-side performance and may generally better memory footprint than RCU.</p>
+<p>Please share any comments you may have in the comments section.</p>
 </div>
   
   
@@ -549,11 +533,13 @@ Most Recept Post:
 
 <div class="pagination">
   
+    <a href="/page22">&laquo; Previous Post</a> &nbsp; &nbsp; &nbsp;
+  
 
   <!-- Don't want numbers.
   
     
-      <em>1</em>
+      <a href="/">1</a>
     
   
     
@@ -641,13 +627,11 @@ Most Recept Post:
     
   
     
-      <a href="/page23">23</a>
+      <em>23</em>
     
   
   -->
 
-  
-    <a href="/page2">Next Post&raquo;</a>
   
 </div>
 

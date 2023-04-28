@@ -527,29 +527,29 @@ _switch():
 
 <p>As explained earlier in the article and as Christpophe answered this for me:</p>
 
-<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">PPC64</span> <span class="nx">uses</span> <span class="nx">a</span> <span class="nx">per</span><span class="o">-</span><span class="nx">task</span> <span class="nx">canary</span><span class="p">.</span> <span class="nx">But</span> <span class="nx">unlike</span> <span class="nx">PPC32</span><span class="p">,</span> <span class="nx">PPC64</span> <span class="nx">doesn</span><span class="dl">'</span><span class="s1">t have a fixed 
-register pointing to </span><span class="dl">'</span><span class="nx">current</span><span class="dl">'</span><span class="s1"> at all time so the canary is copied into 
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PPC64 uses a per-task canary. But unlike PPC32, PPC64 doesn't have a fixed 
+register pointing to 'current' at all time so the canary is copied into 
 a per-cpu struct (PACA) during _switch().
 
 If GCC keeps an old value of the per-cpu struct pointer, it then gets 
 the canary from the wrong CPU struct so from a different task.
-</span></code></pre></div></div>
+</code></pre></div></div>
 
 <h3 id="compiler-optimizations">Compiler optimizations</h3>
 
 <p>What Christophe refers to in the last line is exactly a Compilter optimization. It turns out that from the reporter’s email, the <code class="language-plaintext highlighter-rouge">r10</code> register was used as a base pointer to the per-CPU PACA area. This means the compiler must have cached <code class="language-plaintext highlighter-rouge">r13</code> into <code class="language-plaintext highlighter-rouge">r10</code>, perhaps because it wanted to use <code class="language-plaintext highlighter-rouge">r13</code> for something else. Boqun Feng provided the following snippet which Zhouyi verified fixes the issue:</p>
 
-<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">diff</span> <span class="o">--</span><span class="nx">git</span> <span class="nx">a</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span> <span class="nx">b</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
-        <span class="nx">index</span> <span class="nx">ab4ee58af84b</span><span class="p">..</span><span class="nx">f5ae3be3d04d</span> <span class="mi">100644</span>
-        <span class="o">---</span> <span class="nx">a</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
-        <span class="o">+++</span> <span class="nx">b</span><span class="o">/</span><span class="nx">kernel</span><span class="o">/</span><span class="nx">rcu</span><span class="o">/</span><span class="nx">srcutree</span><span class="p">.</span><span class="nx">c</span>
-        <span class="p">@@</span> <span class="o">-</span><span class="mi">747</span><span class="p">,</span><span class="mi">6</span> <span class="o">+</span><span class="mi">747</span><span class="p">,</span><span class="mi">7</span> <span class="p">@@</span> <span class="k">void</span> <span class="nx">__srcu_read_unlock_nmisafe</span><span class="p">(</span><span class="nx">struct</span> <span class="nx">srcu_struct</span> <span class="o">*</span><span class="nx">ssp</span><span class="p">,</span> <span class="nx">int</span> <span class="nx">idx</span><span class="p">)</span>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
+        index ab4ee58af84b..f5ae3be3d04d 100644
+        --- a/kernel/rcu/srcutree.c
+        +++ b/kernel/rcu/srcutree.c
+        @@ -747,6 +747,7 @@ void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
 
-                <span class="nx">smp_mb__before_atomic</span><span class="p">();</span> <span class="cm">/* C */</span>  <span class="cm">/* Avoid leaking the critical section. */</span>
-                <span class="nx">atomic_long_inc</span><span class="p">(</span><span class="o">&amp;</span><span class="nx">sdp</span><span class="o">-&gt;</span><span class="nx">srcu_unlock_count</span><span class="p">[</span><span class="nx">idx</span><span class="p">]);</span>
-        <span class="o">+</span>       <span class="nx">asm</span> <span class="nx">volatile</span><span class="p">(</span><span class="dl">""</span> <span class="p">:</span> <span class="p">:</span> <span class="p">:</span> <span class="dl">"</span><span class="s2">r13</span><span class="dl">"</span><span class="p">,</span> <span class="dl">"</span><span class="s2">memory</span><span class="dl">"</span><span class="p">);</span>
-         <span class="p">}</span>
-         <span class="nx">EXPORT_SYMBOL_GPL</span><span class="p">(</span><span class="nx">__srcu_read_unlock_nmisafe</span><span class="p">);</span>
+                smp_mb__before_atomic(); /* C */  /* Avoid leaking the critical section. */
+                atomic_long_inc(&amp;sdp-&gt;srcu_unlock_count[idx]);
+        +       asm volatile("" : : : "r13", "memory");
+         }
+         EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
 </code></pre></div></div>
 
 <p>In this snippet, <code class="language-plaintext highlighter-rouge">r13</code> is added to an extended inline asm statement, which instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, which hopefully prevents the compiler from caching its value before exiting the function. In fact this is exactly what prevents the issue.</p>
@@ -560,21 +560,21 @@ the canary from the wrong CPU struct so from a different task.
 
 <p>Later in the email chain, I mentioned the series of events as outlined by Christophe and Boqun which could lead to the issue:</p>
 
-<div class="language-jsx highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">The</span> <span class="nx">issue</span> <span class="nx">requires</span> <span class="nx">the</span> <span class="nx">following</span> <span class="nx">ingredients</span><span class="p">:</span>
-<span class="mi">1</span><span class="p">.</span> <span class="nx">Task</span> <span class="nx">A</span> <span class="nx">is</span> <span class="nx">running</span> <span class="nx">on</span> <span class="nx">CPU</span> <span class="mi">1</span><span class="p">,</span> <span class="nx">and</span> <span class="nx">the</span> <span class="nx">task</span><span class="dl">'</span><span class="s1">s canary is copied into
-the CPU1</span><span class="dl">'</span><span class="nx">s</span> <span class="nx">per</span><span class="o">-</span><span class="nx">cpu</span> <span class="nx">area</span> <span class="nx">pointed</span> <span class="nx">to</span> <span class="nx">by</span> <span class="nx">r13</span><span class="p">.</span>
-<span class="mi">2</span><span class="p">.</span> <span class="nx">r13</span> <span class="nx">is</span> <span class="nx">now</span> <span class="nx">cached</span> <span class="nx">into</span> <span class="nx">r10</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">offending</span> <span class="kd">function</span> <span class="nx">due</span> <span class="nx">to</span> <span class="nx">the</span> <span class="nx">compiler</span><span class="p">.</span>
-<span class="mi">3</span><span class="p">.</span> <span class="nx">Task</span> <span class="nx">A</span> <span class="nx">running</span> <span class="nx">on</span> <span class="nx">CPU</span> <span class="mi">1</span> <span class="nx">now</span> <span class="nx">gets</span> <span class="nx">preempted</span> <span class="nx">right</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">middle</span> <span class="k">of</span>
-<span class="nx">the</span> <span class="nx">offending</span> <span class="nx">SRCU</span> <span class="kd">function</span> <span class="nx">and</span> <span class="nx">gets</span> <span class="nx">migrated</span> <span class="nx">to</span> <span class="nx">CPU</span> <span class="mi">2</span><span class="p">.</span>
-<span class="mi">4</span><span class="p">.</span>  <span class="nx">CPU</span> <span class="mi">2</span><span class="dl">'</span><span class="s1">s per-cpu canary is updated to that of task A since task A
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The issue requires the following ingredients:
+1. Task A is running on CPU 1, and the task's canary is copied into
+the CPU1's per-cpu area pointed to by r13.
+2. r13 is now cached into r10 in the offending function due to the compiler.
+3. Task A running on CPU 1 now gets preempted right in the middle of
+the offending SRCU function and gets migrated to CPU 2.
+4.  CPU 2's per-cpu canary is updated to that of task A since task A
 is the current task now.
 5. Task B now runs on CPU 1 and the per-cpu canary on CPU 1 is now that of B.
 6. Task A exits the function, but stack checking code reads r10 which
-contains CPU 1</span><span class="dl">'</span><span class="nx">s</span> <span class="nx">canary</span> <span class="nx">which</span> <span class="nx">is</span> <span class="nx">that</span> <span class="k">of</span> <span class="nx">task</span> <span class="nx">B</span><span class="o">!</span>
-<span class="mi">7</span><span class="p">.</span> <span class="nx">Boom</span><span class="p">.</span>
+contains CPU 1's canary which is that of task B!
+7. Boom.
 
-<span class="nx">So</span> <span class="nx">the</span> <span class="nx">issue</span> <span class="nx">is</span> <span class="nx">precisely</span> <span class="k">in</span> <span class="err">#</span><span class="mi">2</span><span class="p">.</span>  <span class="nx">The</span> <span class="nx">issue</span> <span class="nx">is</span> <span class="k">in</span> <span class="nx">the</span> <span class="nx">compiler</span> <span class="nx">that</span> <span class="nx">it</span>
-<span class="nx">does</span> <span class="nx">not</span> <span class="nx">treat</span> <span class="nx">r13</span> <span class="k">as</span> <span class="nx">volatile</span> <span class="k">as</span> <span class="nx">Boqun</span> <span class="nx">had</span> <span class="nx">initially</span> <span class="nx">mentioned</span><span class="p">.</span>
+So the issue is precisely in #2.  The issue is in the compiler that it
+does not treat r13 as volatile as Boqun had initially mentioned.
 </code></pre></div></div>
 <h2 id="how-do-we-fix-it">How do we fix it?</h2>
 
