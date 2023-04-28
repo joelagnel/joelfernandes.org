@@ -6,7 +6,14 @@ categories: [rcu, synchronization]
 ---
 # **Introduction**
 
-In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with another popular synchronization technique called Read-Copy-Update (RCU). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.
+In concurrent systems, managing concurrent access to shared memory resources
+efficiently and safely is of paramount importance. Hazard pointers, like RCU,
+is a synchronization mechanism that can be used to address this issue. In this
+post, we will explore how hazard pointers work, provide a simple example to
+illustrate their usage, and compare them with another popular synchronization
+technique called Read-Copy-Update (RCU). Additionally, we will dive into the
+implementation details of hazard pointers, including the per-CPU and per-thread
+data structures used to maintain them.
 
 ## **Example with a Singly Linked List**
 
@@ -43,8 +50,9 @@ Both hazard pointers and RCU are synchronization mechanisms that allow for effic
 1. Read-side performance: RCU typically offers better read-side performance than hazard pointers, as it does not require retries. Hazard pointers, on the other hand, may involve read-side retries due to concurrent modifications, which can slow down the read-side performance.
 2. Write-side performance: While hazard pointers generally provide better write-side performance than naive reference counting, they may still be slower than RCU. This is because hazard pointers require writers to check all hazard pointers before modifying an object, which can be time-consuming when there are many of them. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are lots of readers storing hazard pointers.
 3. Memory footprint: Hazard pointers have a minimal memory footprint, as any object not currently protected by a hazard pointer can be immediately freed. RCU, on the other hand, may require a larger memory footprint due to its deferred reclamation mechanism.
-4. Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.
-5. Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism.
+4. Data structure size: Hazard pointers don't require any additional members in the objects their pointing to. In contract, RCU typically requires an rcu_head structure representing it, and traditional reference counting mechanisms require an integer. This makes Hazard Pointers really useful for objects of small size.
+5. Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.
+6. Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism.
 
 ## **Implementation of Hazard Pointers**
 
@@ -60,4 +68,9 @@ Virtual reference counting eliminates the need to maintain reference counts for 
 
 ## In summary
 
-Hazard pointers are an effective synchronization mechanism for managing shared resources in concurrent systems. They offer good read-side performance and may generally better memory footprint than RCU.
+Hazard pointers could be an effective synchronization mechanism for managing
+shared access to objects in concurrent systems. They offer good read-side
+performance and may offer better memory footprint than RCU due to smaller data
+structure footprint and quicker memory reclaim. However, they have poor
+read-side performance and complexity, compared to RCU. On modern systems with
+ever increasing amounts of memory, RCU makes much more sense to use than HP.
