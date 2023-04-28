@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>28 Apr 2023</span> &nbsp; <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [rcusynchronization]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>25 Apr 2023</span> &nbsp; <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -437,7 +451,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/kernel/stack/2023/04/25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></h1>
+      <h1 class="entry-title"><a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a></h1>
     
     
       <p class="meta">
@@ -451,144 +465,79 @@ Most Recept Post:
 
 
 
-<time datetime="2023-04-25T00:00:00+00:00" pubdate data-updated="true">Apr 25, 2023</time>
+<time datetime="2023-04-28T00:00:00+00:00" pubdate data-updated="true">Apr 28, 2023</time>
         
-           | <a href="/kernel/stack/2023/04/25/ppc-stack-guards.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/kernel/stack/2023/04/25/ppc-stack-guards.html">Comments</a>
+           | <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p>Recently, the RCU mailing list
-<a href="https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t">received</a>
-a report about an SRCU function failing stack guard checks.</p>
+  <div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
 
-<p>Stack guard canaries are a security mechanism used to detect stack buffer
-overflows. This mechanism works by placing a random value, called a canary,
-between the local variables and the return address on the stack. If a buffer
-overflow occurs, the canary value will be overwritten and the stack guard check
-will fail, indicating that the program is being attacked. False positives can
-occur if the canary value is overwritten by a legitimate write operation, such
-as when a large structure is copied onto the stack.</p>
+<p>In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with another popular synchronization technique called Read-Copy-Update (RCU). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.</p>
 
-<p>Closer inspection of the function (<code class="language-plaintext highlighter-rouge">srcu_gp_start_if_needed</code>) did not reveal
-any buffers that may be overflowed.</p>
+<h2 id="example-with-a-singly-linked-list"><strong>Example with a Singly Linked List</strong></h2>
 
-<p>After discussions with a number of kernel developers, it is clear what the
-issue is. Firstly, credit to Boqun Feng for looking through disassembly and
-pointing things out which led to the whole email chain and discovery of the
-issue.</p>
+<p>Consider a singly linked list that is shared among multiple threads. In this example, some threads may be traversing the list while others may be adding or removing nodes. The main challenge here is to ensure that a node being accessed by a reader is not deleted or modified by a writer simultaneously.</p>
 
-<p>A significant hint came from Christophe who is the kernel author of PPC’s stack
-protection, he mentioned:</p>
+<p>Hazard pointers provide a mechanism to temporarily “protect” a node while it is being accessed. When a thread wants to access a node, it stores the address of the node in a hazard pointer, signaling that the node is in use. Before a writer can remove or modify a node, it must check all hazard pointers to ensure that the node is not currently being accessed by any other thread.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Each task has its own canary, stored in task struct :
+<p>Here’s a step-by-step illustration of how hazard pointers work:</p>
 
-kernel/fork.c:1012:
-tsk-&gt;stack_canary = get_random_canary();
+<ol>
+  <li>Thread A starts traversing the list and wants to access node B.</li>
+  <li>Thread A stores the address of node B in a hazard pointer, marking it as “in use.”</li>
+  <li>Thread B attempts to remove node B from the list but first checks all hazard pointers.</li>
+  <li>Thread B sees that node B is in use by Thread A (due to the hazard pointer) and must wait before removing it.</li>
+  <li>Thread A finishes accessing node B and clears its hazard pointer.</li>
+  <li>Thread B can now safely remove node B from the list.</li>
+</ol>
 
-On PPC32 we have register 'r2' that points to task struct at all time, 
-so GCC is instructed to find canary at an offset from r2.
-But on PPC64 we have no such register.
+<h2 id="a-reader-traversing-a-list-may-need-to-retry">A reader traversing a list may need to retry</h2>
 
-Instead we have r13 that points to the PACA struct which is a per-cpu
-structure, and we have a pointer to 'current' task struct in the PACA struct.
-So in order to be able to have the canary as an offset of a fixed register as
-expected by GCC, we copy the task canary into the cpu's PACA struct during
-_switch():
+<p>This can happen if the reader steps on a list element that was freed. Let’s go through a simple example step by step to see why this might happen:</p>
 
-	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
-	std	r6,PACACURRENT(r13)	/* Set new 'current' */
-  #if defined(CONFIG_STACKPROTECTOR)
-	  ld	r6, TASK_CANARY(r6)
-	  std	r6, PACA_CANARY(r13)
-  #endif
-</code></pre></div></div>
+<p>Imagine a singly-linked list with three elements: A, B, and C. We have two threads, Thread 0 and Thread 1, which read and modify the list concurrently.</p>
 
-<hr />
+<ol>
+  <li>Thread 0 wants to read element B. To do this safely, it first records a hazard pointer to element B, indicating that it is about to access B and that B should not be deleted while Thread 0 is using it.</li>
+  <li>Thread 1 wants to delete element B from the list. It removes B from the list by updating A’s next pointer to point to C instead of B. Thread 1 checks for hazard pointers referencing B and sees that Thread 0 has a hazard pointer to B. Since Thread 0 is still using B, Thread 1 cannot delete it yet.</li>
+  <li>Thread 1 now wants to delete element C. It removes C from the list by updating B’s next pointer to be a special value called <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code>, marking the deletion. Since no hazard pointers reference C, Thread 1 can immediately delete C.</li>
+  <li>Thread 0 finishes reading element B and moves on to the next element in the list. It tries to acquire a hazard pointer for B’s successor, which is now marked as <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> due to the deletion of element C. When Thread 0 encounters the <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> value, it knows that the list has been modified concurrently and must restart its traversal from the beginning of the list.</li>
+  <li>Thread 0 starts over, traversing the list again from the beginning. This time, it finds the updated list without elements B and C.</li>
+  <li>Once Thread 0 is done using element B and releases its hazard pointer, Thread 1 is free to delete B as there are no longer any hazard pointers referencing it.</li>
+</ol>
 
-<p>In 64-bit PPC, the TLS (Thread Local Storage) cannot be pointed to by register <code class="language-plaintext highlighter-rouge">r2</code> as it is used to store the TOC (Table of Contents) pointer instead, which is used for accessing global and static data. Therefore, the kernel saves the currently running <code class="language-plaintext highlighter-rouge">task_struct</code> in the per-CPU area pointed to by <code class="language-plaintext highlighter-rouge">r13</code> instead. This is known as the Processor Access Control Area (PACA). The PACA is a per-CPU memory area that stores information about the CPU’s context. One of the users of this data structure is to save the current instruction location prior to interrupt processing.</p>
+<h2 id="comparing-hazard-pointers-with-rcu"><strong>Comparing Hazard Pointers with RCU</strong></h2>
 
-<p>On PPC64, each task has its own stack canary, stored in the task struct. However, unlike PPC32, there is no fixed register that points to the currently running <code class="language-plaintext highlighter-rouge">task_struct</code> at all times. Instead, the per-CPU PACA struct contains a pointer to the current <code class="language-plaintext highlighter-rouge">task_struct</code>. Therefore, in order to be able to have the canary as an offset of a fixed register as expected by GCC, the task canary is copied into the PACA struct during <code class="language-plaintext highlighter-rouge">_switch()</code>. False positives can occur if GCC keeps an old value of the per-CPU struct pointer, which then gets the canary from the wrong CPU struct, leading to a different task.</p>
+<p>Both hazard pointers and RCU are synchronization mechanisms that allow for efficient handling of shared resources. However, they differ in several key aspects:</p>
 
-<p>This issue with storing canaries of the currently running task is related to the issue of not being able to use <code class="language-plaintext highlighter-rouge">r2</code> to point to the TLS on 64-bit PPC. The kernel must use the per-CPU area to store the currently running <code class="language-plaintext highlighter-rouge">task_struct</code>, which leads to the need to copy the task canary into the PACA struct during <code class="language-plaintext highlighter-rouge">_switch()</code>. The compiler optimization that causes the register <code class="language-plaintext highlighter-rouge">r13</code> to be cached into <code class="language-plaintext highlighter-rouge">r10</code> can then lead to false positives if GCC keeps an old value of the per-CPU struct pointer.</p>
+<ol>
+  <li>Read-side performance: RCU typically offers better read-side performance than hazard pointers, as it does not require retries. Hazard pointers, on the other hand, may involve read-side retries due to concurrent modifications, which can slow down the read-side performance.</li>
+  <li>Write-side performance: While hazard pointers generally provide better write-side performance than naive reference counting, they may still be slower than RCU. This is because hazard pointers require writers to check all hazard pointers before modifying an object, which can be time-consuming when there are many of them. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are lots of readers storing hazard pointers.</li>
+  <li>Memory footprint: Hazard pointers have a minimal memory footprint, as any object not currently protected by a hazard pointer can be immediately freed. RCU, on the other hand, may require a larger memory footprint due to its deferred reclamation mechanism.</li>
+  <li>Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.</li>
+  <li>Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism.</li>
+</ol>
 
-<h3 id="so-what-the-heck-is-paca">So what the heck is PACA?</h3>
+<h2 id="implementation-of-hazard-pointers"><strong>Implementation of Hazard Pointers</strong></h2>
 
-<p>This <code class="language-plaintext highlighter-rouge">r13</code> register points to a structure in the kernel called PACA which is a per-CPU memory area storing information about the CPU’s context.</p>
+<p>Hazard pointers are maintained in per-CPU or per-thread data structures. This design choice allows for improved cache locality, as each thread or CPU only needs to update its own local data structure when accessing shared resources. Consequently, this reduces contention and cache coherency traffic, leading to good read-side performance. However, the write-side performance of hazard pointers may be slower than RCU, as writers need to check all hazard pointers before modifying an object. This can be time-consuming when there are many hazard pointers to check. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are many readers storing hazard pointers, leading to additional overhead.</p>
 
-<p>Per the PPC64 <a href="https://www.kernel.org/doc/ols/2001/ppc64.pdf">paper</a>:</p>
+<h2 id="virtual-reference-counting-using-hazard-pointers">Virtual Reference Counting using Hazard Pointers</h2>
 
-<p>This structure contains information unique to each processor; therefore an array of PACAs are created, one for each logical processor. One of the users of this data structure to save the current instruction location prior to interrupt processing.</p>
+<p>Virtual reference counting is a technique used to avoid the overhead of maintaining reference counts for each object in a concurrent system. Instead of incrementing and decrementing object reference counts, threads maintain a list of “virtual” reference counts in the form of hazard pointers.</p>
 
-<h3 id="so-whats-up-with-the-canary">So what’s up with the Canary?</h3>
+<p>When a thread wants to access an object, it temporarily protects the object using a hazard pointer. This marks the object as “in use” and guarantees that it won’t be freed or modified by any other thread. By counting the number of hazard pointers in the system, it is possible to determine the “value of the virtual refcount.” The absence of hazard pointers implies that the number of references to an object is zero, which means that the object can be destroyed.</p>
 
-<p>As explained earlier in the article and as Christpophe answered this for me:</p>
+<p>Virtual reference counting eliminates the need to maintain reference counts for each object resulting in the object saving space as a separate refcount need to be stored in the object. This is very useful for small objects.</p>
 
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PPC64 uses a per-task canary. But unlike PPC32, PPC64 doesn't have a fixed 
-register pointing to 'current' at all time so the canary is copied into 
-a per-cpu struct (PACA) during _switch().
+<h2 id="in-summary">In summary</h2>
 
-If GCC keeps an old value of the per-cpu struct pointer, it then gets 
-the canary from the wrong CPU struct so from a different task.
-</code></pre></div></div>
-
-<h3 id="compiler-optimizations">Compiler optimizations</h3>
-
-<p>What Christophe refers to in the last line is exactly a Compilter optimization. It turns out that from the reporter’s email, the <code class="language-plaintext highlighter-rouge">r10</code> register was used as a base pointer to the per-CPU PACA area. This means the compiler must have cached <code class="language-plaintext highlighter-rouge">r13</code> into <code class="language-plaintext highlighter-rouge">r10</code>, perhaps because it wanted to use <code class="language-plaintext highlighter-rouge">r13</code> for something else. Boqun Feng provided the following snippet which Zhouyi verified fixes the issue:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
-        index ab4ee58af84b..f5ae3be3d04d 100644
-        --- a/kernel/rcu/srcutree.c
-        +++ b/kernel/rcu/srcutree.c
-        @@ -747,6 +747,7 @@ void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
-
-                smp_mb__before_atomic(); /* C */  /* Avoid leaking the critical section. */
-                atomic_long_inc(&amp;sdp-&gt;srcu_unlock_count[idx]);
-        +       asm volatile("" : : : "r13", "memory");
-         }
-         EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
-</code></pre></div></div>
-
-<p>In this snippet, <code class="language-plaintext highlighter-rouge">r13</code> is added to an extended inline asm statement, which instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, which hopefully prevents the compiler from caching its value before exiting the function. In fact this is exactly what prevents the issue.</p>
-
-<p>Boqun also included a <code class="language-plaintext highlighter-rouge">memory</code> clobber which is equivalent to <code class="language-plaintext highlighter-rouge">barrier()</code> and is additional step which hopefully ensures memory access compiler optimizations don’t span the inline assembly statement.</p>
-
-<h3 id="finally-the-issue-is-clear">Finally the issue is clear</h3>
-
-<p>Later in the email chain, I mentioned the series of events as outlined by Christophe and Boqun which could lead to the issue:</p>
-
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The issue requires the following ingredients:
-1. Task A is running on CPU 1, and the task's canary is copied into
-the CPU1's per-cpu area pointed to by r13.
-2. r13 is now cached into r10 in the offending function due to the compiler.
-3. Task A running on CPU 1 now gets preempted right in the middle of
-the offending SRCU function and gets migrated to CPU 2.
-4.  CPU 2's per-cpu canary is updated to that of task A since task A
-is the current task now.
-5. Task B now runs on CPU 1 and the per-cpu canary on CPU 1 is now that of B.
-6. Task A exits the function, but stack checking code reads r10 which
-contains CPU 1's canary which is that of task B!
-7. Boom.
-
-So the issue is precisely in #2.  The issue is in the compiler that it
-does not treat r13 as volatile as Boqun had initially mentioned.
-</code></pre></div></div>
-<h2 id="how-do-we-fix-it">How do we fix it?</h2>
-
-<p>My / our current take on it is it appears to be a compiler bug where the register <code class="language-plaintext highlighter-rouge">r13</code> is not considered volatile (which works for user land but not for the kernel). Seher Boessenkool who has worked on similar PPC64 issues before is on the email chain and can hopefully fix it in the compiler but lets see where it goes.</p>
-
-<p>As a quick hack to fix this (as shown by Boqun above),<code class="language-plaintext highlighter-rouge">r13</code> can be added to an extended inline asm statement, which instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, hopefully preventing the compiler from caching its value before exiting the function.</p>
-
-<h2 id="can-we-fix-it-in-the-kernel">Can we fix it in the kernel?</h2>
-
-<p>According to Michael Ellerman, a possible solution would be to keep current in a register (GPR) on 64-bit, but we’d need to do that in addition to the register reserved for the PACA, so that would consume another GPR which we’d need to think hard about.</p>
-
-<p>There’s another reason to have the canary in the PACA, according to him: The PACA is always accessible, even when the MMU is off (because it is in a register), whereas <code class="language-plaintext highlighter-rouge">current</code> isn’t (in some situations).</p>
-
-<p>Even though, we prefer not to use stack protector in code that runs with the MMU off — if the canary wasn’t in the PACA to begin with, then we’d have a hard requirement to not use stack protector in code paths where the MMU is off.</p>
+<p>Hazard pointers are an effective synchronization mechanism for managing shared resources in concurrent systems. They offer good read-side performance and may generally better memory footprint than RCU.</p>
 </div>
   
   
@@ -689,6 +638,10 @@ does not treat r13 as volatile as Boqun had initially mentioned.
   
     
       <a href="/page22">22</a>
+    
+  
+    
+      <a href="/page23">23</a>
     
   
   -->
