@@ -244,7 +244,7 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
-   <span>23 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/23/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a> 
+   <span>22 Dec 2018</span> &nbsp; <a href="/linuxinternals/2018/12/22/stack-dumps.html">Dumping User and Kernel stacks on Kernel events</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
      properly. Check posts/category.html if you want to generate linked
@@ -398,7 +398,7 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
-   <span>08 May 2014</span> &nbsp; <a href="/linux/kernel/locking/2014/05/08/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a> 
+   <span>07 May 2014</span> &nbsp; <a href="/linux/kernel/locking/2014/05/07/spinlock-implementation-in-linux-kernel.html">Linux Spinlock Internals</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
      properly. Check posts/category.html if you want to generate linked
@@ -412,7 +412,7 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
-   <span>25 Apr 2014</span> &nbsp; <a href="/synchronization/2014/04/25/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a> 
+   <span>24 Apr 2014</span> &nbsp; <a href="/synchronization/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems.html">Studying cache-line sharing effects on SMP systems</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
      properly. Check posts/category.html if you want to generate linked
@@ -465,7 +465,7 @@ Most Recept Post:
 
 
 
-<time datetime="2023-04-28T00:00:00+00:00" pubdate data-updated="true">Apr 28, 2023</time>
+<time datetime="2023-04-28T00:00:00-04:00" pubdate data-updated="true">Apr 28, 2023</time>
         
            | <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html#disqus_thread"
              data-disqus-identifier="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">Comments</a>
@@ -475,16 +475,11 @@ Most Recept Post:
   </header>
 
 
-  <div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
+  <div class="entry-content"><h1 id="understanding-hazard-pointers">Understanding Hazard Pointers</h1>
 
-<p>In concurrent systems, managing concurrent access to shared memory resources
-efficiently and safely is of paramount importance. Hazard pointers, like RCU,
-is a synchronization mechanism that can be used to address this issue. In this
-post, we will explore how hazard pointers work, provide a simple example to
-illustrate their usage, and compare them with another popular synchronization
-technique called Read-Copy-Update (RCU). Additionally, we will dive into the
-implementation details of hazard pointers, including the per-CPU and per-thread
-data structures used to maintain them.</p>
+<h1 id="introduction"><strong>Introduction</strong></h1>
+
+<p>In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with RCU (Read-Copy-Update). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.</p>
 
 <h2 id="example-with-a-singly-linked-list"><strong>Example with a Singly Linked List</strong></h2>
 
@@ -526,9 +521,8 @@ data structures used to maintain them.</p>
   <li>Read-side performance: RCU typically offers better read-side performance than hazard pointers, as it does not require retries. Hazard pointers, on the other hand, may involve read-side retries due to concurrent modifications, which can slow down the read-side performance.</li>
   <li>Write-side performance: While hazard pointers generally provide better write-side performance than naive reference counting, they may still be slower than RCU. This is because hazard pointers require writers to check all hazard pointers before modifying an object, which can be time-consuming when there are many of them. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are lots of readers storing hazard pointers.</li>
   <li>Memory footprint: Hazard pointers have a minimal memory footprint, as any object not currently protected by a hazard pointer can be immediately freed. RCU, on the other hand, may require a larger memory footprint due to its deferred reclamation mechanism.</li>
-  <li>Data structure size: Hazard pointers don’t require any additional members in the objects their pointing to. In contract, RCU typically requires an rcu_head structure representing it, and traditional reference counting mechanisms require an integer. This makes Hazard Pointers really useful for objects of small size.</li>
   <li>Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.</li>
-  <li>Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism.</li>
+  <li>Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism. SRCU can help some with that problem, as the readers that need to be waited on are per-object-type. However, Hazard pointers are per-object and not really per-object type so they are event better than SRCU for this point. Another big disadvantage of SRCU vs HP for this point is, SRCU has large memory footprint due to per-cpu counters, which hazard pointers does not. Imagine an srcu_struct for an object that’s just 20 bytes long but the system has 100 CPUs!</li>
 </ol>
 
 <h2 id="implementation-of-hazard-pointers"><strong>Implementation of Hazard Pointers</strong></h2>
@@ -543,14 +537,39 @@ data structures used to maintain them.</p>
 
 <p>Virtual reference counting eliminates the need to maintain reference counts for each object resulting in the object saving space as a separate refcount need to be stored in the object. This is very useful for small objects.</p>
 
+<h2 id="design-consideration-with-hazard-pointer-implementations">Design consideration with Hazard Pointer Implementations</h2>
+
+<h3 id="the-retry-dance">The retry dance</h3>
+
+<p>A dance is performed when recording an HP.</p>
+
+<p>Reader has to:</p>
+
+<ol>
+  <li>
+    <p>Read the object pointer and issue a full MB.</p>
+
+    <aside>
+ 💡 A full MB may be avoidable, if the reader may be IPI’d by an updater, similar to how the “rude” variant of RCU-tasks avoids full MBs. The IPI itself will issue the full MB. Which means in the absence of an updater, readers can avoid a full MB.
+    
+ </aside>
+  </li>
+  <li>Record it into an HP.</li>
+  <li>Pick up the object pointer again and compare it to the recorded HP in #2.</li>
+  <li>Retry if it has changed (back to #1).</li>
+</ol>
+
+<p>This has to be done because it is possible that between #1 and #2, the object was freed by an updater.</p>
+
+<h3 id="recording-hps-to-objects-which-are-embedded-in-hp-protected-objects">Recording HPs to objects which are embedded in HP-protected objects</h3>
+
+<p>An issue can occur if a hazard pointer is recorded to some offset within a data structure, that is itself hazard pointer protected. In this case, the updater may not be aware of hazard pointer protected data within the outer hazard pointer protected object. The updater may then wrongly conclude that there are no readers.</p>
+
+<p>Various strategies can be used to solve this, such as recording a range of memory to protect instead of just the pointer, and then checking if a range of memory has any inner hazard pointer protected ranges, before freeing such memory. Another approach is to use a common memory address as the recorded pointer for both the inner and the other outer structure, such as an rcu_head in the outer structure, or the beginning/end address of the outer structure.</p>
+
 <h2 id="in-summary">In summary</h2>
 
-<p>Hazard pointers could be an effective synchronization mechanism for managing
-shared access to objects in concurrent systems. They offer good read-side
-performance and may offer better memory footprint than RCU due to smaller data
-structure footprint and quicker memory reclaim. However, they have poor
-read-side performance and complexity, compared to RCU. On modern systems with
-ever increasing amounts of memory, RCU makes much more sense to use than HP.</p>
+<p>Hazard pointers are an effective synchronization mechanism for read-mostly uses. If the usecase is write-mostly, then readers may have too many retries. But they offer good read-side performance, and may generally better memory footprint than RCU, SRCU and per-CPU refcounts.</p>
 </div>
   
   
