@@ -1,0 +1,798 @@
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"/><title>Understanding Memory Ordering using LKMM and Herd7</title><style>
+/* cspell:disable-file */
+/* webkit printing magic: print all background colors */
+html {
+	-webkit-print-color-adjust: exact;
+}
+* {
+	box-sizing: border-box;
+	-webkit-print-color-adjust: exact;
+}
+
+html,
+body {
+	margin: 0;
+	padding: 0;
+}
+@media only screen {
+	body {
+		margin: 2em auto;
+		max-width: 900px;
+		color: rgb(55, 53, 47);
+	}
+}
+
+body {
+	line-height: 1.5;
+	white-space: pre-wrap;
+}
+
+a,
+a.visited {
+	color: inherit;
+	text-decoration: underline;
+}
+
+.pdf-relative-link-path {
+	font-size: 80%;
+	color: #444;
+}
+
+h1,
+h2,
+h3 {
+	letter-spacing: -0.01em;
+	line-height: 1.2;
+	font-weight: 600;
+	margin-bottom: 0;
+}
+
+.page-title {
+	font-size: 2.5rem;
+	font-weight: 700;
+	margin-top: 0;
+	margin-bottom: 0.75em;
+}
+
+h1 {
+	font-size: 1.875rem;
+	margin-top: 1.875rem;
+}
+
+h2 {
+	font-size: 1.5rem;
+	margin-top: 1.5rem;
+}
+
+h3 {
+	font-size: 1.25rem;
+	margin-top: 1.25rem;
+}
+
+.source {
+	border: 1px solid #ddd;
+	border-radius: 3px;
+	padding: 1.5em;
+	word-break: break-all;
+}
+
+.callout {
+	border-radius: 3px;
+	padding: 1rem;
+}
+
+figure {
+	margin: 1.25em 0;
+	page-break-inside: avoid;
+}
+
+figcaption {
+	opacity: 0.5;
+	font-size: 85%;
+	margin-top: 0.5em;
+}
+
+mark {
+	background-color: transparent;
+}
+
+.indented {
+	padding-left: 1.5em;
+}
+
+hr {
+	background: transparent;
+	display: block;
+	width: 100%;
+	height: 1px;
+	visibility: visible;
+	border: none;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.09);
+}
+
+img {
+	max-width: 100%;
+}
+
+@media only print {
+	img {
+		max-height: 100vh;
+		object-fit: contain;
+	}
+}
+
+@page {
+	margin: 1in;
+}
+
+.collection-content {
+	font-size: 0.875rem;
+}
+
+.column-list {
+	display: flex;
+	justify-content: space-between;
+}
+
+.column {
+	padding: 0 1em;
+}
+
+.column:first-child {
+	padding-left: 0;
+}
+
+.column:last-child {
+	padding-right: 0;
+}
+
+.table_of_contents-item {
+	display: block;
+	font-size: 0.875rem;
+	line-height: 1.3;
+	padding: 0.125rem;
+}
+
+.table_of_contents-indent-1 {
+	margin-left: 1.5rem;
+}
+
+.table_of_contents-indent-2 {
+	margin-left: 3rem;
+}
+
+.table_of_contents-indent-3 {
+	margin-left: 4.5rem;
+}
+
+.table_of_contents-link {
+	text-decoration: none;
+	opacity: 0.7;
+	border-bottom: 1px solid rgba(55, 53, 47, 0.18);
+}
+
+table,
+th,
+td {
+	border: 1px solid rgba(55, 53, 47, 0.09);
+	border-collapse: collapse;
+}
+
+table {
+	border-left: none;
+	border-right: none;
+}
+
+th,
+td {
+	font-weight: normal;
+	padding: 0.25em 0.5em;
+	line-height: 1.5;
+	min-height: 1.5em;
+	text-align: left;
+}
+
+th {
+	color: rgba(55, 53, 47, 0.6);
+}
+
+ol,
+ul {
+	margin: 0;
+	margin-block-start: 0.6em;
+	margin-block-end: 0.6em;
+}
+
+li > ol:first-child,
+li > ul:first-child {
+	margin-block-start: 0.6em;
+}
+
+ul > li {
+	list-style: disc;
+}
+
+ul.to-do-list {
+	padding-inline-start: 0;
+}
+
+ul.to-do-list > li {
+	list-style: none;
+}
+
+.to-do-children-checked {
+	text-decoration: line-through;
+	opacity: 0.375;
+}
+
+ul.toggle > li {
+	list-style: none;
+}
+
+ul {
+	padding-inline-start: 1.7em;
+}
+
+ul > li {
+	padding-left: 0.1em;
+}
+
+ol {
+	padding-inline-start: 1.6em;
+}
+
+ol > li {
+	padding-left: 0.2em;
+}
+
+.mono ol {
+	padding-inline-start: 2em;
+}
+
+.mono ol > li {
+	text-indent: -0.4em;
+}
+
+.toggle {
+	padding-inline-start: 0em;
+	list-style-type: none;
+}
+
+/* Indent toggle children */
+.toggle > li > details {
+	padding-left: 1.7em;
+}
+
+.toggle > li > details > summary {
+	margin-left: -1.1em;
+}
+
+.selected-value {
+	display: inline-block;
+	padding: 0 0.5em;
+	background: rgba(206, 205, 202, 0.5);
+	border-radius: 3px;
+	margin-right: 0.5em;
+	margin-top: 0.3em;
+	margin-bottom: 0.3em;
+	white-space: nowrap;
+}
+
+.collection-title {
+	display: inline-block;
+	margin-right: 1em;
+}
+
+.page-description {
+    margin-bottom: 2em;
+}
+
+.simple-table {
+	margin-top: 1em;
+	font-size: 0.875rem;
+	empty-cells: show;
+}
+.simple-table td {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table th {
+	height: 29px;
+	min-width: 120px;
+}
+
+.simple-table-header-color {
+	background: rgb(247, 246, 243);
+	color: black;
+}
+.simple-table-header {
+	font-weight: 500;
+}
+
+time {
+	opacity: 0.5;
+}
+
+.icon {
+	display: inline-block;
+	max-width: 1.2em;
+	max-height: 1.2em;
+	text-decoration: none;
+	vertical-align: text-bottom;
+	margin-right: 0.5em;
+}
+
+img.icon {
+	border-radius: 3px;
+}
+
+.user-icon {
+	width: 1.5em;
+	height: 1.5em;
+	border-radius: 100%;
+	margin-right: 0.5rem;
+}
+
+.user-icon-inner {
+	font-size: 0.8em;
+}
+
+.text-icon {
+	border: 1px solid #000;
+	text-align: center;
+}
+
+.page-cover-image {
+	display: block;
+	object-fit: cover;
+	width: 100%;
+	max-height: 30vh;
+}
+
+.page-header-icon {
+	font-size: 3rem;
+	margin-bottom: 1rem;
+}
+
+.page-header-icon-with-cover {
+	margin-top: -0.72em;
+	margin-left: 0.07em;
+}
+
+.page-header-icon img {
+	border-radius: 3px;
+}
+
+.link-to-page {
+	margin: 1em 0;
+	padding: 0;
+	border: none;
+	font-weight: 500;
+}
+
+p > .user {
+	opacity: 0.5;
+}
+
+td > .user,
+td > time {
+	white-space: nowrap;
+}
+
+input[type="checkbox"] {
+	transform: scale(1.5);
+	margin-right: 0.6em;
+	vertical-align: middle;
+}
+
+p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.image {
+	border: none;
+	margin: 1.5em 0;
+	padding: 0;
+	border-radius: 0;
+	text-align: center;
+}
+
+.code,
+code {
+	background: rgba(135, 131, 120, 0.15);
+	border-radius: 3px;
+	padding: 0.2em 0.4em;
+	border-radius: 3px;
+	font-size: 85%;
+	tab-size: 2;
+}
+
+code {
+	color: #eb5757;
+}
+
+.code {
+	padding: 1.5em 1em;
+}
+
+.code-wrap {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.code > code {
+	background: none;
+	padding: 0;
+	font-size: 100%;
+	color: inherit;
+}
+
+blockquote {
+	font-size: 1.25em;
+	margin: 1em 0;
+	padding-left: 1em;
+	border-left: 3px solid rgb(55, 53, 47);
+}
+
+.bookmark {
+	text-decoration: none;
+	max-height: 8em;
+	padding: 0;
+	display: flex;
+	width: 100%;
+	align-items: stretch;
+}
+
+.bookmark-title {
+	font-size: 0.85em;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	height: 1.75em;
+	white-space: nowrap;
+}
+
+.bookmark-text {
+	display: flex;
+	flex-direction: column;
+}
+
+.bookmark-info {
+	flex: 4 1 180px;
+	padding: 12px 14px 14px;
+	display: flex;
+	flex-direction: column;
+	justify-content: space-between;
+}
+
+.bookmark-image {
+	width: 33%;
+	flex: 1 1 180px;
+	display: block;
+	position: relative;
+	object-fit: cover;
+	border-radius: 1px;
+}
+
+.bookmark-description {
+	color: rgba(55, 53, 47, 0.6);
+	font-size: 0.75em;
+	overflow: hidden;
+	max-height: 4.5em;
+	word-break: break-word;
+}
+
+.bookmark-href {
+	font-size: 0.75em;
+	margin-top: 0.25em;
+}
+
+.sans { font-family: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol"; }
+.code { font-family: "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace; }
+.serif { font-family: Lyon-Text, Georgia, ui-serif, serif; }
+.mono { font-family: iawriter-mono, Nitti, Menlo, Courier, monospace; }
+.pdf .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK JP'; }
+.pdf:lang(zh-CN) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK SC'; }
+.pdf:lang(zh-TW) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK TC'; }
+.pdf:lang(ko-KR) .sans { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, "Apple Color Emoji", Arial, sans-serif, "Segoe UI Emoji", "Segoe UI Symbol", 'Twemoji', 'Noto Color Emoji', 'Noto Sans CJK KR'; }
+.pdf .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .code { font-family: Source Code Pro, "SFMono-Regular", Menlo, Consolas, "PT Mono", "Liberation Mono", Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.pdf .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK JP'; }
+.pdf:lang(zh-CN) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK SC'; }
+.pdf:lang(zh-TW) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK TC'; }
+.pdf:lang(ko-KR) .serif { font-family: PT Serif, Lyon-Text, Georgia, ui-serif, serif, 'Twemoji', 'Noto Color Emoji', 'Noto Serif CJK KR'; }
+.pdf .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK JP'; }
+.pdf:lang(zh-CN) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK SC'; }
+.pdf:lang(zh-TW) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK TC'; }
+.pdf:lang(ko-KR) .mono { font-family: PT Mono, iawriter-mono, Nitti, Menlo, Courier, monospace, 'Twemoji', 'Noto Color Emoji', 'Noto Sans Mono CJK KR'; }
+.highlight-default {
+	color: rgba(55, 53, 47, 1);
+}
+.highlight-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.highlight-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.highlight-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.highlight-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.highlight-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.highlight-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.highlight-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.highlight-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.highlight-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.highlight-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.highlight-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.highlight-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.highlight-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.highlight-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.highlight-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.highlight-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.highlight-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.highlight-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.block-color-default {
+	color: inherit;
+	fill: inherit;
+}
+.block-color-gray {
+	color: rgba(120, 119, 116, 1);
+	fill: rgba(120, 119, 116, 1);
+}
+.block-color-brown {
+	color: rgba(159, 107, 83, 1);
+	fill: rgba(159, 107, 83, 1);
+}
+.block-color-orange {
+	color: rgba(217, 115, 13, 1);
+	fill: rgba(217, 115, 13, 1);
+}
+.block-color-yellow {
+	color: rgba(203, 145, 47, 1);
+	fill: rgba(203, 145, 47, 1);
+}
+.block-color-teal {
+	color: rgba(68, 131, 97, 1);
+	fill: rgba(68, 131, 97, 1);
+}
+.block-color-blue {
+	color: rgba(51, 126, 169, 1);
+	fill: rgba(51, 126, 169, 1);
+}
+.block-color-purple {
+	color: rgba(144, 101, 176, 1);
+	fill: rgba(144, 101, 176, 1);
+}
+.block-color-pink {
+	color: rgba(193, 76, 138, 1);
+	fill: rgba(193, 76, 138, 1);
+}
+.block-color-red {
+	color: rgba(212, 76, 71, 1);
+	fill: rgba(212, 76, 71, 1);
+}
+.block-color-gray_background {
+	background: rgba(241, 241, 239, 1);
+}
+.block-color-brown_background {
+	background: rgba(244, 238, 238, 1);
+}
+.block-color-orange_background {
+	background: rgba(251, 236, 221, 1);
+}
+.block-color-yellow_background {
+	background: rgba(251, 243, 219, 1);
+}
+.block-color-teal_background {
+	background: rgba(237, 243, 236, 1);
+}
+.block-color-blue_background {
+	background: rgba(231, 243, 248, 1);
+}
+.block-color-purple_background {
+	background: rgba(244, 240, 247, 0.8);
+}
+.block-color-pink_background {
+	background: rgba(249, 238, 243, 0.8);
+}
+.block-color-red_background {
+	background: rgba(253, 235, 236, 1);
+}
+.select-value-color-interactiveBlue { background-color: rgba(35, 131, 226, .07); }
+.select-value-color-pink { background-color: rgba(245, 224, 233, 1); }
+.select-value-color-purple { background-color: rgba(232, 222, 238, 1); }
+.select-value-color-green { background-color: rgba(219, 237, 219, 1); }
+.select-value-color-gray { background-color: rgba(227, 226, 224, 1); }
+.select-value-color-translucentGray { background-color: rgba(255, 255, 255, 0.0375); }
+.select-value-color-orange { background-color: rgba(250, 222, 201, 1); }
+.select-value-color-brown { background-color: rgba(238, 224, 218, 1); }
+.select-value-color-red { background-color: rgba(255, 226, 221, 1); }
+.select-value-color-yellow { background-color: rgba(253, 236, 200, 1); }
+.select-value-color-blue { background-color: rgba(211, 229, 239, 1); }
+
+.checkbox {
+	display: inline-flex;
+	vertical-align: text-bottom;
+	width: 16;
+	height: 16;
+	background-size: 16px;
+	margin-left: 2px;
+	margin-right: 5px;
+}
+
+.checkbox-on {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22%2358A9D7%22%2F%3E%0A%3Cpath%20d%3D%22M6.71429%2012.2852L14%204.9995L12.7143%203.71436L6.71429%209.71378L3.28571%206.2831L2%207.57092L6.71429%2012.2852Z%22%20fill%3D%22white%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+
+.checkbox-off {
+	background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2216%22%20height%3D%2216%22%20viewBox%3D%220%200%2016%2016%22%20fill%3D%22none%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%0A%3Crect%20x%3D%220.75%22%20y%3D%220.75%22%20width%3D%2214.5%22%20height%3D%2214.5%22%20fill%3D%22white%22%20stroke%3D%22%2336352F%22%20stroke-width%3D%221.5%22%2F%3E%0A%3C%2Fsvg%3E");
+}
+	
+</style></head><body><article id="5d3b1647-195e-400c-94dc-37da888647fb" class="page sans"><header><h1 class="page-title">Understanding Memory Ordering using LKMM and Herd7</h1><p class="page-description"></p></header><div class="page-body"><h1 id="95bfff58-c682-430e-8e05-17855ab96743" class="">Introduction</h1><p id="30d8799d-8b4c-4339-b94b-9bd6ba768673" class="">The herd7 memory consistency tool is used to verify if certain (likely undesirable) outcomes of memory accesses made by concurrent programs exist, given a memory model.</p><p id="acd105ca-5f63-48d9-af94-3a983cfcd2cb" class="">As a matter of fact, herd7 on its own does not know anything about how programs execute.</p><p id="b5e2ac34-d6ce-474b-9c34-30f97986e7f4" class="">For example, given a program executing on processor P0:</p><pre id="ab39a923-110e-49b1-b4ba-f72e27ad466d" class="code code-wrap"><code>P0(int *x) {
+  WRITE_ONCE(*x, 2);
+  WRITE_ONCE(*x, 3);
+}</code></pre><p id="506b9c24-f5c4-4a4d-ad50-22e0c1a52660" class="">Any sane computer architecture will conclude that the final value of <code>x</code> is 2.</p><p id="62588510-2fbc-4ff8-86ef-6b317b22bfb2" class="">However, herd7 without any memory model (or a memory model that allows everything) will consider the following 2 possible sequences as valid:</p><pre id="0f363cfb-308c-414e-838f-9a85b0561929" class="code code-wrap"><code>Candidate execution 1:
+1. Value 2 is stored to x.
+2. Value 3 overwrites the value 2 that was just stored to x.</code></pre><p id="363b470b-ab32-48de-8341-dff52b07d3c8" class="">and,</p><pre id="f2ce36ec-3ca8-477a-a2a6-d3d912b13181" class="code code-wrap"><code>Candidate execution 2:
+1. Value 3 is stored to x.
+2. Value 2 overwrites the value 3 that was just stored to x.</code></pre><p id="2b1bc785-bc1c-4b03-a1d0-40e5ee3dc532" class="">These 2 possible executions are called <em>candidate executions</em>.</p><p id="995df4c5-3776-4f07-9d8a-8e0ea66c1a98" class="">It is up to the memory model to instruct herd7 to <em>disallow</em> some of these candidate executions. A sane memory model should disallow the second candidate execution as it would otherwise be the model of a broken architecture.</p><p id="00c1a062-08a0-4700-a233-5aac39543427" class="">The<code>LKMM</code> is a memory model for the Linux Kernel which can be fed to the herd7 tools to verify the memory ordering properties of a test program, also known as a Litmus Test. The model is written in the <code>linux-kernel.cat</code> and <code>linux-kernel.bell</code> files. This article will cover some parts of the model, focusing on how to use the herd7 tool to visually understand the more complex parts of the files. With herd7, it is possible to generate complex graphs showcasing the relationship between memory accesses in a litmus test. This aids in reverse engineering the equations and axioms in the <code>.bell</code> and <code>.cat</code> files. Armed with this knowledge, readers can explore more advanced nuances on their own using herd7.</p><p id="73ae011c-eadd-430d-a19a-5199e8bc7615" class="">Where possible, we will try to prioritize describing how to use herd7, and the syntax of <code>CAT</code> code, over actually describing too many details of the axioms, as we believe understanding the axioms can be achieved once the reader is empowered with the knowledge of how to use herd7 and read/write <code>CAT</code> code.</p><p id="07639db3-27a3-46f0-8408-118101b9ea3a" class="">Note that, even though a herd7 memory model is abstract in some sense (it does not describe CPU implementation but just a set of properties and rules on memory ordering and program execution), it can still be considered to be a model of how a CPU should behave if it CPU wishes to run the Linux kernel code correctly. It does so by formally defining how memory ordering in a typical multiprocessor running kernel code should behave.</p><p id="3e7b3c91-09be-43dc-99dc-d03284822ea3" class="">In the next section, we will describe how to eliminate the nonsensical candidate execution 2, which no sane CPU design should support, certainly not the <code>LKMM</code>.</p><h2 id="948afd9e-b421-4384-ad3c-cdc06d059768" class="">A few basics first</h2><h3 id="cb6806e0-35e7-43f1-8990-1615e52dcb69" class="">Cache coherence and ordering</h3><p id="b9d68bad-3d31-4caa-b6de-1336067ff11f" class="">Cache coherence refers to the principle that in a multi-processor system, all CPUs must share a consistent view of the memory contents. This requires that for each location in shared memory, the stores to that location must form a single global ordering which all the CPUs agree on (the coherence order), and this ordering must be consistent with the program order for accesses to that location. Cache coherence protocols are used to manage this ordering and ensure that all processors have the same view of the order in which the data to the shared memory location was written. It is important to understand that due to concurrency and timing, the order in which writes to the same memory location occur is unpredictable. However, once the writes occur, all CPUs see the same order in which those writes happened.</p><p id="04806838-071f-4190-af6d-c30c3cb174de" class="">In the <code>LKMM</code>, the cache-coherent ordering between any two writes is connected by a <code>co</code>relationship. For example, two writes <code>W1</code>and <code>W2</code> to the same memory location, where <code>W1</code> occurred before <code>W2</code>, would be denoted by <code>W1 -&gt;co W2.</code></p><h3 id="591bd43b-196c-4072-9218-c4073e7af9b2" class="">Program Order</h3><p id="57e51d4f-6872-48c6-9dfd-10196996e8ac" class="">Program order (<code>po</code>) is the order in which instructions are presented to a CPU&#x27;s execution unit. <code>po-loc</code> is a sub-relation of <code>po</code> that links two memory accesses when the first comes before the second in program order and they access the same memory location.</p><p id="5923e1eb-61d3-4f53-8661-e35e03e96a1d" class="">For example, using <code>po-loc</code>, we can link the two memory accesses in the following program:</p><pre id="b80a8d6f-edb8-4d19-97c0-48632f1971bf" class="code code-wrap"><code>P0(int *x) {
+  WRITE_ONCE(*x, 5);  // W1
+  WRITE_ONCE(*x, 6);  // W2
+}</code></pre><p id="5f349493-aa9b-4b1d-89f7-9dc41f6c6fa6" class="">Since <code>W2</code> comes after <code>W1</code> in program order and they access the same memory location (<code>x</code>), we can say <code>W1 -&gt;po-loc W2</code>.</p><h3 id="465f1a6b-2fa0-4712-86ab-bd3c4515621f" class="">Ordering and cycles</h3><p id="44a1a91c-f5f0-4e34-b762-0cbf4d1923e5" class="">Memory models are primarily concerned with ordering. One of the main types of ordering is temporal ordering, which specifies the order in which a set of events happened in time. Two different sequences of temporal ordering may also overlap in space, making them independent of each other and happening in parallel.</p><p id="918c93c7-0972-4932-9738-de86c44ea0f8" class="">When a memory model requires certain accesses to be ordered, cycles are ruled out. If a certain outcome for final values of a piece of code can only happen if those accesses would form a cycle, then the memory model forbids the cycle and predicts that the outcome cannot occur.</p><p id="86db90ba-a036-4f4e-9ff1-248c8fa0f295" class="">However, a memory model on its own may not always be able forbid cycles, and needs help from the programmer by having them issue memory barriers. Such memory barriers serve to filter out certain execution candidates before the model can even be applied to them.</p><h2 id="e28ab7f8-73e5-46a5-85ca-326f71b9daec" class="">Axioms of the Linux Kernel Memory Model</h2><p id="b50b3057-487d-4350-a2b4-dde857a3f971" class="">Now, let&#x27;s examine the various axioms (rules) of the <code>LKMM</code>. To permit a candidate execution of a concurrent program, it must not be prohibited by the axioms of the <code>LKMM</code>. As previously stated, models like the <code>LKMM</code> that are reasonable will prohibit executions that are impossible on modern hardware.</p><h2 id="a7d34b2c-4d6e-4bc6-863c-a9eb75b95c17" class="">1. Sequential consistency per-variable (SCPV)</h2><p id="a0638c69-d304-4b31-9859-7171d4749293" class="">This property is fundamental in modern processors, and it basically means that reads and writes to a certain variable happen in a total-order. In other words, for a specific variable, it is not possible to observe a sequence of writes to that variable in an order different from the order in which its values were written.</p><p id="fb699c48-e824-4b15-8044-670a1891d11c" class="">This also applies to the writes happening on the same CPU. In a single CPU, the writes happening on the same variable happen in program order execution.</p><p id="eff7334b-76d7-4282-80e5-ae5c55af5d48" class="">The way the memory model can enforce this is by defining a rule forbidding a certain property. Let us see if we can define the violations of <code>SCPV</code> as a cycle in a particular candidate execution, and then tell the model that such execution candidates are forbidden.</p><p id="a7fc63dd-370e-4f66-8c56-974841f91e64" class="">Consider a program doing the same program from earlier doing a pair of writes, this time with the events labeled:</p><pre id="92113eb4-d029-4efe-99ce-5d405db7c070" class="code code-wrap"><code>P0(int *x) {
+  WRITE_ONCE(*x, 2);            // event W1
+  WRITE_ONCE(*x, 3);            // event W2
+}</code></pre><p id="939a7674-f555-47f5-9699-c450e4cc0d12" class="">As described earlier, there are 2 candidate executions:</p><p id="9d2b89dd-224b-40ff-94c7-3520e14b0307" class="">Candidate 1. The final value of x is 2. This happens because of the following candidate execution:</p><pre id="bd4c4366-8c3b-42d1-9808-1462961af84b" class="code code-wrap"><code>W1 -&gt;co W2</code></pre><p id="3eae7782-7b7a-490e-a469-473df0b13604" class="">Candidate 2. The final value of x is 3. This happens because of the following candidate execution:</p><pre id="2482515f-c70a-428b-8497-8e8b9f9c4d47" class="code code-wrap"><code>W2 -&gt;co W1</code></pre><p id="5f59d6b2-c690-4a72-affd-da716cc6bc49" class="">Visually this can be shown as 2 candidate graphs: [comment]: &lt;&gt; (Add 2 graphs here)</p><p id="acd1675d-70b1-4b55-b0c9-04e424a8f607" class="">A quick note on <code>-&gt;co</code>. It describes the order of writes to the same variable. For example:</p><pre id="791a0068-345e-46a9-9aa2-96b099cd2197" class="code code-wrap"><code>W1 -&gt;co W2</code></pre><p id="87568bcf-0e06-4b35-b403-4b7ed14c1ca5" class="">means the writes (to the same variable) followed the order of first W1, and then W2 in the cache-coherent memory. In other words, the program execution resulted in W2 overwriting W1 with the final value of the variable decided by W2.</p><p id="f34c696f-2121-476c-9341-63d2a41a1903" class="">So, we wish to forbid the pattern in candidate #2. How do we do that?</p><p id="b753716b-3577-4790-a69d-c4191ee5ebd2" class="">First, lets learn a new relation. Following the instruction order in the instruction stream, there is a relation in LKMM called <code>po-loc</code>.</p><p id="753128ec-4777-442e-b4db-2b0edff04926" class="">The <code>po-loc</code> relation links 2 program-ordered memory accesses happening on the same CPU, and on the same variable.</p><p id="8b00403a-ed78-4fe9-89a1-994b5ce1de45" class="">So we have a relation <code>W1 -&gt;po-loc W2</code> in the program.</p><p id="a86827c4-7400-48f0-93f4-7a64d7b700cd" class="">Lets learn a new notion of how heard builds a relation (a set of event-pairs).</p><p id="17ceacad-2dee-4951-bc07-e72bef7eeb91" class="">In herd7’s <code>CAT</code> language, using a keyword like <code>po-loc</code> or <code>co</code> gives you a set of all possible event-pairs (relations). This set is actually (confusingly) called a relation.</p><p id="e3419cb3-3477-4412-97cc-a44fffa89f1a" class="">For example, <code>-&gt;co</code> is the following relation with 2 event pairs:</p><pre id="2abd9e7e-600f-422a-87a1-267c4bd1a59b" class="code code-wrap"><code>[ (W1, W2)  ,  (W2, W1)  ]</code></pre><p id="20bd5074-7b33-4826-a723-e021a81d4637" class="">Similarly, <code>-&gt;po-loc</code> is the following relation:</p><pre id="6b8de4ff-e859-4b0d-91b8-61b2c30200de" class="code code-wrap"><code>[ (W1, W2) ]</code></pre><p id="c891d465-def9-41e6-a3ab-7f41ec70c51d" class="">We can combine program ordering (<code>-&gt;po-loc</code>) and cache coherent ordering (<code>-&gt;co</code>) to build a cycle.</p><p id="6a17d536-bded-4b45-b907-9099a50747ee" class="">We can build a new relation by taking the union of the 2, using the union order (pipe). <code>po-loc | co</code></p><p id="43f186fe-5eb4-42b9-bae1-d9356131be35" class="">This united relation is:</p><pre id="ad1ae976-df07-48f2-99c0-739ae20edc73" class="code code-wrap"><code>[ (W1, W2), (W2, W1) ]</code></pre><p id="71c2bbcf-cf18-4ca4-91bb-a9dd16bebca0" class="">Or it can be written as <code>W1 -&gt;po-loc W2 -&gt;co -&gt; W1</code></p><p id="f21389eb-d310-4f1e-970c-a52f8a27d852" class="">Visually this union results in the following graph:</p><figure id="66f58f00-b38f-4de4-915d-13cdba0fb576" class="image"><a href="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/poloc-co-cycle.svg"><img style="width:192px" src="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/poloc-co-cycle.svg"/></a><figcaption>Graph showing po-loc and co cycle</figcaption></figure><p id="304536bc-4369-4755-8c1d-4427f8cf7612" class="">This is a cycle! So we can we can simply define a property (or axiom) in the CAT code as:</p><pre id="c6fa0ba1-bf56-4117-bfca-e7f6cdc469ec" class="code code-wrap"><code>let scpv = acyclic po-loc | co</code></pre><p id="9470d676-ef4b-48e9-a1f8-2c4ace3626f9" class="">This makes herd7 forbid all candidate executions that have such a cycle, and thus don’t satisfy the <code>scpv</code> property.</p><p id="785082c0-ac89-4c46-9feb-79916a116cf8" class="">Note that to forbid candidate execute #2, we could have simply said:</p><pre id="433ea4d7-4389-4fd4-a119-668a0da9cb96" class="code code-wrap"><code>let scvp = acyclic co</code></pre><p id="f6bb3846-2f3b-4cb2-a3c0-3c60bc5c9834" class="">However, consider the following 2 CPU example, with writes happening on different CPUs:</p><pre id="63b2aaf6-f742-4962-9324-7bcdf40a328d" class="code code-wrap"><code>P0(int *x) {
+  WRITE_ONCE(*x, 2);            // event W1
+  WRITE_ONCE(*x, 3);            // event W2
+}
+
+P1(int *x) {
+  WRITE_ONCE(*x, 4);            // event W3
+}</code></pre><p id="db23a571-1be2-4825-800c-d0904d5f95bd" class="">Here there are 6 possible candidate executions:</p><ol type="1" id="4fb3f9bd-0652-4a27-9c55-b17501e015db" class="numbered-list" start="1"><li>Final value is 4.</li></ol><pre id="8bf3fdf3-7971-44ab-9a91-b469d987df97" class="code code-wrap"><code>W1 -&gt;co W2-&gt;co W3</code></pre><ol type="1" id="9727c6fd-146d-40d6-86e3-67becca213eb" class="numbered-list" start="1"><li>Final value is 4.</li></ol><pre id="aa43cebc-e288-4f12-b179-0137bd98463a" class="code code-wrap"><code>W2 -&gt;co W1 -&gt;co W3</code></pre><ol type="1" id="f96d4297-323f-42ae-b1f1-aafdc1acad16" class="numbered-list" start="1"><li>Final value is 2.</li></ol><pre id="acbf656b-48ff-4a5e-a406-ecbf70fbd70e" class="code code-wrap"><code>W2 -&gt;co W3-&gt;co W1</code></pre><ol type="1" id="017e2549-47d2-4cb1-ba94-f3c543f9e338" class="numbered-list" start="1"><li>Final value is 3.</li></ol><pre id="4305b9b0-0444-41db-9875-6c9e11a5221a" class="code code-wrap"><code>W1 -&gt;co W3 -&gt;co W2</code></pre><ol type="1" id="8f94a2ad-c1f4-4d75-9f2c-aa90022c99c3" class="numbered-list" start="1"><li>Final value is 3.</li></ol><pre id="9822cbdb-c312-402c-bae2-6f317ef405f6" class="code code-wrap"><code>W3 -&gt;co W1 -&gt;co W2</code></pre><ol type="1" id="e93350fb-70f6-4b07-a011-bd5eaab2e39a" class="numbered-list" start="1"><li>Final value is 2.</li></ol><pre id="d611055c-6f13-4e69-bf7f-6d0fcec5cb94" class="code code-wrap"><code>W3 -&gt;co W2 -&gt;co W1</code></pre><p id="2e483f74-4442-4e1c-a89f-60586e5732b2" class="">Here cases #3 and #6 should be forbidden, as the only allowed final-value outcomes should be 3 or 4.</p><p id="6c61aea1-dfd9-4fd6-b145-2d95c990f4c5" class="">Candidate execution #3 has the following relations:</p><pre id="1ec09bd3-43ca-40c6-9913-3fb758da1162" class="code code-wrap"><code>W2 -&gt;co W3
+W3 -&gt;co W1
+W1 -&gt;po-loc W2</code></pre><p id="b4dba31f-fbb6-40b9-b306-350a77435d9e" class="">A cycle can be observed when uniting all of these relations using <code>po-loc | co</code>, which is equivalent to this graph:</p><figure id="80d6c9eb-6651-4b85-8040-c3cb904feff8" class="image"><a href="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/poloc-co-cycle-2.svg"><img style="width:192px" src="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/poloc-co-cycle-2.svg"/></a><figcaption>Graph showing po-loc and co cycle</figcaption></figure><p id="ab1fa77d-adc7-4ce3-894d-03855dbf2c0c" class="">Thus <code>acyclic po-loc | co</code> can again be used to forbid the candidate executions #3, and similarly #6.</p><p id="3809144b-998b-47c6-a904-caa61513cbf1" class="">So far we have only considered stores, however we must order the loads with respect to these stores as well, and such reads cannot observe the stores to the same variable out of order. Let us next look at an example, where the above acyclic definition is incomplete.</p><p id="a95c5def-76b9-46f0-8580-bf57eeaaaaa1" class="">Consider the following Litmus test involving read accesses:</p><pre id="17b07d18-1afa-445a-b29d-e5f84fa5f125" class="code code-wrap"><code>C scpv-rf
+
+{}
+
+P0(int *x)
+{
+        WRITE_ONCE(*x, 2);
+        WRITE_ONCE(*x, 3);
+}
+
+P1(int *x)
+{
+        int r1;
+        int r2;
+
+        r1 = READ_ONCE(*x);
+        r2 = READ_ONCE(*x);
+}
+
+exists (1:r1=3 /\ 1:r2=2)</code></pre><p id="c383f982-1cf1-427d-bb99-10f664181af7" class="">Here, we hope that the reads to variable <code>x</code> are observed by P1 in the program-order that were written in P0. So the forbidden exists clause should never occur.</p><p id="bdf515e6-9684-4561-8d67-44b3a6666f9b" class="">However, if you were to build a CAT model as follows, using the previously determined acyclic property, then the forbidden case indeed happens.</p><p id="cb9dede9-b6a9-49c2-b89a-c077410a7711" class="">Here is the CAT code:</p><pre id="44e26954-d750-4685-875a-396760cc369f" class="code code-wrap"><code>include &quot;cos.cat&quot;
+
+acyclic po-loc | co</code></pre><p id="acb3ab62-db4c-4ff9-8bd0-40eec71f38c7" class="">This can be run using herd7 as follows, with the <code>-show prop</code> options to generate a DOT graph file of the forbidden case:</p><pre id="ab5d50d8-ac71-43a6-98e6-21349d7f0445" class="code code-wrap"><code>herd7 -bell linux-kernel.bell -macros linux-kernel.def -cat test.cat scpvrf.litmus -show prop -o OUT/</code></pre><p id="94234676-4054-49c5-97fd-cbac794f053b" class="">Running this shows:</p><pre id="e80b66e1-4da1-4125-a16e-dd951a61314b" class="code code-wrap"><code>Test scpv-rf Allowed
+States 9
+1:r1=0; 1:r2=0;
+1:r1=0; 1:r2=2;
+1:r1=0; 1:r2=3;
+1:r1=2; 1:r2=0;
+1:r1=2; 1:r2=2;
+1:r1=2; 1:r2=3;
+1:r1=3; 1:r2=0;
+1:r1=3; 1:r2=2;
+1:r1=3; 1:r2=3;
+Ok
+Witnesses
+Positive: 1 Negative: 8
+Condition exists (1:r1=3 /\ 1:r2=2)
+Observation scpv-rf Sometimes 1 8
+Time scpv-rf 0.00
+Hash=f2f1ffdc787b0e923ae8cf087fcd5b12</code></pre><p id="67dfb903-6472-402e-baeb-d25ab6da847e" class="">And the graph for the forbidden case generated by herd7 is as follows:</p><figure id="0ef7c8dc-6efa-48ce-b657-9dfb0ece23b5" class="image"><a href="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/scpvrf.svg"><img style="width:624px" src="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/scpvrf.svg"/></a><figcaption>A graph showing failure of read sequential consistency</figcaption></figure><p id="1dc6bdbf-d8e6-4b7c-b166-cfe3b594d945" class="">As you can see, there is a cycle between <code>-&gt;po-loc</code>, <code>-&gt;rf</code> and <code>-&gt;fr</code>.</p><p id="eaa26b64-da8a-44af-a17e-38b2113e7497" class="">This shows that both <code>-&gt;rf</code> and <code>-&gt;fr</code> should also included in the acyclic property as well. Hence to avoid the problematic candidate execution, the SCPV property should be <code>acyclic po-loc | co | rf | fr</code>. That is indeed the case in the Linux kernel’s memory model.</p><h2 id="4b15360d-6457-43d5-90ff-03143e2705a3" class="">2. Atomicity</h2><p id="fdc830d8-e014-45b2-b891-5655bbfaf8d9" class="">Atomicity can be defined as a read-modify-write (RMW) operation on a memory location which happens atomically, that is no write from another CPU can happen between the read and the write. In other words, the read and write operation in the RMW operation are one (atomic).</p><p id="f2b51039-a10a-4c68-97ce-5ceda1b3ac37" class="">First let us see what happens if we have an RMW on CPU 0 being interleaved with a write from another CPU 1. Consider the litmus test we will use to generate a graph from:</p><pre id="f2badf17-4d0c-4038-a463-4fed467d6a4f" class="code code-wrap"><code>C rmw-1
+
+{}
+
+P0(int *x)
+{
+        int r0;
+
+        r0 = xchg(x, 1);
+}
+
+P1(int *x)
+{
+        WRITE_ONCE(*x, 2);
+}
+
+
+exists (0:r0=0 /\ x=1)</code></pre><p id="75285bd2-3ae3-4af3-8ffa-da5b3c1b1878" class="">The below graph generated by herd7 shows the case that exists:</p><figure id="ed38a2e1-8df0-4694-82bf-cbf02806c091" class="image"><a href="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/rmw.svg"><img style="width:672px" src="Understanding%20Memory%20Ordering%20using%20LKMM%20and%20Herd7%205d3b1647195e400c94dc37da888647fb/rmw.svg"/></a></figure><p id="bbe8b372-b7e1-40e3-9947-f2b79e80acfd" class="">The <code>Rmw</code> edge in the graph illustrates the data-dependent relation between the read and the write, with the additional implication that it is to be atomic. The <code>fr</code> edge shows that a write on another CPU happened after the read operation of the RMW. The <code>co</code> edge shows that another write overwrote that write.</p><p id="8f1b0d74-5201-4fd4-9845-e6468f63b41b" class="">This is precisely what we want our model to prevent – another write should not be allowed to interleave in such a fashion, and all modern CPU architectures have hardware support to prevent such interleaving. We expect APIs like <code>xchg()</code> in the Linux kernel, that does use RMW instructions to work correctly.</p><p id="32ff9fcd-ebaf-4fee-a096-0b6bfbb44889" class="">To prevent the above case, we first build a relation linking the <code>fr</code> and <code>co</code> edges using the sequence operator (semicolon) as follows:</p><pre id="3d295732-8857-4d8f-bbca-12294da15643" class="code code-wrap"><code>(fr; co)</code></pre><p id="beca1975-720b-4463-b47b-69792ecf9461" class="">The only thing left to form an intersection between this relation and the relation consisting of the rmw operation, to form a new relation, and then forbid then forbid that such a relation exists in any candidate execution. These candidates will be rejected, as our model cannot possibly support them (just like the underlying hardware cannot).</p><pre id="18d58e8e-6f3e-46b0-8b2d-cb2f34d93ea8" class="code code-wrap"><code>empty rmw &amp; (fr; co)</code></pre><p id="501c4cfd-0254-43b6-b837-b3ec7817ae38" class="">The next several sections will discuss difficult-to-understand topics using the herd7 modeling tool and using examples and mathematics where possible.</p><h2 id="06bd9b7d-e8c5-429c-92cf-2be671e38d66" class="">3. Propagation</h2><p id="2f4d3ad4-2fbc-4df9-88b0-c1867de487a2" class="">One of the most confusing parts of memory ordering is that of delayed propagation. Using a formal modeling tool like LKMM, we can get a better understanding of this concept.</p><p id="e4277363-3f7b-4b85-8e92-e0876346dc9b" class="">Consider the following litmus test with 2 concurrent threads running on 2 CPUs (P0 and P1):</p><pre id="372f8255-06db-445b-9732-edf0ff782c51" class="code code-wrap"><code>P0(int *x, int *y)
+{
+    WRITE_ONCE(*x, 1);
+    smp_wmb();
+    WRITE_ONCE(*y, 1);
+}
+
+P1(int *x, int *y)
+{
+    int r0;
+
+    WRITE_ONCE(*y, 2);
+    smp_mb();
+    r0 = READ_ONCE(*x);
+}
+
+exists (y=2 /\ 1:r0=0)</code></pre><p id="fd538905-d796-4d65-897b-f0a57b1dd841" class="">The exists clause tries to verify if any candidate execution in this concurrent program can result in <code>y</code> having a final value of 2, and P1’s read into register r0 having a value of 0.</p><p id="ce23a3e0-c97b-439c-80fc-cf6403038b8b" class="">Intuitively speaking, if y has a final value of 2, then the store of 1 to y in some sense preceded the store of 2 to y. The <code>smp_mb()</code> guarantees that the <code>P1()</code>’s store to y precedes its load from x, and the <code>smp_wmb()</code> guarantees that <code>P0()</code>’s stores are seen in order.</p><p id="5ed278ef-0c24-490c-88cc-ad343ae2c42d" class="">Putting all of this together, one might hope that whenever the final value of y is 2, the final value of r0 would be guaranteed to be 1.</p><p id="46d8e0d6-29d1-48f3-9c81-3203b5c630f9" class="">Unfortunately, there is real hardware that runs the Linux kernel on which the final value of y can be 2 and the final value of <code>r0</code> can be 0. LKMM must therefore allow this outcome, counter-intuitive though it might be.</p><p id="c7681719-579f-423f-bb07-56dbea6152d7" class="">The issue happens because we did not consider a subtle point related to propagation here. Even though we have the <code>-&gt;co</code> relation between the stores to <code>y</code>, the store to <code>x</code> can be propagated much later to thread <code>P1</code> as the <code>weak fence</code> delays the propagation.</p><p id="be2a13af-0f61-4c05-811d-0edff7021ed1" class="">Let us see what it takes to forbid this mathematically and why weak fences cannot forbid it. First lets define a <code>-&gt;prop</code> relation. A <code>-&gt;prop</code> relation guarantees the propagation of changes to different memory locations to happen in a certain order.</p><p id="39e11679-a703-4b19-8241-c21ddcfeb477" class="">So for instance, if we have writes <code>W1</code> and <code>W2</code>, <code>W1 -&gt;co W2</code> implies <code>W1 -&gt;prop W2</code>. Weak fences also assist in propagation of previous <code>-&gt;co</code> links.</p><p id="55cb29af-8a8b-49c1-8f7e-a453ee383663" class="">So, <code>W1 -&gt;co W2 -&gt;weak-fence W3</code> also implies <code>W1 -&gt;prop W3</code>. This property of weak fences is called cumulativity.</p><p id="1c9278d5-0402-4a72-ace3-218a88439552" class="">Applying this to the previous example, for <code>x</code> to be read as 0 with the final value as <code>y</code>, we generate:</p><pre id="1d0d0f13-d1cb-4eb5-a506-e7d817a59fbf" class="code code-wrap"><code>WRITE_ONCE(*y, 1) -&gt;co WRITE_ONCE(*y, 2) -&gt;strong-fence  READ_ONCE(*x)</code></pre><p id="0150ad15-2f8c-4742-becf-1057cc55b978" class="">and,</p><pre id="1408b35a-ce6d-4afc-8adc-a5376cea46c4" class="code code-wrap"><code>READ_ONCE(*x); -&gt;fr WRITE_ONCE(*x, 1); -&gt;weak-fence WRITE_ONCE(*y, 1);</code></pre><p id="b090b6c9-e7f8-42af-99d2-f6296ed5d2df" class="">This implies:</p><pre id="88d5d33c-8e22-464e-a0e4-9439b22c7a75" class="code code-wrap"><code>WRITE_ONCE(*y, 1) -&gt;prop  READ_ONCE(*x)</code></pre><p id="4aca8297-d053-4672-a63c-e82ec20bf55d" class="">and</p><pre id="b95f8ffe-c170-4100-a380-1f75e5096538" class="code code-wrap"><code>READ_ONCE(*x); -&gt;prop WRITE_ONCE(*y, 1);</code></pre><p id="c72892c8-4a6d-42d9-a7d9-4a5bfa62b138" class="">That may appear like a cycle at first that we can should be intuitively forbidden, however it is important to realize that <code>A -&gt;prop B</code> and <code>B -&gt;prop C</code> does not imply <code>A -&gt;prop C</code>. Because we have no way of chaining 2 <code>-&gt;prop</code> relations this way, we cannot define a chain of <code>-&gt;prop</code> relations to be acyclic because <code>-&gt;prop</code> relations may not happen temporally in a strict order.</p><p id="bdf187e9-e86f-4c5c-9221-0cf7a94fe061" class="">In plain words, The action “A propagating before B” can happen after the action “B propagating before C”.</p><p id="3fc0d824-ca58-4ca7-adea-7fe308a92b03" class="">In order to enforce the order <code>A -&gt;prop B -&gt;prop C</code>, we need both <code>prop</code> relations to involve strong fences, not just one of them. This upgrades the <code>prop</code> relation to a <code>pb</code> relation (propagates before) in LKMM terminology.</p><p id="8ef27542-43b2-4977-b2e5-561d48bb0987" class="">Applying this to the previous example, we have:</p><pre id="5b64ebc1-c75a-43eb-a417-9984bfc89d6e" class="code code-wrap"><code>WRITE_ONCE(*y, 1) -&gt;co WRITE_ONCE(*y, 2) -&gt;strong-fence  READ_ONCE(*x)</code></pre><p id="622441ba-d3f0-43c1-b068-a4eab3ba58aa" class="">and</p><pre id="84b9a05b-0f5b-4c3d-a938-d165bcc418a4" class="code code-wrap"><code>READ_ONCE(*x); -&gt;fr WRITE_ONCE(*x, 1); -&gt;strong-fence WRITE_ONCE(*y, 1);</code></pre><p id="8dca8468-bde1-4c81-95ca-7d92109930ce" class="">This implies:</p><pre id="843af3f7-c36a-475e-86e3-4e12f17b656f" class="code code-wrap"><code>WRITE_ONCE(*y, 1) -&gt;pb  READ_ONCE(*x)</code></pre><p id="50431b28-bd49-4832-8b10-b8e85ecc3bce" class="">and</p><pre id="0846510a-d579-4906-a56c-551e5e54d360" class="code code-wrap"><code>READ_ONCE(*x); -&gt;pb WRITE_ONCE(*y, 1);</code></pre><p id="3d7955b9-ef03-4267-bb57-90da50190f74" class="">Now we can forbid this undesirable cause of <code>x</code> being read as 0, simply saying that the LKMM forbids cycles in <code>-&gt;pb</code>.</p><h2 id="daf76b0e-8a76-4c81-be80-db9e4b039bca" class="">4. Speculative execution and memory ordering</h2><p id="23c60c18-cfa6-4916-99d8-e43d0d65b836" class="">In this section, we will go over an example of control-flow speculation that causes memory accesses to happen in an unexpected order, and how herd7 formally models this.</p><p id="bc33d43e-f88d-49fa-a4f6-b7f3c5793c44" class="">Consider the following litmus test:</p><pre id="4cdfcbc8-ba04-46de-95d3-c4185332b9e1" class="code code-wrap"><code>C rfitest
+
+{
+    int a = 0;
+    int *x;
+    int y = 0;
+}
+
+P0(int **x, int *y, int *a)
+{
+    WRITE_ONCE(*a, 1);
+    smp_mb();
+    WRITE_ONCE(*y, 1);
+
+}
+
+P1(int **x, int *y, int *a)
+{
+    int r0;
+    int *r1;
+    int r2;
+
+    r0 = READ_ONCE(*y);
+    if (r0 == 1) {
+       WRITE_ONCE(*x, a);
+       r1 = READ_ONCE(*x);
+       r2 = READ_ONCE(*r1);
+    }
+}
+
+exists (1:r0 = 1 /\ 1:r2 = 0)</code></pre><p id="0fd41b94-549e-42e8-b2cd-d9c43ff049fa" class="">In this example, to avoid the condition where register r0’s value in P1 is 1 and r2’s value is 0, we expect P0’s store to <code>a</code> to propogate to P1’s load of <code>a</code>. This is intuitively enforced by the fact that, between that “store to a” and “load from a” event, we have the following: 1. A strong fence: <code>smp_mb()</code>. 2. A <code>read-from</code> dependency between P0’s store to <code>y</code> and P1’s load of <code>y</code>. 3. And a control dependency that we will execute the body of the loop only if the value loaded in step 2 obtained a value of 1.</p><p id="6b86c577-0ac1-4abe-a314-ca43ecf09ac6" class="">However, modern hardware is anything but intuitive! So the case where register r0’s value in P1 is 1 and r2’s value is 0 can very well happen on weakly ordered architectures like PowerPC.</p><p id="6f43c940-24ec-48d2-aa0d-54346d7d176d" class="">The reason for this is control-flow speculation along with a feature in pipelined hardware called <code>store forwarding</code>. The body of the loop can be speculatively executed by the processor in advance of knowing the value <code>y</code> being loaded into <code>r0</code>. Further, the body of the loop is indendent of r0. So as long as the processor does not COMMIT the side effects of store to <code>x</code> in P1 until the processor knows the value of <code>y</code>, everything is fine.</p><p id="53f3a80d-d75a-4f27-8624-6a68eb334cf7" class="">This is where store-forwarding comes in. Even before the store of the address of a to <code>x</code> in P0 can be committed, the address of <code>x</code> can be forwarded directly to the load of <code>x</code>. The next statement then loads a stale value of <code>a</code>, before the value of <code>y</code> can even be loaded, thus resulting in the counter-intuitive outcome. The store-forwarding behavior is modeled by the <code>-&gt;rfi</code> relation in the LKMM (Read-from internal relation).</p><p id="f189dde4-897b-42f5-bc98-c9d191ff3b6c" class="">As can be seen in this example, both store-forwarding and speculation are required to result in the counter-inutive outcome.</p><p id="2c604112-17da-4805-8a02-103d8a5b322e" class="">This can be avoided by adding a full memory barrier as the first statement in the body of the <code>if</code> block. This will ensure that the process of speculation completes before executing the body of the loop.</p><h2 id="74d94232-0a82-4f0f-abf3-cd856a9a0f83" class="">Conclusion</h2><p id="6cc79a91-6b9b-4d35-9d4e-45a2f4a94c6f" class="">These is a work in progress article. I tried to go deep and explain things that are not explained in other places. I may update this article in the future as I uncover the mysteries of herd7 and LKMM.</p><p id="2d4f2645-3eab-4660-9c89-705fb0c80aa5" class="">
+</p><figure id="e4fc5309-24a6-4bd1-bb59-bd5462784d9b" class="link-to-page"><a href="https://www.notion.so/Understanding-the-LKMM-using-herd7-e4fc530924a64bd1bb59bd5462784d9b?pvs=21">Understanding the LKMM using herd7</a></figure></div></article></body></html>

@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>10 Jun 2023</span> &nbsp; <a href="/selinux/debugging/2023/06/10/selinux-procfs.html">SELinux Debugging on ChromeOS</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [selinuxdebugging]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>28 Apr 2023</span> &nbsp; <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -451,7 +465,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/rcu/synchronization/2023/04/28/hazard-pointers.html">Understanding Hazard Pointers</a></h1>
+      <h1 class="entry-title"><a href="/selinux/debugging/2023/06/10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></h1>
     
     
       <p class="meta">
@@ -465,109 +479,55 @@ Most Recept Post:
 
 
 
-<time datetime="2023-04-28T00:00:00-04:00" pubdate data-updated="true">Apr 28, 2023</time>
+<time datetime="2023-06-10T00:00:00-04:00" pubdate data-updated="true">Jun 10, 2023</time>
         
-           | <a href="/rcu/synchronization/2023/04/28/hazard-pointers.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/rcu/synchronization/2023/04/28/hazard-pointers.html">Comments</a>
+           | <a href="/selinux/debugging/2023/06/10/selinux-procfs.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/selinux/debugging/2023/06/10/selinux-procfs.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><h1 id="introduction"><strong>Introduction</strong></h1>
+  <div class="entry-content"><p>Not being an SELinux expert but having to deal with it from time-to-time, I find it may be productive to write some debugging notes. So this post is about an issue that I fixed just this morning.</p>
 
-<p>In concurrent systems, managing shared resources efficiently and safely is of paramount importance. Hazard pointers are a powerful synchronization mechanism that can be used to address this issue. In this post, we will explore how hazard pointers work, provide a simple example to illustrate their usage, and compare them with RCU (Read-Copy-Update). Additionally, we will dive into the implementation details of hazard pointers, including the per-CPU and per-thread data structures used to maintain them.</p>
+<h2 id="issue-runtime-labeled-pseudo-files-are-not-getting-labelled">Issue: Runtime labeled pseudo-files are not getting labelled</h2>
 
-<h2 id="example-with-a-singly-linked-list"><strong>Example with a Singly Linked List</strong></h2>
+<p>On ChromeOS, there are Android-specific policies which are combined with the ChromeOS ones. For someone who tries to stay away from SELinux, this is pretty much voodoo.</p>
 
-<p>Consider a singly linked list that is shared among multiple threads. In this example, some threads may be traversing the list while others may be adding or removing nodes. The main challenge here is to ensure that a node being accessed by a reader is not deleted or modified by a writer simultaneously.</p>
+<p>Let me start with the last issue. I had to label a procfs file added by a test kernel patch which I am developed. This procfs would then be toggled by ChromeOS’s experiment system to enable the feature and collect data. The procfs file was called <code class="language-plaintext highlighter-rouge">/proc/sys/kernel/timer_highres</code>.</p>
 
-<p>Hazard pointers provide a mechanism to temporarily “protect” a node while it is being accessed. When a thread wants to access a node, it stores the address of the node in a hazard pointer, signaling that the node is in use. Before a writer can remove or modify a node, it must check all hazard pointers to ensure that the node is not currently being accessed by any other thread.</p>
+<p>ChromeOS’s SELinux policies live in a repository at <code class="language-plaintext highlighter-rouge">src/platform2/sepolicy</code> as of this writing. In this repo, there is a file named<code class="language-plaintext highlighter-rouge">genfs_contexts</code> which contains <code class="language-plaintext highlighter-rouge">genfscon</code> rules.</p>
 
-<p>Here’s a step-by-step illustration of how hazard pointers work:</p>
+<p><code class="language-plaintext highlighter-rouge">genfscon</code> is used to dynamically generate security contexts for pseudo-filesystems such as <code class="language-plaintext highlighter-rouge">procfs</code>. This is documented more in the <a href="https://selinuxproject.org/page/FileStatements#File_System_Labeling_Statements">docs here</a>.</p>
 
-<ol>
-  <li>Thread A starts traversing the list and wants to access node B.</li>
-  <li>Thread A stores the address of node B in a hazard pointer, marking it as “in use.”</li>
-  <li>Thread B attempts to remove node B from the list but first checks all hazard pointers.</li>
-  <li>Thread B sees that node B is in use by Thread A (due to the hazard pointer) and must wait before removing it.</li>
-  <li>Thread A finishes accessing node B and clears its hazard pointer.</li>
-  <li>Thread B can now safely remove node B from the list.</li>
-</ol>
-
-<h2 id="a-reader-traversing-a-list-may-need-to-retry">A reader traversing a list may need to retry</h2>
-
-<p>This can happen if the reader steps on a list element that was freed. Let’s go through a simple example step by step to see why this might happen:</p>
-
-<p>Imagine a singly-linked list with three elements: A, B, and C. We have two threads, Thread 0 and Thread 1, which read and modify the list concurrently.</p>
+<p>The main issue here was I was making changes to the wrong <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file to begin with. That’s easy to do when there are 2 of them. But here’s how I found out that my changes were not getting through to the device:</p>
 
 <ol>
-  <li>Thread 0 wants to read element B. To do this safely, it first records a hazard pointer to element B, indicating that it is about to access B and that B should not be deleted while Thread 0 is using it.</li>
-  <li>Thread 1 wants to delete element B from the list. It removes B from the list by updating A’s next pointer to point to C instead of B. Thread 1 checks for hazard pointers referencing B and sees that Thread 0 has a hazard pointer to B. Since Thread 0 is still using B, Thread 1 cannot delete it yet.</li>
-  <li>Thread 1 now wants to delete element C. It removes C from the list by updating B’s next pointer to be a special value called <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code>, marking the deletion. Since no hazard pointers reference C, Thread 1 can immediately delete C.</li>
-  <li>Thread 0 finishes reading element B and moves on to the next element in the list. It tries to acquire a hazard pointer for B’s successor, which is now marked as <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> due to the deletion of element C. When Thread 0 encounters the <code class="language-plaintext highlighter-rouge">HAZPTR_POISON</code> value, it knows that the list has been modified concurrently and must restart its traversal from the beginning of the list.</li>
-  <li>Thread 0 starts over, traversing the list again from the beginning. This time, it finds the updated list without elements B and C.</li>
-  <li>Once Thread 0 is done using element B and releases its hazard pointer, Thread 1 is free to delete B as there are no longer any hazard pointers referencing it.</li>
-</ol>
-
-<h2 id="comparing-hazard-pointers-with-rcu"><strong>Comparing Hazard Pointers with RCU</strong></h2>
-
-<p>Both hazard pointers and RCU are synchronization mechanisms that allow for efficient handling of shared resources. However, they differ in several key aspects:</p>
-
-<ol>
-  <li>Read-side performance: RCU typically offers better read-side performance than hazard pointers, as it does not require retries. Hazard pointers, on the other hand, may involve read-side retries due to concurrent modifications, which can slow down the read-side performance.</li>
-  <li>Write-side performance: While hazard pointers generally provide better write-side performance than naive reference counting, they may still be slower than RCU. This is because hazard pointers require writers to check all hazard pointers before modifying an object, which can be time-consuming when there are many of them. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are lots of readers storing hazard pointers.</li>
-  <li>Memory footprint: Hazard pointers have a minimal memory footprint, as any object not currently protected by a hazard pointer can be immediately freed. RCU, on the other hand, may require a larger memory footprint due to its deferred reclamation mechanism.</li>
-  <li>Grace period: RCU requires a grace period even when there are no readers, which can cause latency issues. With hazard pointers, objects can be freed instantly as soon as they are no longer being used by any thread.</li>
-  <li>Reclamation of memory: Hazard pointers allow for the immediate reclamation of any object not currently protected by a hazard pointer. This means that hazard pointers can be freed per-object while not freeing others. However, with RCU, reclamation is independent of specific objects and may require a larger memory footprint due to its deferred reclamation mechanism. SRCU can help some with that problem, as the readers that need to be waited on are per-object-type. However, Hazard pointers are per-object and not really per-object type so they are event better than SRCU for this point. Another big disadvantage of SRCU vs HP for this point is, SRCU has large memory footprint due to per-cpu counters, which hazard pointers does not. Imagine an srcu_struct for an object that’s just 20 bytes long but the system has 100 CPUs!</li>
-</ol>
-
-<h2 id="implementation-of-hazard-pointers"><strong>Implementation of Hazard Pointers</strong></h2>
-
-<p>Hazard pointers are maintained in per-CPU or per-thread data structures. This design choice allows for improved cache locality, as each thread or CPU only needs to update its own local data structure when accessing shared resources. Consequently, this reduces contention and cache coherency traffic, leading to good read-side performance. However, the write-side performance of hazard pointers may be slower than RCU, as writers need to check all hazard pointers before modifying an object. This can be time-consuming when there are many hazard pointers to check. Furthermore, traversal of per-thread data structures to scan for hazard pointers may result in cache contention when there are many readers storing hazard pointers, leading to additional overhead.</p>
-
-<h2 id="virtual-reference-counting-using-hazard-pointers">Virtual Reference Counting using Hazard Pointers</h2>
-
-<p>Virtual reference counting is a technique used to avoid the overhead of maintaining reference counts for each object in a concurrent system. Instead of incrementing and decrementing object reference counts, threads maintain a list of “virtual” reference counts in the form of hazard pointers.</p>
-
-<p>When a thread wants to access an object, it temporarily protects the object using a hazard pointer. This marks the object as “in use” and guarantees that it won’t be freed or modified by any other thread. By counting the number of hazard pointers in the system, it is possible to determine the “value of the virtual refcount.” The absence of hazard pointers implies that the number of references to an object is zero, which means that the object can be destroyed.</p>
-
-<p>Virtual reference counting eliminates the need to maintain reference counts for each object resulting in the object saving space as a separate refcount need to be stored in the object. This is very useful for small objects.</p>
-
-<h2 id="design-consideration-with-hazard-pointer-implementations">Design consideration with Hazard Pointer Implementations</h2>
-
-<h3 id="the-retry-dance">The retry dance</h3>
-
-<p>A dance is performed when recording an HP.</p>
-
-<p>Reader has to:</p>
-
-<ol>
-  <li>
-    <p>Read the object pointer and issue a full MB.</p>
-
-    <aside>
- 💡 A full MB may be avoidable, if the reader may be IPI’d by an updater, similar to how the “rude” variant of RCU-tasks avoids full MBs. The IPI itself will issue the full MB. Which means in the absence of an updater, readers can avoid a full MB.
-    
- </aside>
+  <li>Make <a href="https://chromium-review.googlesource.com/c/chromiumos/platform2/+/4568967/1/sepolicy/policy/base/genfs_contexts">the change</a> to <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file to label the proc node I am interested in.</li>
+  <li>After building and installing the <code class="language-plaintext highlighter-rouge">platform-base/selinux-policy</code> ChromeOS package, inspect the device.</li>
+  <li>Where to inspect? Read the <a href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/chromiumos-overlay/chromeos-base/selinux-policy/selinux-policy-9999.ebuild;l=312?q=selinux-policy%20ebuild">eBuild file sources</a> which is what builds that package. From this I figured that the <code class="language-plaintext highlighter-rouge">genfs_contexts</code> was being compiled into a binary located at <code class="language-plaintext highlighter-rouge">/etc/selinux/arc/policy.30</code>. I am still not sure what the numeric suffix means, but it does not matter.</li>
+  <li>Next, use <code class="language-plaintext highlighter-rouge">grep</code> to scan this binary for <code class="language-plaintext highlighter-rouge">timer_highres</code>, I found that the <code class="language-plaintext highlighter-rouge">grep</code> brought back nothing. Confirming that my change had no effect.</li>
+  <li>Hmm, what if the string was actually some weird encoding and <code class="language-plaintext highlighter-rouge">grep</code> could not find it? After all, I know nothing about that binary file’s format.
+    <ol>
+      <li>So copy policy binary file and confirm with <code class="language-plaintext highlighter-rouge">seinfo</code> command on a regular Linux machine:</li>
+      <li>First <code class="language-plaintext highlighter-rouge">scp</code> the <code class="language-plaintext highlighter-rouge">policy.30</code> file from the device.</li>
+      <li>Then on regular Linux, run: <code class="language-plaintext highlighter-rouge">seinfo --genfscon=proc policy.30 | less</code>.</li>
+      <li>Look for the <code class="language-plaintext highlighter-rouge">genfscon</code> line for <code class="language-plaintext highlighter-rouge">timer_highres</code> in the output.</li>
+    </ol>
   </li>
-  <li>Record it into an HP.</li>
-  <li>Pick up the object pointer again and compare it to the recorded HP in #2.</li>
-  <li>Retry if it has changed (back to #1).</li>
+  <li><a href="https://chromium-review.googlesource.com/c/chromiumos/platform2/+/4606196">Modify</a> the correct <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file and repeat.</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">ls -lZ</code> to confirm that the procfs file is now correctly labeled.</li>
 </ol>
 
-<p>This has to be done because it is possible that between #1 and #2, the object was freed by an updater.</p>
+<h2 id="conclusions-and-lessons-learnt">Conclusions and Lessons Learnt</h2>
 
-<h3 id="recording-hps-to-objects-which-are-embedded-in-hp-protected-objects">Recording HPs to objects which are embedded in HP-protected objects</h3>
-
-<p>An issue can occur if a hazard pointer is recorded to some offset within a data structure, that is itself hazard pointer protected. In this case, the updater may not be aware of hazard pointer protected data within the outer hazard pointer protected object. The updater may then wrongly conclude that there are no readers.</p>
-
-<p>Various strategies can be used to solve this, such as recording a range of memory to protect instead of just the pointer, and then checking if a range of memory has any inner hazard pointer protected ranges, before freeing such memory. Another approach is to use a common memory address as the recorded pointer for both the inner and the other outer structure, such as an rcu_head in the outer structure, or the beginning/end address of the outer structure.</p>
-
-<h2 id="in-summary">In summary</h2>
-
-<p>Hazard pointers are an effective synchronization mechanism for read-mostly uses. If the usecase is write-mostly, then readers may have too many retries. But they offer good read-side performance, and may generally better memory footprint than RCU, SRCU and per-CPU refcounts.</p>
+<ol>
+  <li>Trial and error approach to debugging is OK, but always make sure your changes are being reflected on what is on the device, otherwise you’ll waste a lot of time.</li>
+  <li>Once a theory is validated, example: “<code class="language-plaintext highlighter-rouge">genfscon</code> rule did not get updated”, then stop with step #1, and focus on digging deeper into the validated theory which we know is de-facto correct.</li>
+  <li>Read the build source files to get a better understanding of how your code changes result in the artifacts. That’s how I learnt the <code class="language-plaintext highlighter-rouge">genfscon</code> rule I was adding was getting compiled into the <code class="language-plaintext highlighter-rouge">policy.30</code> file.</li>
+  <li>Document the issue like in this blog post, and also in the source file being changed so that others don’t run into the issue in the future.</li>
+</ol>
 </div>
   
   
@@ -672,6 +632,10 @@ Most Recept Post:
   
     
       <a href="/page23">23</a>
+    
+  
+    
+      <a href="/page24">24</a>
     
   
   -->
