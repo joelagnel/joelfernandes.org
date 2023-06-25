@@ -118,6 +118,20 @@ Full list of all blog posts on this site:
 
 <font face="monospace">
  <li>
+   <span>25 Jun 2023</span> &nbsp; <a href="/herd7/lkmm/formalmethods/2023/06/25/svm-vectors.html">SVM and vectors for the curious</a> 
+   <!--
+     Commenting out categories in square brackets, because it does not work
+     properly. Check posts/category.html if you want to generate linked
+     categories here.
+
+   [herd7lkmmformalmethods]
+
+     !-->
+ </li>
+</font>
+
+<font face="monospace">
+ <li>
    <span>10 Jun 2023</span> &nbsp; <a href="/selinux/debugging/2023/06/10/selinux-procfs.html">SELinux Debugging on ChromeOS</a> 
    <!--
      Commenting out categories in square brackets, because it does not work
@@ -465,7 +479,7 @@ Most Recept Post:
       
   <header>
     
-      <h1 class="entry-title"><a href="/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html">TIF_NEED_RESCHED: why is it needed</a></h1>
+      <h1 class="entry-title"><a href="/linux/kernel/tracing/2016/06/19/ftrace-events-mechanism.html">Ftrace events mechanism</a></h1>
     
     
       <p class="meta">
@@ -479,78 +493,119 @@ Most Recept Post:
 
 
 
-<time datetime="2016-03-20T08:44:32+00:00" pubdate data-updated="true">Mar 20, 2016</time>
+<time datetime="2016-06-19T05:29:26+00:00" pubdate data-updated="true">Jun 19, 2016</time>
         
-           | <a href="/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html#disqus_thread"
-             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/scheduler/2016/03/20/tif-need-resched-why-is-it-needed.html">Comments</a>
+           | <a href="/linux/kernel/tracing/2016/06/19/ftrace-events-mechanism.html#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org/linux/kernel/tracing/2016/06/19/ftrace-events-mechanism.html">Comments</a>
         
       </p>
     
   </header>
 
 
-  <div class="entry-content"><p><code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is one of the many “thread information flags” stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Inorder to explain why its important and how it works, I will go over 2 cases where <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is used.</p>
+  <div class="entry-content"><p>Ftrace events are a mechanism that allows different pieces of code in the kernel to ‘broadcast’ events of interest. Such as a scheduler context-switch <code class="language-plaintext highlighter-rouge">sched_switch</code> for example. In the scheduler core’s <code class="language-plaintext highlighter-rouge">__schedule</code> function, you’ll see something like: <code class="language-plaintext highlighter-rouge">trace_sched_switch(preempt, prev, next);</code>
+This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).</p>
 
-<h2 id="preemption">Preemption</h2>
-<p>Preemption is the process of forceably grabbing CPU from a user or kernel context and giving it to someone else (user or kernel). It is the means for timesharing a CPU between competing tasks (I will use task as terminology for process).
-In Linux, the way it works is a timer interrupt (called the tick) interrupts the task that is running and makes a decision about whether a task or a kernel code path (executing on behalf of a task like in a syscall) is to be preempted. This decision is based on whether the task has been running long-enough and something higher priority woke up and needs CPU now, or is ready to run.</p>
+<p>Under the hood, these ftrace events are actually implemented using tracepoints. The terms events are tracepoints appear to be used interchangeably, but it appears one could use a trace point if desired without having to do anything with ftrace. Events on the other hand use ftrace.</p>
 
-<p>These things happen in <code class="language-plaintext highlighter-rouge">scheduler_tick()</code>, the exact path is <em>TIMER HARDWARE INTERRUPT</em> -&gt; <code class="language-plaintext highlighter-rouge">scheduler_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">task_tick_fair</code> -&gt; <code class="language-plaintext highlighter-rouge">entity_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">check_preempt_tick</code>.
-<code class="language-plaintext highlighter-rouge">entity_tick()</code> updates various run time statistics of the task, and <code class="language-plaintext highlighter-rouge">check_preempt_tick()</code> is where TIF_NEED_RESCHED is set.</p>
+<p>Let’s discuss a bit about how a tracepoint works. Tracepoints are hooks that are inserted into points of code of interest and call a certain function of your choice (also known as a function probe). Inorder for the tracepoint to do anything, you have to register a function using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code>. Multiple functions can be registered in a single hook. Once your tracepoint is hit, all functions registered to the tracepoint are executed. Also note that if no function is registered to the tracepoint, then the tracepoint is essentially a NOP with zero-overhead. Actually that’s a lie, there is a branch (and some space) overhead only although negligible.</p>
 
-<p>Here’s a small bit of code in <code class="language-plaintext highlighter-rouge">check_preempt_tick</code></p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr)
-{
-        unsigned long ideal_runtime, delta_exec;
-        struct sched_entity *se;
-        s64 delta;
-
-        ideal_runtime = sched_slice(cfs_rq, curr);
-        delta_exec = curr-&gt;sum_exec_runtime - curr-&gt;prev_sum_exec_runtime;
-        if (delta_exec &gt; ideal_runtime) {
-                resched_curr(rq_of(cfs_rq));
-                /*
-                 * The current task ran long enough, ensure it doesn't get
-                 * re-elected due to buddy favours.
-                 */
-                clear_buddies(cfs_rq, curr);
-                return;
-        }
+<p>Here is the heart of the code that executes when a tracepoint is hit:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
+        extern struct tracepoint __tracepoint_##name;                   \
+        static inline void trace_##name(proto)                          \
+        {                                                               \
+                if (static_key_false(&amp;__tracepoint_##name.key))         \
+                        __DO_TRACE(&amp;__tracepoint_##name,                \
+                                TP_PROTO(data_proto),                   \
+                                TP_ARGS(data_args),                     \
+                                TP_CONDITION(cond),,);                  \
+                if (IS_ENABLED(CONFIG_LOCKDEP) &amp;&amp; (cond)) {             \
+                        rcu_read_lock_sched_notrace();                  \
+                        rcu_dereference_sched(__tracepoint_##name.funcs);\
+                        rcu_read_unlock_sched_notrace();                \
+                }                                                       \
+        }                                                   
 </code></pre></div></div>
-<p>Here you see a decision is made that the process ran long enough based on its runtime and if so call <code class="language-plaintext highlighter-rouge">resched_curr</code>. Turns out <code class="language-plaintext highlighter-rouge">resched_curr</code> sets the <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> for the current task! This informs whoever looks at the flag, that this process should be scheduled out soon.</p>
+<p>The <code class="language-plaintext highlighter-rouge">static_key_false</code> in the above code will evaluate to false if there’s no probe registered to the tracepoint.</p>
 
-<p>Even though this flag is set at this point, the task is not going to be preempted yet. This is because preemption happens at specific points such as exit of interrupts. If the flag is set because the timer interrupt (scheduler decided) decided that something of higher priority needs CPU now and sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>, then at the exit of the timer interrupt (interrupt exit path), <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is checked, and because it is set - <code class="language-plaintext highlighter-rouge">schedule()</code> is called causing context switch to happen to another process of higher priority, instead of just returning to the existing process that the timer interrupted normally would.
-Lets examine where this happens.</p>
+<p>Digging further, <code class="language-plaintext highlighter-rouge">__DO_TRACE</code> does the following in <code class="language-plaintext highlighter-rouge">include/linux/tracepoint.h</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DO_TRACE(tp, proto, args, cond, prercu, postrcu)              \
+        do {                                                            \
+                struct tracepoint_func *it_func_ptr;                    \
+                void *it_func;                                          \
+                void *__data;                                           \
+                                                                        \
+                if (!(cond))                                            \
+                        return;                                         \
+                prercu;                                                 \
+                rcu_read_lock_sched_notrace();                          \
+                it_func_ptr = rcu_dereference_sched((tp)-&gt;funcs);       \
+                if (it_func_ptr) {                                      \
+                        do {                                            \
+                                it_func = (it_func_ptr)-&gt;func;          \
+                                __data = (it_func_ptr)-&gt;data;           \
+                                ((void(*)(proto))(it_func))(args);      \
+                        } while ((++it_func_ptr)-&gt;func);                \
+                }                                                       \
+                rcu_read_unlock_sched_notrace();                        \
+                postrcu;                                                \
+        } while (0)
+</code></pre></div></div>
+<p>There’s a lot going on there, but main part is the loop that goes through all function pointers (probes) that were registered to the tracepoint and calls them one after the other.</p>
 
-<p>For return from interrupt to user-mode:</p>
+<p>Now, here’s some secrets. Since all ftrace events are tracepoints under the hood, you can piggy back onto interesting events in your kernel with your own probes. This allows you to write interesting tracers. Infact this is precisely how blktrace works, and also is how SystemTap hooks into ftrace events.
+<a href="https://github.com/joelagnel/joel-snips/blob/master/k-patches/cpuhists.diff">Checkout a module I wrote</a> that hooks onto <code class="language-plaintext highlighter-rouge">sched_switch</code> to build some histograms. The code there is still buggy but if you mess with it and improve it please share your work.</p>
 
-<p>If the tick interrupt happened user-mode code was running, then in somewhere in the interrupt exit path for x86, this call chain calls schedule <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_user</code> -&gt; <code class="language-plaintext highlighter-rouge">prepare_exit_to_usermode</code>. Here the need_reched flag is checked, and if true <code class="language-plaintext highlighter-rouge">schedule()</code> is called.</p>
+<p>Now that we know a good amount about tracepoints, ftrace events are easy.</p>
 
-<p>For return from interrupt to kernel mode, things are a bit different (skip this para if you think it’ll confuse you).</p>
+<p>An ftrace event being based on tracepoints, makes full use of it but it has to do more. Ofcourse, it has to write events out to the ring buffer.
+When you enable an ftrace event using debug-fs, at that instant the ftrace events framework registers an “event probe” function at the tracepoint that represents the event. How? Using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code> just as we discussed.</p>
 
-<p>This feature requires kernel preemption to be enabled. The call chain doing the preemption is: <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_kernel</code> -&gt; <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> (see <code class="language-plaintext highlighter-rouge">arch/x86/entry/entry_64.S</code>) which calls <code class="language-plaintext highlighter-rouge">schedule</code>.
-Note that, for return to kernel mode, I see that <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> calls <code class="language-plaintext highlighter-rouge">schedule</code> anyway whether need_resched flag is set or not, this is probably Ok but I am wondering if need_resched should be checked here before <code class="language-plaintext highlighter-rouge">schedule</code> is called. Perhaps it would be an optimiziation to avoid unecessarily calling <code class="language-plaintext highlighter-rouge">schedule</code>. One reason for not doing so would be, say any other interrupt other than timer tick is returning to the interrupted kernel space, then in these cases for example - if the timer tick didn’t get a chance to run (because all other local interrupts are disabled in Linux until an interrupt finishes, in this case our non-timer interrupt), then we’d want the exit path of the non-timer interrupt to behave just like the exit path of the timer tick interrupt would behave, whether need_resched is set or not.</p>
+<p>The code for this is in the file <code class="language-plaintext highlighter-rouge">kernel/trace/trace_events.c</code> in function <code class="language-plaintext highlighter-rouge">trace_event_reg</code>.</p>
 
-<h2 id="critical-sections-in-kernel-code-where-preemption-is-off">Critical sections in kernel code where preemption is off</h2>
-<p>One nice example of a code path where preemption is off is the <code class="language-plaintext highlighter-rouge">mutex_lock</code> path in the kernel. In the kernel, there is an optimization where if a mutex is already locked and not available, but if the lock owner (the task currently holding the lock) is running on another CPU, then the mutex temporarily becomes a spinlock (which means it will spin until it can get the lock) instead of behaving like a mutex (which sleeps until the lock is available). The pseudo code looks like this:</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mutex_lock() {
-  disable_preempt();
-  if (lock can't be acquired and the lock holding task is currently running) {
-	while (lock_owner_running &amp;&amp; !need_resched()) {
-		cpu_relax();
-	}
-  }
-  enable_preempt();
-  acquire_lock_or_sleep();
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int trace_event_reg(struct trace_event_call *call,
+                    enum trace_reg type, void *data)
+{
+        struct trace_event_file *file = data;
+
+        WARN_ON(!(call-&gt;flags &amp; TRACE_EVENT_FL_TRACEPOINT));
+        switch (type) {
+        case TRACE_REG_REGISTER:
+                return tracepoint_probe_register(call-&gt;tp,
+                                                 call-&gt;class-&gt;probe,
+                                                 file);
+...
+</code></pre></div></div>
+<p>The probe function <code class="language-plaintext highlighter-rouge">call-&gt;class-&gt;probe</code> for trace events is defined in the file <code class="language-plaintext highlighter-rouge">include/trace/trace_events.h</code> and does the job of writing to the ring buffer. In a nutshell, the code gets a handle into the ring buffer, does assignment of the values to the entry structure and writes it out. There is some magic going on here to accomodate arbitrary number of arguments but I am yet to figure that out.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static notrace void                                                     \
+trace_event_raw_event_##call(void *__data, proto)                       \
+{                                                                       \
+        struct trace_event_file *trace_file = __data;                   \
+        struct trace_event_data_offsets_##call __maybe_unused __data_offsets;\
+        struct trace_event_buffer fbuffer;                              \
+        struct trace_event_raw_##call *entry;                           \
+        int __data_size;                                                \
+                                                                        \
+        if (trace_trigger_soft_disabled(trace_file))                    \
+                return;                                                 \
+                                                                        \
+        __data_size = trace_event_get_offsets_##call(&amp;__data_offsets, args); \
+                                                                        \
+        entry = trace_event_buffer_reserve(&amp;fbuffer, trace_file,        \
+                                 sizeof(*entry) + __data_size);         \
+                                                                        \
+        if (!entry)                                                     \
+                return;                                                 \
+                                                                        \
+        tstruct                                                         \
+                                                                        \
+        { assign; }                                                     \
+                                                                        \
+        trace_event_buffer_commit(&amp;fbuffer);                            \
 }
 </code></pre></div></div>
-
-<p>The lock path does exactly what I described. <code class="language-plaintext highlighter-rouge">cpu_relax()</code> is arch specific which is called when the CPU has to do nothing but wait. It gives hints to the CPU that it can put itself into an idle state or use its resources for someone else. For x86, it involves calling the <a href="https://en.wikipedia.org/wiki/HLT">halt instruction</a>.</p>
-
-<p>What I noticed is the Ftrace latency tracer complained about a long delay in the preempt disabled path of mutex_lock for one of my tests, and I made some <a href="http://www.spinics.net/lists/linux-rt-users/msg15022.html">noise</a> about it on the mailing list. Disabling preemption for long periods is generally a bad thing to do because during this duration, no other task can be scheduled on the CPU. However, Steven <a href="http://www.spinics.net/lists/linux-rt-users/msg15025.html">pointed out that</a> for this particular case, since we’re checking for need_resched() and breaking out of the loop, we should be Ok. What would happen is, the scheduling timer interrupt (which calls <code class="language-plaintext highlighter-rouge">scheduler_tick()</code> I mentioned earlier) comes in and checks if higher priority tasks need CPU, and if they do, it sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Once the timer interrupt returns to our tightly spinning loop in mutex_lock, we would break out of the loop having noticed <code class="language-plaintext highlighter-rouge">need_resched()</code> and, re-enable preemption as shown in the code above. Thus the long duration of preemption doesn’t turn out to be a problem as long tasks that need CPU are prioritized correctly. <code class="language-plaintext highlighter-rouge">need_resched()</code> achieved this fairness.</p>
-
-<p>Next time you see <code class="language-plaintext highlighter-rouge">if (need_resched())</code> in kernel code, you’ll have a better idea why its there :). Let me know your comments if any.</p>
-
+<p>Let me know any comments you have or any other ftrace event behavior you’d like explained.</p>
 </div>
   
   
@@ -661,6 +716,10 @@ Note that, for return to kernel mode, I see that <code class="language-plaintext
   
     
       <a href="/page24">24</a>
+    
+  
+    
+      <a href="/page25">25</a>
     
   
   -->
