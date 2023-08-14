@@ -31,6 +31,15 @@ popd
 
 rm -rf $spath/tmp-ssh-files/
 
+echo -n "Do you want to SKIP installing YCM for completion? Takes several mins. (Y/n): "
+read answer
+if [[ "$answer" == [Yy]* ]]; then
+    YCM="--skip-ycm"
+else
+    YCM=""
+fi
+
+
 mkdir -p $HOME/repo/
 if [ -d $HOME/repo/joel-snips ]; then
 	rm -rf $HOME/repo/joel-snips.bak
@@ -40,7 +49,7 @@ fi
 pushd $HOME/repo/
 git clone git@github.com:joelagnel/joel-snips.git
 pushd joel-snips
-sudo ./rcfiles/setuprc $password
+sudo ./rcfiles/setuprc $password "$YCM"
 
 popd
 popd
