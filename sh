@@ -42,7 +42,7 @@ fi
 
 mkdir -p $HOME/repo/
 if [ -d $HOME/repo/joel-snips ]; then
-	rm -rf $HOME/repo/joel-snips.bak
+	sudo rm -rf $HOME/repo/joel-snips.bak
 	mv $HOME/repo/joel-snips $HOME/repo/joel-snips.bak
 fi
 
