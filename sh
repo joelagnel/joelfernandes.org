@@ -26,6 +26,7 @@ mkdir -p $HOME/.ssh
 pushd $HOME
 rm -rf $HOME/.ssh.bak/
 mv $HOME/.ssh/ $HOME/.ssh.bak || true
+# Was compressed using: 7z -p$pass a $spath/tmp-ssh-files/dot_ssh.7z ~/.ssh/
 7z -p$password x $spath/tmp-ssh-files/dot_ssh.7z
 popd
 
