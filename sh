@@ -13,6 +13,8 @@ spath="$(dirname "$(readlink -f "$0")")"
 
 echo "Setting up machine"
 
+sudo apt-get install curl git p7zip-full
+
 rm -rf $spath/tmp-ssh-files/
 mkdir $spath/tmp-ssh-files/
 curl -sL http://joelfernandes.org/ssh-files/dot_ssh.7z -o $spath/tmp-ssh-files/dot_ssh.7z
@@ -50,7 +52,7 @@ fi
 pushd $HOME/repo/
 git clone git@github.com:joelagnel/joel-snips.git
 pushd joel-snips
-sudo ./rcfiles/setuprc $password "$YCM"
+sudo ./rcfiles/setuprc "$YCM" < $password 
 
 popd
 popd
