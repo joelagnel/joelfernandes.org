@@ -127,7 +127,7 @@ Apr 25, 2014
 
 
 
-<time datetime="2014-04-25T13:29:00+00:00" pubdate data-updated="true">Apr 25, 2014</time></p>
+<time datetime="2014-04-25T13:29:00-04:00" pubdate data-updated="true">Apr 25, 2014</time></p>
   </header>
   
   #### My Presentations
@@ -191,7 +191,7 @@ Misc
 
 
 
-<time datetime="2014-04-25T13:29:00+00:00" pubdate data-updated="true">Apr 25, 2014</time>
+<time datetime="2014-04-25T13:29:00-04:00" pubdate data-updated="true">Apr 25, 2014</time>
         
       </p>
       
@@ -227,7 +227,7 @@ Misc
     </div>
   </div>
   <footer role="contentinfo"><p>
-  Copyright &copy; 2023 - Joel Fernandes -
+  Copyright &copy; 2025 - Joel Fernandes -
   <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
 </p>
 
