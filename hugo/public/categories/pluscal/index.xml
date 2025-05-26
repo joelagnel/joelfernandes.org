@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Pluscal on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/pluscal/</link>
+    <description>Recent content in Pluscal on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/categories/pluscal/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Modeling (lack of) store ordering using PlusCal - and a wishlist</title>
+      <link>http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/</guid>
+      <description>The Message Passing pattern (MP pattern) is shown in the snippet below (borrowed from LKMM docs). Here, P0 and P1 are 2 CPUs executing some code. P0 stores a message in buf and then signals to consumers like P1 that the message is available &amp;ndash; by doing a store to flag. P1 reads flag and if it is set, knows that some data is available in buf and goes ahead and reads it.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Rcu, Synchronization on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/rcu-synchronization/</link>
+    <description>Recent content in Rcu, Synchronization on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/categories/rcu-synchronization/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>GUS (Global Unbounded Sequences)</title>
+      <link>http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/</guid>
+      <description>GUS is a memory reclaim algorithm used in FreeBSD, similar to RCU. It is borrows concepts from Epoch and Parsec. A video of a presentation describing the integration of GUS with UMA (FreeBSD&amp;rsquo;s slab implementation) is here: https://www.youtube.com/watch?v=ZXUIFj4nRjk&#xA;The best description of GUS is in the FreeBSD code itself. It is based on the concept of global write clock, with readers catching up to writers.&#xA;Effectively, I see GUS as an implementation of light traveling from distant stars.</description>
+    </item>
+  </channel>
+</rss>

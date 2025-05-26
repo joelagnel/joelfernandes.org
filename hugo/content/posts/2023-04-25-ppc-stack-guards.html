@@ -1,0 +1,394 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>PowerPC stack guard false positives in Linux kernel - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      PowerPC stack guard false positives in Linux kernel
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+
+        
+           | Comments
+        
+...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/hugo/content/posts/2023-04-25-ppc-stack-guards.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">PowerPC stack guard false positives in Linux kernel</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Recently, the RCU mailing list
+<a href="https://lore.kernel.org/rcu/CAABZP2xVCQhizytn4H9Co7OU3UCSb_qNJaOszOawUFpeo=qpWQ@mail.gmail.com/T/#t">received</a>
+a report about an SRCU function failing stack guard checks.</p>
+
+<p>Stack guard canaries are a security mechanism used to detect stack buffer
+overflows. This mechanism works by placing a random value, called a canary,
+between the local variables and the return address on the stack. If a buffer
+overflow occurs, the canary value will be overwritten and the stack guard check
+will fail, indicating that the program is being attacked. False positives can
+occur if the canary value is overwritten by a legitimate write operation, such
+as when a large structure is copied onto the stack.</p>
+
+<p>Closer inspection of the function (<code class="language-plaintext highlighter-rouge">srcu_gp_start_if_needed</code>) did not reveal
+any buffers that may be overflowed.</p>
+
+<p>After discussions with a number of kernel developers, it is clear what the
+issue is. Firstly, credit to Boqun Feng for looking through disassembly and
+pointing things out which led to the whole email chain and discovery of the
+issue.</p>
+
+<p>A significant hint came from Christophe who is the kernel author of PPC’s stack
+protection, he mentioned:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Each task has its own canary, stored in task struct :
+
+kernel/fork.c:1012:
+tsk-&gt;stack_canary = get_random_canary();
+
+On PPC32 we have register 'r2' that points to task struct at all time, 
+so GCC is instructed to find canary at an offset from r2.
+But on PPC64 we have no such register.
+
+Instead we have r13 that points to the PACA struct which is a per-cpu
+structure, and we have a pointer to 'current' task struct in the PACA struct.
+So in order to be able to have the canary as an offset of a fixed register as
+expected by GCC, we copy the task canary into the cpu's PACA struct during
+_switch():
+
+	addi	r6,r4,-THREAD	/* Convert THREAD to 'current' */
+	std	r6,PACACURRENT(r13)	/* Set new 'current' */
+  #if defined(CONFIG_STACKPROTECTOR)
+	  ld	r6, TASK_CANARY(r6)
+	  std	r6, PACA_CANARY(r13)
+  #endif
+</code></pre></div></div>
+
+<hr />
+
+<p>In 64-bit PPC, the TLS (Thread Local Storage) cannot be pointed to by register <code class="language-plaintext highlighter-rouge">r2</code> as it is used to store the TOC (Table of Contents) pointer instead, which is used for accessing global and static data. Therefore, the kernel saves the currently running <code class="language-plaintext highlighter-rouge">task_struct</code> in the per-CPU area pointed to by <code class="language-plaintext highlighter-rouge">r13</code> instead. This is known as the Processor Access Control Area (PACA). The PACA is a per-CPU memory area that stores information about the CPU’s context. One of the users of this data structure is to save the current instruction location prior to interrupt processing.</p>
+
+<p>On PPC64, each task has its own stack canary, stored in the task struct. However, unlike PPC32, there is no fixed register that points to the currently running <code class="language-plaintext highlighter-rouge">task_struct</code> at all times. Instead, the per-CPU PACA struct contains a pointer to the current <code class="language-plaintext highlighter-rouge">task_struct</code>. Therefore, in order to be able to have the canary as an offset of a fixed register as expected by GCC, the task canary is copied into the PACA struct during <code class="language-plaintext highlighter-rouge">_switch()</code>. False positives can occur if GCC keeps an old value of the per-CPU struct pointer, which then gets the canary from the wrong CPU struct, leading to a different task.</p>
+
+<p>This issue with storing canaries of the currently running task is related to the issue of not being able to use <code class="language-plaintext highlighter-rouge">r2</code> to point to the TLS on 64-bit PPC. The kernel must use the per-CPU area to store the currently running <code class="language-plaintext highlighter-rouge">task_struct</code>, which leads to the need to copy the task canary into the PACA struct during <code class="language-plaintext highlighter-rouge">_switch()</code>. The compiler optimization that causes the register <code class="language-plaintext highlighter-rouge">r13</code> to be cached into <code class="language-plaintext highlighter-rouge">r10</code> can then lead to false positives if GCC keeps an old value of the per-CPU struct pointer.</p>
+
+<h3 id="so-what-the-heck-is-paca">So what the heck is PACA?</h3>
+
+<p>This <code class="language-plaintext highlighter-rouge">r13</code> register points to a structure in the kernel called PACA which is a per-CPU memory area storing information about the CPU’s context.</p>
+
+<p>Per the PPC64 <a href="https://www.kernel.org/doc/ols/2001/ppc64.pdf">paper</a>:</p>
+
+<p>This structure contains information unique to each processor; therefore an array of PACAs are created, one for each logical processor. One of the users of this data structure to save the current instruction location prior to interrupt processing.</p>
+
+<h3 id="so-whats-up-with-the-canary">So what’s up with the Canary?</h3>
+
+<p>As explained earlier in the article and as Christpophe answered this for me:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>PPC64 uses a per-task canary. But unlike PPC32, PPC64 doesn't have a fixed 
+register pointing to 'current' at all time so the canary is copied into 
+a per-cpu struct (PACA) during _switch().
+
+If GCC keeps an old value of the per-cpu struct pointer, it then gets 
+the canary from the wrong CPU struct so from a different task.
+</code></pre></div></div>
+
+<h3 id="compiler-optimizations">Compiler optimizations</h3>
+
+<p>What Christophe refers to in the last line is exactly a Compilter optimization. It turns out that from the reporter’s email, the <code class="language-plaintext highlighter-rouge">r10</code> register was used as a base pointer to the per-CPU PACA area. This means the compiler must have cached <code class="language-plaintext highlighter-rouge">r13</code> into <code class="language-plaintext highlighter-rouge">r10</code>, perhaps because it wanted to use <code class="language-plaintext highlighter-rouge">r13</code> for something else. Boqun Feng provided the following snippet which Zhouyi verified fixes the issue:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>diff --git a/kernel/rcu/srcutree.c b/kernel/rcu/srcutree.c
+        index ab4ee58af84b..f5ae3be3d04d 100644
+        --- a/kernel/rcu/srcutree.c
+        +++ b/kernel/rcu/srcutree.c
+        @@ -747,6 +747,7 @@ void __srcu_read_unlock_nmisafe(struct srcu_struct *ssp, int idx)
+
+                smp_mb__before_atomic(); /* C */  /* Avoid leaking the critical section. */
+                atomic_long_inc(&amp;sdp-&gt;srcu_unlock_count[idx]);
+        +       asm volatile("" : : : "r13", "memory");
+         }
+         EXPORT_SYMBOL_GPL(__srcu_read_unlock_nmisafe);
+</code></pre></div></div>
+
+<p>In this snippet, <code class="language-plaintext highlighter-rouge">r13</code> is added to an extended inline asm statement, which instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, which hopefully prevents the compiler from caching its value before exiting the function. In fact this is exactly what prevents the issue.</p>
+
+<p>Boqun also included a <code class="language-plaintext highlighter-rouge">memory</code> clobber which is equivalent to <code class="language-plaintext highlighter-rouge">barrier()</code> and is additional step which hopefully ensures memory access compiler optimizations don’t span the inline assembly statement.</p>
+
+<h3 id="finally-the-issue-is-clear">Finally the issue is clear</h3>
+
+<p>Later in the email chain, I mentioned the series of events as outlined by Christophe and Boqun which could lead to the issue:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>The issue requires the following ingredients:
+1. Task A is running on CPU 1, and the task's canary is copied into
+the CPU1's per-cpu area pointed to by r13.
+2. r13 is now cached into r10 in the offending function due to the compiler.
+3. Task A running on CPU 1 now gets preempted right in the middle of
+the offending SRCU function and gets migrated to CPU 2.
+4.  CPU 2's per-cpu canary is updated to that of task A since task A
+is the current task now.
+5. Task B now runs on CPU 1 and the per-cpu canary on CPU 1 is now that of B.
+6. Task A exits the function, but stack checking code reads r10 which
+contains CPU 1's canary which is that of task B!
+7. Boom.
+
+So the issue is precisely in #2.  The issue is in the compiler that it
+does not treat r13 as volatile as Boqun had initially mentioned.
+</code></pre></div></div>
+<h2 id="how-do-we-fix-it">How do we fix it?</h2>
+
+<p>My / our current take on it is it appears to be a compiler bug where the register <code class="language-plaintext highlighter-rouge">r13</code> is not considered volatile (which works for user land but not for the kernel). Seher Boessenkool who has worked on similar PPC64 issues before is on the email chain and can hopefully fix it in the compiler but lets see where it goes.</p>
+
+<p>As a quick hack to fix this (as shown by Boqun above),<code class="language-plaintext highlighter-rouge">r13</code> can be added to an extended inline asm statement, which instructs the compiler that <code class="language-plaintext highlighter-rouge">r13</code> may be clobbered by the asm statement, hopefully preventing the compiler from caching its value before exiting the function.</p>
+
+<h2 id="can-we-fix-it-in-the-kernel">Can we fix it in the kernel?</h2>
+
+<p>According to Michael Ellerman, a possible solution would be to keep current in a register (GPR) on 64-bit, but we’d need to do that in addition to the register reserved for the PACA, so that would consume another GPR which we’d need to think hard about.</p>
+
+<p>There’s another reason to have the canary in the PACA, according to him: The PACA is always accessible, even when the MMU is off (because it is in a register), whereas <code class="language-plaintext highlighter-rouge">current</code> isn’t (in some situations).</p>
+
+<p>Even though, we prefer not to use stack protector in code that runs with the MMU off — if the canary wasn’t in the PACA to begin with, then we’d have a hard requirement to not use stack protector in code paths where the MMU is off.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+
+      <!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+  Added on 1/29/2023
+-->
+<div class="post-categories">
+  
+  
+  <a href="/categories/#kernel">kernel</a>
+  &nbsp;
+  
+  <a href="/categories/#stack">stack</a>
+  
+  
+</div>
+
+<!--
+Commented out on 1/29/2023:
+
+
+
+<span class="categories">
+  
+    kernelstack
+  
+  </span>
+
+ -->
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2025 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/hugo/content/posts/2023-04-25-ppc-stack-guards.html';
+        var disqus_url = 'http://www.linuxinternals.org/hugo/content/posts/2023-04-25-ppc-stack-guards.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

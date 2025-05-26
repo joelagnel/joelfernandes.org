@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Tracing on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/tracing/</link>
+    <description>Recent content in Tracing on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 10 Feb 2018 23:22:39 -0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/tracing/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>USDT for reliable Userspace event tracing</title>
+      <link>http://localhost:1313/blog/2018/02/10/usdt-for-reliable-userspace-event-tracing/</link>
+      <pubDate>Sat, 10 Feb 2018 23:22:39 -0800</pubDate>
+      <guid>http://localhost:1313/blog/2018/02/10/usdt-for-reliable-userspace-event-tracing/</guid>
+      <description>Userspace program when compiled to native can place tracepoints in them using a USDT (User Statically Defined Tracing), the details of the tracepoints (such as address and arguments) are placed as a note in the ELF binary for other tools to interpret. This at first seems much better than using Uprobes directly on userspace functions, since the latter not only needs symbol information from the binary but is also at the mercy of compiler optimizations and function inlining.</description>
+    </item>
+    <item>
+      <title>ARMv8: flamegraph and NMI support</title>
+      <link>http://localhost:1313/blog/2016/12/31/armv8-flamegraph-and-nmi-support/</link>
+      <pubDate>Sat, 31 Dec 2016 22:29:26 -0700</pubDate>
+      <guid>http://localhost:1313/blog/2016/12/31/armv8-flamegraph-and-nmi-support/</guid>
+      <description>Non-maskable interrupts (NMI) is a really useful feature for debugging, that hardware can provide. Unfortunately ARM doesn&amp;rsquo;t provide an out-of-the-box NMI interrupt mechanism. This post shows a flamegraph issue due to missing NMI support, and the upstream work being done to simulate NMI in ARMv8.&#xA;Some great Linux kernel features that rely on NMI to work properly are:&#xA;Backtrace from all CPUs: A number of places in the kernel rely on dumping the stacks of all CPUs at the time of a failure to determine what was going on.</description>
+    </item>
+    <item>
+      <title>Ftrace events mechanism</title>
+      <link>http://localhost:1313/blog/2016/06/18/ftrace-events-mechanism/</link>
+      <pubDate>Sat, 18 Jun 2016 22:29:26 -0700</pubDate>
+      <guid>http://localhost:1313/blog/2016/06/18/ftrace-events-mechanism/</guid>
+      <description>Ftrace events are a mechanism that allows different pieces of code in the kernel to &amp;lsquo;broadcast&amp;rsquo; events of interest. Such as a scheduler context-switch sched_switch for example. In the scheduler core&amp;rsquo;s __schedule function, you&amp;rsquo;ll see something like: trace_sched_switch(preempt, prev, next); This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).</description>
+    </item>
+  </channel>
+</rss>
