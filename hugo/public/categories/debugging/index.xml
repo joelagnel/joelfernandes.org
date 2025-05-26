@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Debugging on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/debugging/</link>
+    <description>Recent content in Debugging on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <atom:link href="http://localhost:1313/categories/debugging/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SELinux Debugging on ChromeOS</title>
+      <link>http://localhost:1313/blog/1/01/01/selinux-debugging-on-chromeos/</link>
+      <pubDate>Mon, 01 Jan 0001 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blog/1/01/01/selinux-debugging-on-chromeos/</guid>
+      <description>Not being an SELinux expert but having to deal with it from time-to-time, I find it may be productive to write some debugging notes. So this post is about an issue that I fixed just this morning.&#xA;Issue: Runtime labeled pseudo-files are not getting labelled On ChromeOS, there are Android-specific policies which are combined with the ChromeOS ones. For someone who tries to stay away from SELinux, this is pretty much voodoo.</description>
+    </item>
+  </channel>
+</rss>

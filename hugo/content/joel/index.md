@@ -19,8 +19,8 @@ Follow me on [Twitter](https://twitter.com/joel_linux), [Google+](https://plus.g
 Here's a list the full list of all articles I ever wrote:
 {{ range site.RegularPages }}
  <li><span>{{ .Date.Format "02 Jan 2006" }}</span> &nbsp; <a href="{{ .Permalink }}">{{ .Title }}</a> 
- {{ if .Params.categories }}
- [{{ range $index, $category := .Params.categories }}<a href="{{ "/categories/" | relURL }}#{{ $category | urlize }}">{{ $category }}</a>{{ if ne $index (sub (len $.Params.categories) 1) }}, {{ end }}{{ end }}]
+ {{ with .Params.categories }}
+ [{{ if reflect.IsSlice . }}{{ range $index, $category := . }}<a href="{{ "/categories/" | relURL }}#{{ $category | urlize }}">{{ $category }}</a>{{ if ne $index (sub (len .) 1) }}, {{ end }}{{ end }}{{ else }}{{ $categories := split . ", " }}{{ range $index, $category := $categories }}<a href="{{ "/categories/" | relURL }}#{{ $category | urlize }}">{{ $category }}</a>{{ if ne $index (sub (len $categories) 1) }}, {{ end }}{{ end }}{{ end }}]
  {{ end }}
  </li>
 {{ end }}
