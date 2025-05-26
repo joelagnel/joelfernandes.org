@@ -1,0 +1,36 @@
+{{ define "main" }}
+<div>
+<article class="hentry" role="article">
+  {{ partial "article.html" . }}
+  <footer>
+    <p class="meta">
+      {{ partial "post/author.html" . }}
+      {{ partial "post/date.html" . }}
+      {{ partial "post/categories.html" . }}
+    </p>
+    {{ if ne .Params.sharing false }}
+      {{ partial "post/sharing.html" . }}
+    {{ end }}
+    <p class="meta">
+      {{ with .PrevInSection }}
+        <a class="basic-alignment left" href="{{ .Permalink }}" title="Previous Post: {{ .Title }}">&laquo; {{ .Title }}</a>
+      {{ end }}
+      {{ with .NextInSection }}
+        <a class="basic-alignment right" href="{{ .Permalink }}" title="Next Post: {{ .Title }}">{{ .Title }} &raquo;</a>
+      {{ end }}
+    </p>
+  </footer>
+</article>
+{{ if and site.Params.disqus_short_name (ne .Params.comments false) }}
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite">{{ partial "post/disqus_thread.html" . }}</div>
+  </section>
+{{ end }}
+</div>
+{{ if ne .Params.sidebar false }}
+<aside class="sidebar">
+  {{ partial "sidebar.html" . }}
+</aside>
+{{ end }}
+{{ end }}

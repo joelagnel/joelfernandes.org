@@ -1,0 +1,6 @@
+<div class="post-categories">
+  {{ range $index, $category := .Params.categories }}
+  <a href="{{ "/categories/" | relURL }}#{{ $category | urlize }}">{{ $category }}</a>
+  {{ if ne $index (sub (len $.Params.categories) 1) }}&nbsp;{{ end }}
+  {{ end }}
+</div>

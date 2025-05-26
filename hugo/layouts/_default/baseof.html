@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>{{- if .Title }}{{ .Title | title }} - {{ end }}{{ site.Title }}</title>
+  <meta name="author" content="{{ site.Params.author }}">
+
+  {{ $description := .Description | default .Summary | default site.Params.description }}
+  <meta name="description" content="{{ $description | plainify | truncate 150 }}">
+  {{- if .Keywords }}<meta name="keywords" content="{{ delimit .Keywords ", " }}">{{ end }}
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="canonical" href="{{ .Permalink }}">
+  <link href="{{ "favicon.png" | relURL }}" rel="icon">
+  <link href="{{ "stylesheets/screen.css" | relURL }}" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="{{ "javascripts/modernizr-2.0.js" | relURL }}"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="{{ "javascripts/libs/jquery.min.js" | relURL }}"%3E%3C/script%3E'))</script>
+  <script src="{{ "javascripts/octopress.js" | relURL }}" type="text/javascript"></script>
+  {{ partial "head.html" . }}
+  {{ partial "google_analytics.html" . }}
+</head>
+<body {{ if .Params.body_id }} id="{{ .Params.body_id }}" {{ end }} {{ if eq .Params.sidebar false }} class="no-sidebar" {{ end }} {{ if or (eq .Params.sidebar "collapse") (eq site.Params.sidebar "collapse") }} class="collapse-sidebar sidebar-footer" {{ end }}>
+  <header role="banner">{{ partial "header.html" . }}</header>
+<!--
+  <nav role="navigation">{{ partial "navigation.html" . }}</nav>
+-->
+  <div id="main">
+    <div id="content">
+      {{ block "main" . }}{{ end }}
+    </div>
+  </div>
+  <footer role="contentinfo">{{ partial "footer.html" . }}</footer>
+  {{ partial "after_footer.html" . }}
+</body>
+</html>

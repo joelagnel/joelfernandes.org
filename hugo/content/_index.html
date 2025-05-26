@@ -1,0 +1,59 @@
+---
+title: "JoelFernandes.org"
+---
+<div class="blog-index">
+
+<article>
+Hello! I'm Joel and this my personal website built with Hugo! I currently
+work at Google. My interests are scheduler, RCU, tracing, synchronization,
+memory models and other kernel internals. I also love contributing to the
+upstream Linux kernel and other open source projects.
+
+Connect with me on [Twitter](https://twitter.com/joel_linux), and
+[LinkedIn](https://www.linkedin.com/in/joelagnel). Or, drop me an email at:
+joel _at_ joelfernandes _dot_ org
+
+Look for my name in the kernel git log to find my upstream kernel patches.
+Check out [my resume](/joel/joel-resume.pdf) for full details of my work
+experience. I also actively present at conferences, see a list of my past
+[talks, presentations and publications](/resources).
+
+Full list of all blog posts on this site:
+{{ range site.RegularPages }}
+<font face="monospace">
+ <li>
+   <span>{{ .Date.Format "02 Jan 2006" }}</span> &nbsp; <a href="{{ .Permalink }}">{{ .Title }}</a> 
+ </li>
+</font>
+{{ end }}
+</article>
+
+
+ <!-- This loops through the paginated posts -->
+
+{{ range (.Paginate site.RegularPages).Pages }}
+    <article>
+Most Recent Post:
+      {{ partial "article.html" . }}
+    </article>
+{{ end }}
+
+{{ if gt .Paginator.TotalPages 1 }}
+<div class="pagination">
+  {{ if .Paginator.HasPrev }}
+    <a href="{{ .Paginator.Prev.URL }}">&laquo; Previous Post</a> &nbsp; &nbsp; &nbsp;
+  {{ end }}
+
+  {{ if .Paginator.HasNext }}
+    <a href="{{ .Paginator.Next.URL }}">Next Post&raquo;</a>
+  {{ end }}
+</div>
+{{ end }}
+
+<!-- div blog-index -->
+</div>
+
+
+<aside class="sidebar">
+  {{ partial "sidebar.html" . }}
+</aside>

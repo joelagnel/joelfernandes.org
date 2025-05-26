@@ -1,0 +1,15 @@
+{{ define "main" }}
+<article role="article">
+  {{ .Content }}
+  {{ range (.Paginate .Pages).Pages }}
+    {{ partial "archive_post.html" . }}
+  {{ end }}
+  {{ partial "pagination.html" . }}
+</article>
+
+{{ if ne .Params.sidebar false }}
+<aside class="sidebar">
+  {{ partial "sidebar.html" . }}
+</aside>
+{{ end }}
+{{ end }}

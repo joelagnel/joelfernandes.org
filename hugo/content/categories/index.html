@@ -1,0 +1,23 @@
+---
+title: "Categories"
+type: page
+---
+<!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+-->
+<div id="archives">
+{{ range $name, $taxonomy := site.Taxonomies.categories }}
+  <div class="archive-group">
+    <div id="#{{ $name | urlize }}"></div>
+    <p></p>
+
+    <h3 class="category-head">{{ $name }}</h3>
+    <a name="{{ $name | urlize }}"></a>
+    {{ range $taxonomy.Pages }}
+    <article class="archive-item">
+      <h4><a href="{{ .Permalink }}">{{ .Title }}</a></h4>
+    </article>
+    {{ end }}
+  </div>
+{{ end }}
+</div>

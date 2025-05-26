@@ -1,0 +1,35 @@
+baseURL = "http://www.linuxinternals.org"
+languageCode = "en-us"
+title = "JoelFernandes.org"
+subtitle = "Age is of no importance unless you're a cheese -- Billie Burke"
+
+[author]
+name = "Joel Fernandes"
+
+[params]
+author = "Joel Fernandes"
+github_user = "joelagnel"
+description = ""
+disqus_short_name = "linuxinternals1"
+disqus_show_comment_count = true
+
+[pagination]
+pagerSize = 1
+
+[markup]
+[markup.goldmark]
+[markup.goldmark.renderer]
+unsafe = true
+
+[permalinks]
+posts = "/blog/:year/:month/:day/:slug/"
+
+[frontmatter]
+date = ["date", "publishDate", "lastmod"]
+lastmod = [":git", "lastmod", "date", "publishDate"]
+publishDate = ["publishDate", "date"]
+expiryDate = ["expiryDate"]
+
+[taxonomies]
+category = "categories"
+tag = "tags"

@@ -1,0 +1,19 @@
+---
+title: "List of articles"
+sidebar: false
+footer: false
+type: page
+---
+<div id="blog-archives">
+{{ $currentYear := "" }}
+{{ range site.RegularPages.ByDate.Reverse }}
+{{ $year := .Date.Format "2006" }}
+{{ if ne $currentYear $year }}
+  {{ $currentYear = $year }}
+  <h2>{{ $year }}</h2>
+{{ end }}
+<article>
+  {{ partial "archive_post.html" . }}
+</article>
+{{ end }}
+</div>

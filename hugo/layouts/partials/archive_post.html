@@ -1,0 +1,11 @@
+<h1><a href="{{ .Permalink }}">{{ .Title }}</a></h1>
+<time datetime="{{ .Date.Format "2006-01-02T15:04:05Z07:00" }}" pubdate>{{ .Date.Format "<span class='month'>Jan</span> <span class='day'>2</span> <span class='year'>2006</span>" }}</time>
+{{ if .Params.categories }}
+<footer>
+  <span class="categories">posted in 
+  {{ range $index, $category := .Params.categories }}
+    <a href="{{ "/categories/" | relURL }}#{{ $category | urlize }}">{{ $category }}</a>{{ if ne $index (sub (len $.Params.categories) 1) }}, {{ end }}
+  {{ end }}
+  </span>
+</footer>
+{{ end }}
