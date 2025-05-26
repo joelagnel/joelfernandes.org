@@ -1,0 +1,376 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Ftrace events mechanism - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      Ftrace events mechanism
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+Jun 18, 2016
+        
+           | Comments
+        
+      
+    
+  
+
+...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/hugo/content/posts/2016-06-18-ftrace-events-mechanism.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Ftrace events mechanism</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2016-06-19T01:29:26-04:00" pubdate data-updated="true">Jun 18, 2016</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Ftrace events are a mechanism that allows different pieces of code in the kernel to ‘broadcast’ events of interest. Such as a scheduler context-switch <code class="language-plaintext highlighter-rouge">sched_switch</code> for example. In the scheduler core’s <code class="language-plaintext highlighter-rouge">__schedule</code> function, you’ll see something like: <code class="language-plaintext highlighter-rouge">trace_sched_switch(preempt, prev, next);</code>
+This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).</p>
+
+<p>Under the hood, these ftrace events are actually implemented using tracepoints. The terms events are tracepoints appear to be used interchangeably, but it appears one could use a trace point if desired without having to do anything with ftrace. Events on the other hand use ftrace.</p>
+
+<p>Let’s discuss a bit about how a tracepoint works. Tracepoints are hooks that are inserted into points of code of interest and call a certain function of your choice (also known as a function probe). Inorder for the tracepoint to do anything, you have to register a function using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code>. Multiple functions can be registered in a single hook. Once your tracepoint is hit, all functions registered to the tracepoint are executed. Also note that if no function is registered to the tracepoint, then the tracepoint is essentially a NOP with zero-overhead. Actually that’s a lie, there is a branch (and some space) overhead only although negligible.</p>
+
+<p>Here is the heart of the code that executes when a tracepoint is hit:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
+        extern struct tracepoint __tracepoint_##name;                   \
+        static inline void trace_##name(proto)                          \
+        {                                                               \
+                if (static_key_false(&amp;__tracepoint_##name.key))         \
+                        __DO_TRACE(&amp;__tracepoint_##name,                \
+                                TP_PROTO(data_proto),                   \
+                                TP_ARGS(data_args),                     \
+                                TP_CONDITION(cond),,);                  \
+                if (IS_ENABLED(CONFIG_LOCKDEP) &amp;&amp; (cond)) {             \
+                        rcu_read_lock_sched_notrace();                  \
+                        rcu_dereference_sched(__tracepoint_##name.funcs);\
+                        rcu_read_unlock_sched_notrace();                \
+                }                                                       \
+        }                                                   
+</code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">static_key_false</code> in the above code will evaluate to false if there’s no probe registered to the tracepoint.</p>
+
+<p>Digging further, <code class="language-plaintext highlighter-rouge">__DO_TRACE</code> does the following in <code class="language-plaintext highlighter-rouge">include/linux/tracepoint.h</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DO_TRACE(tp, proto, args, cond, prercu, postrcu)              \
+        do {                                                            \
+                struct tracepoint_func *it_func_ptr;                    \
+                void *it_func;                                          \
+                void *__data;                                           \
+                                                                        \
+                if (!(cond))                                            \
+                        return;                                         \
+                prercu;                                                 \
+                rcu_read_lock_sched_notrace();                          \
+                it_func_ptr = rcu_dereference_sched((tp)-&gt;funcs);       \
+                if (it_func_ptr) {                                      \
+                        do {                                            \
+                                it_func = (it_func_ptr)-&gt;func;          \
+                                __data = (it_func_ptr)-&gt;data;           \
+                                ((void(*)(proto))(it_func))(args);      \
+                        } while ((++it_func_ptr)-&gt;func);                \
+                }                                                       \
+                rcu_read_unlock_sched_notrace();                        \
+                postrcu;                                                \
+        } while (0)
+</code></pre></div></div>
+<p>There’s a lot going on there, but main part is the loop that goes through all function pointers (probes) that were registered to the tracepoint and calls them one after the other.</p>
+
+<p>Now, here’s some secrets. Since all ftrace events are tracepoints under the hood, you can piggy back onto interesting events in your kernel with your own probes. This allows you to write interesting tracers. Infact this is precisely how blktrace works, and also is how SystemTap hooks into ftrace events.
+<a href="https://github.com/joelagnel/joel-snips/blob/master/k-patches/cpuhists.diff">Checkout a module I wrote</a> that hooks onto <code class="language-plaintext highlighter-rouge">sched_switch</code> to build some histograms. The code there is still buggy but if you mess with it and improve it please share your work.</p>
+
+<p>Now that we know a good amount about tracepoints, ftrace events are easy.</p>
+
+<p>An ftrace event being based on tracepoints, makes full use of it but it has to do more. Ofcourse, it has to write events out to the ring buffer.
+When you enable an ftrace event using debug-fs, at that instant the ftrace events framework registers an “event probe” function at the tracepoint that represents the event. How? Using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code> just as we discussed.</p>
+
+<p>The code for this is in the file <code class="language-plaintext highlighter-rouge">kernel/trace/trace_events.c</code> in function <code class="language-plaintext highlighter-rouge">trace_event_reg</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int trace_event_reg(struct trace_event_call *call,
+                    enum trace_reg type, void *data)
+{
+        struct trace_event_file *file = data;
+
+        WARN_ON(!(call-&gt;flags &amp; TRACE_EVENT_FL_TRACEPOINT));
+        switch (type) {
+        case TRACE_REG_REGISTER:
+                return tracepoint_probe_register(call-&gt;tp,
+                                                 call-&gt;class-&gt;probe,
+                                                 file);
+...
+</code></pre></div></div>
+<p>The probe function <code class="language-plaintext highlighter-rouge">call-&gt;class-&gt;probe</code> for trace events is defined in the file <code class="language-plaintext highlighter-rouge">include/trace/trace_events.h</code> and does the job of writing to the ring buffer. In a nutshell, the code gets a handle into the ring buffer, does assignment of the values to the entry structure and writes it out. There is some magic going on here to accomodate arbitrary number of arguments but I am yet to figure that out.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static notrace void                                                     \
+trace_event_raw_event_##call(void *__data, proto)                       \
+{                                                                       \
+        struct trace_event_file *trace_file = __data;                   \
+        struct trace_event_data_offsets_##call __maybe_unused __data_offsets;\
+        struct trace_event_buffer fbuffer;                              \
+        struct trace_event_raw_##call *entry;                           \
+        int __data_size;                                                \
+                                                                        \
+        if (trace_trigger_soft_disabled(trace_file))                    \
+                return;                                                 \
+                                                                        \
+        __data_size = trace_event_get_offsets_##call(&amp;__data_offsets, args); \
+                                                                        \
+        entry = trace_event_buffer_reserve(&amp;fbuffer, trace_file,        \
+                                 sizeof(*entry) + __data_size);         \
+                                                                        \
+        if (!entry)                                                     \
+                return;                                                 \
+                                                                        \
+        tstruct                                                         \
+                                                                        \
+        { assign; }                                                     \
+                                                                        \
+        trace_event_buffer_commit(&amp;fbuffer);                            \
+}
+</code></pre></div></div>
+<p>Let me know any comments you have or any other ftrace event behavior you’d like explained.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2016-06-19T01:29:26-04:00" pubdate data-updated="true">Jun 18, 2016</time>
+      <!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+  Added on 1/29/2023
+-->
+<div class="post-categories">
+  
+  
+  <a href="/categories/#linux">linux</a>
+  &nbsp;
+  
+  <a href="/categories/#kernel">kernel</a>
+  &nbsp;
+  
+  <a href="/categories/#tracing">tracing</a>
+  
+  
+</div>
+
+<!--
+Commented out on 1/29/2023:
+
+
+
+<span class="categories">
+  
+    linuxkerneltracing
+  
+  </span>
+
+ -->
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2025 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/hugo/content/posts/2016-06-18-ftrace-events-mechanism.html';
+        var disqus_url = 'http://www.linuxinternals.org/hugo/content/posts/2016-06-18-ftrace-events-mechanism.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

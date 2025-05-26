@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Linuxinternals on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/linuxinternals/</link>
+    <description>Recent content in Linuxinternals on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 22 Dec 2018 20:28:24 -0500</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/linuxinternals/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Dumping User and Kernel stacks on Kernel events</title>
+      <link>http://localhost:1313/blog/2018/12/22/dumping-user-and-kernel-stacks-on-kernel-events/</link>
+      <pubDate>Sat, 22 Dec 2018 20:28:24 -0500</pubDate>
+      <guid>http://localhost:1313/blog/2018/12/22/dumping-user-and-kernel-stacks-on-kernel-events/</guid>
+      <description>Dumping the native kernel and userspace stack when a certain path in the kernel or userspace occurs, can be useful to understand which code paths triggered a certain behavior that you&amp;rsquo;re trying to debug, such as an error you found in the log. One such case is when you notice Selinux denial messages in logs but want to know which path triggered it.&#xA;In this article we will show you how to use kernel instrumentation and BCC to dump the both the user and kernel stack.</description>
+    </item>
+  </channel>
+</rss>

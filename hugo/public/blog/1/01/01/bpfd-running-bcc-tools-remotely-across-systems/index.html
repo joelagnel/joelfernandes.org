@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+
+
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8">
+  <title>BPFd- Running BCC Tools Remotely Across Systems - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="This article (with some edits) also appeared on LWN.
+Introduction BCC (BPF Compiler Collection) is a toolkit and a suite of kernel tracing tools that …">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="canonical" href="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="\/javascripts\/libs\/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  
+</head>
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ 
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources/">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div></header>
+
+  <div id="main">
+    <div id="content">
+      
+<div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">BPFd- Running BCC tools remotely across systems</h1>
+    
+    
+      <p class="meta">
+        
+        
+           | <a href="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/#disqus_thread"
+             data-disqus-identifier="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This article (with some edits) also <a href="https://lwn.net/Articles/744522/">appeared on LWN</a>.</p>
+<h2 id="introduction">Introduction</h2>
+<p><a href="https://github.com/iovisor/bcc/blob/master/README.md">BCC (BPF Compiler Collection)</a> is a toolkit and a suite of kernel
+tracing tools that allow systems engineers to efficiently and safely get a deep understanding into the inner workings of
+a Linux system. Because they can&rsquo;t crash the kernel, they are safer than kernel modules and can be run in production
+environments. <a href="http://www.brendangregg.com/ebpf.html">Brendan Gregg has written</a> nice tools and given talks showing the
+full power of eBPF based tools. Unfortunately, BCC has no support for a cross-development workflow. I define
+&ldquo;cross-development&rdquo; as a development workflow in which the development machine and the target machine running the
+developed code are different. Cross-development is very typical among Embedded System kernel developers who often
+develop on a powerful x86 host and then flash and test their code on SoCs (System on Chips) based on the ARM
+architecture. Not having a cross-development flow gives rise to several complications, lets go over them and discuss a
+solution called BPFd that cleverly addresses this issue.</p>
+<p>In the Android kernel team, we work mostly on ARM64 systems, since most Android devices are on this architecture. BCC
+tools support on ARM64 systems has stayed broken for years. One of the reasons for this difficulty is with ARM64 inline
+assembler statements. Unavoidably, kernel header includes in BCC tools result in inclusion of asm headers which in the
+case of ARM64 has the potential of spewing inline asm ARM64 instructions <a href="https://www.mail-archive.com/iovisor-dev@lists.iovisor.org/msg00299.html">causing major
+pains</a>  to LLVM&rsquo;s BPF backend. Recently this
+issue got fixed by BPF inline asm support (these
+<a href="https://github.com/llvm-mirror/llvm/commit/2865ab6996164e7854d55c9e21c065fad7c26569">LLVM</a> <a href="https://github.com/llvm-mirror/llvm/commit/a6b7d22c2e64f44e6c74ad7e5ce5670f5ae72da3">commits</a>) and <a href="(https://github.com/iovisor/bcc/issues/1202)">folks could finally run BCC
+tools on arm64</a>, but..</p>
+<p>In order for BCC tools to work at all, they need kernel sources. This is because most tools need to register callbacks
+on the ever-changing kernel API in order to get their data. Such callbacks are registered using the
+<a href="https://lwn.net/Articles/132196/">kprobe</a> infrastructure. When a BCC tool is run, BCC switches its current directory
+into the kernel source directory before compilation starts, and compiles the C program that embodies the BCC tool&rsquo;s
+logic. The C program is free to include kernel headers for <code>kprobes</code> to work and to use kernel data structures.</p>
+<p>Even if one were not to use <code>kprobes</code>, BCC also implicity adds a common <code>helpers.h</code> include directive  whenever an eBPF
+C program is being compiled, found in <code>src/cc/export/helpers.h</code> in the BCC sources. This <code>helpers.h</code> header uses the
+<code>LINUX_VERSION_CODE</code> macro to create a &ldquo;version&rdquo; section in the compiled output. <code>LINUX_VERSION_CODE</code> is available only
+in the specific kernel&rsquo;s sources being targeted and is used during eBPF program loading to make sure the BPF program is
+being loaded into a kernel with the right version. As you can see, kernel sources quickly become mandatory for compiling
+eBPF programs.</p>
+<p>In some sense this build process is similar to how external kernel modules are built. Kernel sources are large in size
+and often can take up a large amount of space on the system being debugged. They can also get out of sync, which may
+make the tools misbehave.</p>
+<p>The other issue is Clang and LLVM libraries need to be available on the target being traced. This is because the tools
+compile the needed BPF bytecode which are then loaded into the kernel. These libraries take up a lot space. It seems
+overkill that you need a full-blown compiler infrastructure on a system when the BPF code can be compiled elsewhere and
+maybe even compiled just once. Further, these libraries need to be cross-compiled to run on the architecture you&rsquo;re
+tracing. That&rsquo;s possible, but why would anyone want to do that if they didn&rsquo;t need to? Cross-compiling compiler
+toolchains can be tedious and stressful.</p>
+<h2 id="bpfd-a-daemon-for-running-ebpf-bcc-tools-across-systems">BPFd: A daemon for running eBPF BCC tools across systems</h2>
+<p><a href="https://github.com/joelagnel/bpfd">Sources for BPFd can be downloaded here</a>.</p>
+<p>Instead of loading up all the tools, compiler infrastructure and kernel sources onto the remote targets being traced and
+running BCC that way, I decided to write a proxy program named BPFd that receives commands and performs them on behalf
+of whoever is requesting them. All the heavily lifting (compilation, parsing of user input, parsing of the hash maps,
+presentation of results etc) is done by BCC tools on the host machine, with BPFd running on the target and being the
+interface to the target kernel. BPFd encapsulates all the needs of BCC and performs them - this includes loading a BPF
+program, creating, deleting and looking up maps, attaching a eBPF program to a kprobe, polling for new data that the
+eBPF program may have written into a perf buffer, etc. If it&rsquo;s woken up because the perf buffer contains new data, it&rsquo;ll
+inform BCC tools on the host about it, or it can return map data whenever requested, which may contain information
+updated by the target eBPF program.</p>
+<h3 id="simple-design">Simple design</h3>
+<p>Before this work, the BCC tools architecture was as follows:
+<img src="images/bcc-arch.png" alt="BCC architecture"></p>
+<p>BPFd based invocations partition this, thus making it possible to do cross-development and execution of the tools across
+machine and architecture boundaries. For instance, kernel sources that the BCC tools depend on can be on a development
+machine, with eBPF code being loaded onto a remote machine. This partioning is illustrated in the following diagram:
+<img src="images/bcc-with-bpfd-arch.png" alt="BCC architecture with BPFd"></p>
+<p>The design of BPFd is quite simple, it expects commands on <code>stdin</code> (standard input) and provides the results over
+<code>stdout</code> (standard output). Every command a single line always, no matter how big the command is. This allows easy
+testing using <code>cat</code>, since one could simply <code>cat</code> a file with commands, and check if BPFd&rsquo;s <code>stdout</code> contain the
+expected results. Results from a command, however can be multiple lines.</p>
+<p>BPF maps are data structures that a BPF program uses to store data which can be
+retrieved at a later time. Maps are represented by file descriptor returned by
+the <code>bpf</code> system call once the map has been successfully created.
+For example, following is a command to BPFd for creating a BPF hashtable map.</p>
+<pre tabindex="0"><code>BPF_CREATE_MAP 1 count 8 40 10240 0
+</code></pre><p>And the result from BPFd is:</p>
+<pre tabindex="0"><code>bpf_create_map: ret=3
+</code></pre><p>Since BPFd is proxying the map creation, the file descriptor (3 in this example) is
+mapped into <code>BPFd's</code> file descriptor table. The file descriptor can be used later to
+look up entries that the BPF program in the kernel may have created, or to clear all
+entries in the map, as is done by tools that periodically clear the accounting done
+by a BPF program.</p>
+<p>The <code>BPF_CREATE_MAP</code> command in this example tells BPFd to create a map named
+<code>count</code> with map type 1 (<a href="https://github.com/torvalds/linux/blob/master/include/uapi/linux/bpf.h#L101">type 1 is a hashtable
+map</a>),
+with a key size of 8 bytes and a value size of 40, maximum of 10240 entries and
+no special flags. BPFd created a map and identified by file descriptor 3.</p>
+<p>With the simple standard input/output design, it&rsquo;s possible to write wrappers around BPFd to handle more advanced
+communication methods such as USB or Networking. As a part of my analysis work in the Android kernel team, I am
+communicating these commands over the <a href="https://developer.android.com/studio/command-line/adb.html">Android Debug Bridge</a>
+which interfaces with the target device over either USB or TCP/IP. I have shared several demos below.</p>
+<h3 id="changes-to-the-bcc-project-for-working-with-bpfd">Changes to the BCC project for working with BPFd</h3>
+<p><a href="https://github.com/iovisor/bcc/">BCC</a> needed several changes to be able to talk
+to BPFd over a remote connection. All these changes <a href="https://github.com/joelagnel/bcc/tree/bcc-bpfd">are available
+here</a> and will be pushed
+upstream soon.</p>
+<p>Following are all the BCC modifications that have been made:</p>
+<h4 id="support-for-remote-communication-with-bpfd-such-as-over-the-network">Support for remote communication with BPFd such as over the network</h4>
+<p>A new <code>remotes</code> module has been added to BCC tools with an abstraction that
+different remote types, such as networking or USB must implement. This keeps
+code duplication to a minimum. By implementing <a href="https://github.com/joelagnel/bcc/blob/bcc-bpfd/src/python/bcc/remote/base.py">the functions
+needed</a>
+for a remote, a new communication method can be easily added. Currently an
+<code>adb</code> remote and a <code>process</code> remote are provided. The <code>adb</code> remote is for
+communication with the target device over USB or TCP/IP using the <a href="https://developer.android.com/studio/command-line/adb.html">Android
+Debug Bridge</a>. The
+<code>process</code> remote is probably useful just for local testing. With the <code>process</code> remote,
+BPFd is forked on the same machine running BCC and communicates with it over
+<code>stdin</code> and <code>stdout</code>.</p>
+<h4 id="changes-to-bcc-to-send-commands-to-the-remote-bpfd">Changes to BCC to send commands to the remote BPFd</h4>
+<p><a href="https://github.com/iovisor/bcc/blob/master/src/cc/libbpf.c">libbpf.c</a> is the
+main C file in the BCC project that talks to the kernel for all things BPF.
+This is illustrated in the diagram above. Inorder to make BCC perform BPF
+operations on the remote machine instead of the local machine, parts of BCC
+that make calls to the local <code>libbpf.c</code> are now instead channeled to the remote
+BPFd on the target. BPFd on the target then perform the commands on behalf of
+BCC running locally, by calling into its copy of <code>libbpf.c</code>.</p>
+<p>One of the tricky parts to making this work is, not only calls to <code>libbpf.c</code>
+but certain other paths need to be channeled to the remote machine. For example, to
+attach to a tracepoint, BCC needs a list of all available tracepoints on the
+system. This list has to be obtained on the remote system, not the local one and is
+the exact reason why there exists the <a href="https://github.com/joelagnel/bpfd/blob/master/src/bpfd.c#L421">GET_TRACE_EVENTS</a>
+command in BPFd.</p>
+<h4 id="making-the-kernel-build-for-correct-target-processor-architecture">Making the kernel build for correct target processor architecture</h4>
+<p>When BCC compiles the C program encapsulated in a BCC tool into eBPF
+instructions, it assumes that the eBPF program will run on the same processor
+architecture that BCC is running on. This is incorrect especially when building
+the eBPF program for a different target.</p>
+<p>Some time ago, before I started this project, I <a href="https://patchwork.kernel.org/patch/9961801/">changed
+this</a> when building the in-kernel
+eBPF samples (which are simple standalone samples and unrelated to BCC). Now, I have had to <a href="https://github.com/joelagnel/bcc/commit/2a2f9d41c336d8aa058338ae536bd93d31dbb1ef">make a similar
+change</a>
+to BCC so that it compiles the C program correctly for the target architecture.</p>
+<h3 id="installation">Installation</h3>
+<p>Try it out for yourself! Follow the <a href="https://github.com/joelagnel/bpfd/blob/master/INSTALL.md#diy">Detailed</a> or
+<a href="https://github.com/joelagnel/bpfd/blob/master/INSTALL.md">Simple</a> instructions. Also, apply this <a href="https://raw.githubusercontent.com/joelagnel/bpfd/master/patches/kernel/0001-bpf-stackmap-Implement-bpf_get_next_key.patch">kernel
+patch</a>
+to make it faster to run tools like offcputime. I am submitting this patch to LKML as we speak.</p>
+<h3 id="bpf-demos-examples-of-bcc-tools-running-on-android">BPF Demos: examples of BCC tools running on Android</h3>
+<h4 id="running-filetop">Running filetop</h4>
+<p><code>filetop</code> is a BCC tool which shows you all read/write I/O operations with a similar experience to the <code>top</code> tool.
+It refreshes every few seconds, giving you a live view of these operations.
+Goto your bcc directory and set the environment variables needed. For Android running on Hikey960, I run:</p>
+<pre tabindex="0"><code>joel@ubuntu:~/bcc# source arm64-adb.rc
+</code></pre><p>which basically sets the following environment variables:</p>
+<pre tabindex="0"><code>  export ARCH=arm64
+  export BCC_KERNEL_SOURCE=/home/joel/sdb/hikey-kernel/
+  export BCC_REMOTE=adb
+</code></pre><p>You could also use the convenient bcc-set script provided in BPFd sources to set these environment variables for you.
+Check <a href="https://github.com/joelagnel/bpfd/blob/master/INSTALL.md">INSTALL.md</a> file in BPFd sources for more information.</p>
+<p>Next I start <code>filetop</code>:</p>
+<pre tabindex="0"><code>joel@ubuntu:~/bcc# ./tools/filetop.py 5
+</code></pre><p>This tells the tool to monitor file I/O every 5 seconds.</p>
+<p>While <code>filetop</code> is running, I start the stock email app in Android and the output looks like:</p>
+<pre tabindex="0"><code>  Tracing... Output every 5 secs. Hit Ctrl-C to end
+  13:29:25 loadavg: 0.33 0.23 0.15 2/446 2931
+ 
+  TID    COMM             READS  WRITES R_Kb    W_Kb    T FILE
+  3787   Binder:2985_8    44     0      140     0       R profile.db
+  3792   m.android.email  89     0      130     0       R Email.apk
+  3813   AsyncTask #3     29     0      48      0       R EmailProvider.db
+  3808   SharedPreferenc  1      0      16      0       R AndroidMail.Main.xml
+  3792   m.android.email  2      0      16      0       R deviceName
+  3815   SharedPreferenc  1      0      16      0       R MailAppProvider.xml
+  3813   AsyncTask #3     8      0      12      0       R EmailProviderBody.db
+  2434   WifiService      4      0      4       0       R iface_stat_fmt
+  3792   m.android.email  66     0      2       0       R framework-res.apk
+</code></pre><p>Notice the Email.apk being read by Android to load the email application, and then various other reads happening related
+to the email app. Finally, WifiService continously reads iface_state_fmt to get network statistics for Android
+accounting.</p>
+<h4 id="running-biosnoop">Running biosnoop</h4>
+<p>Biosnoop is another great tool shows you block level I/O operations (bio) happening on the system along with the latency
+and size of the operation. Following is a sample output of running <code>tools/biosnoop.py</code> while doing random things in the
+Android system.</p>
+<pre tabindex="0"><code>  TIME(s)        COMM           PID    DISK    T  SECTOR    BYTES   LAT(ms)
+  0.000000000    jbd2/sdd13-8   2135   sdd     W  37414248  28672      1.90
+  0.001563000    jbd2/sdd13-8   2135   sdd     W  37414304  4096       0.43
+  0.003715000    jbd2/sdd13-8   2135   sdd     R  20648736  4096       1.94
+  5.119298000    kworker/u16:1  3848   sdd     W  11968512  8192       1.72
+  5.119421000    kworker/u16:1  3848   sdd     W  20357128  4096       1.80
+  5.448831000    SettingsProvid 2415   sdd     W  20648752  8192       1.70
+</code></pre><h4 id="running-hardirq">Running hardirq</h4>
+<p>This tool measures the total time taken by different hardirqs in the systems. Excessive time spent in hardirq can result
+in poor real-time performance of the system.</p>
+<pre><code>joel@ubuntu:~/bcc# ./tools/hardirqs.py
+</code></pre>
+<p>Output:</p>
+<pre tabindex="0"><code>  Tracing hard irq event time... Hit Ctrl-C to end.
+  HARDIRQ                    TOTAL_usecs
+  wl18xx                             232
+  dw-mci                            1066
+  e82c0000.mali                     8514
+  kirin                             9977
+  timer                            22384
+</code></pre><h4 id="running-biotop">Running biotop</h4>
+<p>Run biotop while launching the android Gallery app and doing random stuff:</p>
+<pre tabindex="0"><code>joel@ubuntu:~/bcc# ./tools/biotop.py
+</code></pre><p>Output:</p>
+<pre tabindex="0"><code>PID    COMM             D MAJ MIN DISK       I/O  Kbytes  AVGms
+4524   droid.gallery3d  R 8   48  ?           33    1744   0.51
+2135   jbd2/sdd13-8     W 8   48  ?           15     356   0.32
+4313   kworker/u16:4    W 8   48  ?           26     232   1.61
+4529   Jit thread pool  R 8   48  ?            4     184   0.27
+2135   jbd2/sdd13-8     R 8   48  ?            7      68   2.19
+2459   LazyTaskWriterT  W 8   48  ?            3      12   1.77
+</code></pre><h3 id="open-issues-as-of-this-writing">Open issues as of this writing</h3>
+<p>While most issues have been fixed, a few remain. Please check the <a href="https://github.com/joelagnel/bpfd/issues">issue
+tracker</a> and contribute patches or help by testing.</p>
+<h3 id="other-usecases-for-bpfd">Other usecases for BPFd</h3>
+<p>While the main usecase at the moment is easier use of BCC tools on cross-development models, another potential usecase
+that&rsquo;s gaining interest is easy loading of a BPF program. The BPFd code can be stored on disk in base64 format and sent
+to bpfd using something as simple as:</p>
+<pre tabindex="0"><code>joel@ubuntu:~/bpfprogs# cat my_bpf_prog.base64 | bpfd
+</code></pre><p>In the Android kernel team, we are also expermenting for certain usecases that need eBPF, with loading a program with a
+forked BPFd instance, creating maps, and then pinning them for use at a later time once BPFd exits and then kill the
+BPFd fork since its done. Creating a separate process (fork/exec of BPFd) and having it load the eBPF program for you
+has the distinct advantage that the <a href="https://github.com/torvalds/linux/blob/master/samples/bpf/bpf_load.c#L546">runtime-fixing up map file
+descriptors</a> isn&rsquo;t needed in the loaded eBPF machine
+instructions. In other words, the eBPF program&rsquo;s instructions can be pre-determined and statically loaded. The reason
+for this convience is BPFd starts with the same number of file descriptors each time before the first map is created.</p>
+<h3 id="conclusion">Conclusion</h3>
+<p>Building code for instrumentation on a different machine than the one actually
+running the debugging code is beneficial and BPFd makes this possible.
+Alternately, one could also write tracing code in their own kernel module on a
+development machine, copy it over to a remote target, and do similar
+tracing/debugging.  However, this is quite unsafe since kernel modules can
+crash the kernel. On the other hand, eBPF programs are verified before they&rsquo;re
+run and are guaranteed to be safe when loaded into the kernel, unlike kernel
+modules.  Furthermore, the BCC project offers great support for parsing the
+output of maps, processing them and presenting results all using the friendly
+Python programming language. BCC tools are quite promising and could be the
+future for easier and safer deep tracing endeavours. BPFd can hopefully make it
+even more easier to run these tools for folks such as Embedded system and Android
+developers who typically compile their kernels on their local machine and run
+them on a non-local target machine.</p>
+<p>If you have any questions, feel to <a href="http://www.linuxinternals.org/joel/">reach out</a> to me or drop me a note in the
+comments section.</p>
+</div>
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+      
+      <div class="post-categories">
+  
+</div>
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="http://localhost:1313/blog/1/01/01/c-rvalue-references/" title="Previous Post: C&#43;&#43; rvalue references">&laquo; C&#43;&#43; rvalue references</a>
+      
+      
+        <a class="basic-alignment right" href="http://localhost:1313/blog/1/01/01/" title="Next Post: "> &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2023/06/25/svm-and-vectors-for-the-curious/">SVM and vectors for the curious</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/12/22/dumping-user-and-kernel-stacks-on-kernel-events/">Dumping User and Kernel stacks on Kernel events</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/02/10/usdt-for-reliable-userspace-event-tracing/">USDT for reliable Userspace event tracing</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/12/31/armv8-flamegraph-and-nmi-support/">ARMv8: flamegraph and NMI support</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/06/18/ftrace-events-mechanism/">Ftrace events mechanism</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/03/20/tif_need_resched-why-is-it-needed/">TIF_NEED_RESCHED: why is it needed</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2015/12/25/tying-2-voltage-sources/signals-together/">Tying 2 voltage sources/signals together</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/06/04/microsd-card-remote-switch/">MicroSD card remote switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/05/07/linux-spinlock-internals/">Linux Spinlock Internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/">Studying cache-line sharing effects on SMP systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/22/design-of-fork-followed-by-exec-in-linux/">Design of fork followed by exec in Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/"></a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/">BPFd- Running BCC tools remotely across systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/c-rvalue-references/">C&#43;&#43; rvalue references</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/categories/">Categories</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/joel/">false</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/figuring-out-herd7-memory-models/">Figuring out herd7 memory models</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/getting-youcompleteme-working-for-kernel-development/">Getting YouCompleteMe working for kernel development</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/">GUS (Global Unbounded Sequences)</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/archives/">List of articles</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/">Making sense of scheduler deadlocks in RCU</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/">Modeling (lack of) store ordering using PlusCal - and a wishlist</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/on-workings-of-hrtimers-slack-time-functionality/">On workings of hrtimer&#39;s slack time functionality</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/powerpc-stack-guard-false-positives-in-linux-kernel/">PowerPC stack guard false positives in Linux kernel</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-and-dynticks-idle-mode/">RCU and dynticks-idle mode</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-preempt-what-happens-on-a-context-switch/">RCU-preempt: What happens on a context switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/resources/">Resources</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/selinux-debugging-on-chromeos/">SELinux Debugging on ChromeOS</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/single-stepping-the-kernels-c-code/">Single-stepping the kernel&#39;s C code</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/srcu-state-double-scan/">SRCU state double scan</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/understanding-hazard-pointers/">Understanding Hazard Pointers</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>About Me</h1>
+  <p>A little something about me.</p>
+</section>
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2025 - Joel Fernandes -
+  <span class="credit">Powered by <a href="https://gohugo.io">Hugo</a></span>
+</p></footer>
+  
+</body>
+</html>

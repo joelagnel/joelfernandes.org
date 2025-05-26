@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Vectors on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/vectors/</link>
+    <description>Recent content in Vectors on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Sun, 25 Jun 2023 00:00:00 +0000</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/vectors/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>SVM and vectors for the curious</title>
+      <link>http://localhost:1313/blog/2023/06/25/svm-and-vectors-for-the-curious/</link>
+      <pubDate>Sun, 25 Jun 2023 00:00:00 +0000</pubDate>
+      <guid>http://localhost:1313/blog/2023/06/25/svm-and-vectors-for-the-curious/</guid>
+      <description>I posted a pair of articles/notes on SVM and vectors. I was curious how they worked and I&amp;rsquo;m sure these notes will be useful to me or others. Especially for some basic mathematics related to machine learning.&#xA;Notes on Vectors&#xA;Notes on SVM</description>
+    </item>
+  </channel>
+</rss>
