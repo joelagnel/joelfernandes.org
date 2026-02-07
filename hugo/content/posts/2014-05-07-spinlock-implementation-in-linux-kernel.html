@@ -1,0 +1,383 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>Linux Spinlock Internals - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      Linux Spinlock Internals
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+May 07, 2014
+        
+           | Comments
+        
+      
+    
+  
+...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/hugo/content/posts/2014-05-07-spinlock-implementation-in-linux-kernel.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Linux Spinlock Internals</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2014-05-07T23:42:45-04:00" pubdate data-updated="true">May 07, 2014</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>This article tries to clarify how spinlocks are implemented in the Linux kernel and how they should be used correctly in the face of preemption and interrupts. The focus of this article will be more on basic concepts than details, as details tend to be forgotten more easily and shouldn’t be too hard to look up although attention is paid to it to the extent that it helps understanding.</p>
+
+<p>Fundamentally somewhere in <code class="language-plaintext highlighter-rouge">include/linux/spinlock.h</code>, a decision is made on which spinlock header to pull based on whether SMP is enabled or not:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#if defined(CONFIG_SMP) || defined(CONFIG_DEBUG_SPINLOCK)
+# include &lt;linux/spinlock_api_smp.h&gt;
+#else
+# include &lt;linux/spinlock_api_up.h&gt;
+#endif
+</code></pre></div></div>
+
+<p>We’ll go over how things are implemented in both the SMP (Symmetric Multi-Processor) and UP (Uni-Processor) cases.</p>
+
+<p>For the SMP case, <code class="language-plaintext highlighter-rouge">__raw_spin_lock*</code> functions in <code class="language-plaintext highlighter-rouge">kernel/locking/spinlock.c</code> are called when one calls some version of a <code class="language-plaintext highlighter-rouge">spin_lock</code>.</p>
+
+<p>Following is the definition of the most basic version defined with a macro:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+void __lockfunc __raw_##op##_lock(locktype##_t *lock)                   \
+{                                                                       \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+}                                                                       \
+</code></pre></div></div>
+
+<p>The function has several imporant bits. First it disables preemption on line 5, then tries to <em>atomically</em> acquire the spinlock on line 6. If it succeeds it breaks from the <code class="language-plaintext highlighter-rouge">for</code> loop on line 7, leaving preemption disabled for the duration of crticial section being protected by the lock. If it didn’t succeed in acquiring the lock (maybe some other CPU grabbed the lock already), it enables preemption back and spins till it can acquire the lock keeping <em>preemption enabled during this period</em>. Each time it detects that the lock can’t be acquired in the <code class="language-plaintext highlighter-rouge">while</code> loop, it calls an architecture specific relax function which has the effect executing some variant of a <code class="language-plaintext highlighter-rouge">no-operation</code> instruction that causes the CPU to execute such an instruction efficiently in a lower power state. We’ll talk about the <code class="language-plaintext highlighter-rouge">break_lock</code> usage in a bit. Soon as it knows the lock is free, say the <code class="language-plaintext highlighter-rouge">raw_spin_can_lock(lock)</code> function returned 1, it goes back to the beginning of the <code class="language-plaintext highlighter-rouge">for</code> loop and tries to acquire the lock again.</p>
+
+<p>What’s important to note here is the reason for keeping preemption enabled (we’ll see in a bit that for UP configurations, this is not done). While the kernel is spinning on a lock, other processes shouldn’t be kept from preempting the spinning thread. The lock in these cases have been acquired on a <em>different CPU</em> because (assuming bug free code) it’s impossible the current CPU which is trying to grab the lock has already acquired it, because preemption is disabled on acquiral. So it makes sense for the spinning kernel thread to be preempted giving others CPU time.
+It is also possible that more than one process on the current CPU is trying to acquire the same lock and spinning on it, in this case the kernel gets continuously preempted between the 2 threads fighting for the lock, while some other CPU in the cluster happily holds the lock, hopefully for not too long.</p>
+
+<p>That’s where the <code class="language-plaintext highlighter-rouge">break_lock</code> element in the lock structure comes in. Its used to signal to the lock-holding processor in the cluster that there is someone else trying to acquire the lock. This can cause the lock to released early by the holder if required.</p>
+
+<p>Now lets see what happens in the UP (Uni-Processor) case.</p>
+
+<p>Believe it or not, it’s really this simple:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define ___LOCK(lock) \
+  do { __acquire(lock); (void)(lock); } while (0)
+
+#define __LOCK(lock) \
+  do { preempt_disable(); ___LOCK(lock); } while (0)
+
+// ....skipped some lines.....
+#define _raw_spin_lock(lock)                    __LOCK(lock)
+</code></pre></div></div>
+
+<p>All that needs to be done is to disable preemption and acquire the lock. The code really doesn’t do anything other than disable preemption. The references to the <code class="language-plaintext highlighter-rouge">lock</code> variable are just to suppress compiler warnings as mentioned in comments in the source file.</p>
+
+<p>There’s no spinning at all here like the UP case and the reason is simple: in the SMP case, remember we had agreed that while a lock is <em>acquired</em> by a particular CPU (in this case just the 1 CPU), no other process on that CPU should have acquired the lock. How could it have gotten a chance to do so with preemption disabled on that CPU to begin with?</p>
+
+<p>Even if the code is buggy, (say the same process tries to acquires the lock twice), it’s still impossible that 2 <em>different processes</em> try to acquire the same lock on a Uni-Processor system considering preemption is disabled on lock acquiral. Following that idea, in the Uni-processor case, since we are running on only 1 CPU, all that needs to be done is to disable preemption, since the fact that we are being allowed to disable preemption to begin with, means that no one else has acquired the lock. Works really well!</p>
+
+<h2 id="sharing-spinlocks-between-interrupt-and-process-context">Sharing spinlocks between interrupt and process-context</h2>
+<p>It is possible that a critical section needs to be protected by the same lock in both an interrupt and in non-interrupt (process) execution context in the kernel. In this case <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> and the <code class="language-plaintext highlighter-rouge">spin_unlock_irqrestore</code> variants have to be used to protect the critical section. This has the effect of disabling interrupts on the  executing CPU. Imagine what would happen if you just used <code class="language-plaintext highlighter-rouge">spin_lock</code> in the process context?</p>
+
+<p>Picture the following:</p>
+
+<ol>
+  <li>Process context kernel code acquires <em>lock A</em> using <code class="language-plaintext highlighter-rouge">spin_lock</code>.</li>
+  <li>While the lock is held, an interrupt comes in on the same CPU and executes.</li>
+  <li>Interrupt Service Routing (ISR) tries to acquire <em>lock A</em>, and spins continuously waiting for it.</li>
+  <li>For the duration of the ISR, the Process context is blocked and never gets a chance to run and free the lock.</li>
+  <li>Hard lock up condition on the CPU!</li>
+</ol>
+
+<p>To prevent this, the process context code needs call <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> which has the effect of disabling interrupts on that particular CPU along with the regular disabling of preemption we saw earlier <em>before</em> trying to grab the lock.</p>
+
+<p>Note that the ISR can still just call <code class="language-plaintext highlighter-rouge">spin_lock</code> instead of <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> because interrupts are disabled anyway during ISR execution. Often times people use <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> in an ISR, that’s not necessary.</p>
+
+<p>Also note that during the executing of the critical section protected by <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code>, the interrupts are only disabled on the executing CPU. The same interrupt can come in on a different CPU and the ISR will be executed there, but that will not trigger the hard lock condition I talked about, because the process-context code is not blocked and can finish executing the locked critical section and release the lock while the ISR spins on the lock on a different CPU waiting for it. The process context does get a chance to finish and free the lock causing no hard lock up.</p>
+
+<p>Following is what the <code class="language-plaintext highlighter-rouge">spin_lock_irqsave</code> code looks like for the SMP case, UP case is similar, look it up. BTW, the only difference here compared to the regular <code class="language-plaintext highlighter-rouge">spin_lock</code> I described in the beginning are the <code class="language-plaintext highlighter-rouge">local_irq_save</code> and <code class="language-plaintext highlighter-rouge">local_irq_restore</code> that accompany the <code class="language-plaintext highlighter-rouge">preempt_disable</code> and <code class="language-plaintext highlighter-rouge">preempt_enable</code> in the lock code:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define BUILD_LOCK_OPS(op, locktype)                                    \
+unsigned long __lockfunc __raw_##op##_lock_irqsave(locktype##_t *lock)  \
+{                                                                       \
+        unsigned long flags;                                            \
+                                                                        \
+        for (;;) {                                                      \
+                preempt_disable();                                      \
+                local_irq_save(flags);                                  \
+                if (likely(do_raw_##op##_trylock(lock)))                \
+                        break;                                          \
+                local_irq_restore(flags);                               \
+                preempt_enable();                                       \
+                                                                        \
+                if (!(lock)-&gt;break_lock)                                \
+                        (lock)-&gt;break_lock = 1;                         \
+                while (!raw_##op##_can_lock(lock) &amp;&amp; (lock)-&gt;break_lock)\
+                        arch_##op##_relax(&amp;lock-&gt;raw_lock);             \
+        }                                                               \
+        (lock)-&gt;break_lock = 0;                                         \
+        return flags;                                                   \
+}                                                                       \
+</code></pre></div></div>
+<p>Update:
+Further clean up of break_lock has happened <a href="https://lore.kernel.org/patchwork/patch/856271/">in this
+patch</a>. If caller needs to
+know if lock is contended, they can do so directly by using
+arch_spin_is_contended. So there’s no longer a need for the break_lock variable
+in the lock structure.</p>
+
+<p>Hope this post made a few things more clear, there’s a lot more to spinlocking. A good reference is <a href="https://www.kernel.org/pub/linux/kernel/people/rusty/kernel-locking/">Rusty’s Unreliable Guide To Locking</a>.</p>
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2014-05-07T23:42:45-04:00" pubdate data-updated="true">May 07, 2014</time>
+      <!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+  Added on 1/29/2023
+-->
+<div class="post-categories">
+  
+  
+  <a href="/categories/#linux">linux</a>
+  &nbsp;
+  
+  <a href="/categories/#kernel">kernel</a>
+  &nbsp;
+  
+  <a href="/categories/#locking">locking</a>
+  
+  
+</div>
+
+<!--
+Commented out on 1/29/2023:
+
+
+
+<span class="categories">
+  
+    linuxkernellocking
+  
+  </span>
+
+ -->
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2026 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/hugo/content/posts/2014-05-07-spinlock-implementation-in-linux-kernel.html';
+        var disqus_url = 'http://www.linuxinternals.org/hugo/content/posts/2014-05-07-spinlock-implementation-in-linux-kernel.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

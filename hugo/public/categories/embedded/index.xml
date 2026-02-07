@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Embedded on JoelFernandes.org</title>
+    <link>http://localhost:1313/categories/embedded/</link>
+    <description>Recent content in Embedded on JoelFernandes.org</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 25 Dec 2015 14:51:29 -0600</lastBuildDate>
+    <atom:link href="http://localhost:1313/categories/embedded/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Tying 2 voltage sources/signals together</title>
+      <link>http://localhost:1313/blog/2015/12/25/tying-2-voltage-sources/signals-together/</link>
+      <pubDate>Fri, 25 Dec 2015 14:51:29 -0600</pubDate>
+      <guid>http://localhost:1313/blog/2015/12/25/tying-2-voltage-sources/signals-together/</guid>
+      <description>Recently I asked a question on StackExchange about what happens when 2 voltage signals are tied together. What&amp;rsquo;s the resultant voltage and what decides this voltage? The whole train of thought started when I was trying to contemplate what happens when you use pull-ups on signals that are not Open Drain.&#xA;I create and simulated a Circuit with the same scenario in LTSpice. &amp;ldquo;V&amp;rdquo; is the voltage between the &amp;ldquo;+&amp;rdquo; terminals of V1 and V2 and its shown on the right of the simulation.</description>
+    </item>
+    <item>
+      <title>MicroSD card remote switch</title>
+      <link>http://localhost:1313/blog/2014/06/04/microsd-card-remote-switch/</link>
+      <pubDate>Wed, 04 Jun 2014 06:12:55 -0500</pubDate>
+      <guid>http://localhost:1313/blog/2014/06/04/microsd-card-remote-switch/</guid>
+      <description>Recently, I&amp;rsquo;ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem without removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what&amp;rsquo;s going on.</description>
+    </item>
+  </channel>
+</rss>
