@@ -6,6 +6,14 @@ body {
 	font-size: 14.5px;
 }
 
+li {
+	margin-bottom: 0.3em;
+}
+
+ol li, ul li {
+	margin-bottom: 0.3em;
+}
+
 .site {
 		background-color: #ffffff;
 	//text-align: justify;
