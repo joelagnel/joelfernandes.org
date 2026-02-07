@@ -1,5 +1,5 @@
 Hello! I'm Joel and this my personal website built with Jekyll! I currently
-work at NVIDIA. My interests are GPU software, device drivers, scheduler, RCU,
+work at NVIDIA. My interests are GPU software, Linux device drivers, scheduler, RCU,
 tracing, synchronization, memory models and other kernel internals. I also love
 contributing to the upstream Linux kernel and other open source projects.
 

@@ -6,7 +6,7 @@ sharing: false
 sidebar: false
 footer: true
 ---
-Hi! I'm Joel and I run this site! I'm a Linux kernel developer and work at NVIDIA. My interests are GPU software, device drivers, scheduler, RCU, tracing, synchronization and kernel internals.
+Hi! I'm Joel and I run this site! I'm a Linux kernel developer and work at NVIDIA. My interests are GPU software, Linux device drivers, scheduler, RCU, tracing, synchronization and kernel internals.
 
 Follow me on [Twitter](https://twitter.com/joel_linux) and [LinkedIn](https://www.linkedin.com/in/joelagnel). Email me at: [joel@joelfernandes.org](mailto:joel@joelfernandes.org)
 
