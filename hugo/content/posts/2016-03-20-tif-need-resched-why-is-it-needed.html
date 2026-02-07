@@ -1,0 +1,331 @@
+
+<!DOCTYPE html>
+<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
+<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
+<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  <title>TIF_NEED_RESCHED: why is it needed - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="
+
+  
+  
+    
+      TIF_NEED_RESCHED: why is it needed
+    
+    
+      
+        
+
+
+
+
+
+
+
+
+
+Mar 20, 2016
+        
+           | Comments
+        
+     ...">
+  
+
+  <!-- http://t.co/dKP3o1e -->
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  
+  <link rel="canonical" href="http://www.linuxinternals.org/hugo/content/posts/2016-03-20-tif-need-resched-why-is-it-needed.html">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <link href="" rel="alternate" title="JoelFernandes.org" type="application/atom+xml">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="./javascripts/libs/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  <!--Fonts from Google"s Web font directory at http://google.com/webfonts -->
+<link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+<link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic" rel="stylesheet" type="text/css">
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=UA-50777115-1"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'UA-50777115-1');
+</script>
+
+</head>
+
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>Age is of no importance unless you're a cheese -- Billie Burke</h6>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div>
+
+</header>
+<!--
+  <nav role="navigation"><ul class="subscription" data-subscription="rss">
+  <li><a href="" rel="subscribe-rss" title="subscribe via RSS">RSS</a></li>
+  
+</ul>
+  
+<form action="https://www.google.com/search" method="get">
+  <fieldset role="search">
+    <input type="hidden" name="q" value="site:http://www.linuxinternals.org" />
+    <input class="search" type="text" name="q" results="0" placeholder="Search"/>
+  </fieldset>
+</form>
+  
+<ul class="main-navigation">
+  <li><a href="/">Blog</a></li>
+  <li><a href="/blog/archives">Archives</a></li>
+  <li><a href="/technical-resources/">Resources</a></li>
+  <li><a href="/aboutme/">About me</a></li>
+</ul>
+
+</nav>
+-->
+  <div id="main">
+    <div id="content">
+      <div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">TIF_NEED_RESCHED: why is it needed</h1>
+    
+    
+      <p class="meta">
+        
+
+
+
+
+
+
+
+
+
+<time datetime="2016-03-20T04:44:32-04:00" pubdate data-updated="true">Mar 20, 2016</time>
+        
+           | <a href="#disqus_thread"
+             data-disqus-identifier="http://www.linuxinternals.org">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p><code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is one of the many “thread information flags” stored along side every task in the Linux Kernel. One of the flags which is vital to the working of preemption is <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Inorder to explain why its important and how it works, I will go over 2 cases where <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is used.</p>
+
+<h2 id="preemption">Preemption</h2>
+<p>Preemption is the process of forceably grabbing CPU from a user or kernel context and giving it to someone else (user or kernel). It is the means for timesharing a CPU between competing tasks (I will use task as terminology for process).
+In Linux, the way it works is a timer interrupt (called the tick) interrupts the task that is running and makes a decision about whether a task or a kernel code path (executing on behalf of a task like in a syscall) is to be preempted. This decision is based on whether the task has been running long-enough and something higher priority woke up and needs CPU now, or is ready to run.</p>
+
+<p>These things happen in <code class="language-plaintext highlighter-rouge">scheduler_tick()</code>, the exact path is <em>TIMER HARDWARE INTERRUPT</em> -&gt; <code class="language-plaintext highlighter-rouge">scheduler_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">task_tick_fair</code> -&gt; <code class="language-plaintext highlighter-rouge">entity_tick</code> -&gt; <code class="language-plaintext highlighter-rouge">check_preempt_tick</code>.
+<code class="language-plaintext highlighter-rouge">entity_tick()</code> updates various run time statistics of the task, and <code class="language-plaintext highlighter-rouge">check_preempt_tick()</code> is where TIF_NEED_RESCHED is set.</p>
+
+<p>Here’s a small bit of code in <code class="language-plaintext highlighter-rouge">check_preempt_tick</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>check_preempt_tick(struct cfs_rq *cfs_rq, struct sched_entity *curr)
+{
+        unsigned long ideal_runtime, delta_exec;
+        struct sched_entity *se;
+        s64 delta;
+
+        ideal_runtime = sched_slice(cfs_rq, curr);
+        delta_exec = curr-&gt;sum_exec_runtime - curr-&gt;prev_sum_exec_runtime;
+        if (delta_exec &gt; ideal_runtime) {
+                resched_curr(rq_of(cfs_rq));
+                /*
+                 * The current task ran long enough, ensure it doesn't get
+                 * re-elected due to buddy favours.
+                 */
+                clear_buddies(cfs_rq, curr);
+                return;
+        }
+</code></pre></div></div>
+<p>Here you see a decision is made that the process ran long enough based on its runtime and if so call <code class="language-plaintext highlighter-rouge">resched_curr</code>. Turns out <code class="language-plaintext highlighter-rouge">resched_curr</code> sets the <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> for the current task! This informs whoever looks at the flag, that this process should be scheduled out soon.</p>
+
+<p>Even though this flag is set at this point, the task is not going to be preempted yet. This is because preemption happens at specific points such as exit of interrupts. If the flag is set because the timer interrupt (scheduler decided) decided that something of higher priority needs CPU now and sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>, then at the exit of the timer interrupt (interrupt exit path), <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code> is checked, and because it is set - <code class="language-plaintext highlighter-rouge">schedule()</code> is called causing context switch to happen to another process of higher priority, instead of just returning to the existing process that the timer interrupted normally would.
+Lets examine where this happens.</p>
+
+<p>For return from interrupt to user-mode:</p>
+
+<p>If the tick interrupt happened user-mode code was running, then in somewhere in the interrupt exit path for x86, this call chain calls schedule <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_user</code> -&gt; <code class="language-plaintext highlighter-rouge">prepare_exit_to_usermode</code>. Here the need_reched flag is checked, and if true <code class="language-plaintext highlighter-rouge">schedule()</code> is called.</p>
+
+<p>For return from interrupt to kernel mode, things are a bit different (skip this para if you think it’ll confuse you).</p>
+
+<p>This feature requires kernel preemption to be enabled. The call chain doing the preemption is: <code class="language-plaintext highlighter-rouge">ret_from_intr</code> -&gt; <code class="language-plaintext highlighter-rouge">reint_kernel</code> -&gt; <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> (see <code class="language-plaintext highlighter-rouge">arch/x86/entry/entry_64.S</code>) which calls <code class="language-plaintext highlighter-rouge">schedule</code>.
+Note that, for return to kernel mode, I see that <code class="language-plaintext highlighter-rouge">preempt_schedule_irq</code> calls <code class="language-plaintext highlighter-rouge">schedule</code> anyway whether need_resched flag is set or not, this is probably Ok but I am wondering if need_resched should be checked here before <code class="language-plaintext highlighter-rouge">schedule</code> is called. Perhaps it would be an optimiziation to avoid unecessarily calling <code class="language-plaintext highlighter-rouge">schedule</code>. One reason for not doing so would be, say any other interrupt other than timer tick is returning to the interrupted kernel space, then in these cases for example - if the timer tick didn’t get a chance to run (because all other local interrupts are disabled in Linux until an interrupt finishes, in this case our non-timer interrupt), then we’d want the exit path of the non-timer interrupt to behave just like the exit path of the timer tick interrupt would behave, whether need_resched is set or not.</p>
+
+<h2 id="critical-sections-in-kernel-code-where-preemption-is-off">Critical sections in kernel code where preemption is off</h2>
+<p>One nice example of a code path where preemption is off is the <code class="language-plaintext highlighter-rouge">mutex_lock</code> path in the kernel. In the kernel, there is an optimization where if a mutex is already locked and not available, but if the lock owner (the task currently holding the lock) is running on another CPU, then the mutex temporarily becomes a spinlock (which means it will spin until it can get the lock) instead of behaving like a mutex (which sleeps until the lock is available). The pseudo code looks like this:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mutex_lock() {
+  disable_preempt();
+  if (lock can't be acquired and the lock holding task is currently running) {
+	while (lock_owner_running &amp;&amp; !need_resched()) {
+		cpu_relax();
+	}
+  }
+  enable_preempt();
+  acquire_lock_or_sleep();
+}
+</code></pre></div></div>
+
+<p>The lock path does exactly what I described. <code class="language-plaintext highlighter-rouge">cpu_relax()</code> is arch specific which is called when the CPU has to do nothing but wait. It gives hints to the CPU that it can put itself into an idle state or use its resources for someone else. For x86, it involves calling the <a href="https://en.wikipedia.org/wiki/HLT">halt instruction</a>.</p>
+
+<p>What I noticed is the Ftrace latency tracer complained about a long delay in the preempt disabled path of mutex_lock for one of my tests, and I made some <a href="http://www.spinics.net/lists/linux-rt-users/msg15022.html">noise</a> about it on the mailing list. Disabling preemption for long periods is generally a bad thing to do because during this duration, no other task can be scheduled on the CPU. However, Steven <a href="http://www.spinics.net/lists/linux-rt-users/msg15025.html">pointed out that</a> for this particular case, since we’re checking for need_resched() and breaking out of the loop, we should be Ok. What would happen is, the scheduling timer interrupt (which calls <code class="language-plaintext highlighter-rouge">scheduler_tick()</code> I mentioned earlier) comes in and checks if higher priority tasks need CPU, and if they do, it sets <code class="language-plaintext highlighter-rouge">TIF_NEED_RESCHED</code>. Once the timer interrupt returns to our tightly spinning loop in mutex_lock, we would break out of the loop having noticed <code class="language-plaintext highlighter-rouge">need_resched()</code> and, re-enable preemption as shown in the code above. Thus the long duration of preemption doesn’t turn out to be a problem as long tasks that need CPU are prioritized correctly. <code class="language-plaintext highlighter-rouge">need_resched()</code> achieved this fairness.</p>
+
+<p>Next time you see <code class="language-plaintext highlighter-rouge">if (need_resched())</code> in kernel code, you’ll have a better idea why its there :). Let me know your comments if any.</p>
+
+</div>
+
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+
+      
+
+
+
+
+
+
+
+
+
+<time datetime="2016-03-20T04:44:32-04:00" pubdate data-updated="true">Mar 20, 2016</time>
+      <!--
+  Borrowed from: https://blog.webjeda.com/jekyll-categories/
+  Added on 1/29/2023
+-->
+<div class="post-categories">
+  
+  
+  <a href="/categories/#linux">linux</a>
+  &nbsp;
+  
+  <a href="/categories/#kernel">kernel</a>
+  &nbsp;
+  
+  <a href="/categories/#scheduler">scheduler</a>
+  
+  
+</div>
+
+<!--
+Commented out on 1/29/2023:
+
+
+
+<span class="categories">
+  
+    linuxkernelscheduler
+  
+  </span>
+
+ -->
+
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+
+    
+    <p class="meta">
+      
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+</div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  
+    
+
+
+
+  
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2026 - Joel Fernandes -
+  <span class="credit">Powered by <a href="http://octopress.org">Octopress</a></span>
+</p>
+
+</footer>
+  
+
+<script type="text/javascript">
+      var disqus_shortname = 'linuxinternals1';
+      
+        
+        // var disqus_developer = 1;
+        var disqus_identifier = 'http://www.linuxinternals.org/hugo/content/posts/2016-03-20-tif-need-resched-why-is-it-needed.html';
+        var disqus_url = 'http://www.linuxinternals.org/hugo/content/posts/2016-03-20-tif-need-resched-why-is-it-needed.html';
+        var disqus_script = 'embed.js';
+      
+    (function () {
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/' + disqus_script;
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    }());
+</script>
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

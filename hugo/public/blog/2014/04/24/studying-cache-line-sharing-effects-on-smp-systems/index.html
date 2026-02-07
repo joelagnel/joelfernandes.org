@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8">
+  <title>Studying Cache-Line Sharing Effects on SMP Systems - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="Having read the chapter on counting and per-CPU counters in Paul Mckenney&amp;rsquo;s recent book, I thought I would do a small experiment to check how …">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="canonical" href="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="\/javascripts\/libs\/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  
+</head>
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ 
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources/">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div></header>
+
+  <div id="main">
+    <div id="content">
+      
+<div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Studying cache-line sharing effects on SMP systems</h1>
+    
+    
+      <p class="meta">
+        
+<time datetime="2014-04-24T20:28:24-05:00" pubdate data-updated="true">Apr 24, 2014</time>
+
+        
+           | <a href="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/#disqus_thread"
+             data-disqus-identifier="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Having read the chapter on counting and per-CPU counters in <a href="http://www.lulu.com/shop/paul-e-mckenney/is-parallel-programming-hard-and-if-so-what-can-you-do-about-it-first-bw-print-edition/paperback/product-21562459.html">Paul Mckenney&rsquo;s recent book</a>, I thought I would do a small experiment to check how good or bad it would be if those per-CPU counters were close to each other in memory.</p>
+<p>Paul talks about using one global shared counter for N threads on N CPUs, and the effects it can have on the cache. Each CPU core&rsquo;s cache in an SMP system will need exclusive rights on a specific cache line of memory, before it can do the write. This means that, at any given time <em>only one</em> CPU can and should do a write to that part of memory.</p>
+<p>This is accomplished typically by an invalidate protocol, where each CPU needs to do some inter-processor communication before it can assume it has exclusive access to that cache line, and also read any copies that may still be in some other core&rsquo;s cache and not in main memory. This is an expensive operation that is to be avoided at all costs!</p>
+<p>Then Paul goes about saying, OK- let&rsquo;s have a per-thread counter, and have each core increment it independently, and when we need a read out, we would grab a lock and add all of the individual counters together. This works great, assuming each per-thread counter is separated by atleast a cache line. That&rsquo;s guaranteed, when one uses the <code>__thread</code> primitive nicely separating out the memory to reduce cache line sharing effects.</p>
+<p>So I decided to flip this around, and have per-thread counters that were closely spaced and do some counting with them. Instead of using <code>__thread</code>, I created an array of counters, each element belonging to some thread. The counters are still separate and not shared, but they may still be in shared cache-line causing the nasty effects we talked about, which I wanted to measure.</p>
+<p><a href="https://github.com/joelagnel/smp-experiments/blob/05afb2db4fea1c6c0b4614c180186c10627a341a/cache-sharing.c">My program</a> sets up N counting threads, and assumes its running each of them on a single core on typical multicore system.  Various iterations of per-thread counting is done, with the counters separated by increasing powers of 2 each iteration. After each iteration, I stop all threads, add the per-thread counter values and report the result.</p>
+<p>Below are the results of running the program on 3 different SMP systems (2 threads on 2 CPUs, sorry I don&rsquo;t have better multi-core hardware ATM):</p>
+<p>Effect of running on a reference ARM dual-core Cortex-A9 system:
+{% img /images/cache-sharing/a9-counts.jpeg %}</p>
+<p>Notice the jump in through-put once the separation changes from 16 to 32 bytes. That gives us a good idea that the L1 cache line size on Cortex-A9 systems is 32 bytes (8 words). Something the author didn&rsquo;t know for sure in advance (I initially thought it was 64-bytes).</p>
+<p>Effect of running on a reference ARM dual-core Cortex-A15 system:
+{% img /images/cache-sharing/a15-counts.jpeg %}</p>
+<p>L1 Cache-line size of Cortex A-15 is 64 bytes (8 words). Expected jump for a separation of 64 bytes.</p>
+<p>Effect of running on a x86-64 i7-3687U dual-core CPU:
+{% img /images/cache-sharing/x86-counts.jpeg %}.</p>
+<p>L1 Cache-line size of this CPU is 64 bytes too (8 words). Expected jump for a separation of 64 bytes.</p>
+<p>This shows your parallel programs need to take care of cache-line alignment to avoid false-sharing effects. Also, doing something like this in your program is an indirect way to find out what the cache-line size is for your CPU, or a direct way to get fired, whichever way you want to look at it. ;)</p>
+</div>
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+      
+<time datetime="2014-04-24T20:28:24-05:00" pubdate data-updated="true">Apr 24, 2014</time>
+
+      <div class="post-categories">
+  
+    
+      
+      <a href="/categories/#synchronization">synchronization</a>
+      &nbsp;
+      
+    
+  
+</div>
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="http://localhost:1313/blog/2014/04/22/design-of-fork-followed-by-exec-in-linux/" title="Previous Post: Design of fork followed by exec in Linux">&laquo; Design of fork followed by exec in Linux</a>
+      
+      
+        <a class="basic-alignment right" href="http://localhost:1313/blog/2014/05/07/linux-spinlock-internals/" title="Next Post: Linux Spinlock Internals">Linux Spinlock Internals &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2023/06/25/svm-and-vectors-for-the-curious/">SVM and vectors for the curious</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/12/22/dumping-user-and-kernel-stacks-on-kernel-events/">Dumping User and Kernel stacks on Kernel events</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/02/10/usdt-for-reliable-userspace-event-tracing/">USDT for reliable Userspace event tracing</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/12/31/armv8-flamegraph-and-nmi-support/">ARMv8: flamegraph and NMI support</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/06/18/ftrace-events-mechanism/">Ftrace events mechanism</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/03/20/tif_need_resched-why-is-it-needed/">TIF_NEED_RESCHED: why is it needed</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2015/12/25/tying-2-voltage-sources/signals-together/">Tying 2 voltage sources/signals together</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/06/04/microsd-card-remote-switch/">MicroSD card remote switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/05/07/linux-spinlock-internals/">Linux Spinlock Internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/">Studying cache-line sharing effects on SMP systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/22/design-of-fork-followed-by-exec-in-linux/">Design of fork followed by exec in Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/"></a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/">BPFd- Running BCC tools remotely across systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/c-rvalue-references/">C&#43;&#43; rvalue references</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/categories/">Categories</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/joel/">false</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/figuring-out-herd7-memory-models/">Figuring out herd7 memory models</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/getting-youcompleteme-working-for-kernel-development/">Getting YouCompleteMe working for kernel development</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/">GUS (Global Unbounded Sequences)</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/archives/">List of articles</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/">Making sense of scheduler deadlocks in RCU</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/">Modeling (lack of) store ordering using PlusCal - and a wishlist</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/on-workings-of-hrtimers-slack-time-functionality/">On workings of hrtimer&#39;s slack time functionality</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/powerpc-stack-guard-false-positives-in-linux-kernel/">PowerPC stack guard false positives in Linux kernel</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-and-dynticks-idle-mode/">RCU and dynticks-idle mode</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-preempt-what-happens-on-a-context-switch/">RCU-preempt: What happens on a context switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/resources/">Resources</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/selinux-debugging-on-chromeos/">SELinux Debugging on ChromeOS</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/single-stepping-the-kernels-c-code/">Single-stepping the kernel&#39;s C code</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/srcu-state-double-scan/">SRCU state double scan</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/understanding-hazard-pointers/">Understanding Hazard Pointers</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>About Me</h1>
+  <p>A little something about me.</p>
+</section>
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2025 - Joel Fernandes -
+  <span class="credit">Powered by <a href="https://gohugo.io">Hugo</a></span>
+</p></footer>
+  
+</body>
+</html>

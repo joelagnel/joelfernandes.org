@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+
+
+<html class="no-js" lang="en">
+<head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8">
+  <title>Making Sense of Scheduler Deadlocks in RCU - JoelFernandes.org</title>
+  <meta name="author" content="Joel Fernandes">
+
+  
+  <meta name="description" content="Note: At the time of this writing, it is kernel v5.3 release. RCU moves fast and can change in the future, so some details in this article may be …">
+
+  
+  <meta name="HandheldFriendly" content="True">
+  <meta name="MobileOptimized" content="320">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="canonical" href="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/">
+  <link href="/favicon.png" rel="icon">
+  <link href="/stylesheets/screen.css" media="screen, projection" rel="stylesheet" type="text/css">
+  <script src="/javascripts/modernizr-2.0.js"></script>
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script>!window.jQuery && document.write(unescape('%3Cscript src="\/javascripts\/libs\/jquery.min.js"%3E%3C/script%3E'))</script>
+  <script src="/javascripts/octopress.js" type="text/javascript"></script>
+  
+  
+</head>
+<body   >
+  <header role="banner"><div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="/">JoelFernandes.org</a></h1>
+  
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ 
+ <a href="/categories/">Blog posts by category.</a><br>
+ <a href="/blog/archives/">Archive of all blog posts.</a><br>
+ <a href="/resources/">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="/images/peng.png" height=100 width=100>
+</div>
+</div></header>
+
+  <div id="main">
+    <div id="content">
+      
+<div>
+<article class="hentry" role="article">
+  
+  <header>
+    
+      <h1 class="entry-title">Making sense of scheduler deadlocks in RCU</h1>
+    
+    
+      <p class="meta">
+        
+        
+           | <a href="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/#disqus_thread"
+             data-disqus-identifier="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/">Comments</a>
+        
+      </p>
+    
+  </header>
+
+
+<div class="entry-content"><p>Note: At the time of this writing, it is kernel v5.3 release. RCU moves fast
+and can change in the future, so some details in this article may be obsolete.</p>
+<p>The RCU subsystem and the task scheduler are inter-dependent. They both depend
+on each other to function correctly. The scheduler has many data structures
+that are protected by RCU. And, RCU may need to wake up threads to perform
+things like completing grace periods and callback execution. One such case
+where RCU does a wake up and enters the scheduler is
+<code>rcu_read_unlock_special()</code>.</p>
+<p>Recently Paul McKenney consolidated RCU flavors. What does this mean?</p>
+<p>Consider the following code executing in CPU 0:</p>
+<pre tabindex="0"><code>preempt_disable();
+rcu_read_lock();
+rcu_read_unlock();
+preempt_enable();
+</code></pre><p>And, consider the following code executing in CPU 1:</p>
+<pre tabindex="0"><code>a = 1;
+synchronize_rcu();  // Assume synchronize_rcu
+                    // executes after CPU0&#39;s rcu_read_lock
+b = 2;
+</code></pre><p>CPU 0&rsquo;s execution path shows 2 flavors of RCU readers, one nested into another.
+The <code>preempt_{disable,enable}</code> pair is an <code>RCU-sched</code> flavor RCU reader
+section, while the <code>rcu_read_{lock,unlock}</code> pair is an <code>RCU-preempt</code> flavor RCU
+reader section.</p>
+<p>In older kernels (before v4.20), CPU 1&rsquo;s <code>synchronize_rcu()</code>  could return
+<em>after</em> CPU 0&rsquo;s <code>rcu_read_unlock()</code> but before CPU 0&rsquo;s <code>preempt_enable()</code>. This
+is because <code>synchronize_rcu()</code> only needs to wait for the &ldquo;RCU-preempt&rdquo; flavor
+of the RCU grace period to end.</p>
+<p>In newer kernels (v4.20 and above), the RCU-preempt and RCU-sched flavors have
+been consolidated. This means CPU 1&rsquo;s <code>synchronize_rcu()</code> is guaranteed to wait
+for both of CPU 1&rsquo;s <code>rcu_read_unlock()</code> and <code>preempt_enable()</code> to complete.</p>
+<p>Now, lets get a bit more detailed. That <code>rcu_read_unlock()</code> most likely does
+very little. However, there are cases where it needs to do more, by calling
+<code>rcu_read_unlock_special()</code>. One such case is if the reader section was
+preempted. A few more cases are:</p>
+<ul>
+<li>The RCU reader is blocking an expedited grace period, so it needed to report
+a quiescent state quickly.</li>
+<li>The RCU reader is blocking a grace period for too long (~100 jiffies on my
+system, that&rsquo;s the default but can be set with
+<code>rcutree.jiffies_till_sched_qs</code> parameter).</li>
+</ul>
+<p>In all these cases, the <code>rcu_read_unlock()</code> needs to do more work. However,
+care must be taken when calling <code>rcu_read_unlock()</code> from the scheduler, that&rsquo;s
+why this article on scheduler deadlocks.</p>
+<p>One of the reasons <code>rcu_read_unlock_special()</code> needs to call into the scheduler
+is priority de-boosting:  A task getting preempted in the middle of an RCU
+read-side critical section results in blocking the completion of the critical
+section and hence could prevent current and future grace periods from ending.
+So the priority of the RCU reader may need to be boosted so that it gets enough
+CPU time to make progress, and have the grace period end soon. But it also
+needs to be de-boosted after the reader section completes. This de-boosting
+happens by calling of the <code>rcu_read_unlock_special()</code> function in the outer
+most <code>rcu_read_unlock()</code>.</p>
+<p>What could go wrong with the scheduler using RCU? Let us see this in action.
+Consider the following piece of code executed in the scheduler:</p>
+<pre tabindex="0"><code>  reader()
+	{
+		rcu_read_lock();
+		do_something();     // Preemption happened
+                /* Preempted task got boosted */
+		task_rq_lock();     // Disables interrupts
+                rcu_read_unlock();  // Need to de-boost
+		task_rq_unlock();   // Re-enables interrupts
+	}
+</code></pre><p>Assume that the <code>rcu_read_unlock()</code> needs to de-boost the task&rsquo;s priority. This
+may cause it to enter the scheduler and cause a deadlock due to recursive
+locking of RQ/PI locks.</p>
+<p>Because of these kind of issues, there has traditionally been a rule that RCU
+usage in the scheduler must follow:</p>
+<pre tabindex="0"><code>“Thou shall not hold RQ/PI locks across an rcu_read_unlock() if thou not
+holding it or disabling IRQ across both both the rcu_read_lock() +
+rcu_read_unlock().”
+</code></pre><p>More on this rule can be read <a href="https://lwn.net/Articles/453002/">here as well</a>.</p>
+<p>Obviously, acquiring RQ/PI locks across the whole <code>rcu_read_lock()</code> and
+<code>rcu_read_unlock()</code> pair would resolve the above situation. Since preemption
+and interrupts are disabled across the whole <code>rcu_read_lock()</code> and
+<code>rcu_read_unlock()</code> pair; there is no question of task preemption.</p>
+<p>Anyway, the point is <code>rcu_read_unlock()</code> needs to be careful about scheduler
+wake-ups; either by avoiding calls to <code>rcu_read_unlock_special()</code> altogether
+(as is the case if interrupts are disabled across the entire RCU reader), or by
+detecting situations where a wake up is unsafe. Peter Ziljstra says there&rsquo;s no
+way to know when the scheduler uses RCU, so &ldquo;generic&rdquo; detection of the unsafe
+condition is a bit tricky.</p>
+<p>Now with RCU consolidation, the above situation actually improves. Even if the
+scheduler RQ/PI locks are not held across the whole read-side critical sectoin,
+but just across that of the <code>rcu_read_unlock()</code>, then that itself may be enough
+to prevent a scheduler deadlock. The reasoning is: during the
+<code>rcu_read_unlock()</code>, we cannot yet report a QS until the RQ/PI lock is itself
+released since the act of holding the lock itself means preemption is disabled
+and that would cause a QS deferral. As a result, the act of priority
+de-boosting would also be deferred and prevent a possible scheduler deadlock.</p>
+<p>However, RCU consolidation introduces even newer scenarios where the
+<code>rcu_read_unlock()</code>  has to enter the scheduler, if the &ldquo;scheduler rules&rdquo; above
+is not honored, as explained below:</p>
+<p>Consider the previous code example. Now also assume that the RCU reader is
+blocking an expedited RCU grace period. That is just a fancy term for a grace
+period that needs to end fast. These grace periods have to complete much more
+quickly than normal grace period. An expedited grace period causes currently
+running RCU reader sections to receive IPIs that <a href="https://github.com/joelagnel/linux-kernel/blob/rcu/rcu-check-unsafe-scheduler-use-2/kernel/rcu/tree_exp.h#L641">set a
+hint</a>.
+Setting of this hint results in the outermost <code>rcu_read_unlock()</code> calling
+<code>rcu_read_unlock_special()</code>, which otherwise would not occur.
+When <code>rcu_read_unlock_special()</code> gets called in this scenario, it tries to get
+more aggressive once it <a href="https://github.com/joelagnel/linux-kernel/blob/rcu/rcu-check-unsafe-scheduler-use-2/kernel/rcu/tree_plugin.h#L627">notices
+that</a>
+the reader has blocked an expedited RCU grace period. In particular, it
+<a href="https://github.com/joelagnel/linux-kernel/blob/rcu/rcu-check-unsafe-scheduler-use-2/kernel/rcu/tree_plugin.h#L620">notices that preemption is
+disabled</a>
+and so the grace period cannot end due to RCU consolidation. Out of
+desperation, it raises a softirq (<code>raise_softirq()</code>) in the hope that the next
+time the softirq runs, the grace period could be ended quickly before the
+scheduler tick occurs. But that can cause a scheduler deadlock by way of entry
+into the scheduler due to a ksoftirqd-wakeup.</p>
+<p>The cure for this problem is the same, holding the RQ/PI locks across the
+entire reader section results in no question of a scheduler related deadlock
+due to recursively acquiring of these locks; because there would be no question
+of expedited-grace-period IPIs, hence no question of setting of any hints, and
+hence no question of calling <code>rcu_read_unlock_special()</code> from scheduler code.
+For a twist of the IPI problem, see <a href="#special-note">special note</a>.</p>
+<p>However, the RCU consolidation throws yet another curve ball. Paul McKenney
+<a href="https://lore.kernel.org/lkml/20190627173831.GW26519@linux.ibm.com/">explained on
+LKML</a> that
+there is yet another situation now due to RCU consolidation that can cause
+scheduler deadlocks.</p>
+<p>Consider the following code, where <code>previous_reader()</code> and <code>current_reader()</code>
+execute in quick succession in the context of the same task:</p>
+<pre tabindex="0"><code>       previous_reader()
+	{
+		rcu_read_lock();
+		do_something();      // Preemption or IPI happened
+		local_irq_disable(); // Cannot be the scheduler
+		do_something_else();
+		rcu_read_unlock();  // As IRQs are off, defer QS report
+                                    //but set deferred_qs bit in 
+                                    //rcu_read_unlock_special
+		do_some_other_thing();
+		local_irq_enable();
+	}
+
+        // QS from previous_reader() is still deferred.
+	current_reader() 
+	{
+		local_irq_disable();  // Might be the scheduler.
+		do_whatever();
+		rcu_read_lock();
+		do_whatever_else();
+		rcu_read_unlock();    // Must still defer reporting QS
+		do_whatever_comes_to_mind();
+		local_irq_enable();
+	}
+</code></pre><p>Here <code>previous_reader()</code> had a preemption; even though the <code>current_reader()</code>
+did not - but the <code>current_reader()</code> still needs to call
+<code>rcu_read_unlock_special()</code> from the scheduler!  This situation would not
+happen in the pre-consolidated-RCU world because <code>previous_reader()</code>&rsquo;s
+<code>rcu_read_unlock()</code> would have taken care of it.</p>
+<p>As you can see, just following the scheduler rule of disabling interrupts
+across the entire reader section does not help. To detect the above scenario; a
+new bitfield  <code>deferred_qs</code> has been
+<a href="https://lore.kernel.org/patchwork/patch/1057344/">added</a> to the
+<code>task_struct::rcu_read_unlock_special</code> union. Now what happens is, at
+<code>rcu_read_unlock()</code>-time, the <code>previous reader()</code> sets this bit, and the
+<code>current_reader()</code> checks this bit. If set, the call to <code>raise_softirq()</code> is
+avoided thus eliminating the possibility of a scheduler deadlock.</p>
+<p>Hopefully no other scheduler deadlock issue is lurking!</p>
+<p>Coming back to the scheduler rule, I have been running overnight rcutorture
+tests to detect if this rule is ever violated. Here is the <a href="https://github.com/joelagnel/linux-kernel/commits/rcu/rcu-check-unsafe-scheduler-use-2">test
+patch</a>
+checking for the unsafe condition. So far I have not seen this condition occur
+which is a good sign.</p>
+<h2 id="for-mainline-is-worth-it-thankfully-lpc-2019-is-right-around-the-corner--">I may need to check with Paul McKenney about whether proposing this checking
+for mainline is worth it. Thankfully, LPC 2019 is right around the corner! ;-)</h2>
+<h4 id="special-note">Special Note</h4>
+<p>[1] The expedited IPI interrupting an RCU reader has a variation. For an
+example see below where the IPI was not received, but we still have a problem
+because the <code>-&gt;need_qs</code> bit in the <code>rcu_read_unlock_special union</code> got set even
+though the expedited grace period started after IRQs were disabled. The start
+of the expedited grace period would set the <code>rnp-&gt;expmask</code> bit for the CPU. In
+the unlock path, because the <code>-&gt;need_qs</code> bit is set, it will call
+<code>rcu_read_unlock_special()</code> and risk a deadlock by way of a <code>ksoftirqd</code> wakeup
+because <code>exp</code> in that function is true.</p>
+<pre tabindex="0"><code>CPU 0                         CPU 1
+preempt_disable();
+rcu_read_lock();
+
+// do something real long
+
+// Scheduler-tick sets
+// -&gt;need_qs as reader is
+// held for too long.
+
+local_irq_disable();
+                              // Expedited GP started
+// Exp IPI not received
+// because IRQs are off.
+
+local_irq_enable();
+
+// Here rcu_read_unlock will
+// still call ..._special()
+// as -&gt;need_qs got set.
+rcu_read_unlock();
+
+preempt_enable();
+</code></pre><p>The fix for this issue is the same as described earlier, disabling interrupts
+across both <code>rcu_read_lock()</code> and <code>rcu_read_unlock()</code> in the scheduler path.</p>
+</div>
+
+  <footer>
+    <p class="meta">
+      
+<span class="byline author vcard">Posted by <span class="fn">Joel Fernandes</span></span>
+      
+      <div class="post-categories">
+  
+    
+      
+      <a href="/categories/#rcu">rcu</a>
+      &nbsp;
+      
+      <a href="/categories/#scheduler">scheduler</a>
+      &nbsp;
+      
+      <a href="/categories/#locking">locking</a>
+      &nbsp;
+      
+    
+  
+</div>
+    </p>
+    
+      <div class="sharing">
+  
+  
+  
+</div>
+    
+    <p class="meta">
+      
+        <a class="basic-alignment left" href="http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/" title="Previous Post: Modeling (lack of) store ordering using PlusCal - and a wishlist">&laquo; Modeling (lack of) store ordering using PlusCal - and a wishlist</a>
+      
+      
+        <a class="basic-alignment right" href="http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/" title="Next Post: GUS (Global Unbounded Sequences)">GUS (Global Unbounded Sequences) &raquo;</a>
+      
+    </p>
+  </footer>
+</article>
+
+  <section>
+    <h1>Comments</h1>
+    <div id="disqus_thread" aria-live="polite"><noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript></div>
+  </section>
+
+</div>
+
+<aside class="sidebar">
+  <section>
+  <h1>Recent Posts</h1>
+  <ul id="recent_posts">
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2023/06/25/svm-and-vectors-for-the-curious/">SVM and vectors for the curious</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/12/22/dumping-user-and-kernel-stacks-on-kernel-events/">Dumping User and Kernel stacks on Kernel events</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2018/02/10/usdt-for-reliable-userspace-event-tracing/">USDT for reliable Userspace event tracing</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/12/31/armv8-flamegraph-and-nmi-support/">ARMv8: flamegraph and NMI support</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/06/18/ftrace-events-mechanism/">Ftrace events mechanism</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2016/03/20/tif_need_resched-why-is-it-needed/">TIF_NEED_RESCHED: why is it needed</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2015/12/25/tying-2-voltage-sources/signals-together/">Tying 2 voltage sources/signals together</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/06/04/microsd-card-remote-switch/">MicroSD card remote switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/05/07/linux-spinlock-internals/">Linux Spinlock Internals</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/24/studying-cache-line-sharing-effects-on-smp-systems/">Studying cache-line sharing effects on SMP systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/2014/04/22/design-of-fork-followed-by-exec-in-linux/">Design of fork followed by exec in Linux</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/"></a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/bpfd-running-bcc-tools-remotely-across-systems/">BPFd- Running BCC tools remotely across systems</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/c-rvalue-references/">C&#43;&#43; rvalue references</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/categories/">Categories</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/joel/">false</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/figuring-out-herd7-memory-models/">Figuring out herd7 memory models</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/getting-youcompleteme-working-for-kernel-development/">Getting YouCompleteMe working for kernel development</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/gus-global-unbounded-sequences/">GUS (Global Unbounded Sequences)</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/archives/">List of articles</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/making-sense-of-scheduler-deadlocks-in-rcu/">Making sense of scheduler deadlocks in RCU</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/modeling-lack-of-store-ordering-using-pluscal-and-a-wishlist/">Modeling (lack of) store ordering using PlusCal - and a wishlist</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/on-workings-of-hrtimers-slack-time-functionality/">On workings of hrtimer&#39;s slack time functionality</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/powerpc-stack-guard-false-positives-in-linux-kernel/">PowerPC stack guard false positives in Linux kernel</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-and-dynticks-idle-mode/">RCU and dynticks-idle mode</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/rcu-preempt-what-happens-on-a-context-switch/">RCU-preempt: What happens on a context switch</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/resources/">Resources</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/selinux-debugging-on-chromeos/">SELinux Debugging on ChromeOS</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/single-stepping-the-kernels-c-code/">Single-stepping the kernel&#39;s C code</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/srcu-state-double-scan/">SRCU state double scan</a>
+      </li>
+    
+      <li class="post">
+        <a href="http://localhost:1313/blog/1/01/01/understanding-hazard-pointers/">Understanding Hazard Pointers</a>
+      </li>
+    
+  </ul>
+</section>
+<section>
+  <h1>About Me</h1>
+  <p>A little something about me.</p>
+</section>
+</aside>
+
+
+    </div>
+  </div>
+  <footer role="contentinfo"><p>
+  Copyright &copy; 2025 - Joel Fernandes -
+  <span class="credit">Powered by <a href="https://gohugo.io">Hugo</a></span>
+</p></footer>
+  
+</body>
+</html>

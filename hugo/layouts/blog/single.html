@@ -1,0 +1,22 @@
+{{ define "main" }}
+<div>
+<article role="article">
+  <header>
+    <h1 class="entry-title">{{ .Title }}</h1>
+  </header>
+  <div id="blog-archives">
+  {{ $currentYear := "" }}
+  {{ range site.RegularPages.ByDate.Reverse }}
+  {{ $year := .Date.Format "2006" }}
+  {{ if ne $currentYear $year }}
+    {{ $currentYear = $year }}
+    <h2>{{ $year }}</h2>
+  {{ end }}
+  <article>
+    {{ partial "archive_post.html" . }}
+  </article>
+  {{ end }}
+  </div>
+</article>
+</div>
+{{ end }}

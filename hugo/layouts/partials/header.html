@@ -1,0 +1,24 @@
+<div>
+<div style="margin-right:50px;float:left;">
+  <h1><a href="{{ "/" | relURL }}">{{ site.Title }}</a></h1>
+  {{ with site.Params.subtitle }}
+  <!--
+    1/29/2023:
+    Changed from h2 to h6 to accomodate longer subtitle.
+  -->
+    <h6>{{ . }}</h6>
+  {{ end }}
+</div>
+<div style="float:left;" class="hnav">
+ <br>
+ <!--
+   a href="/linuxinternals/">Linux Internals Articles</a><br>
+ !-->
+ <a href="{{ "categories/" | relURL }}">Blog posts by category.</a><br>
+ <a href="{{ "blog/archives/" | relURL }}">Archive of all blog posts.</a><br>
+ <a href="{{ "resources/" | relURL }}">Presentations and other work.</a><br>
+</div>
+<div style="float:right;">
+<img src="{{ "images/peng.png" | relURL }}" height=100 width=100>
+</div>
+</div>
