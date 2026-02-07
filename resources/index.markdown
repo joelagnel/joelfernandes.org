@@ -4,6 +4,14 @@ sharing: true
 published: true
 ---
 ## Conference Presentations
+- DRM and Nova GPU Driver Update (with Danilo Krummrich). (Kangrejos / Rust for
+  Linux Workshop, September 2025, Copenhagen).
+  [slides](/resources/kangrejos2025-nova-gpu-driver.pdf)
+
+- Rust for Linux Pain Points. (Kangrejos / Rust for Linux Workshop, September
+  2025, Copenhagen).
+  [slides](/resources/kangrejos2025-rust-pain-points.pdf)
+
 - Make RCU do less to save power (Lazy RCU). (Linux Plumbers Conference,
   September 2023). [link](/resources/lpc2022-rcu-do-less.pdf)
 
