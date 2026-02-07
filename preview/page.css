@@ -186,6 +186,11 @@ li {
 	padding-bottom: 3px;
 }
 
+ul {
+	padding-left: 20px;
+	margin-left: 0;
+}
+
 li.recent {
 	padding-bottom: 0px;
 	line-height: 1.4em;

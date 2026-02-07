@@ -6,16 +6,7 @@ body {
 	font-size: 14.5px;
 }
 
-li {
-	margin-bottom: 0.3em;
-}
-
-ol li, ul li {
-	margin-bottom: 0.3em;
-}
-
 .site {
-		background-color: #ffffff;
 	//text-align: justify;
         max-width: 740px;
         background-color: #ffffff;
@@ -123,7 +114,6 @@ div.navf {
 }
 
 div.site {
-		background-color: #ffffff;
 	z-index:2;
 }
 
@@ -391,25 +381,7 @@ a:visited { color: #a0a; }
 	pre.ten {
 		font-size: 10px;
 	}
-}
-
-/* Tighter list padding on mobile */
-@media only screen and (max-device-width: 960px) {
-	ul {
-		padding-left: 20px;
-		margin-left: 0;
-	}
-	ol {
-		padding-left: 20px;
-		margin-left: 0;
-	}
-}
-
-/* Full-width code blocks on mobile */
-@media only screen and (max-device-width: 960px) {
-	pre {
-		margin-left: 0;
-		margin-right: 0;
-		width: 100%;
+	li {
+		margin-bottom: 0.05em;
 	}
 }
