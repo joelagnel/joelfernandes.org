@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>SELinux Debugging on ChromeOS - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/bio.html">Bio</a><br>
+<a href="/linuxperf.html">Linux Perf</a><br>
+<a href="/rcu.html">RCU</a><br>
+<a href="/tracing.html">Tracing</a><br>
+<a href="/schedulers.html">Schedulers</a><br>
+<a href="/memory-ordering.html">Memory Ordering</a><br>
+<a href="/gpu.html">GPU Drivers</a><br>
+<a href="/resources/">Talks</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/joel/">Resume</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+<li class="recent">2022-12-15 &raquo;<br><a href="/blog/2022-12-15/modeling-condition-variables.html">Modeling Condition Variables using Formal Methods</a></li>
+
+
+
+
+
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+
+
+
+
+
+<li class="recent">2020-10-25 &raquo;<br><a href="/blog/2020-10-25/cpp-ref.html">C++ rvalue references</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<p class="navhdr">Recent personal:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/test-post.html">Test Post</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<p><a href="/">All posts</a><br>
+<a href="/bio.html">About</a><br>
+<a href="/feed.xml">RSS</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">SELinux Debugging on ChromeOS</h1>
+<p class="meta">10 Jun 2023</p>
+
+<div class="post">
+<p>Not being an SELinux expert but having to deal with it from time-to-time, I find it may be productive to write some debugging notes. So this post is about an issue that I fixed just this morning.</p>
+
+<h2 id="issue-runtime-labeled-pseudo-files-are-not-getting-labelled">Issue: Runtime labeled pseudo-files are not getting labelled</h2>
+
+<p>On ChromeOS, there are Android-specific policies which are combined with the ChromeOS ones. For someone who tries to stay away from SELinux, this is pretty much voodoo.</p>
+
+<p>Let me start with the last issue. I had to label a procfs file added by a test kernel patch which I am developed. This procfs would then be toggled by ChromeOS’s experiment system to enable the feature and collect data. The procfs file was called <code class="language-plaintext highlighter-rouge">/proc/sys/kernel/timer_highres</code>.</p>
+
+<p>ChromeOS’s SELinux policies live in a repository at <code class="language-plaintext highlighter-rouge">src/platform2/sepolicy</code> as of this writing. In this repo, there is a file named<code class="language-plaintext highlighter-rouge">genfs_contexts</code> which contains <code class="language-plaintext highlighter-rouge">genfscon</code> rules.</p>
+
+<p><code class="language-plaintext highlighter-rouge">genfscon</code> is used to dynamically generate security contexts for pseudo-filesystems such as <code class="language-plaintext highlighter-rouge">procfs</code>. This is documented more in the <a href="https://selinuxproject.org/page/FileStatements#File_System_Labeling_Statements">docs here</a>.</p>
+
+<p>The main issue here was I was making changes to the wrong <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file to begin with. That’s easy to do when there are 2 of them. But here’s how I found out that my changes were not getting through to the device:</p>
+
+<ol>
+  <li>Make <a href="https://chromium-review.googlesource.com/c/chromiumos/platform2/+/4568967/1/sepolicy/policy/base/genfs_contexts">the change</a> to <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file to label the proc node I am interested in.</li>
+  <li>After building and installing the <code class="language-plaintext highlighter-rouge">platform-base/selinux-policy</code> ChromeOS package, inspect the device.</li>
+  <li>Where to inspect? Read the <a href="https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/third_party/chromiumos-overlay/chromeos-base/selinux-policy/selinux-policy-9999.ebuild;l=312?q=selinux-policy%20ebuild">eBuild file sources</a> which is what builds that package. From this I figured that the <code class="language-plaintext highlighter-rouge">genfs_contexts</code> was being compiled into a binary located at <code class="language-plaintext highlighter-rouge">/etc/selinux/arc/policy.30</code>. I am still not sure what the numeric suffix means, but it does not matter.</li>
+  <li>Next, use <code class="language-plaintext highlighter-rouge">grep</code> to scan this binary for <code class="language-plaintext highlighter-rouge">timer_highres</code>, I found that the <code class="language-plaintext highlighter-rouge">grep</code> brought back nothing. Confirming that my change had no effect.</li>
+  <li>Hmm, what if the string was actually some weird encoding and <code class="language-plaintext highlighter-rouge">grep</code> could not find it? After all, I know nothing about that binary file’s format.
+    <ol>
+      <li>So copy policy binary file and confirm with <code class="language-plaintext highlighter-rouge">seinfo</code> command on a regular Linux machine:</li>
+      <li>First <code class="language-plaintext highlighter-rouge">scp</code> the <code class="language-plaintext highlighter-rouge">policy.30</code> file from the device.</li>
+      <li>Then on regular Linux, run: <code class="language-plaintext highlighter-rouge">seinfo --genfscon=proc policy.30 | less</code>.</li>
+      <li>Look for the <code class="language-plaintext highlighter-rouge">genfscon</code> line for <code class="language-plaintext highlighter-rouge">timer_highres</code> in the output.</li>
+    </ol>
+  </li>
+  <li><a href="https://chromium-review.googlesource.com/c/chromiumos/platform2/+/4606196">Modify</a> the correct <code class="language-plaintext highlighter-rouge">genfs_contexts</code> file and repeat.</li>
+  <li>Use <code class="language-plaintext highlighter-rouge">ls -lZ</code> to confirm that the procfs file is now correctly labeled.</li>
+</ol>
+
+<h2 id="conclusions-and-lessons-learnt">Conclusions and Lessons Learnt</h2>
+
+<ol>
+  <li>Trial and error approach to debugging is OK, but always make sure your changes are being reflected on what is on the device, otherwise you’ll waste a lot of time.</li>
+  <li>Once a theory is validated, example: “<code class="language-plaintext highlighter-rouge">genfscon</code> rule did not get updated”, then stop with step #1, and focus on digging deeper into the validated theory which we know is de-facto correct.</li>
+  <li>Read the build source files to get a better understanding of how your code changes result in the artifacts. That’s how I learnt the <code class="language-plaintext highlighter-rouge">genfscon</code> rule I was adding was getting compiled into the <code class="language-plaintext highlighter-rouge">policy.30</code> file.</li>
+  <li>Document the issue like in this blog post, and also in the source file being changed so that others don’t run into the issue in the future.</li>
+</ol>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>

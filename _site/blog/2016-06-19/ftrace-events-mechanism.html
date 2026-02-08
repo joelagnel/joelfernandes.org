@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Ftrace events mechanism - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/bio.html">Bio</a><br>
+<a href="/linuxperf.html">Linux Perf</a><br>
+<a href="/rcu.html">RCU</a><br>
+<a href="/tracing.html">Tracing</a><br>
+<a href="/schedulers.html">Schedulers</a><br>
+<a href="/memory-ordering.html">Memory Ordering</a><br>
+<a href="/gpu.html">GPU Drivers</a><br>
+<a href="/resources/">Talks</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/joel/">Resume</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+<li class="recent">2022-12-15 &raquo;<br><a href="/blog/2022-12-15/modeling-condition-variables.html">Modeling Condition Variables using Formal Methods</a></li>
+
+
+
+
+
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+
+
+
+
+
+<li class="recent">2020-10-25 &raquo;<br><a href="/blog/2020-10-25/cpp-ref.html">C++ rvalue references</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<p class="navhdr">Recent personal:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/test-post.html">Test Post</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<p><a href="/">All posts</a><br>
+<a href="/bio.html">About</a><br>
+<a href="/feed.xml">RSS</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Ftrace events mechanism</h1>
+<p class="meta">19 Jun 2016</p>
+
+<div class="post">
+<p>Ftrace events are a mechanism that allows different pieces of code in the kernel to ‘broadcast’ events of interest. Such as a scheduler context-switch <code class="language-plaintext highlighter-rouge">sched_switch</code> for example. In the scheduler core’s <code class="language-plaintext highlighter-rouge">__schedule</code> function, you’ll see something like: <code class="language-plaintext highlighter-rouge">trace_sched_switch(preempt, prev, next);</code>
+This immediately results in a write to a per-cpu ring buffer storing info about what the previous task was, what the next one is, and whether the switch is happening as a result of kernel preemption (versus happening for other reasons such as a task waiting for I/O completion).</p>
+
+<p>Under the hood, these ftrace events are actually implemented using tracepoints. The terms events are tracepoints appear to be used interchangeably, but it appears one could use a trace point if desired without having to do anything with ftrace. Events on the other hand use ftrace.</p>
+
+<p>Let’s discuss a bit about how a tracepoint works. Tracepoints are hooks that are inserted into points of code of interest and call a certain function of your choice (also known as a function probe). Inorder for the tracepoint to do anything, you have to register a function using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code>. Multiple functions can be registered in a single hook. Once your tracepoint is hit, all functions registered to the tracepoint are executed. Also note that if no function is registered to the tracepoint, then the tracepoint is essentially a NOP with zero-overhead. Actually that’s a lie, there is a branch (and some space) overhead only although negligible.</p>
+
+<p>Here is the heart of the code that executes when a tracepoint is hit:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DECLARE_TRACE(name, proto, args, cond, data_proto, data_args) \
+        extern struct tracepoint __tracepoint_##name;                   \
+        static inline void trace_##name(proto)                          \
+        {                                                               \
+                if (static_key_false(&amp;__tracepoint_##name.key))         \
+                        __DO_TRACE(&amp;__tracepoint_##name,                \
+                                TP_PROTO(data_proto),                   \
+                                TP_ARGS(data_args),                     \
+                                TP_CONDITION(cond),,);                  \
+                if (IS_ENABLED(CONFIG_LOCKDEP) &amp;&amp; (cond)) {             \
+                        rcu_read_lock_sched_notrace();                  \
+                        rcu_dereference_sched(__tracepoint_##name.funcs);\
+                        rcu_read_unlock_sched_notrace();                \
+                }                                                       \
+        }                                                   
+</code></pre></div></div>
+<p>The <code class="language-plaintext highlighter-rouge">static_key_false</code> in the above code will evaluate to false if there’s no probe registered to the tracepoint.</p>
+
+<p>Digging further, <code class="language-plaintext highlighter-rouge">__DO_TRACE</code> does the following in <code class="language-plaintext highlighter-rouge">include/linux/tracepoint.h</code></p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#define __DO_TRACE(tp, proto, args, cond, prercu, postrcu)              \
+        do {                                                            \
+                struct tracepoint_func *it_func_ptr;                    \
+                void *it_func;                                          \
+                void *__data;                                           \
+                                                                        \
+                if (!(cond))                                            \
+                        return;                                         \
+                prercu;                                                 \
+                rcu_read_lock_sched_notrace();                          \
+                it_func_ptr = rcu_dereference_sched((tp)-&gt;funcs);       \
+                if (it_func_ptr) {                                      \
+                        do {                                            \
+                                it_func = (it_func_ptr)-&gt;func;          \
+                                __data = (it_func_ptr)-&gt;data;           \
+                                ((void(*)(proto))(it_func))(args);      \
+                        } while ((++it_func_ptr)-&gt;func);                \
+                }                                                       \
+                rcu_read_unlock_sched_notrace();                        \
+                postrcu;                                                \
+        } while (0)
+</code></pre></div></div>
+<p>There’s a lot going on there, but main part is the loop that goes through all function pointers (probes) that were registered to the tracepoint and calls them one after the other.</p>
+
+<p>Now, here’s some secrets. Since all ftrace events are tracepoints under the hood, you can piggy back onto interesting events in your kernel with your own probes. This allows you to write interesting tracers. Infact this is precisely how blktrace works, and also is how SystemTap hooks into ftrace events.
+<a href="https://github.com/joelagnel/joel-snips/blob/master/k-patches/cpuhists.diff">Checkout a module I wrote</a> that hooks onto <code class="language-plaintext highlighter-rouge">sched_switch</code> to build some histograms. The code there is still buggy but if you mess with it and improve it please share your work.</p>
+
+<p>Now that we know a good amount about tracepoints, ftrace events are easy.</p>
+
+<p>An ftrace event being based on tracepoints, makes full use of it but it has to do more. Ofcourse, it has to write events out to the ring buffer.
+When you enable an ftrace event using debug-fs, at that instant the ftrace events framework registers an “event probe” function at the tracepoint that represents the event. How? Using <code class="language-plaintext highlighter-rouge">tracepoint_probe_register</code> just as we discussed.</p>
+
+<p>The code for this is in the file <code class="language-plaintext highlighter-rouge">kernel/trace/trace_events.c</code> in function <code class="language-plaintext highlighter-rouge">trace_event_reg</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int trace_event_reg(struct trace_event_call *call,
+                    enum trace_reg type, void *data)
+{
+        struct trace_event_file *file = data;
+
+        WARN_ON(!(call-&gt;flags &amp; TRACE_EVENT_FL_TRACEPOINT));
+        switch (type) {
+        case TRACE_REG_REGISTER:
+                return tracepoint_probe_register(call-&gt;tp,
+                                                 call-&gt;class-&gt;probe,
+                                                 file);
+...
+</code></pre></div></div>
+<p>The probe function <code class="language-plaintext highlighter-rouge">call-&gt;class-&gt;probe</code> for trace events is defined in the file <code class="language-plaintext highlighter-rouge">include/trace/trace_events.h</code> and does the job of writing to the ring buffer. In a nutshell, the code gets a handle into the ring buffer, does assignment of the values to the entry structure and writes it out. There is some magic going on here to accomodate arbitrary number of arguments but I am yet to figure that out.</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>static notrace void                                                     \
+trace_event_raw_event_##call(void *__data, proto)                       \
+{                                                                       \
+        struct trace_event_file *trace_file = __data;                   \
+        struct trace_event_data_offsets_##call __maybe_unused __data_offsets;\
+        struct trace_event_buffer fbuffer;                              \
+        struct trace_event_raw_##call *entry;                           \
+        int __data_size;                                                \
+                                                                        \
+        if (trace_trigger_soft_disabled(trace_file))                    \
+                return;                                                 \
+                                                                        \
+        __data_size = trace_event_get_offsets_##call(&amp;__data_offsets, args); \
+                                                                        \
+        entry = trace_event_buffer_reserve(&amp;fbuffer, trace_file,        \
+                                 sizeof(*entry) + __data_size);         \
+                                                                        \
+        if (!entry)                                                     \
+                return;                                                 \
+                                                                        \
+        tstruct                                                         \
+                                                                        \
+        { assign; }                                                     \
+                                                                        \
+        trace_event_buffer_commit(&amp;fbuffer);                            \
+}
+</code></pre></div></div>
+<p>Let me know any comments you have or any other ftrace event behavior you’d like explained.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
