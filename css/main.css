@@ -174,7 +174,7 @@ pre {
 	font-family: Courier, "Courier New", mono;
 	font-size: 12px;
 	color: #000000;
-	background-color: #eeeeff;
+	background-color: #e8f4fc;
 	padding: 8px 16px 8px 8px;
 	margin-left: 20px;
 	border: #000000;
@@ -369,7 +369,7 @@ a:visited { color: #a0a; }
 		overflow-x: auto;
 		font-size: 12px;
 		line-height: 1.6em;
-		background-color: #eeeeff;
+		background-color: #e8f4fc;
 		max-width: 98%;
 		white-space: pre-wrap;
 		word-wrap: break-word;
