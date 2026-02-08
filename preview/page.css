@@ -279,8 +279,8 @@ iframe.sitenav {
 		width: 100%;
 	}
 	li {
-		/* a touch more padding needed */
-		padding-top: 15px;
+		/* minimal padding on mobile */
+		padding-top: 2px;
 	}
 	div.recent,
 	div.nav {
