@@ -176,10 +176,10 @@ pre {
 	color: #000000;
 	background-color: transparent !important;
 	padding: 8px 16px 8px 8px;
-	margin-left: 0;
-	margin-right: 0;
+	margin-left: 0 !important;
+	margin-right: 0 !important;
 	border: none !important;
-	display: block;
+	display: block !important;
 	width: 100% !important;
 	box-sizing: border-box;
 	margin-top: 0px;
