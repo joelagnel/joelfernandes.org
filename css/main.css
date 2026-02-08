@@ -178,9 +178,7 @@ pre {
 	padding: 8px 16px 8px 8px;
 	margin-left: 0;
 	margin-right: 0;
-	border: #000000;
-	border-style: dashed;
-	border-width: 1px;
+	border: none;
 	display: block;
 	width: 100% !important;
 	box-sizing: border-box;
@@ -338,8 +336,10 @@ div.highlighter-rouge {
   width: 100% !important;
   max-width: none !important;
   box-sizing: border-box;
-  padding-left: 20px;
-  padding-right: 20px;
+  margin-left: 20px;
+  margin-right: 20px;
+  border: 1px dashed #000000;
+  background-color: #e8f4fc;
 }
 
 div.highlight, pre.highlight {
@@ -347,6 +347,7 @@ div.highlight, pre.highlight {
   width: 100% !important;
   max-width: none !important;
   box-sizing: border-box;
+  background-color: transparent;
 }
 
 /* @media only screen and (max-device-width: 480px) { */
