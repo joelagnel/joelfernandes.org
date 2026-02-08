@@ -181,9 +181,9 @@ table.p {
 
 li {
 /* was 2021	text-align: justify; */
-	margin: 0 10px 0 0;
-	padding: 1px 0;
-	line-height: 1.3em;
+	margin: 0;
+	padding: 0;
+	line-height: 1.2em;
 }
 
 ul {
