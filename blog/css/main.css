@@ -177,16 +177,16 @@ pre {
 	background-color: #e8f4fc;
 	padding: 8px 16px 8px 8px;
 	margin-left: 20px;
+	margin-right: 20px;
 	border: #000000;
 	border-style: dashed;
 	border-width: 1px;
 	display: block;
-	width: calc(100% - 40px);
+	box-sizing: border-box;
 	margin-top: 0px;
 	margin-bottom: 0px;
 	line-height: 1.0em;
 	overflow-x: auto;
-	max-width: 680px;
 }
 
 pre.narrow {
@@ -334,7 +334,8 @@ pre code, .highlight code {
 /* Make code block wrappers full-width */
 div.highlighter-rouge, div.highlight {
   display: block !important;
-  max-width: 680px;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* @media only screen and (max-device-width: 480px) { */
