@@ -180,11 +180,11 @@ pre {
 	border: #000000;
 	border-style: dashed;
 	border-width: 1px;
-	display: inline-block;
+	display: block;
 	margin-top: 0px;
 	margin-bottom: 0px;
 	line-height: 1.0em;
-	overflow-x: scroll;
+	overflow-x: auto;
 	max-width: 680px;
 }
 
