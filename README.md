@@ -1,75 +1,72 @@
-# joelfernandes.org
+# Joel Fernandes Website - Brendan Gregg Style
 
-Personal website for Joel Fernandes, built with Jekyll.
+A redesign of [joelfernandes.org](https://www.joelfernandes.org) using the exact same design as [Brendan Gregg's website](https://www.brendangregg.com).
 
-## Design Credits
+## Design
 
-This website's design is inspired by [Brendan Gregg's website](https://www.brendangregg.com/), who kindly allowed reuse of some design ideas. Brendan's design was in turn inspired by the [Nokia Bell Labs Dennis M. Ritchie memorial page](https://www.nokia.com/bell-labs/about/dennis-m-ritchie/).
+This site uses **Brendan Gregg's exact CSS** (`page.css`) and matching HTML structure:
 
-## Prerequisites
+- **Background:** Light pink (#ffe0e0)
+- **Layout:** Three columns (nav | content | sidebar)
+- **Fonts:** Garamond/Times serif body, Avant Garde/Helvetica headers
+- **Colors:** Blue links (#00a), purple visited (#a0a)
+- **Responsive:** Sidebars hide on narrow screens (<1050px)
 
-- Ruby (2.7+)
-- Bundler (`gem install bundler`)
-
-## Setup
-
-```bash
-# Install dependencies
-bundle install
-```
-
-## Local Development
+## Quick Start
 
 ```bash
-# Build and serve locally
-bundle exec jekyll serve --port 4000
+cd joelfernandes-brendangregg-style
 
-# Or just build without serving
-bundle exec jekyll build
+# Serve locally
+python3 -m http.server 4445 --bind 0.0.0.0
+
+# Visit http://localhost:4445
 ```
 
-The site will be available at http://localhost:4000
-
-## Deployment
-
-The site is hosted on GitHub Pages from the `gh-pages` branch.
-
-To deploy:
-
-```bash
-# Build the site
-bundle exec jekyll build
-
-# Copy _site contents to gh-pages branch root
-# (Keep CNAME file for custom domain)
-```
-
-## Directory Structure
-
-- `_posts/` - Blog posts in Markdown
-- `_layouts/` - Page templates
-- `_includes/` - Reusable HTML components
-- `_config.yml` - Jekyll configuration
-- `page.css` - Main stylesheet (Brendan Gregg-inspired)
-- `backup-old/` - Previous site version (Octopress/Hugo)
-
-## Adding a New Blog Post
-
-Create a new file in `_posts/` with the naming convention:
+## Structure
 
 ```
-YYYY-MM-DD-title-slug.md
+.
+├── page.css              # Brendan Gregg's exact CSS
+├── index.html            # Homepage
+├── bio.html              # Biography
+├── overview.html         # Start Here page
+├── blog/
+│   └── index.html        # Blog listing
+├── resources/
+│   ├── index.html        # Talks page
+│   └── *.pdf             # Slide PDFs
+├── joel/
+│   ├── index.html        # Resume page
+│   └── joel-resume.pdf   # Resume PDF
+├── Images/
+│   └── joel_photo.jpg    # Profile photo
+├── linuxperf.html        # Linux Performance page
+├── rcu.html              # RCU page
+├── tracing.html          # Tracing page
+├── schedulers.html       # Schedulers page
+├── memory-ordering.html  # Memory Ordering page
+├── gpu.html              # GPU Drivers page
+├── books.html            # Books page
+└── sites.html            # Other Sites page
 ```
 
-With frontmatter:
+## Comparison
 
-```yaml
----
-layout: post
-title: "Your Post Title"
-date: YYYY-MM-DD
-categories: [category1, category2]
----
+| Feature | Brendan Gregg | Joel Fernandes |
+|---------|---------------|----------------|
+| Background | #ffe0e0 (pink) | #ffe0e0 (pink) |
+| Layout | 3-column | 3-column |
+| Left nav | Fixed, gray | Fixed, gray |
+| Right sidebar | Books + posts | Photo + posts |
+| Fonts | Garamond | Garamond |
+| Mobile | Responsive | Responsive |
 
-Your content here...
-```
+## Customization
+
+Replace `Images/joel_photo.jpg` with your actual photo.
+
+## Credits
+
+- Design: [Brendan Gregg](https://www.brendangregg.com)
+- Content: [Joel Fernandes](https://www.joelfernandes.org)

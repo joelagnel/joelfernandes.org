@@ -15,5 +15,6 @@ exclude:
   - Gemfile.lock
   - README.md
   - _reference
-  - backup-old
-  - hugo
+
+# Disqus comments
+disqus_short_name: linuxinternals1
