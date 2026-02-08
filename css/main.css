@@ -336,8 +336,8 @@ div.highlighter-rouge {
   width: 100% !important;
   max-width: none !important;
   box-sizing: border-box;
-  margin-left: 20px;
-  margin-right: 20px;
+  margin-left: 0;
+  margin-right: 0;
   border: 1px dashed #000000;
   background-color: #e8f4fc;
 }
