@@ -1,36 +1,17 @@
-# ----------------------- #
-#      Main Configs       #
-# ----------------------- #
+name: Joel Fernandes
+description: Linux Kernel Engineer at NVIDIA
+url: "http://joelfernandes.org"
+baseurl: ""
 
-url: http://www.linuxinternals.org
-title: JoelFernandes.org
-subtitle: "Age is of no importance unless you're a cheese -- Billie Burke"
-author: Joel Fernandes
-github_user: joelagnel
+permalink: /blog/:year-:month-:day/:title.html
 
-paginate: 1          # Posts per page on the blog index
-pagination_dir: blog  # Directory base for pagination URLs eg. /blog/page/2/
-recent_posts: 1000      # Posts in the sidebar Recent Posts section
-excerpt_link: "Read on &rarr;"  # "Continue reading" link text at the bottom of excerpted articles
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
 
-titlecase: true       # Converts page and post titles to titlecase
-
-plugins_dir: ['_plugins']
-
-# list each of the sidebar modules you want to include, in the order you want them to appear.
-# To add custom asides, create files in /source/_includes/custom/asides/ and add them to the list like 'custom/asides/custom_aside_name.html'
-default_asides: [asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
-# default_asides: [asides/recent_posts.html, asides/github.html, asides/delicious.html, asides/pinboard.html, asides/googleplus.html]
-
-simple_search: https://www.google.com/search
-description:
-
-# Default date format is "ordinal" (resulting in "July 22nd 2007")
-# You can customize the format as defined in
-# http://www.ruby-doc.org/core-1.9.2/Time.html#method-i-strftime
-# Additionally, %o will give you the ordinal representation of the day
-date_format: "ordinal"
-
-disqus_short_name: linuxinternals1
-disqus_show_comment_count: true
-plugins: [jekyll-paginate]
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - _reference

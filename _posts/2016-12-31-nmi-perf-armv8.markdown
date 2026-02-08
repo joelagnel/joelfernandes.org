@@ -14,7 +14,7 @@ Some great Linux kernel features that rely on NMI to work properly are:
 
 * Perf profiling and flamegraphs: To be able to profile code that runs in interrupt handlers, or in sections of code that disable interrupts, Perf relies on NMI support in the architecture. [flamegraphs](http://www.brendangregg.com/FlameGraphs/cpuflamegraphs.html) are a great visual representation of perf profile output. Below is a flamegraph I generated from perf profile output, that shows just what happens on an architecture like ARMv8 with missing NMI support. Perf is using maskable-interrupts on this platform for profiling:
 
-{% img /images/nmi/flamegraph.png %}
+![](/images/nmi/flamegraph.png)
 
 As you can see in the area of the flamegraph where the arrow is pointed, a large amount of time is spent in `_raw_spin_unlock_irqrestore`. It can baffle anyone looking at this data for the first time, and make them think that most of the time is spent in the unlock function. What's actually happenning is because perf is using a maskable interrupt in ARMv8 to do its profiling, any section of code that disables interrupts will not be see in the flamegraph (not be profiled). In other words perf is unable to peek into sections of code where interrupts are disabled. As a result, when interrupts are reenabled during the `_raw_spin_unlock_irqrestore`, the perf interrupt routine then kicks in and records the large number of samples that elapsed in the interrupt-disable section but falsely accounts it to the _raw_spin_unlock_restore function during which the perf interrupt got a chance to run. Hence the flamegraph anomaly. It is indeed quite sad that ARM still doesn't have a true NMI which perf would love to make use of.
 

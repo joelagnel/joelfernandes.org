@@ -1,16 +1,52 @@
-{% capture root_url %}{{ site.root | strip_slash }}{% endcapture %}
-{% include head.html %}
-<body {% if page.body_id %} id="{{ page.body_id }}" {% endif %} {% if page.sidebar == false %} class="no-sidebar" {% endif %} {% if page.sidebar == 'collapse' or site.sidebar == 'collapse' %} class="collapse-sidebar sidebar-footer" {% endif %}>
-  <header role="banner">{% include header.html %}</header>
-<!--
-  <nav role="navigation">{% include navigation.html %}</nav>
--->
-  <div id="main">
-    <div id="content">
-      {{ content | expand_urls: root_url }}
-    </div>
-  </div>
-  <footer role="contentinfo">{% include footer.html %}</footer>
-  {% include after_footer.html %}
+<!DOCTYPE html>
+<html>
+<head>
+<title>{{ page.title }} - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/bio.html">Bio</a><br>
+<a href="/linuxperf.html">Linux Perf</a><br>
+<a href="/rcu.html">RCU</a><br>
+<a href="/tracing.html">Tracing</a><br>
+<a href="/schedulers.html">Schedulers</a><br>
+<a href="/memory-ordering.html">Memory Ordering</a><br>
+<a href="/gpu.html">GPU Drivers</a><br>
+<a href="/resources/">Talks</a><br>
+<a href="/joel/">Resume</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent posts:</p>
+<ul>
+{% for post in site.posts limit:10 %}
+<li class="recent">{{ post.date | date: "%Y-%m-%d" }} &raquo;<br><a href="{{ post.url }}">{{ post.title }}</a></li>
+{% endfor %}
+</ul>
+<p><a href="/">All posts</a><br>
+<a href="/bio.html">About</a><br>
+<a href="/feed.xml">RSS</a></p>
+</div>
+
+<div class="site">
+{% unless page.url == "/" %}
+<p><a href="/">&laquo; Back to Home</a></p>
+{% endunless %}
+{{ content }}
+</div>
+
+</div>
+
 </body>
 </html>

@@ -11,11 +11,11 @@ The base board requires two [SparkFun MicroSD sniffers](https://www.sparkfun.com
 I also [wrote up](https://github.com/joelagnel/microsd-switch/blob/master/sw/switch.c) a `switch` program to control the switcher with libftdi. You just have to pass to it the FTDI's serial number and whether you want to switch to host-mode (for programming the card) or target-mode (for booting the programmed card).
 [Hardware design files](https://github.com/joelagnel/microsd-switch) are available under a CC-BY-NC-SA 3.0 license.
 
-Screencast{% youtube StpIihVQ7oM %}
+Screencast<iframe width="560" height="315" src="https://www.youtube.com/embed/StpIihVQ7oM" frameborder="0" allowfullscreen></iframe>
 
 Pictures
-{% img https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo5.jpg %}
-{% img https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo2.jpg %}
-{% img https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/front.png %}
+![](https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo5.jpg)
+![](https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo2.jpg)
+![](https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/front.png)
 
 Hope you enjoyed it, let me know what yout think in the comments:)

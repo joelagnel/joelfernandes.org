@@ -21,17 +21,17 @@ So I decided to flip this around, and have per-thread counters that were closely
 Below are the results of running the program on 3 different SMP systems (2 threads on 2 CPUs, sorry I don't have better multi-core hardware ATM):
 
 Effect of running on a reference ARM dual-core Cortex-A9 system:
-{% img /images/cache-sharing/a9-counts.jpeg %}
+![](/images/cache-sharing/a9-counts.jpeg)
 
 Notice the jump in through-put once the separation changes from 16 to 32 bytes. That gives us a good idea that the L1 cache line size on Cortex-A9 systems is 32 bytes (8 words). Something the author didn't know for sure in advance (I initially thought it was 64-bytes).
 
 Effect of running on a reference ARM dual-core Cortex-A15 system:
-{% img /images/cache-sharing/a15-counts.jpeg %}
+![](/images/cache-sharing/a15-counts.jpeg)
 
 L1 Cache-line size of Cortex A-15 is 64 bytes (8 words). Expected jump for a separation of 64 bytes.
 
 Effect of running on a x86-64 i7-3687U dual-core CPU:
-{% img /images/cache-sharing/x86-counts.jpeg %}.
+![](/images/cache-sharing/x86-counts.jpeg).
 
 L1 Cache-line size of this CPU is 64 bytes too (8 words). Expected jump for a separation of 64 bytes.
 
