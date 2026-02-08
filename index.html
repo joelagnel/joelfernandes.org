@@ -40,7 +40,19 @@ title: Joel Fernandes
 <p><a href="/categories.html">View posts by category</a></p>
 <ul>
 {% for post in site.posts %}
+{% unless post.categories contains "personal" %}
 <li><a href="{{ post.url }}">{{ post.title }}</a> <span style="color:#666">({{ post.date | date: "%Y-%m-%d" }})</span></li>
+{% endunless %}
+{% endfor %}
+</ul>
+
+<h2>Personal Posts</h2>
+<p><a href="/personal.html">View all personal posts</a></p>
+<ul>
+{% for post in site.posts %}
+{% if post.categories contains "personal" %}
+<li><a href="{{ post.url }}">{{ post.title }}</a> <span style="color:#666">({{ post.date | date: "%Y-%m-%d" }})</span></li>
+{% endif %}
 {% endfor %}
 </ul>
 

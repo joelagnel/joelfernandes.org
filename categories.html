@@ -10,12 +10,14 @@ title: Posts by Category
 
 {% assign categories = site.categories | sort %}
 {% for category in categories %}
+{% unless category[0] == "personal" %}
 <h2 id="{{ category[0] | slugify }}">{{ category[0] | capitalize }}</h2>
 <ul>
 {% for post in category[1] %}
 <li><a href="{{ post.url }}">{{ post.title }}</a> <span style="color:#666">({{ post.date | date: "%Y-%m-%d" }})</span></li>
 {% endfor %}
 </ul>
+{% endunless %}
 {% endfor %}
 
 </div>

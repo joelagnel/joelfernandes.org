@@ -24,16 +24,37 @@
 <a href="/memory-ordering.html">Memory Ordering</a><br>
 <a href="/gpu.html">GPU Drivers</a><br>
 <a href="/resources/">Talks</a><br>
+<a href="/personal.html">Personal Posts</a><br>
 <a href="/joel/">Resume</a><br>
 </div>
 
 <div class="recent">
 <p class="navhdr">Recent posts:</p>
 <ul>
-{% for post in site.posts limit:10 %}
+{% assign count = 0 %}
+{% for post in site.posts %}
+{% unless post.categories contains "personal" %}
+{% if count < 10 %}
 <li class="recent">{{ post.date | date: "%Y-%m-%d" }} &raquo;<br><a href="{{ post.url }}">{{ post.title }}</a></li>
+{% assign count = count | plus: 1 %}
+{% endif %}
+{% endunless %}
 {% endfor %}
 </ul>
+
+<p class="navhdr">Recent personal:</p>
+<ul>
+{% assign pcount = 0 %}
+{% for post in site.posts %}
+{% if post.categories contains "personal" %}
+{% if pcount < 5 %}
+<li class="recent">{{ post.date | date: "%Y-%m-%d" }} &raquo;<br><a href="{{ post.url }}">{{ post.title }}</a></li>
+{% assign pcount = pcount | plus: 1 %}
+{% endif %}
+{% endif %}
+{% endfor %}
+</ul>
+
 <p><a href="/">All posts</a><br>
 <a href="/bio.html">About</a><br>
 <a href="/feed.xml">RSS</a></p>
