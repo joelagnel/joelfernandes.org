@@ -11,6 +11,11 @@ kramdown:
   syntax_highlighter: rouge
 
 exclude:
+  - backup-old
+  - hugo
+  - README.md
+  - Gemfile
+  - Gemfile.lock
   - Gemfile
   - Gemfile.lock
   - README.md
