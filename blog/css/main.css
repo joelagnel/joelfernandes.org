@@ -176,13 +176,13 @@ pre {
 	color: #000000;
 	background-color: #e8f4fc;
 	padding: 8px 16px 8px 8px;
-	margin-left: 20px;
-	margin-right: 20px;
+	margin-left: 0;
+	margin-right: 0;
 	border: #000000;
 	border-style: dashed;
 	border-width: 1px;
 	display: block;
-	width: calc(100% - 40px) !important;
+	width: 100% !important;
 	box-sizing: border-box;
 	margin-top: 0px;
 	margin-bottom: 0px;
@@ -333,7 +333,16 @@ pre code, .highlight code {
 }
 
 /* Make code block wrappers full-width */
-div.highlighter-rouge, div.highlight, div.highlighter-rouge div.highlight, pre.highlight {
+div.highlighter-rouge {
+  display: block !important;
+  width: 100% !important;
+  max-width: none !important;
+  box-sizing: border-box;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+div.highlight, pre.highlight {
   display: block !important;
   width: 100% !important;
   max-width: none !important;
