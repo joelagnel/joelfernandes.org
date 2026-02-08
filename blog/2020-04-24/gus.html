@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Single-stepping the kernel's C code - Joel Fernandes</title>
+<title>GUS (Global Unbounded Sequences) - Joel Fernandes</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="author" content="Joel Fernandes">
 <meta name="viewport" content="width=device-width">
@@ -61,40 +61,65 @@
 
 <p><a href="/">&laquo; Back to Home</a></p>
 
-<h1 class="title">Single-stepping the kernel's C code</h1>
-<p class="meta">10 Jun 2018</p>
+<h1 class="title">GUS (Global Unbounded Sequences)</h1>
+<p class="meta">24 Apr 2020</p>
 
 <div class="post">
-<p>Recently, I have had to use the GNU debugger (gdb) connected to a Qemu instance
-of a RISC-V processor to step through some kernel code.</p>
+<p>GUS is a memory reclaim algorithm used in FreeBSD, similar to RCU. It is
+borrows concepts from Epoch and Parsec. A video of a presentation describing
+the integration of GUS with UMA (FreeBSD’s slab implementation) is here:
+https://www.youtube.com/watch?v=ZXUIFj4nRjk</p>
 
-<p>Turns out that the Linux kernel is compiled with gcc <code class="language-plaintext highlighter-rouge">-O2</code> flag for
-optimizations it needs during the build. This causes several problems for a
-debugger.  One of them is that the gdb command <code class="language-plaintext highlighter-rouge">info registers</code> will show
-values as <code class="language-plaintext highlighter-rouge">&lt;optimized out&gt;</code>. Another issue is that single-stepping will make
-the debugger appear to jump back and forth across lines of code as code is
-stepped through with <code class="language-plaintext highlighter-rouge">next</code> or <code class="language-plaintext highlighter-rouge">step</code> gdb commands.</p>
+<p>The best description of GUS is in the FreeBSD code
+<a href="http://bxr.su/FreeBSD/sys/kern/subr_smr.c#44">itself</a>. It is based on the
+concept of global write clock, with readers catching up to writers.</p>
 
-<p>To circumvent this issue, I ended up with a hack that works well. I don’t claim
-this is recommended or correct, but it makes it through the build and gdb works
-fine. In my debugging, I have wanted to single-step through scheduler code in
-the <code class="language-plaintext highlighter-rouge">__schedule</code> kernel function. For this purpose, all I have to do is add the
-following to <code class="language-plaintext highlighter-rouge">kernel/sched/Makefile</code>.</p>
-<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CFLAGS_REMOVE_core.o := -O2
-CFLAGS_core.o := -O0
-</code></pre></div></div>
-<p>This works brilliantly! What do you think? Let me know in the comments.</p>
+<p>Effectively, I see GUS as an implementation of light traveling from distant
+stars. When a photon leaves a star, it is no longer needed by the star and is
+ready to be reclaimed. However, on earth we can’t see the photon yet, we can
+only see what we’ve been shown so far, and in a way, if we’ve not seen
+something because enough “time” has not passed, then we may not reclaim it yet.
+If we’ve not seen something, we will see it at some point in the future. Till
+then we need to sit tight.</p>
 
-<p>Some more tips:</p>
-<ul>
-  <li><code class="language-plaintext highlighter-rouge">CONFIG_DEBUG_INFO</code> is needed to ensure kernel has debug symbols for gdb to
-load, and ofcourse <code class="language-plaintext highlighter-rouge">CONFIG_DEBUG_KERNEL</code>.</li>
-  <li><code class="language-plaintext highlighter-rouge">CONFIG_FRAME_POINTER</code> should be enabled to ensure stack unwinding,
-backtraces work correctly.</li>
-  <li><code class="language-plaintext highlighter-rouge">CONFIG_GDB_SCRIPTS</code> is a bunch of useful gdb scripts automatically load when a
-vmlinux is gdb’d.</li>
-</ul>
+<p>Roughly, an implementation has 2+N counters (with N CPUs):</p>
+<ol>
+  <li>Global write sequence.</li>
+  <li>Global read sequence.</li>
+  <li>Per-cpu read sequence (read from #1 when a reader starts)</li>
+</ol>
 
+<p>On freeing, the object is tagged with the write sequence. Only once global read
+sequence has caught up with global write sequence, the object is freed. Until
+then, the free’ing is deferred. The <code class="language-plaintext highlighter-rouge">poll()</code> operation updates #2 by referring
+to #3 of all CPUs.  Whatever was tagged between the old read sequence and new
+read sequence can be freed. This is similar to <code class="language-plaintext highlighter-rouge">synchronize_rcu()</code> in the Linux
+kernel which waits for all readers to have finished observing the object being
+reclaimed.</p>
+
+<p>Note the scalability drawbacks of this reclaim scheme:</p>
+
+<ol>
+  <li>
+    <p>Expensive poll operation if you have 1000s of CPUs.  (Note: Parsec uses a
+tree-based mechanism to improve the situation which GUS could consider)</p>
+  </li>
+  <li>
+    <p>Heavy-weight memory barriers are needed (SRCU has a similar drawback) to
+ensure ordering properties of reader sections with respect to poll() operation.</p>
+  </li>
+  <li>
+    <p>There can be a delay between reading the global write-sequence number and
+writing it into the per-cpu read-sequence number. This can cause the per-cpu
+read-sequence to advance past the global write-sequence. Special handling is
+needed.</p>
+  </li>
+</ol>
+
+<p>One advantage of the scheme could be implementation simplicity.</p>
+
+<p>RCU (not SRCU or Userspace RCU) doesn’t suffer from these drawbacks.
+Reader-sections in Linux kernel RCU are extremely scalable and lightweight.</p>
 
 </div>
 
@@ -106,8 +131,8 @@ vmlinux is gdb’d.</li>
 <div id="disqus_thread"></div>
 <script type="text/javascript">
     var disqus_shortname = 'linuxinternals1';
-    var disqus_identifier = '/blog/2018-06-10/kernel-gdb.html';
-    var disqus_url = 'http://joelfernandes.org/blog/2018-06-10/kernel-gdb.html';
+    var disqus_identifier = '/blog/2020-04-24/gus.html';
+    var disqus_url = 'http://joelfernandes.org/blog/2020-04-24/gus.html';
     
     (function() {
         var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
