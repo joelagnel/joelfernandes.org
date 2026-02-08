@@ -332,9 +332,10 @@ pre code, .highlight code {
 }
 
 /* Make code block wrappers full-width */
-div.highlighter-rouge, div.highlight {
+div.highlighter-rouge, div.highlight, div.highlighter-rouge div.highlight, pre.highlight {
   display: block !important;
-  width: 100%;
+  width: 100% !important;
+  max-width: none !important;
   box-sizing: border-box;
 }
 
