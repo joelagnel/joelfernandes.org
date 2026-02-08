@@ -1,0 +1,19 @@
+---
+layout: default
+title: Technical Posts
+---
+<div class="header">
+<h1 class="title">Technical Posts</h1>
+</div>
+
+<div class="post">
+<p>Linux kernel, systems programming, and technical deep-dives.</p>
+
+<ul>
+{% for post in site.posts %}
+{% unless post.categories contains "personal" %}
+<li><a href="{{ post.url }}">{{ post.title }}</a> <span style="color:#666">({{ post.date | date: "%Y-%m-%d" }})</span></li>
+{% endunless %}
+{% endfor %}
+</ul>
+</div>
