@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>RCU and dynticks-idle mode - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/bio.html">Bio</a><br>
+<a href="/linuxperf.html">Linux Perf</a><br>
+<a href="/rcu.html">RCU</a><br>
+<a href="/tracing.html">Tracing</a><br>
+<a href="/schedulers.html">Schedulers</a><br>
+<a href="/memory-ordering.html">Memory Ordering</a><br>
+<a href="/gpu.html">GPU Drivers</a><br>
+<a href="/resources/">Talks</a><br>
+<a href="/joel/">Resume</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent posts:</p>
+<ul>
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+<li class="recent">2020-10-25 &raquo;<br><a href="/blog/2020-10-25/cpp-ref.html">C++ rvalue references</a></li>
+
+<li class="recent">2020-03-06 &raquo;<br><a href="/blog/2020-03-06/srcu-scan.html">SRCU state double scan</a></li>
+
+<li class="recent">2019-10-18 &raquo;<br><a href="/blog/2019-10-18/pluscal-store-ordering.html">Modeling (lack of) store ordering using PlusCal - and a wishlist</a></li>
+
+</ul>
+<p><a href="/">All posts</a><br>
+<a href="/bio.html">About</a><br>
+<a href="/feed.xml">RSS</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">RCU and dynticks-idle mode</h1>
+<p class="meta">15 Jun 2018</p>
+
+<div class="post">
+<p>Note 1: RCU is an extremely complex topic and I make no claims of accuracy,
+correctness and don’t make any claims that this document is to be used as a
+defacto reference for any purpose. You have been warned! For more accurate and
+standard references, I will refer you to the kernel RCU documentation.  Please
+consider this post as rough notes. That said, your corrections, and comments are
+welcomed.</p>
+
+<p>Note 2: The article is a WIP and not fully finished (thought it is almost).</p>
+
+<p>The kernel’s <code class="language-plaintext highlighter-rouge">dynticks-idle</code> mode is a mode of a CPU in which the CPU is idle
+and the scheduler clock tick has been turned off to save power and let the CPU
+to continue to be in lower power state for a long time. Also known as NO_HZ.</p>
+
+<p>A CPU in this mode presents some challenges to RCU. This is because an RCU
+grace period completion depends on RCU knowing that a CPU has transitioned
+through a quiescent state. When the CPU is idle but the scheduling clock tick
+is not turned off, RCU on that idle-but-ticking-CPU can simply report from the
+tick path that the CPU is in a quiescent state. However in dynticks-idle mode
+this isn’t possible, so something more clever is needed. The same complications
+arise due to the turning off of the tick in user mode (adaptive-ticks support).
+This article goes through the design of RCU from this perspective.</p>
+
+<p>For RCU’s purposes, the kernel maintains a per-cpu datastructure called
+<code class="language-plaintext highlighter-rouge">rcu_dynticks</code> which does this dynticks-idle state tracking.</p>
+
+<h2 id="extended-quiescent-state-eqs">Extended Quiescent State (EQS)</h2>
+<p>An extended quiescent state is defined as a processor state in which RCU
+considers the CPU as not something that is using RCU. This is also important
+for a more aggressive form of dynticks-idle code (CONFIG_NO_HZ_FULL) which not
+only turns off the tick in the idle path but also in userspace if there is no
+other need for the tick other than RCU (for example if only 1 task is running).</p>
+
+<p>By defining certain contexts as an EQS, RCU will work no matter how aggressive
+the dynticks-idle implementation.</p>
+
+<p>AFAICT, there are 2 EQS states: dynticks-idle and usermode. In both these states,
+the tick may be turned off and the CPU is considered to be in a quiescent state
+and RCU is considered “idle”.</p>
+
+<h2 id="entry-and-exit-into-an-eqs-due-to-transition-tofrom-non-idle-kernel-process-context">Entry and exit into an EQS due to transition to/from non-idle kernel process context</h2>
+<p>The <code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks_nesting</code> counter tracks entry and exit into an EQS due to
+transition from idle to process context or from usermode to process context.  A
+value of 0 indicates that the CPU in an EQS and a value of &gt; 0 indicates that
+it is not. A non-zero value also means we transitioned into the kernel’s
+non-idle process context.</p>
+
+<p>An EQS can also be exited due to interrupt or NMI entry, but this doesn’t
+really track that. We’ll talk about tracking those later.</p>
+
+<p>A note about dynticks counters: In general the dynticks counters track the
+number of reasons why we’re not in an EQS (that is RCU is not “idle”). For
+example, a value of zero thus means we ARE in an EQS. The
+<code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks_nesting</code> counter tracks the number of process-level (non-idle
+kernel process context)-level reasons why RCU is non-idle.</p>
+
+<p>When I traced <code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks_nesting</code>, I could only find its value to be
+either a 0 or a 1. However looking back at <a href="https://elixir.bootlin.com/linux/v3.19.8/source/kernel/rcu/rcu.h#L33">old kernel
+sources</a>,
+it appears that these can be nested becaues of so called “half-interrupts”. I
+believe these are basically interrupts that cause a transition to usermode due
+to usermode upcalls (usermode helper subsystem).
+So a nesting situation could be something like: 1. Transition from idle to
+process context which makes dynticks_nesting == 1. Next, an interrupt comes in
+which makes a usermode upcall. This usermode call now makes a system call
+causing entry back into process context, which increments the dynticks_nesting
+counter to 2. Such a crazy situation is perhaps possible.</p>
+
+<h2 id="another-way-some-paths-see-if-we-are-in-an-eqs-or-not">Another way some paths see if we are in an EQS or not</h2>
+<p>The <code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks</code> counter is used to track transitions to/from dyntick-idle
+mode. But it also can share light on whether we are in an EQS or not. If this
+counter is odd, it means we are NOT in an EQS and if its even, then we ARE.</p>
+
+<p>Note: since an EQS entry can happen even because of transition into usermode,
+this counter is not only incremented due to entry into dyntick-idle mode, but
+also due to transition into usermode. This is observed by seeing that an
+increment of this counter can also happen due to
+<code class="language-plaintext highlighter-rouge">rcu_user_enter</code>-&gt;<code class="language-plaintext highlighter-rouge">rcu_eqs_enter</code>-&gt;<code class="language-plaintext highlighter-rouge">rcu_dynticks_eqs_enter</code>.</p>
+
+<p>The following function checks this:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/*
+ * Is the current CPU in an extended quiescent state?
+ *
+ * No ordering, as we are sampling CPU-local information.
+ */
+bool rcu_dynticks_curr_cpu_in_eqs(void)
+{
+        struct rcu_dynticks *rdtp = this_cpu_ptr(&amp;rcu_dynticks);
+
+        return !(atomic_read(&amp;rdtp-&gt;dynticks) &amp; RCU_DYNTICK_CTRL_CTR);
+}
+
+</code></pre></div></div>
+<p>Any time the rdtp-&gt;dynticks counter’s second-lowest most bit is not set, we are
+in an EQS, and if its set, then we are not (second lowest because lowest is
+reserved for something else as of v4.18-rc1). This function is not useful to
+check if we’re in an EQS from a timer tick though, because its possible the
+timer tick interrupt entry caused an EQS exit which updated the counter. IOW,
+the ‘dynticks’ counter is not capable of checking if we had already exited the
+EQS before. To check if we were in an EQS or not from the timer tick, we
+instead must use <code class="language-plaintext highlighter-rouge">dynticks_nesting</code> counter. More on that later. The above
+function is probably just useful to make sure that interrupt entry/exit is
+properly updating the dynticks counter, and also to make sure from
+non-interrupt context that RCU is in an EQS (see <code class="language-plaintext highlighter-rouge">rcu_gp_fqs</code> function).</p>
+
+<h2 id="entry-and-exit-into-an-eqs-due-to-interrupts">Entry and exit into an EQS due to interrupts</h2>
+<p>Other than the  entry/exit into usermode or idle, interrupts and NMIs can cause
+the CPU to enter/exit a QS. Naturally, RCU needs to be “watching” as RCU
+read-side critical sections are permitted in interrupt handlers so an exit from
+an EQS for this purpose is a must. This is done by calls to
+<code class="language-plaintext highlighter-rouge">rcu_eqs_enter/exit</code> from <code class="language-plaintext highlighter-rouge">rcu_irq_exit/enter</code> respectively.</p>
+
+<p>The interrupt nesting level is also carefully tracked in
+<code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks_nmi_nesting</code> as of v4.18-rc1, and we’ll see later why this is
+needed (reporting of a QS from the timer tick) and complications due to nested
+NMIs (yes NMIs can nest!) that need to be handled. Both IRQ-nesting and
+NMI-nesting use the same <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> counter. More on this in the
+“Nested Interrupt Handling” section.</p>
+
+<p>With this knowledge in mind, lets discuss how a QS is reported from the tick
+path when the tick is infact not turned off.</p>
+
+<h2 id="how-are-qs-reported-from-the-timer-tick">How are QS reported from the timer tick</h2>
+<p>As for 4.18-rc1, the tick call graph which checks for QS is as follows:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tick_sched_timer-&gt;
+    tick_sched_handle-&gt;
+	update_process_times
+		rcu_check_callbacks
+</code></pre></div></div>
+<p>There are 3 variants of RCU (sched, bh and preempt). All these variants have
+different ways of detecting a QS. Lets only talk about the checks for the
+reporting of the sched RCU variant which is sufficient for the purposes of this
+article.</p>
+
+<p>For the sched RCU variant, we are in a QS if the CPU is either idle, or in
+usermode. This awfully sounds like the definition of an EQS. However, we can’t
+use dynticks eqs detection (<code class="language-plaintext highlighter-rouge">rcu_dynticks_curr_cpu_in_eqs</code> mentioned earlier in
+the article) because <code class="language-plaintext highlighter-rouge">rdtp-&gt;dynticks</code> is just a simple counter. Its has
+evenness when we’re in an EQS and oddity when we’re not. It tells us nothing
+about interrupt nesting. More on this in the below note.</p>
+
+<p>Note: The timer tick path is itself triggered through an interrupt, so we
+can’t rely on the <code class="language-plaintext highlighter-rouge">rcu_dynticks_curr_cpu_in_eqs</code> detection to tell us if we’re
+in a QS or not. Instead we rely on other methods. First of all
+<code class="language-plaintext highlighter-rouge">rcu_check_callbacks</code> is passed a user boolean parameter, which tells us if the
+callback checking (tick) happened during usermode execution. So if that’s the
+case, its easy, we simply report the CPU to in a QS for rcu-sched. But what are
+the other ways we could be in a QS? Just one more: If we were in the idle-loop
+at the time of the <code class="language-plaintext highlighter-rouge">rcu_check_callbacks</code> getting called, AND  we’re a 1st level
+interrupt that caused a call to rcu_check_callbacks. This first level is infact
+most likely the timer tick interrupt. The “first level nesting check” is
+important, because only the outer most interrupt that interrupted the idle loop
+should report the sched-QS. Any nested interrupts in the idle loop that cause
+<code class="language-plaintext highlighter-rouge">rcu_check_callbacks</code> to be called (I don’t know of any) should not report the
+QS again. This interrupt nesting level is determined by <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code>
+mentioned in earlier sections!</p>
+
+<p>Turns out that these above checks (user or interrupt-from-idle) are also
+worthwhile causes to report a bh and tasks RCU qs so we report them as such.</p>
+
+<h2 id="nested-interrupt-and-nmi-handling">Nested Interrupt and NMI Handling</h2>
+<p>During handling of nested interrupts, the <code class="language-plaintext highlighter-rouge">rcu-&gt;dynticks</code> counter which counts
+CPU transitions through dynticks-idle or user mode should correctly maintain
+the invariant: If its even, we’re in an EQS and if its odd, we’re not.</p>
+
+<p>A (naive) algorithm may do something like:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rcu_nmi_enter(void)
+{
+	if(dynticks_is_even())
+		dynticks++;
+
+	dynticks_nmi_nesting++;
+}
+
+void rcu_nmi_exit(void)
+{
+	if (dynticks_nmi_nesting != 1) {
+		dynticks_nmi_nesting--;
+		return;
+	}
+
+	dynticks_nmi_nesting = 0;
+	dynticks++;
+}
+</code></pre></div></div>
+
+<p>The problem with this algorithm is if you have an NMI come in while
+rcu_nmi_enter is running, bad things can happen. Specifically, the inner
+rcu_nmi_enter/exit pair, can result in premature exit from an EQS state.</p>
+
+<p>To see this let us take the case where an NMI comes in before dynticks is
+incremented in the outer rcu_nmi_enter. In this case nothing bad will happen.
+But say the NMI comes in after dynticks is incremented in the outer
+<code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> but before <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> is incremented. Then what will
+happen is:</p>
+
+<p>The steps would look like:</p>
+<ol>
+  <li>The outer rcu_nmi_enter will update dynticks to be odd.</li>
+  <li>An NMI comes in after dynticks is made odd by dynticks++, but before dynticks_nmi_nesting is updated.</li>
+  <li>The second <code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> comes in and it will leave <code class="language-plaintext highlighter-rouge">dynticks</code> alone but increase <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> to 1.</li>
+  <li>Now on the corresponding inner <code class="language-plaintext highlighter-rouge">rcu_nmi_exit</code>, it will notice
+  <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> is 1 so it will set it to 0.</li>
+  <li>Next it will wrongly increment <code class="language-plaintext highlighter-rouge">dynticks</code> messing it up completely. The
+inner rcu_nmi_exit is never supposed to exit EQS. Only the outer one is.</li>
+</ol>
+
+<p>The problem here is the inner <code class="language-plaintext highlighter-rouge">rcu_nmi_exit</code> increments the dynticks counter
+(thus marking the dynticks-idle mode as exited even though we’re still in the
+inner nested interrupt!) but there’s no way of knowing not to do that because
+the outer <code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> hasn’t incremented <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> yet!</p>
+
+<p>The desired behavior is, because the outer <code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> exited dynticks-idle
+mode (incremented dynticks to odd), only the outer <code class="language-plaintext highlighter-rouge">rcu_nmi_exit</code> should make
+it even (and mark an entry back into dynticks-idle mode).</p>
+
+<p>The fix is an algorithm like the following <a href="http://lkml.kernel.org/r/CALCETrXSY9JpW3uE6H8WYk81sg56qasA2aqmjMPsq5dOtzso=g@mail.gmail.com">proposed by Andy Luto</a> and <a href="https://lkml.kernel.org/r/20141122234157.GB5050@linux.vnet.ibm.com">formally written and verified by Paul</a>:</p>
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>void rcu_nmi_enter(void)
+{
+	int incby = 2;
+
+	if(dynticks_is_even()) {
+		incby = 1;
+		dynticks++;
+	}
+
+	dynticks_nmi_nesting += incby;
+}
+
+void rcu_nmi_exit(void)
+{
+	if (dynticks_nmi_nesting != 1) {
+		dynticks_nmi_nesting -= 2;
+		return;
+	}
+
+	dynticks_nmi_nesting = 0;
+	dynticks++;
+}
+</code></pre></div></div>
+
+<p>The GOOD steps would now be:</p>
+<ol>
+  <li>The outer rcu_nmi_enter will update dynticks to be odd and set local
+variable incby to 1.</li>
+  <li>An NMI comes in after dynticks is made odd by dynticks++, but before
+dynticks_nmi_nesting is increased by incby.</li>
+  <li>The second <code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> comes in and it will leave <code class="language-plaintext highlighter-rouge">dynticks</code> alone but
+increase <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> to 2 (incby is 2 if dynticks was left
+alone).</li>
+  <li>Now on the corresponding inner <code class="language-plaintext highlighter-rouge">rcu_nmi_exit</code>, it will notice
+<code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> is not 1, so it will set it decrease nmi_nesting to 0
+and return WITHOUT messing up the <code class="language-plaintext highlighter-rouge">dynticks</code> counter.</li>
+  <li>The outer <code class="language-plaintext highlighter-rouge">rcu_nmi_enter</code> now finally does increase <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code>
+by 1.</li>
+  <li>The outer <code class="language-plaintext highlighter-rouge">rcu_nmi_exit</code> will now set <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> to 0 and do the
+<code class="language-plaintext highlighter-rouge">dynticks++</code> causing an entry back into dynticks-idle mode.</li>
+</ol>
+
+<h2 id="handling-of-usermode-upcalls-from-interrupts">Handling of usermode upcalls from interrupts</h2>
+<p>RCU’s design tries to handle conditions where a usermode upcall was made from
+IRQ context, with the IRQ entry never being matched with an IRQ exit! These are
+so called “half interrupts”. Due to this, the rcu_nmi_nesting counter can go
+out sync because an rcu_irq_enter will not be paired properly with an
+rcu_irq_exit.</p>
+
+<p>This is the reason for a separate <code class="language-plaintext highlighter-rouge">dynticks_nmi_nesting</code> counter and a
+<code class="language-plaintext highlighter-rouge">dynticks_nesting</code> counter. Special “fixing up” of the dynticks_nmi_nesting is
+done to make sure this counter is sane. See next paragraphs on the fixup info.</p>
+
+<p>When dynticks_nesting is decremented to 0 (the outermost process-context
+nesting level exit causes an eqs-entry), the dynticks_nmi_nesting is reset to</p>
+<ol>
+  <li>This makes sense because we’re no longer in an NMI at this point.</li>
+</ol>
+
+<p>Similarly, when the dynticks_nesting is set to 1, we have entered a
+process-context and dynticks_nmi_nesting is set to a high value. This is also
+Ok because the dynticks_nmi_nesting serves no purpose (RCU has already exited
+the EQS state).</p>
+
+<h2 id="conclusion">Conclusion</h2>
+<p>RCU has to watch over what’s happening in the system carefully. This makes the
+subsystem complex and requires it to handle various weird usages such as
+half-interrupts and nested NMIs. The need to save power via dynticks-idle and
+adaptive-ticks modes further complicates RCU. Hopefully this article sheds some
+light on the foundation blocks of this dynticks RCU tracking which is the basis
+of things happening in other areas such as forcing of quiescent states (fqs).</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<div class="footer">
+<div class="contact">
+<p>Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
