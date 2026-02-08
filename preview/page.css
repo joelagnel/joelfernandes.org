@@ -181,14 +181,14 @@ table.p {
 
 li {
 /* was 2021	text-align: justify; */
-	margin-right: 10px;
+	margin: 0 10px 0 0;
+	padding: 1px 0;
 	line-height: 1.3em;
-	padding-bottom: 3px;
 }
 
 ul {
-	padding-left: 20px;
-	margin-left: 0;
+	padding-left: 15px;
+	margin: 5px 0;
 }
 
 li.recent {
