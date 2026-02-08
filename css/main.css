@@ -319,8 +319,15 @@ a:visited { color: #a0a; }
 
 .post code {
   border: 1px solid #ddd;
-  background-color: #eef;
+  background-color: #e8f4fc;
   padding: 0 .2em;
+}
+
+/* Override any code inside pre to have consistent background */
+pre code, .highlight code {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
 /* @media only screen and (max-device-width: 480px) { */
