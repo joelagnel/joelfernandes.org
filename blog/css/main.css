@@ -1,13 +1,12 @@
 body {
 	/* was 2021 background-color: #e0e0e0; */
-	background-color: #ffe0e0;
+	background-color: #2d3a4a;
 	/* was 2016 font: 16px Calibri, Helvetica, Arial, sans-serif; */
 	font-family: Avenir, Arial, Open Sans Light, sans-serif;
 	font-size: 14.5px;
 }
 
 .site {
-		background-color: #ffffff;
 	//text-align: justify;
         max-width: 740px;
         background-color: #ffffff;
@@ -115,7 +114,6 @@ div.navf {
 }
 
 div.site {
-		background-color: #ffffff;
 	z-index:2;
 }
 
@@ -176,7 +174,7 @@ pre {
 	font-family: Courier, "Courier New", mono;
 	font-size: 12px;
 	color: #000000;
-	background-color: #eeeeff;
+	background-color: #e8f4fc;
 	padding: 8px 16px 8px 8px;
 	margin-left: 20px;
 	border: #000000;
@@ -321,8 +319,15 @@ a:visited { color: #a0a; }
 
 .post code {
   border: 1px solid #ddd;
-  background-color: #eef;
+  background-color: #e8f4fc;
   padding: 0 .2em;
+}
+
+/* Override any code inside pre to have consistent background */
+pre code, .highlight code {
+  background-color: transparent !important;
+  border: none !important;
+  padding: 0 !important;
 }
 
 /* @media only screen and (max-device-width: 480px) { */
@@ -371,7 +376,7 @@ a:visited { color: #a0a; }
 		overflow-x: auto;
 		font-size: 12px;
 		line-height: 1.6em;
-		background-color: #eeeeff;
+		background-color: #e8f4fc;
 		max-width: 98%;
 		white-space: pre-wrap;
 		word-wrap: break-word;
@@ -382,5 +387,8 @@ a:visited { color: #a0a; }
 	}
 	pre.ten {
 		font-size: 10px;
+	}
+	li {
+		margin-bottom: 0.05em;
 	}
 }
