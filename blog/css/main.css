@@ -330,6 +330,12 @@ pre code, .highlight code {
   padding: 0 !important;
 }
 
+/* Make code block wrappers full-width */
+div.highlighter-rouge, div.highlight {
+  display: block !important;
+  max-width: 680px;
+}
+
 /* @media only screen and (max-device-width: 480px) { */
 @media only screen and (max-device-width: 960px) {
 	body {
