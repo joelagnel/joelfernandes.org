@@ -44,7 +44,7 @@ We hit up Din Tai Fung on Broadway for lunch - their famous soup dumplings did n
 
 **Dinner: Musaafer**
 
-For dinner, we hopped on the subway down to southern Manhattan for Musaafer, a beautifully designed Indian restaurant. I'm not a fan of taking Uber in New York - it's just easier to walk or take the subway, and way easier on the stomach too. The food was excellent and the interior had this stunning train-station-inspired aesthetic. Rachel really knocked it out of the park with this pick.
+For dinner, we hopped on the subway down to southern Manhattan for Musaafer, a beautifully designed Indian restaurant. I'm not a fan of taking Uber in New York - it's just easier to walk or take the subway, and way easier on the stomach too. The food was excellent and the interior had this stunning train-station design. Rachel really knocked it out of the park with this pick.
 
 <div style="display: flex; gap: 10px;">
   <img src="/images/personal/musaafer-nyc.jpg" style="width: 50%;" alt="Musaafer NYC">
