@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Modeling Condition Variables using Formal Methods - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+<li class="recent">2022-12-15 &raquo;<br><a href="/blog/2022-12-15/modeling-condition-variables.html">Modeling Condition Variables using Formal Methods</a></li>
+
+
+
+
+
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+
+
+
+
+
+<li class="recent">2020-10-25 &raquo;<br><a href="/blog/2020-10-25/cpp-ref.html">C++ rvalue references</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Modeling Condition Variables using Formal Methods</h1>
+<p class="meta">15 Dec 2022</p>
+
+<div class="post">
+<p>Condition variables can seldom be used in isolation and depend on proper usage from the users of it. This article is a gentle introduction to condition variable usage using TLA+ / PlusCal to formally model it: A parent and child process waiting on each other. During this, I actually discovered a bug in my understanding, causing a deadlock which I will share in the end.</p>
+
+<p>Note that you may need to refer to PlusCal and TLA+ documentation. There’s a ton of it written by people who know more than I. My interest is just as a practical user and this article does not explain PlusCal much. To be honest it is quite readable any way.</p>
+
+<p>First we start with a simple C program which we’ll model later, a parent waiting on its child after spawning it.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">volatile</span> <span class="kt">int</span> <span class="n">done</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+<span class="kt">void</span> <span class="o">*</span><span class="nf">child</span><span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span> <span class="o">*</span><span class="n">argv</span><span class="p">[])</span> <span class="p">{</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"parent: begin</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="n">pthread_t</span> <span class="n">c</span><span class="p">;</span>
+    <span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">child</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span> <span class="c1">// create child</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// spin</span>
+    <span class="n">printf</span><span class="p">(</span><span class="s">"parent: end</span><span class="se">\n</span><span class="s">"</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>This trivial program works but wastes a lot of CPU due to the spin loop, especially, say if the child runs for a long time. But it is useful to write a formal model which we’ll use as the basis for more advanced design.</p>
+
+<p>Following is the PlusCal program to verify this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(*--fair algorithm ThreadJoinSpin
+
+variables
+    \* Spin variable used by child to signal to parent that it finished running.
+    done = 0,
+
+    \* Simulate the parent forking the child.
+    childwait = 1,
+
+    \* The below variables are for checking invariants.
+    ChildAboutToExit = 0,
+    ParentDone = 0;
+
+define
+    \* The invariant that has to hold true always.
+    ExitChildBeforeParent == (ParentDone = 0) \/ ((ParentDone = 1) /\ (ChildAboutToExit = 1))
+end define;
+
+procedure thr_exit() begin
+texit: done := 1;
+ret2: return;
+end procedure;
+
+procedure thr_join() begin
+check: await done = 1;
+ret3: return;
+end procedure;
+
+process childproc \in {1} begin
+c0: await childwait = 0;
+    \* child does something for a long time.
+c1: ChildAboutToExit := 1;
+c2: call thr_exit();
+end process;
+
+process parent \in {2} begin
+c3: childwait := 0;
+c4: call thr_join();
+c5: ParentDone := 1;
+end process;
+</code></pre></div></div>
+
+<p>There are 2 things that I make the model verify,</p>
+<ol>
+  <li>That the ExitChildBeforeParent invariant is always satisified. This invariant confirms that under no circumstance will the parent process terminate before the child does. More precisely, the parent’s join returns only after the child calls thr_exit().</li>
+  <li>That the program terminates without going into a deadlock.</li>
+</ol>
+
+<p>Both of these are true with the trivial program. This gives us a foundation to replace thr_exit() and thr_join() with condition variables.</p>
+
+<p>Following is a first attempt, I am only adding the “new changes” to the above program model to keep the article short.</p>
+
+<p>Here is the first attempt at C program using CVs, that we will try to model check:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">thr_exit</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">Pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">thr_join</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">Pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">cv</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>And the PlusCal model is as follows. We add a new set waitSet to keep track of all the waiters on the CV. Along with 2 new functions cvwait and cvsignal to emulate pthread_cond_wait() and pthread_cond_signal() APIs:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>variables
+    waitSet = {};
+
+procedure cvwait(p) begin
+    c1: waitSet := waitSet \cup {p};
+    c2: await p \notin waitSet;
+    c4: return;
+end procedure;
+
+procedure cvsignal() begin
+    \* This if cond is needed because otherwise
+    \* the with statement waits forever if waitset is empty.
+    c5:
+    if waitSet = {} then
+        c7: return;
+    end if;
+
+    \* Non deterministically pick something to wake up.
+    c8: with x \in waitSet do
+        waitSet := waitSet \ {x};
+    end with;
+    c9: return;
+end procedure;
+
+procedure thr_exit() begin
+    c11: call cvsignal();
+    c13: return;
+end procedure;
+
+procedure thr_join(p) begin
+    c20: if done = 0 then
+        c21: call cvwait(p);
+    end if;
+    c23: return;
+end procedure;
+</code></pre></div></div>
+
+<p>It is notable how we model wait/wake by just adding and removing the process number from a set.
+The TLC model checker tells us this program deadlocks, why? Because thr_exit() can be run first and signal the CV. But there’s nothing waiting for it. The parent then calls thr_wait() and waits forever. Replacing the if with while also does not help. The problem is we need the child to signal only once there’s someone waiting.</p>
+
+<p>Seems like we need some synchronization to make sure the signal/wait don’t race with each other, let us add a lock.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">thr_exit</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">);</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">thr_join</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>To implement the lock in PlusCal, we can just do a simple test-and-set lock:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure lock() begin
+    cas: if mutex = 0 then
+        mutex := 1; return;
+    else
+        goto cas;
+    end if;
+end procedure;
+
+procedure unlock() begin
+    unlock_it: mutex := 0;
+    ret: return;
+end procedure;
+</code></pre></div></div>
+
+<p>Anything under a label in PlusCal is atomic and executed as one unit. This helps us to model a Compare-And-Swap operation pretty nicely.</p>
+
+<p>We also need to modify our CV signal/wait functions to be callable under a lock. In particular, we cannot wait on the CV with the lock held as we would then deadlock.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure cvwait(p) begin
+    c0: call unlock();
+    c1: waitSet := waitSet \cup {p};
+    c2: await p \notin waitSet;
+    c3: call lock();
+    c4: return;
+end procedure;
+
+procedure cvsignal() begin
+    \* This if cond is needed because otherwise
+    \* the with statement waits forever if waitset is empty.
+    c5:
+    if waitSet = {} then
+        c7: return;
+    end if;
+
+    \* Non deterministically pick something to wake up.
+    c8: with x \in waitSet do
+        waitSet := waitSet \ {x};
+    end with;
+    c9: return;
+end procedure;
+</code></pre></div></div>
+
+<p>Now armed with these modeled primitives, let us use them in our join/exit functions:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure thr_exit() begin
+    c10: call lock();
+    c11: call cvsignal();
+    c12: call unlock();
+    c13: return;
+end procedure;
+
+procedure thr_join(p) begin
+    c20: call lock();
+    c21: call cvwait(p);
+    c22: call unlock();
+    c23: return;
+end procedure;
+</code></pre></div></div>
+
+<p>The model checker again complaints of a deadlock! Though the signaling and wait cannot be happen at the same time, there is still the original problem of the parent running much later than the child even though exclusively, and then waiting on the CV forever. The parent should not wait if no waiting is needed. Looks like we need both the done state variable and the locking.</p>
+
+<p>Lets try to model this, the C program we will model uses both locking and CVs.</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">void</span> <span class="nf">thr_exit</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="n">done</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+    <span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">);</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="nf">thr_join</span><span class="p">()</span> <span class="p">{</span>
+    <span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">done</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">c</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">pthread_mutex_unlock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">m</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The PlusCal program now becomes:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure thr_exit() begin
+    c9: call lock();
+    c10: done := 1;
+    c11: call cvsignal();
+    c12: call unlock();
+    c13: return;
+end procedure;
+
+procedure thr_join(p) begin
+    c19: call lock();
+    c20: while done = 0 do
+        c21: call cvwait(p);
+    end while;
+    c22: call unlock();
+    c23: return;
+end procedure;
+</code></pre></div></div>
+
+<p>However, turns out the model checker fails even for this! After some staring, I discovered there is a bug in my condition variable implementation itself. The cvwait procedures needs a subtle change.</p>
+
+<p>The change is that, the process waiting (in this case the parent) has to be added to the waitqueue while the lock is being held. A slight reordering of c0 and c1 lines fix the cvwait(). With this the model now passes, by satisfying the invariant while not locking up:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure cvwait(p) begin
+    c1: waitSet := waitSet \cup {p};
+    c0: call unlock();
+    c2: await p \notin waitSet;
+    c3: call lock();
+    c4: return;
+end procedure;
+</code></pre></div></div>
+
+<p>Model checking can be a powerful tool to clarify understanding of simple primitives, that can have subtle bugs. While it has its limitations, quick model checking can identify and rule out bugs before they show up in the wild and clarify your understanding.</p>
+
+<p>As an exercise for the reader, replace the while in c20 with an if statement. You should see it fail as well.</p>
+
+<p>Model checking also shows that in thread_exit(), we only need to hold the lock when setting the done variable, though care must be taken to make sure that the waitSet can be concurrently queued and dequeued into. Otherwise holding the lock may still be needed. Assuming that queue and dequeue are atomic, thread_exit() can rewritten as:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>procedure thr_exit() begin
+    c9: call lock();
+    c10: done := 1;
+    c12: call unlock();
+    c11: call cvsignal();
+    c13: return;
+end procedure;
+</code></pre></div></div>
+
+<p>Note: A few examples of the C code were borrowed from the <a href="https://pages.cs.wisc.edu/~remzi/OSTEP/">Operating Systems: Three Easy Pieces text book</a>. I am grateful to them.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
