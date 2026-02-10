@@ -5,6 +5,11 @@ date: 2026-02-10
 categories: personal
 ---
 
+<style>
+.post img { max-width: 500px; height: auto; }
+.post .flex-gallery img { max-width: 100%; }
+</style>
+
 Rachel and I took a trip to New York City on February 1st to celebrate my 40th birthday. We stayed at The Times Square EDITION - right in the heart of the action.
 
 ## Getting There
