@@ -45,7 +45,8 @@ div.page {
 	z-index:2;
 }
 
-div.content {
+div.content,
+div.site {
 	background-color: #ffffff;
 	padding: 0px 10px 10px 10px;
 	/* was 2021
@@ -182,6 +183,16 @@ table.p {
 img {
 	max-width: 100%;
 	height: auto;
+	display: block;
+}
+
+div.site img,
+div.content img,
+div.post img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin-bottom: 5px;
 }
 
 li {
@@ -269,7 +280,8 @@ iframe.sitenav {
 @media only screen and (max-width: 768px) {
 	div.fullpage,
 	div.page,
-	div.content {
+	div.content,
+	div.site {
 		width: 100%;
 		max-width: 100%;
 		margin: 0;
@@ -315,5 +327,9 @@ iframe.sitenav {
 	img {
 		max-width: 100%;
 		height: auto;
+		display: block;
+	}
+	body {
+		overflow-x: hidden;
 	}
 }
