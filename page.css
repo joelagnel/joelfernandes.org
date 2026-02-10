@@ -45,7 +45,8 @@ div.page {
 	z-index:2;
 }
 
-div.content {
+div.content,
+div.site {
 	background-color: #ffffff;
 	padding: 0px 10px 10px 10px;
 	/* was 2021
@@ -179,6 +180,21 @@ table.p {
 	margin-left: 10px;
 }
 
+img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+}
+
+div.site img,
+div.content img,
+div.post img {
+	max-width: 100%;
+	height: auto;
+	display: block;
+	margin-bottom: 5px;
+}
+
 li {
 /* was 2021	text-align: justify; */
 	margin: 0;
@@ -261,28 +277,33 @@ iframe.sitenav {
 	background-color: #f0f0f0;
 }
 
-@media only screen and (max-device-width: 480px) {
-	div.content {
+@media only screen and (max-width: 768px) {
+	div.fullpage,
+	div.page,
+	div.content,
+	div.site {
 		width: 100%;
-		max-width: 99%;
+		max-width: 100%;
 		margin: 0;
+		padding: 0 10px;
+		box-sizing: border-box;
 	}
 	body {
 		/* was 2016, now leave to defaults font-family: Georgia, "Times New Roman", Times, serif; */
 		font-family: Garamond, "Times New Roman", Times, serif;
 		background-color: #ffffff;
 		/* was 2016 font-size: 150%; */
-		font-size: 80%;
+		font-size: 100%;
 	}
 	h1,h2,h3,h4 {
-		font-size: 160%;
+		font-size: 140%;
 		font-weight: 400;
 	}
 	pre {
-		/* was 2016: default */
-		font-size: 150%;
-		overflow: scroll;
+		font-size: 90%;
+		overflow-x: scroll;
 		width: 100%;
+		box-sizing: border-box;
 	}
 	li {
 		/* minimal padding on mobile */
@@ -303,5 +324,12 @@ iframe.sitenav {
 		background-color: #f0f0f0;
 		line-height: 1.4em;
 	}
-
+	img {
+		max-width: 100%;
+		height: auto;
+		display: block;
+	}
+	body {
+		overflow-x: hidden;
+	}
 }
