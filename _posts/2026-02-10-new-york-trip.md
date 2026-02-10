@@ -6,9 +6,8 @@ categories: personal
 ---
 
 <style>
-article img, .post img { max-width: 600px; width: 100%; height: auto; display: block; margin-bottom: 5px; }
-article p, .post p { clear: both; }
-article em, .post em { display: block; font-style: italic; margin-bottom: 15px; }
+.page img { max-width: 600px; height: auto; display: block; margin-bottom: 5px; }
+.page p img + br + em, .page p > em:only-child { display: block; }
 </style>
 
 Rachel and I took a trip to New York City on February 1st to celebrate my 40th birthday. We stayed at The Times Square EDITION - right in the heart of the action.
