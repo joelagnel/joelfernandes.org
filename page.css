@@ -179,6 +179,11 @@ table.p {
 	margin-left: 10px;
 }
 
+img {
+	max-width: 100%;
+	height: auto;
+}
+
 li {
 /* was 2021	text-align: justify; */
 	margin: 0;
