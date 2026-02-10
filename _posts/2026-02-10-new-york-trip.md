@@ -65,7 +65,7 @@ I'll be honest - I'm not really a fantasy or magic guy. That's more Rachel's thi
 The stunts were great too, and the story held up well on its own[^1]. You don't need to be a die-hard Potter fan to follow along or enjoy it.
 
 ![Cursed Child curtain call](/images/personal/cursed-child-bow.jpg)
-*The cast taking their final bow*
+*The cast taking their final bow - spot Tom Felton (the original Draco Malfoy from the films) near our front row seats!*
 
 If you're in NYC and looking for a show - even if fantasy isn't your thing - this one's worth it.
 
