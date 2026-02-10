@@ -179,11 +179,6 @@ table.p {
 	margin-left: 10px;
 }
 
-img {
-	max-width: 100%;
-	height: auto;
-}
-
 li {
 /* was 2021	text-align: justify; */
 	margin: 0;
@@ -266,32 +261,28 @@ iframe.sitenav {
 	background-color: #f0f0f0;
 }
 
-@media only screen and (max-width: 768px) {
-	div.fullpage,
-	div.page,
+@media only screen and (max-device-width: 480px) {
 	div.content {
 		width: 100%;
-		max-width: 100%;
+		max-width: 99%;
 		margin: 0;
-		padding: 0 10px;
-		box-sizing: border-box;
 	}
 	body {
 		/* was 2016, now leave to defaults font-family: Georgia, "Times New Roman", Times, serif; */
 		font-family: Garamond, "Times New Roman", Times, serif;
 		background-color: #ffffff;
 		/* was 2016 font-size: 150%; */
-		font-size: 100%;
+		font-size: 80%;
 	}
 	h1,h2,h3,h4 {
-		font-size: 140%;
+		font-size: 160%;
 		font-weight: 400;
 	}
 	pre {
-		font-size: 90%;
-		overflow-x: scroll;
+		/* was 2016: default */
+		font-size: 150%;
+		overflow: scroll;
 		width: 100%;
-		box-sizing: border-box;
 	}
 	li {
 		/* minimal padding on mobile */
@@ -312,8 +303,5 @@ iframe.sitenav {
 		background-color: #f0f0f0;
 		line-height: 1.4em;
 	}
-	img {
-		max-width: 100%;
-		height: auto;
-	}
+
 }
