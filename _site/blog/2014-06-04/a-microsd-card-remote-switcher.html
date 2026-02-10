@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>MicroSD card remote switch - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+<li class="recent">2022-12-15 &raquo;<br><a href="/blog/2022-12-15/modeling-condition-variables.html">Modeling Condition Variables using Formal Methods</a></li>
+
+
+
+
+
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+
+
+
+
+
+<li class="recent">2020-10-25 &raquo;<br><a href="/blog/2020-10-25/cpp-ref.html">C++ rvalue references</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/test-post.html">Test Post</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">MicroSD card remote switch</h1>
+<p class="meta">04 Jun 2014</p>
+
+<div class="post">
+<p>Recently, I’ve been wanting to remotely be able to program a MicroSD card with a new bootloader or filesystem <em>without</em> removing the card from its embedded target board (such as a Beaglebone or Pandaboard). Due to the lack of any such existing tools, I decided to design my own board. Finally have got it working, below are some pictures and a screencast demo video of the switcher in action! I sprinkled some power and status LED to show the user what’s going on.</p>
+
+<p>The base board requires two <a href="https://www.sparkfun.com/products/9419">SparkFun MicroSD sniffers</a>. The card cage on the sniffer is unused for my purposes. The switcher is controlled through an <a href="https://www.sparkfun.com/products/9717">FTDI cable</a>. 
+I also <a href="https://github.com/joelagnel/microsd-switch/blob/master/sw/switch.c">wrote up</a> a <code class="language-plaintext highlighter-rouge">switch</code> program to control the switcher with libftdi. You just have to pass to it the FTDI’s serial number and whether you want to switch to host-mode (for programming the card) or target-mode (for booting the programmed card).
+<a href="https://github.com/joelagnel/microsd-switch">Hardware design files</a> are available under a CC-BY-NC-SA 3.0 license.</p>
+
+<p>Screencast&lt;iframe width="560" height="315" src="https://www.youtube.com/embed/StpIihVQ7oM" frameborder="0" allowfullscreen&gt;&lt;/iframe&gt;</p>
+
+<p>Pictures
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo5.jpg" alt="" />
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/microsd-inaction/photo2.jpg" alt="" />
+<img src="https://raw.githubusercontent.com/joelagnel/microsd-switch/master/board-pics/front.png" alt="" /></p>
+
+<p>Hope you enjoyed it, let me know what yout think in the comments:)</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
