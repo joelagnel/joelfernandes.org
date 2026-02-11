@@ -8,7 +8,21 @@ draft: true
 
 The Artemis II mission is finally happening - humans are going back to the Moon for the first time since 1972. I'm genuinely excited about this, but I'd be lying if I said I wasn't a little nervous too. There's something about watching that massive rocket with actual people inside that makes my stomach churn.
 
-The launch date has been pushed to sometime in March 2026. Originally scheduled for early February, NASA encountered a liquid hydrogen leak during the "wet dress rehearsal" - a pre-launch test where they fully fuel the rocket. Specific launch windows include March 6-9 and March 11, with backup opportunities in April.
+The launch date has been pushed to sometime in March 2026. I'm holding a watch party at home and have had to keep canceling on my friends and moving the date - frustrating, but that's space for you. Originally scheduled for early February, NASA encountered a liquid hydrogen leak during the "wet dress rehearsal." This is a full countdown simulation where they actually fuel the rocket with cryogenic propellants (hence "wet") and run through all the pre-launch procedures, stopping just before engine ignition. Apollo had the same practice - they called it the "Countdown Demonstration Test" (CDDT). Apollo 11 did theirs in early July 1969, just weeks before launch. Specific launch windows now include March 6-9 and March 11, with backup opportunities in April.
+
+## How Big Is This Thing?
+
+![SLS at Launch Pad 39B](/images/artemis/sls-pad-scale.jpg)
+*The SLS rocket at Kennedy Space Center's Pad 39B. Look at the vehicles and structures at the base for scale. Credit: NASA*
+
+The SLS rocket stands 322 feet tall (98 meters). To put that in perspective for my fellow New Yorkers and recent visitors:
+
+- **Taller than the Statue of Liberty** - Lady Liberty from the ground to the torch is 305 feet. SLS has her beat by 17 feet.
+- **Taller than the Flatiron Building** - That iconic triangular building in Manhattan is 285 feet. The rocket would tower over it.
+- **Nearly a football field on its side** - A football field is 360 feet. Lay the SLS down and it almost reaches end to end.
+- **About 30 stories** - If it were an apartment building, you'd need a really good elevator.
+
+And this massive structure produces 8.8 million pounds of thrust at liftoff. For comparison, the Saturn V that took Apollo astronauts to the Moon produced 7.5 million pounds. We're strapping four people to the most powerful rocket NASA has ever launched for a crewed mission.
 
 ## Safety First - Why It Took So Long
 
@@ -36,7 +50,7 @@ The 44-foot-tall LAS uses three solid-rocket motors working in sequence:
 
 Unlike "pusher" designs where engines below the capsule push it away, Orion's LAS is a "puller" configuration. This design puts the abort motor farther from the crew and provides better aerodynamic stability during the most intense phases of launch.
 
-The system has been rigorously tested - the Pad Abort-1 test in 2010 demonstrated its ability to pull Orion away from the launch pad, and in 2019, the Ascent Abort-2 test validated performance during maximum atmospheric pressure conditions.
+The LAS is active from the moment the crew boards until about 3 minutes after launch, when Orion is safely through the most dangerous part of ascent. At that point, the jettison motor fires and the entire abort system is discarded - no point carrying 16,000 pounds of dead weight to the Moon. During Artemis I in 2022, the jettison worked perfectly (the abort motor was inert since no crew was aboard). The system has also been tested in 2010 (pad abort) and 2019 (ascent abort during flight conditions).
 
 ## What Are They Actually Doing?
 
