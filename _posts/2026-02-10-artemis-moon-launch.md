@@ -22,8 +22,11 @@ The Artemis program operates under a completely different philosophy. Every piec
 
 One of the most impressive safety features is the Launch Abort System (LAS) - that slender tower mounted above the crew module. If something goes wrong during launch, this thing can respond in milliseconds to pull the astronauts to safety.
 
-<!-- TODO: Add LAS image before publishing. Source: https://www.planetary.org/space-images/orion-launch-abort-system -->
-*[Image placeholder: The Orion spacecraft with Launch Abort System mounted on top. Credit: NASA]*
+![Orion with Launch Abort System](/images/artemis/orion-las-artemis2.jpg)
+*The Orion spacecraft with Launch Abort System being integrated for Artemis II. Credit: NASA/Frank Michaux*
+
+![LAS Infographic](/images/artemis/las-infographic.jpg)
+*How the Launch Abort System works. Credit: Lockheed Martin*
 
 The 44-foot-tall LAS uses three solid-rocket motors working in sequence:
 
