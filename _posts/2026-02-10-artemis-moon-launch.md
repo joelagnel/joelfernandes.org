@@ -12,13 +12,12 @@ The launch date has been pushed to sometime in March 2026. I'm holding a watch p
 
 ## How Big Is This Thing?
 
-![SLS at Launch Pad 39B](/images/artemis/sls-pad-scale.jpg)
-*The SLS rocket at Kennedy Space Center's Pad 39B. Look at the vehicles and structures at the base for scale. Credit: NASA*
+![SLS at Launch Pad 39B](/images/artemis/sls-pad-full.jpg)
+*Artemis II SLS rocket at Pad 39B with the full Snow Moon rising behind it, February 2026. Credit: NASA*
 
-The SLS rocket stands 322 feet tall (98 meters). To put that in perspective for my fellow New Yorkers and recent visitors:
+The SLS rocket stands 322 feet tall (98 meters). To put that in perspective:
 
 - **Taller than the Statue of Liberty** - Lady Liberty from the ground to the torch is 305 feet. SLS has her beat by 17 feet.
-- **Taller than the Flatiron Building** - That iconic triangular building in Manhattan is 285 feet. The rocket would tower over it.
 - **Nearly a football field on its side** - A football field is 360 feet. Lay the SLS down and it almost reaches end to end.
 - **About 30 stories** - If it were an apartment building, you'd need a really good elevator.
 
