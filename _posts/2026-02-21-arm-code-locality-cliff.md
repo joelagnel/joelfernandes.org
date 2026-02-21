@@ -156,7 +156,66 @@ This larger speculation window is also exactly why Spectre was so severe: the CP
 
 ---
 
-<!-- SECTION 5: FDIP — TO BE ADDED -->
+## Section 5: FDIP and When It Actually Works
+
+The FTQ gives us a window of future fetch addresses sitting in a queue before fetch has touched them. The **prefetch engine** exploits this — it looks ahead in the FTQ at entries the fetch unit hasn't consumed yet, and fires off I-cache prefetch requests for those future lines right now:
+
+```
+FTQ:  [X] ← fetch unit is here right now
+      [Y]
+      [Z]
+      [W] ← prefetch engine is here, fires: prefetch(W), prefetch(V), prefetch(U)
+      [V]
+      [U]
+      ...
+```
+
+By the time fetch drains down to [W], that line is already in L1I. This is **FDIP — Fetch-Directed Instruction Prefetching**. Unlike blindly prefetching the next sequential cache line, FDIP follows the predicted control flow — it prefetches what the program will actually execute, through branches and function calls.
+
+### The math: when does it actually hide latency?
+
+The key variable is **prefetch distance** — how many cycles ahead of fetch the prefetch engine is looking. If the FTQ has 32 entries and fetch consumes ~1 entry per cycle, the prefetch engine looking 20 entries ahead has about **20 cycles of lookahead**.
+
+For latency to be hidden, the prefetch must be issued far enough ahead that the line arrives before fetch needs it:
+
+```
+prefetch distance (cycles) > memory latency (cycles) → latency hidden ✓
+prefetch distance (cycles) < memory latency (cycles) → stall            ✗
+```
+
+Concrete numbers on Neoverse V2:
+
+| Memory level | Latency  | FTQ lookahead (32 entries) | Hidden? |
+|---|---|---|---|
+| L1I hit      | ~4 cy    | 20–32 cy                   | ✓ yes   |
+| L2 hit       | ~12 cy   | 20–32 cy                   | ✓ yes   |
+| LLC hit      | ~40 cy   | 20–32 cy                   | ⚠ maybe |
+| DRAM         | ~200 cy  | 20–32 cy                   | ✗ no    |
+
+FDIP reliably hides L2 latency. It can hide LLC latency if the FTQ is deep enough. It **cannot** hide DRAM latency — you would need 200 cycles of lookahead, which would mean a 200-entry FTQ. That's impractical in silicon.
+
+So FDIP's job is actually narrower than it sounds: keep the hot instruction working set in L2/LLC so that misses hit there, not DRAM. As long as that holds, the 20–32 cycle lookahead is enough.
+
+### When it breaks: miss spacing
+
+The other variable is **miss spacing** — how many cycles between consecutive I-cache misses. This matters because a new miss arriving before the previous prefetch has completed means stalls start stacking:
+
+```
+miss spacing > prefetch distance → each miss is prefetched in time ✓
+miss spacing < prefetch distance → misses arrive faster than FDIP can service them ✗
+```
+
+**Scenario A — tight loop, small working set (~1KB):**
+The hot loop fits in ~16 cache lines. After the first run, all lines are warm in L1I. Miss spacing is effectively infinite — the loop runs for millions of cycles between any eviction. FDIP barely needed; everything just hits.
+
+**Scenario B — hot code in 5 regions, medium scatter:**
+Functions are spread across 5 × 2MB regions. I-cache miss every ~50 cycles on average. FTQ lookahead is ~32 cycles. Miss spacing (50) > lookahead (32) — FDIP can issue each prefetch before the next miss arrives. L2 misses get hidden. You're ok.
+
+**Scenario C — hot code scattered across 30+ regions:**
+Now you have functions spread across many 2MB chunks. More unique cache lines in the working set, more frequent evictions. Miss every ~10 cycles. FTQ lookahead is still ~32 cycles — but the prefetch for entry [W] was issued for a DRAM-latency miss, which takes 200 cycles to return. Before it's back, 20 more misses have arrived. Prefetch requests pile up. The memory controller is saturated with instruction prefetches that are all taking 200 cycles. Fetch unit stalls waiting for lines. Pipeline starves.
+
+This is the cliff. It's not a single threshold — it's a gradual worsening as scatter increases, until the miss spacing drops far enough below the prefetch distance that FDIP completely loses the race against memory latency.
+
 <!-- SECTION 6: iTLB pressure and the cliff — TO BE ADDED -->
 <!-- SECTION 7: The CRT — TO BE ADDED -->
 <!-- SECTION 8: BOLT and code layout — TO BE ADDED -->
