@@ -216,7 +216,106 @@ Now you have functions spread across many 2MB chunks. More unique cache lines in
 
 This is the cliff. It's not a single threshold — it's a gradual worsening as scatter increases, until the miss spacing drops far enough below the prefetch distance that FDIP completely loses the race against memory latency.
 
-<!-- SECTION 6: iTLB pressure and the cliff — TO BE ADDED -->
+## Section 6: iTLB Pressure — The Second Reason the Cliff Happens
+
+Every time the prefetch engine reads a future virtual address from the FTQ and wants to issue a prefetch to L1I, it has one problem first: **it needs the physical address**.
+
+The CPU doesn't access caches with virtual addresses — it needs a translation. That comes from the **iTLB** (instruction Translation Lookaside Buffer), which caches recent virtual→physical mappings specifically for code pages.
+
+```
+Prefetch engine reads VA=0x7f3a_4000_1234 from FTQ
+          │
+          ▼
+     iTLB lookup
+          │
+     ┌────┴────┐
+    hit       miss
+     │          │
+     ▼          ▼
+  physical    page table walk
+  addr in     (4 levels × ~50–100 cy each)
+  ~1 cycle    = 200–400 cycles just for translation
+  issue ✓     prefetch issued too late, FDIP benefit gone ✗
+```
+
+An iTLB miss doesn't just slow the prefetch — it destroys it. By the time the translation comes back and the prefetch is issued, the fetch unit has already arrived at that line and is stalling.
+
+---
+
+### How many iTLB entries does Neoverse V2 have?
+
+**48 entries.** Fully associative.
+
+Coverage depends on page size:
+
+```
+4KB pages:  48 × 4KB =  192KB of code   ← tiny, any real binary blows past this
+2MB pages:  48 × 2MB =   96MB of code   ← with Transparent Huge Pages (THP)
+```
+
+Without THP, 192KB of coverage is almost nothing — a single warm library exceeds it. THP helps enormously, which is why it's strongly recommended on Neoverse. But even with THP, 48 entries is a fixed budget you can exhaust.
+
+---
+
+### The scatter problem
+
+The 48 entries must cover **all active code regions simultaneously**. It's not "96MB total" — it's "up to 48 different 2MB regions, all needing their translation live at the same time."
+
+With hot code in 5 regions — fine, 5 entries consumed, 43 left:
+
+```
+Region A: main application hot functions
+Region B: database engine
+Region C: memory allocator
+Region D: JIT-compiled code
+Region E: standard library
+```
+
+Now the application grows. More libraries, larger JIT cache, more hot paths. Suppose hot code spreads across 35 regions. Still fewer than 48 — sounds ok. But:
+
+- The OS kernel, interrupt handlers, and system code also consume iTLB entries
+- Context switches and interrupts bring in new translations, evicting yours
+- The effective budget for application code is considerably less than 48
+
+In practice the cliff appears around **30 regions** — which is exactly what the [NVIDIA Grace Performance Tuning Guide](https://docs.nvidia.com/grace-perf-tuning-guide/compilers.html) documents.
+
+---
+
+### How thrashing destroys FDIP
+
+Once you exceed the effective iTLB capacity, every FDIP prefetch into a scattered region becomes a disaster:
+
+```
+FDIP prefetches Region Z → iTLB miss → 200 cy page table walk
+FDIP prefetches Region A → evicts Region Z's entry to make room
+FDIP prefetches Region Z again → miss again → another 200 cy walk
+FDIP prefetches Region A again → evicts Region Z again → ...
+```
+
+The iTLB constantly evicts entries it will need again in a few cycles. Every prefetch costs 200+ cycles just for address translation. FDIP stops hiding anything — the latency it was supposed to eliminate now shows up as page table walk overhead instead.
+
+---
+
+### The two effects compound
+
+The cliff isn't caused by one thing — it's two problems hitting simultaneously as code scatter crosses the ~30 region threshold:
+
+```
+Effect 1 — Miss spacing drops:
+  Scattered code → larger instruction working set → more frequent I-cache evictions
+  → misses arrive faster than FTQ lookahead can service them
+  → FDIP can't issue prefetches fast enough
+
+Effect 2 — Prefetch cost spikes:
+  Scattered regions → iTLB thrashing → each prefetch costs 200+ cy for translation
+  → even prefetches that are issued in time arrive too late
+  → FDIP's effective lookahead shrinks to near zero
+```
+
+Both compound together. That's why the degradation at 30+ regions can reach 50% — you're not just losing prefetch efficiency, you're actively paying page table walk costs on nearly every instruction prefetch attempt.
+
+<!-- SECTION 7: The CRT — TO BE ADDED -->
+<!-- SECTION 8: BOLT and code layout — TO BE ADDED -->
 <!-- SECTION 7: The CRT — TO BE ADDED -->
 <!-- SECTION 8: BOLT and code layout — TO BE ADDED -->
 
