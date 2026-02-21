@@ -18,7 +18,7 @@ In this post, I want to dive into a specific microarchitectural quirk of modern 
 
 The rule of thumb for NVIDIA Grace (Neoverse V2) tuning is specific and slightly terrifying:
 
-> "Applications accessing **>30 naturally aligned 2MB ranges** in quick succession can suffer up to **50% performance degradation**." [[2]](#ref2)
+> "For large applications and/or libraries that will access more than 30 ranges in quick succession, this optimization type might yield speedups of **as much as 50%**." [[2]](#ref2)
 
 30 ranges of 2MB is 60MB of hot code. That sounds like a lot, but for a modern database (MySQL, Postgres), a JVM heap+code cache, or a monolithic microservice, it's a Tuesday.
 
@@ -88,7 +88,7 @@ We are entering an era where the compiler's static guess at code layout isn't go
 ## References
 
 1. <a name="ref1"></a>Arm. (2024). *Arm Neoverse V2 Core Software Optimization Guide*. Developer.arm.com. [https://developer.arm.com/documentation/109898/0300/](https://developer.arm.com/documentation/109898/0300/)
-2. <a name="ref2"></a>Arm. (2024). *Arm Neoverse V2 Core Software Optimization Guide - Code Region Tracker*. Developer.arm.com. [https://developer.arm.com/documentation/109898/0300/](https://developer.arm.com/documentation/109898/0300/)
+2. <a name="ref2"></a>NVIDIA. *NVIDIA Grace Performance Tuning Guide — Compilers: Code Locality*. docs.nvidia.com. [https://docs.nvidia.com/grace-perf-tuning-guide/compilers.html](https://docs.nvidia.com/grace-perf-tuning-guide/compilers.html)
 3. <a name="ref3"></a>Reinman, G., Calder, B., & Austin, T. (1999). Fetch Directed Instruction Prefetching. *MICRO-32*. [https://cseweb.ucsd.edu/~calder/papers/MICRO-99-FDP.pdf](https://cseweb.ucsd.edu/~calder/papers/MICRO-99-FDP.pdf)
 4. <a name="ref4"></a>Cutress, I., & Frumusanu, A. (2021). *Intel Architecture Day 2021: Alder Lake, Golden Cove, and Gracemont Detailed*. AnandTech. [https://www.anandtech.com/show/16881/a-deep-dive-into-intels-alder-lake-microarchitectures/3](https://www.anandtech.com/show/16881/a-deep-dive-into-intels-alder-lake-microarchitectures/3)
 5. <a name="ref5"></a>Arm. (2024). *Arm Neoverse V2 Core Telemetry Specification*. Developer.arm.com. [https://developer.arm.com/documentation/109528/0200/](https://developer.arm.com/documentation/109528/0200/)
