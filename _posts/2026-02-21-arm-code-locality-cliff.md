@@ -314,9 +314,57 @@ Effect 2 — Prefetch cost spikes:
 
 Both compound together. That's why the degradation at 30+ regions can reach 50% — you're not just losing prefetch efficiency, you're actively paying page table walk costs on nearly every instruction prefetch attempt.
 
-<!-- SECTION 7: The CRT — TO BE ADDED -->
-<!-- SECTION 8: BOLT and code layout — TO BE ADDED -->
-<!-- SECTION 7: The CRT — TO BE ADDED -->
+## Section 7: The Code Region Tracker — What We Know and What We're Inferring
+
+ARM's optimization literature refers to a microarchitectural structure called the **Code Region Tracker** (CRT) as a key factor in the frontend cliff. It's worth being precise about what is publicly documented versus what is reasonably inferred — both for intellectual honesty and because the fix doesn't actually depend on knowing the internals.
+
+### What is confirmed
+
+These facts come from public sources — NVIDIA's tuning guide, ARM's optimization guides, and the Neoverse V2 TRM:
+
+- Hot code spread across **more than ~30 naturally aligned 2MB regions** causes up to **50% performance degradation** on NVIDIA Grace [[1]](#ref1)
+- The bottleneck is in the **CPU frontend** — perf counters confirm it as frontend stall cycles, not backend execution pressure
+- Neoverse cores use a **decoupled branch predictor with FDIP**, referenced in ARM's optimization guides [[3]](#ref3)
+- Neoverse V2 has **48 iTLB entries** — a hard limit on simultaneous active code region translations
+
+### What we can infer
+
+Given Sections 5 and 6, we can reason about what a structure like the CRT must be doing. The FDIP prefetch engine needs to know which 2MB regions are "hot" in order to:
+
+1. Prioritize which FTQ-driven prefetches are worth issuing (hot region → issue; cold region → skip)
+2. Pre-warm iTLB entries for regions it knows will be active, rather than waiting for a miss
+
+A small table of active code regions — the CRT — serves both purposes. The BP or prefetch engine marks a 2MB region as active when it starts seeing FTQ entries into it. The table has a fixed number of slots. When a new region becomes active and all slots are full, an old one is evicted.
+
+```
+CRT (inferred structure):
+
+  Slot 0: Region A [0x0000_0000 – 0x001f_ffff]  active ✓
+  Slot 1: Region B [0x0040_0000 – 0x005f_ffff]  active ✓
+  Slot 2: Region C [0x0200_0000 – 0x021f_ffff]  active ✓
+  ...
+  Slot N: [full]
+
+  New region arrives → evict oldest → lose prefetch coverage for evicted region
+```
+
+When the CRT overflows, the prefetch engine loses advance knowledge of which regions to warm. Every prefetch into an evicted region becomes reactive rather than proactive — arriving too late. This is what triggers the iTLB misses and I-cache stalls described in Section 6.
+
+### What we are NOT claiming
+
+ARM has not published the CRT's implementation details. We do not know:
+
+- Its exact capacity (the ~30 region threshold is empirical, not a published hardware spec)
+- Whether it's a standalone structure or embedded in the BTB
+- Its replacement policy, associativity, or update mechanism
+- How exactly it coordinates with iTLB pre-warming
+
+ARM's [Neoverse V2 Software Optimization Guide](https://developer.arm.com/documentation/109898/0300/) is the closest public resource, though it does not expose these internals [[3]](#ref3).
+
+### Why it doesn't matter for the fix
+
+You don't need to understand the CRT internals to solve the problem. The fix operates entirely at the software level: reduce the number of 2MB regions your hot code occupies, and every hardware mechanism — CRT, iTLB, FDIP — works within its design limits again. That's Section 8.
+
 <!-- SECTION 8: BOLT and code layout — TO BE ADDED -->
 
 ## References
