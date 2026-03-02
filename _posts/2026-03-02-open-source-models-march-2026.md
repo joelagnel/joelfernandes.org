@@ -101,9 +101,15 @@ The other three models have varying levels of support:
 | Qwen3.5 397B A17B | Text + Image | Text |
 | Kimi K2.5 | Text + Image + Video | Text |
 
-Kimi K2.5 is the clear winner here -- it accepts text, images, and video as inputs. Qwen3.5 handles images but not video. MiniMax and GLM-5 are both text-only.
+**Kimi K2.5** is the most capable here by a clear margin -- it accepts text, images, and video as inputs. It is the only model in this group that can handle video, making it the natural choice for any workflow that involves visual content beyond static images.
 
-If you are building something that needs to process visual inputs -- a document pipeline, a screenshot analyzer, a video summarizer -- Kimi K2.5 is the only one of these four that covers the full surface area. GLM-5 being text-only is a real constraint that may or may not matter depending on what you are building.
+**Qwen3.5 397B A17B** supports image input alongside text, which covers a large share of real-world use cases -- screenshots, diagrams, charts, scanned documents. It cannot handle video, but for most developer and research workflows that is not a blocking issue. Given that Qwen3.5 also has the largest context window (262k tokens) and fast output speed, it is a reasonable pick if image understanding matters but video does not.
+
+**MiniMax-M2.5** is text-only, which is surprising given that it is a February 2026 release. At a price point of $0.30/$1.20 per million tokens it is the cheapest model in this comparison, and its text-only limitation may simply reflect a deliberate trade-off to keep costs and latency down.
+
+**GLM-5** being text-only is arguably the sharpest limitation in its otherwise strong profile. It leads on intelligence, agentic reliability, and speed -- but if your pipeline ever needs to process an image or a video frame, you cannot use it without a separate vision model upstream.
+
+The bottom line: if multimodality matters for your use case, Kimi K2.5 is the only complete answer. If static image support is enough, Qwen3.5 is a solid alternative with better speed. If your workflow is purely text, GLM-5's other advantages come back into play.
 
 ---
 
