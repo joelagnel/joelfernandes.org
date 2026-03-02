@@ -151,9 +151,7 @@ What this means in practice depends heavily on your workload:
 
 **Balanced tasks (coding, agentic loops):** Kimi still wins, but the margin shrinks. The output verbosity eats into the savings. Expect roughly 2-3x cheaper.
 
-**Output-heavy tasks (long-form generation, detailed summaries where the model writes a lot):** The advantage nearly disappears. If Kimi generates 6x more tokens to produce the same answer, the lower per-token rate barely compensates. You might end up at parity or even slightly more expensive than Sonnet for pure generation tasks.
-
-The other thing worth noting: Sonnet 4.6 in this benchmark is the *non-reasoning* variant. If you compare Kimi K2.5 against Claude Sonnet with extended thinking enabled, Sonnet's token count would be much higher and closer to Kimi's. The comparison becomes more favorable for Kimi in that scenario.
+**Output-heavy tasks (long-form generation, detailed summaries where the model writes a lot):** The advantage nearly disappears. If Kimi generates 6x more tokens to produce the same answer, the lower per-token rate barely compensates. You might end up at parity or even slightly more expensive than Sonnet for pure generation tasks. That said, this comparison is against Sonnet's *non-reasoning* variant -- if you turn on extended thinking, Sonnet's own token count climbs sharply and the math shifts back in Kimi's favor.
 
 **Providers**
 
