@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Open Source AI Models in March 2026: The Cheapest and Most Capable - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+<li class="recent">2022-12-15 &raquo;<br><a href="/blog/2022-12-15/modeling-condition-variables.html">Modeling Condition Variables using Formal Methods</a></li>
+
+
+
+
+
+
+<li class="recent">2022-11-13 &raquo;<br><a href="/blog/2022-11-13/hrtimer.html">On workings of hrtimer's slack time functionality</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Open Source AI Models in March 2026: The Cheapest and Most Capable</h1>
+<p class="meta">02 Mar 2026</p>
+
+<div class="post">
+<p><strong>Contents</strong></p>
+<ol>
+  <li><a href="#section-1-intelligence-vs-cost">Intelligence vs. Cost</a></li>
+  <li><a href="#section-2-can-it-survive-the-agentic-era">Can It Survive the Agentic Era?</a></li>
+  <li><a href="#section-3-context-window">Context Window</a></li>
+  <li><a href="#section-4-output-speed">Output Speed</a></li>
+  <li><a href="#section-5-multimodality">Multimodality</a></li>
+  <li><a href="#section-6-cost-and-providers">Cost and Providers</a></li>
+  <li><a href="#summary">Summary</a></li>
+</ol>
+
+<hr />
+
+<p>I have been thinking about running local or API-hosted open source models for a while now. The price point has become genuinely attractive, so I decided to zero in on a few contenders and compare them head-to-head. The four models I am looking at are <strong>GLM-5</strong> (Zhipu AI), <strong>Kimi K2.5</strong> (Moonshot AI), <strong>MiniMax-M2.5</strong>, and <strong>Qwen3.5 397B A17B</strong> (Alibaba). All four are Chinese-lab models, which says something about where a lot of the open source momentum is right now.</p>
+
+<p>Throughout this post, I only consider the <strong>thinking/reasoning variants</strong> of all models. Where data for a non-thinking variant is referenced for comparison purposes, it is explicitly noted as <em>(non-thinking)</em> in context. For Claude, both the non-thinking and the adaptive reasoning (max) variants share the same per-token price – the distinction matters for verbosity and total cost, not the rate itself.</p>
+
+<p>This post is intentionally approximate and high-level. The numbers and charts come from <a href="https://artificialanalysis.ai">Artificial Analysis</a>, which tracks live benchmark results and pricing across hundreds of models and providers. For precise, up-to-date data and methodology, I recommend going there directly.</p>
+
+<p>The short version: GLM-5 is the most well-rounded, Kimi K2.5 is the strongest pure coder, and the speed gap between the two is something you need to factor in. Let me go through each dimension.</p>
+
+<hr />
+
+<h2 id="section-1-intelligence-vs-cost">Section 1: Intelligence vs. Cost</h2>
+
+<p>The first thing I checked was raw intelligence relative to price. <a href="https://artificialanalysis.ai">Artificial Analysis</a> has a great interactive chart for exactly this – they compute an “Intelligence Index” across a battery of benchmarks and plot it against token price, so you can see who is in the sweet spot.</p>
+
+<p><a href="https://artificialanalysis.ai/models/glm-5?models=minimax-m2-5%2Ckimi-k2-5%2Cglm-5%2Cqwen3-5-397b-a17b#intelligence-vs-price"><img src="/Images/open-source-models-2026/intel-vs-price.png" alt="Intelligence vs Price" /></a>
+<em>Intelligence Index vs. input/output token price. Higher and to the left is better. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
+
+<p>GLM-5 and Kimi K2.5 both sit in the upper portion of the chart – higher intelligence than MiniMax and Qwen at competitive prices. Both land close to the “most attractive quadrant” (high intelligence, low cost).</p>
+
+<p>One thing worth noting: GLM-5 is a bit chatty. It tends to produce more output tokens to arrive at its answers. That drives its per-query cost up somewhat compared to Kimi K2.5, even if the per-token price looks similar. The chart below, which uses Artificial Analysis’s “cost to run the Intelligence Index” metric (i.e., total cost to complete their benchmark suite), makes that visible:</p>
+
+<p><a href="https://artificialanalysis.ai/models/glm-5?models=minimax-m2-5%2Ckimi-k2-5%2Cglm-5%2Cqwen3-5-397b-a17b&amp;intelligence-index-cost=intelligence-vs-cost#intelligence-vs-cost-to-run-artificial-analysis-intelligence-index"><img src="/Images/open-source-models-2026/intel-vs-cost.png" alt="Intelligence vs Cost to Run" /></a>
+<em>Intelligence vs. total cost to run the AI benchmark suite. GLM-5 is slightly more expensive to operate than Kimi K2.5 despite similar raw pricing. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
+
+<p>Kimi K2.5 comes out a bit cheaper in practice once you account for verbosity. So if cost efficiency is the primary driver, Kimi has a small edge. If you want the highest intelligence without worrying too much about token spend, GLM-5 is the pick.</p>
+
+<p>For the exact methodology behind the Intelligence Index, see <a href="https://artificialanalysis.ai">Artificial Analysis’s documentation</a>.</p>
+
+<hr />
+
+<h2 id="section-2-can-it-survive-the-agentic-era">Section 2: Can It Survive the Agentic Era?</h2>
+
+<p>Raw intelligence scores are one thing. What matters more for real workflows is whether a model can handle multi-step agentic tasks without going off the rails. I came across some benchmark results comparing these four models on exactly that.</p>
+
+<p>First, the agentic benchmarks – GDPval-AA (real-world agentic task completion) and Terminal-Bench Hard (coding and terminal use under agentic conditions):</p>
+
+<p><img src="/Images/open-source-models-2026/bench-agentic-hallucination.jpg" alt="Agentic and Terminal Benchmark Results" />
+<em>Left: GDPval-AA agentic real-world task scores. Right: Terminal-Bench Hard coding and terminal scores.</em></p>
+
+<p>GLM-5 leads on GDPval-AA (46%) with a meaningful gap over Kimi K2.5 (39%). On Terminal-Bench Hard, GLM-5 still leads (43%) but Kimi K2.5 is close behind (41%). Both MiniMax and Qwen trail at 35-36% across both.</p>
+
+<p>To put that in perspective, here is where these models land against the full field – including the proprietary frontier models everyone pays a premium for:</p>
+
+<p><img src="/Images/open-source-models-2026/bench-terminal-full-leaderboard.jpg" alt="Terminal-Bench Hard Full Leaderboard" />
+<em>Terminal-Bench Hard: full leaderboard including proprietary models. GLM-5 at 43% sits just behind Claude Opus 4.6 max (46%) and ahead of several other frontier models.</em></p>
+
+<p>Gemini 3.1 Pro Preview, GPT-5.3, and Claude Sonnet 4.6 cluster at the top around 53-54%. GLM-5, an open-weight model you can run yourself, comes in at 43% – which means it nearly matches Claude Opus 4.6 max (46%), the agentic model that has had a lot of attention lately. That is a striking result for an open source model at a fraction of the API cost.</p>
+
+<p>Then there is hallucination. For agentic work this is arguably the single most important metric – a model that confidently makes things up is worse than useless when it is acting autonomously on your behalf.</p>
+
+<p><img src="/Images/open-source-models-2026/bench-hallucination-rate.jpg" alt="Hallucination Rate (1 - Hallucination Rate, higher is better)" />
+<em>1 minus hallucination rate – higher is better. GLM-5 at 66% is nearly double second place.</em></p>
+
+<p>GLM-5 at 66% non-hallucination rate is striking. Kimi K2.5 comes in at 35%, and both MiniMax and Qwen fall off to around 11%. That is not a close race. For any autonomous agent work, GLM-5’s factual reliability is a serious advantage.</p>
+
+<p>Where Kimi K2.5 fights back is on pure coding. The SciCode benchmark measures scientific coding ability:</p>
+
+<p><img src="/Images/open-source-models-2026/bench-scicode.jpg" alt="SciCode Benchmark" />
+<em>SciCode coding benchmark. Kimi K2.5 edges ahead of GLM-5 on pure coding tasks.</em></p>
+
+<p>Kimi K2.5 takes the top spot here at 49%, with GLM-5 at 46% and the field tighter overall (Qwen and MiniMax at 42-43%). So if your use case is primarily code generation rather than open-ended agentic reasoning, Kimi K2.5 deserves serious consideration.</p>
+
+<hr />
+
+<h2 id="section-3-context-window">Section 3: Context Window</h2>
+
+<p>Context window matters more than people often acknowledge. Larger windows mean you can feed in more code, longer documents, or more conversation history without truncation.</p>
+
+<p><a href="https://artificialanalysis.ai/models/glm-5?models=minimax-m2-5%2Ckimi-k2-5%2Cglm-5%2Cqwen3-5-397b-a17b&amp;intelligence-index-cost=intelligence-vs-cost&amp;context-window=intelligence-vs-context-window#intelligence-vs-context-window"><img src="/Images/open-source-models-2026/context-window.png" alt="Intelligence vs Context Window" /></a>
+<em>Intelligence vs. context window size. Kimi K2.5 and Qwen3.5 offer significantly larger windows than GLM-5. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
+
+<p>Kimi K2.5 and Qwen3.5 397B A17B both sit at around 260k tokens, a bit ahead of GLM-5’s roughly 200k. If you are doing long-document analysis or extended code reviews, that gap matters. GLM-5’s smaller window is the clearest practical limitation in this comparison.</p>
+
+<hr />
+
+<h2 id="section-4-output-speed">Section 4: Output Speed</h2>
+
+<p>None of this matters if the model is too slow to use interactively. GLM-5 wins here, and the gap with Kimi K2.5 is significant.</p>
+
+<p><a href="https://artificialanalysis.ai/models/glm-5?models=minimax-m2-5%2Ckimi-k2-5%2Cglm-5%2Cqwen3-5-397b-a17b&amp;intelligence-index-cost=intelligence-vs-cost&amp;context-window=intelligence-vs-context-window#output-speed"><img src="/Images/open-source-models-2026/output-speed.png" alt="Output Speed" /></a>
+<em>Output speed in tokens per second. GLM-5 and Qwen3.5 lead; Kimi K2.5 lags significantly. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
+
+<p>GLM-5 and Qwen3.5 come in around 74-75 tokens per second. MiniMax and Kimi K2.5 drop to around 48-49. For interactive use that difference is noticeable. Kimi K2.5 would still be fine for batch or overnight jobs – tasks you kick off before bed and check in the morning – but for real-time interactive work GLM-5 is considerably snappier.</p>
+
+<hr />
+
+<h2 id="section-5-multimodality">Section 5: Multimodality</h2>
+
+<p>One area where GLM-5 falls short is multimodality. It is text-only – you cannot feed it images or video, and it will not generate them either. If your workflow involves analyzing screenshots, diagrams, charts, or any kind of visual content, GLM-5 is out.</p>
+
+<p>The other three models have varying levels of support:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Input</th>
+      <th>Output</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLM-5</td>
+      <td>Text only</td>
+      <td>Text</td>
+    </tr>
+    <tr>
+      <td>MiniMax-M2.5</td>
+      <td>Text only</td>
+      <td>Text</td>
+    </tr>
+    <tr>
+      <td>Qwen3.5 397B A17B</td>
+      <td>Text + Image</td>
+      <td>Text</td>
+    </tr>
+    <tr>
+      <td>Kimi K2.5</td>
+      <td>Text + Image + Video</td>
+      <td>Text</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Kimi K2.5</strong> is the most capable here by a clear margin – it accepts text, images, and video as inputs. It is the only model in this group that can handle video, making it the natural choice for any workflow that involves visual content beyond static images.</p>
+
+<p><strong>Qwen3.5 397B A17B</strong> supports image input alongside text, which covers a large share of real-world use cases – screenshots, diagrams, charts, scanned documents. It cannot handle video, but for most developer and research workflows that is not a blocking issue. Given that Qwen3.5 also has the largest context window (262k tokens) and fast output speed, it is a reasonable pick if image understanding matters but video does not.</p>
+
+<p><strong>MiniMax-M2.5</strong> is text-only, which is surprising given that it is a February 2026 release. At a price point of $0.30/$1.20 per million tokens it is the cheapest model in this comparison, and its text-only limitation may simply reflect a deliberate trade-off to keep costs and latency down.</p>
+
+<p><strong>GLM-5</strong> being text-only is arguably the sharpest limitation in its otherwise strong profile. It leads on intelligence, agentic reliability, and speed – but if your pipeline ever needs to process an image or a video frame, you cannot use it without a separate vision model upstream.</p>
+
+<p>The bottom line: if multimodality matters for your use case, Kimi K2.5 is the only complete answer. If static image support is enough, Qwen3.5 is a solid alternative with better speed. If your workflow is purely text, GLM-5’s other advantages come back into play.</p>
+
+<hr />
+
+<h2 id="section-6-cost-and-providers">Section 6: Cost and Providers</h2>
+
+<p>The token prices tell the headline story clearly. All models below are reasoning/thinking variants – the open source models are reasoning-only, and Anthropic prices Claude Sonnet and Opus identically whether you use the non-reasoning or the adaptive reasoning (max) variant. The thinking tokens still cost the same per token; the difference is how many get generated.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Input (per 1M)</th>
+      <th>Output (per 1M)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>MiniMax-M2.5 (Reasoning)</td>
+      <td>$0.30</td>
+      <td>$1.20</td>
+    </tr>
+    <tr>
+      <td>Kimi K2.5 (Reasoning)</td>
+      <td>$0.60</td>
+      <td>$3.00</td>
+    </tr>
+    <tr>
+      <td>Qwen3.5 397B A17B (Reasoning)</td>
+      <td>$0.60</td>
+      <td>$3.60</td>
+    </tr>
+    <tr>
+      <td>GLM-5 (Reasoning)</td>
+      <td>$1.00</td>
+      <td>$3.20</td>
+    </tr>
+    <tr>
+      <td>Claude Sonnet 4.6 (non-reasoning or max)</td>
+      <td>$3.00</td>
+      <td>$15.00</td>
+    </tr>
+    <tr>
+      <td>Claude Opus 4.6 (non-reasoning or max)</td>
+      <td>$5.00</td>
+      <td>$25.00</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Open source models are 3-5x cheaper on input and 4-8x cheaper on output at face value. But there is an important caveat: GLM-5 and Kimi K2.5 are reasoning models that think through problems via internal chain-of-thought. They generate a lot of tokens you pay for but never see. Kimi K2.5 used 89M output tokens to complete Artificial Analysis’s benchmark suite; Claude Sonnet 4.6 used 14M. Despite that 6x verbosity gap, the total benchmark cost was still $371 for Kimi vs $1,397 for Sonnet – primarily because input tokens are where the big savings are. The short version: how much you save depends on your workload. Input-heavy tasks (RAG, long-context analysis) favor open source 3-4x. Balanced coding or agentic work is more like 2-3x. Pure generation tasks where output dominates the bill narrow the gap considerably, though this comparison is against Sonnet’s non-reasoning variant – with extended thinking on, Claude’s verbosity rises sharply too.</p>
+
+<p><strong>Providers</strong></p>
+
+<p>All four models are available on standard Western inference providers – no Chinese accounts required. <a href="https://deepinfra.com">DeepInfra</a> is the best single pick for both GLM-5 (~$1.24 blended, 126 t/s) and Kimi K2.5 (~$0.90 blended). <a href="https://together.ai">Together.ai</a> and <a href="https://fireworks.ai">Fireworks</a> are solid alternatives. All models are MIT or Apache 2.0 licensed and can be self-hosted if you have the hardware.</p>
+
+<p><strong>Prompt caching</strong></p>
+
+<p>Both Claude and open source providers support prompt caching, which cuts the cost of repeated prefixes (long system prompts, tool lists, shared document context). Claude’s caching is explicit – you mark breakpoints and pay $0.30/M for cache reads instead of $3.00/M on Sonnet (a 90% discount). Open source providers like Fireworks apply prefix caching automatically at 50% off, with no markers needed; DeepInfra and Together.ai have similar automatic caching baked in.</p>
+
+<p>The key nuance: caching only applies to input tokens. Output tokens are never cached. With extended thinking enabled on Claude, the model generates a large internal reasoning trace billed at the full $15-$25/M output rate, and caching does nothing for that. The open source reasoning models have the same verbosity, but at $3/M the exposure is far smaller. Caching is most valuable for applications with large, reused system prompts or growing conversation history. It is much less relevant for one-off tasks or highly dynamic prompts.</p>
+
+<p><strong>Most practical starting point</strong></p>
+
+<p><strong>Kimi K2.5 via <a href="https://deepinfra.com">DeepInfra</a> or <a href="https://together.ai">Together.ai</a></strong> – cheaper than GLM-5, multimodal, large context, available on familiar providers. For pure text workloads that demand the highest intelligence and reliability, GLM-5 via DeepInfra is the pick.</p>
+
+<hr />
+
+<h2 id="summary">Summary</h2>
+
+<p><strong>Performance</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Intelligence</th>
+      <th>Agentic</th>
+      <th>Hallucination</th>
+      <th>Coding (SciCode)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLM-5</td>
+      <td>Best</td>
+      <td>Best</td>
+      <td>Best (66%)</td>
+      <td>2nd (46%)</td>
+    </tr>
+    <tr>
+      <td>Kimi K2.5</td>
+      <td>2nd</td>
+      <td>2nd</td>
+      <td>2nd (35%)</td>
+      <td>Best (49%)</td>
+    </tr>
+    <tr>
+      <td>Qwen3.5 397B</td>
+      <td>3rd</td>
+      <td>3rd</td>
+      <td>Poor (11%)</td>
+      <td>3rd (42%)</td>
+    </tr>
+    <tr>
+      <td>MiniMax-M2.5</td>
+      <td>4th</td>
+      <td>3rd</td>
+      <td>Poor (11%)</td>
+      <td>3rd (43%)</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Practical specs</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Context</th>
+      <th>Speed</th>
+      <th>Multimodal</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLM-5</td>
+      <td>200k</td>
+      <td>75 t/s</td>
+      <td>Text only</td>
+    </tr>
+    <tr>
+      <td>Kimi K2.5</td>
+      <td>256k</td>
+      <td>48 t/s</td>
+      <td>Text + Image + Video</td>
+    </tr>
+    <tr>
+      <td>Qwen3.5 397B</td>
+      <td>262k</td>
+      <td>74 t/s</td>
+      <td>Text + Image</td>
+    </tr>
+    <tr>
+      <td>MiniMax-M2.5</td>
+      <td>205k</td>
+      <td>49 t/s</td>
+      <td>Text only</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>Cost (per 1M tokens)</strong></p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th>Input</th>
+      <th>Output</th>
+      <th>Cache read</th>
+      <th>Cache write</th>
+      <th>Verbosity</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GLM-5</td>
+      <td>$1.00</td>
+      <td>$3.20</td>
+      <td>varies by provider</td>
+      <td>varies by provider</td>
+      <td>Very high (110M tokens)</td>
+    </tr>
+    <tr>
+      <td>Kimi K2.5</td>
+      <td>$0.60</td>
+      <td>$3.00</td>
+      <td>varies by provider</td>
+      <td>varies by provider</td>
+      <td>High (89M tokens)</td>
+    </tr>
+    <tr>
+      <td>Qwen3.5 397B</td>
+      <td>$0.60</td>
+      <td>$3.60</td>
+      <td>varies by provider</td>
+      <td>varies by provider</td>
+      <td>High (86M tokens)</td>
+    </tr>
+    <tr>
+      <td>MiniMax-M2.5</td>
+      <td>$0.30</td>
+      <td>$1.20</td>
+      <td>varies by provider</td>
+      <td>varies by provider</td>
+      <td>Moderate (56M tokens)</td>
+    </tr>
+    <tr>
+      <td>Claude Sonnet 4.6</td>
+      <td>$3.00</td>
+      <td>$15.00</td>
+      <td>$0.30 (-90%)</td>
+      <td>$3.75 (+25%)</td>
+      <td>14M (non-reasoning) / N/A (max)†</td>
+    </tr>
+    <tr>
+      <td>Claude Opus 4.6</td>
+      <td>$5.00</td>
+      <td>$25.00</td>
+      <td>$0.50 (-90%)</td>
+      <td>$6.25 (+25%)</td>
+      <td>11M (non-reasoning) / N/A (max)†</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>†The “max” (adaptive reasoning) variants show N/A verbosity because token counts vary per task depending on how much thinking is triggered. With full extended thinking, Claude’s output token counts can match or exceed the open source reasoning models – at $15-$25/M rather than $3-$3.20/M. Caching helps on input but does nothing for those thinking tokens, which is where the cost gap is hardest for Claude to close.</p>
+
+<p>For most agentic or assistant use cases: <strong>GLM-5</strong>. Best intelligence, best reliability, fastest response. The smaller context window and slightly higher verbosity cost are the tradeoffs.</p>
+
+<p>For coding-heavy workloads where speed is less critical, or if you need multimodal input (images, video): <strong>Kimi K2.5</strong>. It beats GLM-5 on SciCode, nearly matches it on terminal coding, has a bigger context window, and is the only one of these four that handles visual inputs.</p>
+
+<p>The analogy I keep coming back to: GLM-5 is the Claude Opus of the open source world – the highest-capability option, the one you reach for when the task demands the most. Kimi K2.5 is the Sonnet – fast, versatile, and covers more ground. The catch is that GLM-5’s lack of vision support is a serious handicap. In practice that probably means running them together: GLM-5 as the primary model and Kimi K2.5 as the fallback or helper whenever a task involves images or video.</p>
+
+<p>I am still evaluating whether to actually run these for any of my own workflows. I still have a Claude Max subscription, and for me capability trumps everything. If Claude did not have an actual max subscription tier, I would probably be primarily using some combination of GLM-5 and Kimi K2.5 – the price point is that attractive.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
