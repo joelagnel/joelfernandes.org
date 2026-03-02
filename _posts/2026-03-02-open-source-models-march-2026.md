@@ -144,6 +144,39 @@ MiniMax-M2.5 and Qwen3.5 are similarly available across DeepInfra, Together.ai, 
 
 If you want to start with one model and keep it simple, **Kimi K2.5 via DeepInfra or Together.ai** is probably the most practical entry point. It is cheaper than GLM-5 at the token level, available on familiar Western providers, handles images and video, and has the largest context window of the four. GLM-5 via DeepInfra is the pick if you need maximum intelligence and reliability and can live without vision.
 
+**Prompt caching and how it changes the math**
+
+Prompt caching is worth understanding because it can significantly affect real-world costs -- and the open source models and Claude handle it quite differently.
+
+The idea is simple: if your requests share a large common prefix (a long system prompt, a tool list, a document you are analyzing across multiple turns), the model has to compute the same KV representations over and over for that shared prefix. Caching saves those representations and skips the recomputation on subsequent calls, which cuts both cost and latency.
+
+*Claude's caching model* is explicit. You mark cache breakpoints in your request, and Anthropic charges accordingly:
+
+| | Sonnet 4.6 | Opus 4.6 |
+|---|---|---|
+| Normal input | $3.00/M | $5.00/M |
+| Cache write | $3.75/M (+25%) | $6.25/M (+25%) |
+| Cache read | $0.30/M (-90%) | $0.50/M (-90%) |
+| Output | $15.00/M | $25.00/M |
+
+The cache read discount is aggressive -- 90% off. If you have a 50k-token system prompt and are making hundreds of calls per day, the savings on that prefix add up fast. Importantly, if your workload has high cache hit rates (say 80% of input tokens come from cache), Claude's effective input cost drops from $3.00/M to around $0.60/M -- which starts to approach the open source base rates. This is Claude's counter-argument to "just use the cheaper model."
+
+*Open source model providers* handle caching more transparently and in some cases more generously. On Fireworks, prefix caching is enabled by default across all models, and cached tokens cost 50% less than regular tokens -- no explicit cache_control markers required. DeepInfra and Together.ai have similar automatic prefix caching, though specific discount rates vary and are often not published separately (they may be baked into the blended pricing). In general, the caching on open source providers is lower friction -- it just works -- but the discount is less dramatic than Claude's 90% cache read rate.
+
+*When caching actually helps:*
+- Long system prompts (instructions, personas, tool definitions) reused across many calls -- the bigger the shared prefix, the more you save
+- Multi-turn chat where growing conversation history is re-sent each turn
+- RAG pipelines where the same retrieved document is used across multiple follow-up questions
+- Coding assistants keeping a large file in context across edits
+
+*When caching does not help:*
+- Short prompts (Claude requires at least 1024 tokens in a cached block to be worth it)
+- Highly dynamic prompts where every request looks different -- no repeated prefix, no cache hits
+- Bursty or low-volume usage -- caches expire (Claude's ephemeral cache lasts 5 minutes), so infrequent calls may never reuse a warm cache
+- Single-shot tasks where you call once and move on
+
+The practical takeaway: if you are building an application with a consistent, large system prompt or a tool-heavy agentic loop, caching can meaningfully close the cost gap between Claude and the open source alternatives. If your workload is mostly unique one-off requests, the headline token prices are what you actually pay.
+
 ---
 
 ## Summary
