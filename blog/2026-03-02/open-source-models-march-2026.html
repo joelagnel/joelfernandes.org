@@ -703,6 +703,10 @@
 
 <p><strong>Use a direct provider</strong> when caching hit rates matter (OpenRouter’s load balancing across providers kills cache locality), you need provider-specific features (dedicated deployments, fine-tuning, SLAs), or the model is not yet on OpenRouter. Note: OpenRouter does not add a per-token markup – provider pricing passes through exactly; they only charge a small fee on credit purchases.</p>
 
+<p><strong>Does OpenRouter support modality-based failover?</strong> No – failover triggers on provider availability failures, not capability mismatches. Sending an image to a text-only model will not automatically reroute to a vision-capable one; you need to handle that in your application layer.</p>
+
+<p><strong>Does OpenRouter support prompt caching?</strong> It passes through caching to the underlying provider (e.g. Anthropic’s <code class="language-plaintext highlighter-rouge">cache_control</code> markers work), but OpenRouter’s default load balancing spreads requests across multiple providers, killing cache hit rates. To make caching reliable, pin to a single provider using the <code class="language-plaintext highlighter-rouge">provider.order</code> request parameter.</p>
+
 </div>
 
 <p><a href="/">&laquo; Back to Home</a></p>
