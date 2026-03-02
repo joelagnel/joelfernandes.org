@@ -43,6 +43,13 @@ First, the agentic benchmarks -- GDPval-AA (real-world agentic task completion) 
 
 GLM-5 leads on GDPval-AA (46%) with a meaningful gap over Kimi K2.5 (39%). On Terminal-Bench Hard, GLM-5 still leads (43%) but Kimi K2.5 is close behind (41%). Both MiniMax and Qwen trail at 35-36% across both.
 
+To put that in perspective, here is where these models land against the full field -- including the proprietary frontier models everyone pays a premium for:
+
+![Terminal-Bench Hard Full Leaderboard](/Images/open-source-models-2026/bench-terminal-full-leaderboard.jpg)
+*Terminal-Bench Hard: full leaderboard including proprietary models. GLM-5 at 43% sits just behind Claude Opus 4.6 max (46%) and ahead of several other frontier models.*
+
+Gemini 3.1 Pro Preview, GPT-5.3, and Claude Sonnet 4.6 cluster at the top around 53-54%. GLM-5, an open-weight model you can run yourself, comes in at 43% -- which means it nearly matches Claude Opus 4.6 max (46%), the agentic model that has had a lot of attention lately. That is a striking result for an open source model at a fraction of the API cost.
+
 Then there is hallucination. For agentic work this is arguably the single most important metric -- a model that confidently makes things up is worse than useless when it is acting autonomously on your behalf.
 
 ![Hallucination Rate (1 - Hallucination Rate, higher is better)](/Images/open-source-models-2026/bench-hallucination-rate.jpg)
@@ -81,17 +88,36 @@ GLM-5 and Qwen3.5 come in around 74-75 tokens per second. MiniMax and Kimi K2.5 
 
 ---
 
+## Section 5: Multimodality
+
+One area where GLM-5 falls short is multimodality. It is text-only -- you cannot feed it images or video, and it will not generate them either. If your workflow involves analyzing screenshots, diagrams, charts, or any kind of visual content, GLM-5 is out.
+
+The other three models have varying levels of support:
+
+| Model | Input | Output |
+|---|---|---|
+| GLM-5 | Text only | Text |
+| MiniMax-M2.5 | Text only | Text |
+| Qwen3.5 397B A17B | Text + Image | Text |
+| Kimi K2.5 | Text + Image + Video | Text |
+
+Kimi K2.5 is the clear winner here -- it accepts text, images, and video as inputs. Qwen3.5 handles images but not video. MiniMax and GLM-5 are both text-only.
+
+If you are building something that needs to process visual inputs -- a document pipeline, a screenshot analyzer, a video summarizer -- Kimi K2.5 is the only one of these four that covers the full surface area. GLM-5 being text-only is a real constraint that may or may not matter depending on what you are building.
+
+---
+
 ## Summary
 
-| Model | Intelligence | Agentic | Hallucination | SciCode | Context | Speed |
-|---|---|---|---|---|---|---|
-| GLM-5 | Best | Best | Best (66%) | 2nd (46%) | Smaller | Fast (75 t/s) |
-| Kimi K2.5 | 2nd | 2nd | 2nd (35%) | Best (49%) | Large | Slow (48 t/s) |
-| Qwen3.5 397B | 3rd | 3rd | Poor | 3rd | Large | Fast (74 t/s) |
-| MiniMax-M2.5 | 4th | 3rd | Poor | 3rd | Smaller | Mid (49 t/s) |
+| Model | Intelligence | Agentic | Hallucination | SciCode | Context | Speed | Multimodal |
+|---|---|---|---|---|---|---|---|
+| GLM-5 | Best | Best | Best (66%) | 2nd (46%) | 200k | Fast (75 t/s) | Text only |
+| Kimi K2.5 | 2nd | 2nd | 2nd (35%) | Best (49%) | 256k | Slow (48 t/s) | Text + Image + Video |
+| Qwen3.5 397B | 3rd | 3rd | Poor | 3rd | 262k | Fast (74 t/s) | Text + Image |
+| MiniMax-M2.5 | 4th | 3rd | Poor | 3rd | 205k | Mid (49 t/s) | Text only |
 
 For most agentic or assistant use cases: **GLM-5**. Best intelligence, best reliability, fastest response. The smaller context window and slightly higher verbosity cost are the tradeoffs.
 
-For coding-heavy workloads where speed is less critical and you want the largest context: **Kimi K2.5**. It beats GLM-5 on SciCode and nearly matches it on terminal coding, with a much bigger window.
+For coding-heavy workloads where speed is less critical, or if you need multimodal input (images, video): **Kimi K2.5**. It beats GLM-5 on SciCode, nearly matches it on terminal coding, has a bigger context window, and is the only one of these four that handles visual inputs.
 
 I am still evaluating whether to actually run these in production for any of my own workflows. But the price point is attractive enough that I am taking it seriously -- which was not true even six months ago.
