@@ -182,7 +182,9 @@ The idea is simple: if your requests share a large common prefix (a long system 
 | Cache read | $0.30/M (-90%) | $0.50/M (-90%) |
 | Output | $15.00/M | $25.00/M |
 
-The cache read discount is aggressive -- 90% off. If you have a 50k-token system prompt and are making hundreds of calls per day, the savings on that prefix add up fast. Importantly, if your workload has high cache hit rates (say 80% of input tokens come from cache), Claude's effective input cost drops from $3.00/M to around $0.60/M -- which starts to approach the open source base rates. This is Claude's counter-argument to "just use the cheaper model."
+The cache read discount is aggressive -- 90% off. If you have a 50k-token system prompt and are making hundreds of calls per day, the savings on that prefix add up fast. With high cache hit rates (say 80% of input tokens coming from cache), Claude's effective input cost drops from $3.00/M toward $0.60/M -- which starts to approach open source input rates.
+
+But caching only applies to input tokens. Output tokens are never cached, and with extended thinking enabled on Claude the output token count can balloon significantly -- the model generates a long internal reasoning trace before answering. A task that produces 2k visible tokens might generate 20k+ tokens internally when thinking is on, all billed at the full $15/M or $25/M output rate. Caching does nothing for that. The open source reasoning models (Kimi K2.5, GLM-5) have the same verbosity problem, but at $3.00-$3.20/M for output rather than $15-$25/M the damage is much less severe.
 
 *Open source model providers* handle caching more transparently and in some cases more generously. On Fireworks, prefix caching is enabled by default across all models, and cached tokens cost 50% less than regular tokens -- no explicit cache_control markers required. DeepInfra and Together.ai have similar automatic prefix caching, though specific discount rates vary and are often not published separately (they may be baked into the blended pricing). In general, the caching on open source providers is lower friction -- it just works -- but the discount is less dramatic than Claude's 90% cache read rate.
 
@@ -198,7 +200,7 @@ The cache read discount is aggressive -- 90% off. If you have a 50k-token system
 - Bursty or low-volume usage -- caches expire (Claude's ephemeral cache lasts 5 minutes), so infrequent calls may never reuse a warm cache
 - Single-shot tasks where you call once and move on
 
-The practical takeaway: if you are building an application with a consistent, large system prompt or a tool-heavy agentic loop, caching can meaningfully close the cost gap between Claude and the open source alternatives. If your workload is mostly unique one-off requests, the headline token prices are what you actually pay.
+The practical takeaway: caching helps on input costs, but input is only part of the bill. For workloads that lean heavily on reasoning or extended thinking, output costs dominate -- and that is where the open source models' lower per-token rates matter most regardless of caching. Caching is a meaningful optimization on both sides of the table, but it does not fundamentally close the cost gap for thinking-heavy agentic work. If your workload is mostly unique one-off requests with short prompts, the headline token prices are simply what you pay.
 
 ---
 
