@@ -4,7 +4,7 @@ title: "Open Source AI Models in March 2026: The Cheapest and Most Capable"
 date: 2026-03-02
 categories: ai technology
 tags: [artificial-intelligence, llm]
-published: false
+published: true
 ---
 
 **Contents**
