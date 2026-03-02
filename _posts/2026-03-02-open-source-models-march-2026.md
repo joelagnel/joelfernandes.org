@@ -115,7 +115,7 @@ The bottom line: if multimodality matters for your use case, Kimi K2.5 is the on
 
 ## Section 6: Cost and Providers
 
-Here is the raw token pricing for all four models compared to Claude Sonnet 4.6 and Claude Opus 4.6 as of March 2026:
+The token prices tell the headline story clearly:
 
 | Model | Input (per 1M) | Output (per 1M) |
 |---|---|---|
@@ -123,84 +123,24 @@ Here is the raw token pricing for all four models compared to Claude Sonnet 4.6 
 | Kimi K2.5 | $0.60 | $3.00 |
 | Qwen3.5 397B A17B | $0.60 | $3.60 |
 | GLM-5 | $1.00 | $3.20 |
-| **Claude Sonnet 4.6** | **$3.00** | **$15.00** |
-| **Claude Opus 4.6** | **$5.00** | **$25.00** |
+| Claude Sonnet 4.6 | $3.00 | $15.00 |
+| Claude Opus 4.6 | $5.00 | $25.00 |
 
-The gap is stark. Claude Sonnet 4.6 costs 3-5x more per input token than GLM-5, and on output tokens the difference is 4-8x. Claude Opus 4.6 is in a different league cost-wise -- at $25 per million output tokens, it is over 7x more expensive on output than GLM-5 and 20x more expensive than MiniMax.
-
-The headline token rates look like a slam dunk for open source, but verbosity complicates the picture considerably -- especially for Kimi K2.5.
-
-Both GLM-5 and Kimi K2.5 are reasoning models. They think out loud, working through problems via internal chain-of-thought before producing an answer. That is part of what makes them capable -- but it also means they generate a lot of tokens you are paying for but never see in the final response.
-
-Artificial Analysis measured exactly this when running their benchmark suite:
-
-| Model | Output tokens (benchmark) | Output price | Output cost (benchmark) | Total cost (benchmark) |
-|---|---|---|---|---|
-| Claude Sonnet 4.6 | 14M | $15.00/M | $210 | $1,397 |
-| Claude Opus 4.6 | 11M | $25.00/M | $275 | ~$1,600 est. |
-| Kimi K2.5 | 89M | $3.00/M | $267 | $371 |
-| GLM-5 | 110M | $3.20/M | $352 | ~$500 est. |
-
-Look at the output cost column. Kimi K2.5 generates 6x more output tokens than Sonnet, and despite costing 5x less per token, ends up spending slightly *more* in raw output cost ($267 vs $210). GLM-5 is similar -- 8x the output tokens, slightly more expensive in output cost than Sonnet.
-
-The reason the total benchmark cost is still 3.8x cheaper for Kimi ($371 vs $1,397) is almost entirely the **input token savings**. Sonnet paid roughly $1,187 in input costs at $3.00/M; Kimi paid around $104 at $0.60/M for a similar volume of input. That 5x input price difference is where the real money is.
-
-What this means in practice depends heavily on your workload:
-
-**Input-heavy tasks (RAG, long-context analysis, document Q&A):** Kimi wins clearly. If your calls have 100k input tokens and modest output, the 5x input price difference drives the bill. Kimi will be 3-4x cheaper.
-
-**Balanced tasks (coding, agentic loops):** Kimi still wins, but the margin shrinks. The output verbosity eats into the savings. Expect roughly 2-3x cheaper.
-
-**Output-heavy tasks (long-form generation, detailed summaries where the model writes a lot):** The advantage nearly disappears. If Kimi generates 6x more tokens to produce the same answer, the lower per-token rate barely compensates. You might end up at parity or even slightly more expensive than Sonnet for pure generation tasks. That said, this comparison is against Sonnet's *non-reasoning* variant -- if you turn on extended thinking, Sonnet's own token count climbs sharply and the math shifts back in Kimi's favor.
+Open source models are 3-5x cheaper on input and 4-8x cheaper on output at face value. But there is an important caveat: GLM-5 and Kimi K2.5 are reasoning models that think through problems via internal chain-of-thought. They generate a lot of tokens you pay for but never see. Kimi K2.5 used 89M output tokens to complete Artificial Analysis's benchmark suite; Claude Sonnet 4.6 used 14M. Despite that 6x verbosity gap, the total benchmark cost was still $371 for Kimi vs $1,397 for Sonnet -- primarily because input tokens are where the big savings are. The short version: how much you save depends on your workload. Input-heavy tasks (RAG, long-context analysis) favor open source 3-4x. Balanced coding or agentic work is more like 2-3x. Pure generation tasks where output dominates the bill narrow the gap considerably, though this comparison is against Sonnet's non-reasoning variant -- with extended thinking on, Claude's verbosity rises sharply too.
 
 **Providers**
 
-These are open-weight models, which means you are not locked into a single vendor. All four are available through multiple third-party inference providers that Western developers already use -- no Chinese account required.
+All four models are available on standard Western inference providers -- no Chinese accounts required. [DeepInfra](https://deepinfra.com) is the best single pick for both GLM-5 (~$1.24 blended, 126 t/s) and Kimi K2.5 (~$0.90 blended). [Together.ai](https://together.ai) and [Fireworks](https://fireworks.ai) are solid alternatives. All models are MIT or Apache 2.0 licensed and can be self-hosted if you have the hardware.
 
-For **GLM-5**, the best option right now is [DeepInfra](https://deepinfra.com), which leads on both speed (126 t/s) and price (~$1.24 blended per 1M tokens). [Fireworks](https://fireworks.ai) and [Together.ai](https://together.ai) are solid alternatives. Google also hosts it.
+**Prompt caching**
 
-For **Kimi K2.5**, [DeepInfra](https://deepinfra.com) is again the cheapest (~$0.90 blended), while [Together.ai](https://together.ai) has the lowest latency (0.54s to first token). [Baseten](https://baseten.co) is the fastest raw throughput option (338 t/s) if speed is the priority.
+Both Claude and open source providers support prompt caching, which cuts the cost of repeated prefixes (long system prompts, tool lists, shared document context). Claude's caching is explicit -- you mark breakpoints and pay $0.30/M for cache reads instead of $3.00/M on Sonnet (a 90% discount). Open source providers like Fireworks apply prefix caching automatically at 50% off, with no markers needed; DeepInfra and Together.ai have similar automatic caching baked in.
 
-MiniMax-M2.5 and Qwen3.5 are similarly available across DeepInfra, Together.ai, and others. All four models are MIT or Apache 2.0 licensed, so self-hosting is also an option if you have the hardware (GLM-5 is 744B parameters total, 40B active; Kimi K2.5 is 1T parameters, 32B active).
+The key nuance: caching only applies to input tokens. Output tokens are never cached. With extended thinking enabled on Claude, the model generates a large internal reasoning trace billed at the full $15-$25/M output rate, and caching does nothing for that. The open source reasoning models have the same verbosity, but at $3/M the exposure is far smaller. Caching is most valuable for applications with large, reused system prompts or growing conversation history. It is much less relevant for one-off tasks or highly dynamic prompts.
 
-**Most practical pick**
+**Most practical starting point**
 
-If you want to start with one model and keep it simple, **Kimi K2.5 via DeepInfra or Together.ai** is probably the most practical entry point. It is cheaper than GLM-5 at the token level, available on familiar Western providers, handles images and video, and has the largest context window of the four. GLM-5 via DeepInfra is the pick if you need maximum intelligence and reliability and can live without vision.
-
-**Prompt caching and how it changes the math**
-
-Prompt caching is worth understanding because it can significantly affect real-world costs -- and the open source models and Claude handle it quite differently.
-
-The idea is simple: if your requests share a large common prefix (a long system prompt, a tool list, a document you are analyzing across multiple turns), the model has to compute the same KV representations over and over for that shared prefix. Caching saves those representations and skips the recomputation on subsequent calls, which cuts both cost and latency.
-
-*Claude's caching model* is explicit. You mark cache breakpoints in your request, and Anthropic charges accordingly:
-
-| | Sonnet 4.6 | Opus 4.6 |
-|---|---|---|
-| Normal input | $3.00/M | $5.00/M |
-| Cache write | $3.75/M (+25%) | $6.25/M (+25%) |
-| Cache read | $0.30/M (-90%) | $0.50/M (-90%) |
-| Output | $15.00/M | $25.00/M |
-
-The cache read discount is aggressive -- 90% off. If you have a 50k-token system prompt and are making hundreds of calls per day, the savings on that prefix add up fast. With high cache hit rates (say 80% of input tokens coming from cache), Claude's effective input cost drops from $3.00/M toward $0.60/M -- which starts to approach open source input rates.
-
-But caching only applies to input tokens. Output tokens are never cached, and with extended thinking enabled on Claude the output token count can balloon significantly -- the model generates a long internal reasoning trace before answering. A task that produces 2k visible tokens might generate 20k+ tokens internally when thinking is on, all billed at the full $15/M or $25/M output rate. Caching does nothing for that. The open source reasoning models (Kimi K2.5, GLM-5) have the same verbosity problem, but at $3.00-$3.20/M for output rather than $15-$25/M the damage is much less severe.
-
-*Open source model providers* handle caching more transparently and in some cases more generously. On Fireworks, prefix caching is enabled by default across all models, and cached tokens cost 50% less than regular tokens -- no explicit cache_control markers required. DeepInfra and Together.ai have similar automatic prefix caching, though specific discount rates vary and are often not published separately (they may be baked into the blended pricing). In general, the caching on open source providers is lower friction -- it just works -- but the discount is less dramatic than Claude's 90% cache read rate.
-
-*When caching actually helps:*
-- Long system prompts (instructions, personas, tool definitions) reused across many calls -- the bigger the shared prefix, the more you save
-- Multi-turn chat where growing conversation history is re-sent each turn
-- RAG pipelines where the same retrieved document is used across multiple follow-up questions
-- Coding assistants keeping a large file in context across edits
-
-*When caching does not help:*
-- Short prompts (Claude requires at least 1024 tokens in a cached block to be worth it)
-- Highly dynamic prompts where every request looks different -- no repeated prefix, no cache hits
-- Bursty or low-volume usage -- caches expire (Claude's ephemeral cache lasts 5 minutes), so infrequent calls may never reuse a warm cache
-- Single-shot tasks where you call once and move on
-
-The practical takeaway: caching helps on input costs, but input is only part of the bill. For workloads that lean heavily on reasoning or extended thinking, output costs dominate -- and that is where the open source models' lower per-token rates matter most regardless of caching. Caching is a meaningful optimization on both sides of the table, but it does not fundamentally close the cost gap for thinking-heavy agentic work. If your workload is mostly unique one-off requests with short prompts, the headline token prices are simply what you pay.
+**Kimi K2.5 via [DeepInfra](https://deepinfra.com) or [Together.ai](https://together.ai)** -- cheaper than GLM-5, multimodal, large context, available on familiar providers. For pure text workloads that demand the highest intelligence and reliability, GLM-5 via DeepInfra is the pick.
 
 ---
 
