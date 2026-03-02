@@ -223,26 +223,10 @@ I am still evaluating whether to actually run these for any of my own workflows.
 
 ## Appendix: OpenRouter vs Direct Providers
 
-Once you decide on a model, you have a second choice: call the provider directly, or route through [OpenRouter](https://openrouter.ai).
+[OpenRouter](https://openrouter.ai) is a proxy that exposes a single OpenAI-compatible API across dozens of inference providers. One key, one integration, automatic fallback if a provider goes down, and unified billing across everything.
 
-**What OpenRouter is:** a proxy layer that sits in front of dozens of inference providers and exposes a single OpenAI-compatible API endpoint. One API key, one integration, access to hundreds of models across DeepInfra, Together.ai, Fireworks, Baseten, and many others. You pick the model by name; OpenRouter handles routing.
+As of March 2026, GLM-5 and Kimi K2.5 are not yet on OpenRouter, so direct is the only option for those two. MiniMax-M2.5, Qwen3.5, and DeepSeek V3.2 are available there.
 
-**One important caveat for this specific post:** as of March 2026, GLM-5 and Kimi K2.5 are not yet listed on OpenRouter. For these two models right now, going direct is your only option. That will likely change as the models mature and gain broader adoption, but it is worth checking the current OpenRouter model list before assuming availability.
+**Use OpenRouter** when you are prototyping, want to switch models without code changes, or want automatic failover and consolidated billing at low to medium volume.
 
-For the models that are on OpenRouter (MiniMax-M2.5, Qwen3.5, and most established models), the choice between OpenRouter and going direct comes down to a few things:
-
-**Choose OpenRouter when:**
-- You are prototyping or experimenting and want to switch models without touching your code
-- You want automatic fallback -- if your preferred provider goes down, OpenRouter re-routes to another that serves the same model
-- You are using multiple models and want unified billing instead of accounts across five different providers
-- You are not sure which provider is fastest or cheapest for your traffic pattern -- OpenRouter can optimize this for you automatically
-- Your volume is low to medium and the convenience outweighs any marginal price difference
-
-**Choose a direct provider when:**
-- You are running high volume and every fraction of a cent matters -- OpenRouter adds a small markup above provider rates
-- You need provider-specific features like dedicated deployments, fine-tuning, or custom SLAs that are not exposed through a proxy
-- You need strict control over data residency or routing (some compliance situations)
-- The model you want is not on OpenRouter yet (currently the case for GLM-5 and Kimi K2.5)
-- You want to lock in committed use pricing or negotiate directly
-
-For most developers starting out with these models, OpenRouter is the path of least friction once the models land there. For production workloads at scale, benchmarking direct providers and picking the best one -- as Artificial Analysis's provider comparison pages make easy -- is worth the extra setup.
+**Use a direct provider** when volume is high enough that OpenRouter's small markup matters, you need provider-specific features (dedicated deployments, fine-tuning, SLAs), or the model is not yet on OpenRouter.
