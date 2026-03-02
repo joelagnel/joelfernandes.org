@@ -73,7 +73,7 @@ Context window matters more than people often acknowledge. Larger windows mean y
 [![Intelligence vs Context Window](/Images/open-source-models-2026/context-window.png)](https://artificialanalysis.ai/models/glm-5?models=minimax-m2-5%2Ckimi-k2-5%2Cglm-5%2Cqwen3-5-397b-a17b&intelligence-index-cost=intelligence-vs-cost&context-window=intelligence-vs-context-window#intelligence-vs-context-window)
 *Intelligence vs. context window size. Kimi K2.5 and Qwen3.5 offer significantly larger windows than GLM-5. ([Artificial Analysis](https://artificialanalysis.ai))*
 
-Kimi K2.5 and Qwen3.5 397B A17B both sit at around 260k tokens, well ahead of GLM-5's roughly 200k. If you are doing long-document analysis or extended code reviews, that gap matters. GLM-5's smaller window is the clearest practical limitation in this comparison.
+Kimi K2.5 and Qwen3.5 397B A17B both sit at around 260k tokens, a bit ahead of GLM-5's roughly 200k. If you are doing long-document analysis or extended code reviews, that gap matters. GLM-5's smaller window is the clearest practical limitation in this comparison.
 
 ---
 
