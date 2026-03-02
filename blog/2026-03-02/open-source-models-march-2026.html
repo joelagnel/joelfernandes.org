@@ -286,13 +286,13 @@
 
 <hr />
 
-<p>I have been thinking about running local or API-hosted open source models for a while now. The price point has become genuinely attractive, so I decided to zero in on a few contenders and compare them head-to-head. The four models I am looking at are <strong>GLM-5</strong> (Zhipu AI), <strong>Kimi K2.5</strong> (Moonshot AI), <strong>MiniMax-M2.5</strong>, and <strong>Qwen3.5 397B A17B</strong> (Alibaba). All four are Chinese-lab models, which says something about where a lot of the open source momentum is right now.</p>
+<p>I have been thinking about running local or API-hosted open source models for a while now. The price point has become genuinely attractive, so I decided to zero in on a few contenders and compare them head-to-head. The five models I am looking at are <strong>GLM-5</strong> (Zhipu AI), <strong>Kimi K2.5</strong> (Moonshot AI), <strong>MiniMax-M2.5</strong>, <strong>Qwen3.5 397B A17B</strong> (Alibaba), and <strong>DeepSeek V3.2</strong> (DeepSeek AI). All five are Chinese-lab models, which says something about where a lot of the open source momentum is right now.</p>
 
 <p>Throughout this post, I only consider the <strong>thinking/reasoning variants</strong> of all models. Where data for a non-thinking variant is referenced for comparison purposes, it is explicitly noted as <em>(non-thinking)</em> in context. For Claude, both the non-thinking and the adaptive reasoning (max) variants share the same per-token price – the distinction matters for verbosity and total cost, not the rate itself.</p>
 
 <p>This post is intentionally approximate and high-level. The numbers and charts come from <a href="https://artificialanalysis.ai">Artificial Analysis</a>, which tracks live benchmark results and pricing across hundreds of models and providers. For precise, up-to-date data and methodology, I recommend going there directly.</p>
 
-<p>The short version: GLM-5 is the most well-rounded, Kimi K2.5 is the strongest pure coder, and the speed gap between the two is something you need to factor in. Let me go through each dimension.</p>
+<p>The short version: GLM-5 is the most well-rounded, Kimi K2.5 is the strongest pure coder, and DeepSeek V3.2 is the dark horse – competitive intelligence at a price that undercuts everything else by a wide margin. Let me go through each dimension.</p>
 
 <hr />
 
@@ -311,6 +311,8 @@
 <em>Intelligence vs. total cost to run the AI benchmark suite. GLM-5 is slightly more expensive to operate than Kimi K2.5 despite similar raw pricing. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
 
 <p>Kimi K2.5 comes out a bit cheaper in practice once you account for verbosity. So if cost efficiency is the primary driver, Kimi has a small edge. If you want the highest intelligence without worrying too much about token spend, GLM-5 is the pick.</p>
+
+<p><strong>Note on DeepSeek V3.2 (Reasoning):</strong> The charts above were generated before including DeepSeek in this comparison. DeepSeek V3.2 (Reasoning) scores 42 on the Artificial Analysis Intelligence Index – matching GLM-5 – while pricing at just $0.28/$0.42 per million input/output tokens. On the cost-vs-intelligence chart, it would sit far to the left of all other models at the same intelligence level, making it arguably the best value in this entire comparison. The caveats are a smaller 128k context window, text-only input, and slower native speed (though Fireworks brings it to 105 t/s).</p>
 
 <p>For the exact methodology behind the Intelligence Index, see <a href="https://artificialanalysis.ai">Artificial Analysis’s documentation</a>.</p>
 
@@ -348,6 +350,8 @@
 
 <p>Kimi K2.5 takes the top spot here at 49%, with GLM-5 at 46% and the field tighter overall (Qwen and MiniMax at 42-43%). So if your use case is primarily code generation rather than open-ended agentic reasoning, Kimi K2.5 deserves serious consideration.</p>
 
+<p><strong>Note on DeepSeek V3.2 (Reasoning):</strong> DeepSeek V3.2 was not included in the original benchmark charts above. On Terminal-Bench Hard it scores 36%, visible in the full leaderboard chart above. GDPval-AA, hallucination rate, and SciCode scores for DeepSeek V3.2 are not covered in these specific charts – refer to <a href="https://artificialanalysis.ai/models/deepseek-v3-2-reasoning">Artificial Analysis</a> for current agentic benchmark data.</p>
+
 <hr />
 
 <h2 id="section-3-context-window">Section 3: Context Window</h2>
@@ -359,6 +363,8 @@
 
 <p>Kimi K2.5 and Qwen3.5 397B A17B both sit at around 260k tokens, a bit ahead of GLM-5’s roughly 200k. If you are doing long-document analysis or extended code reviews, that gap matters. GLM-5’s smaller window is the clearest practical limitation in this comparison.</p>
 
+<p><strong>Note on DeepSeek V3.2 (Reasoning):</strong> Not shown in the chart above. DeepSeek V3.2 has a 128k context window – the smallest of all five models in this post. For long-context use cases it is at a clear disadvantage.</p>
+
 <hr />
 
 <h2 id="section-4-output-speed">Section 4: Output Speed</h2>
@@ -369,6 +375,8 @@
 <em>Output speed in tokens per second. GLM-5 and Qwen3.5 lead; Kimi K2.5 lags significantly. (<a href="https://artificialanalysis.ai">Artificial Analysis</a>)</em></p>
 
 <p>GLM-5 and Qwen3.5 come in around 74-75 tokens per second. MiniMax and Kimi K2.5 drop to around 48-49. For interactive use that difference is noticeable. Kimi K2.5 would still be fine for batch or overnight jobs – tasks you kick off before bed and check in the morning – but for real-time interactive work GLM-5 is considerably snappier.</p>
+
+<p><strong>Note on DeepSeek V3.2 (Reasoning):</strong> Not shown in the chart above. Native DeepSeek speed is around 32.9 t/s – the slowest in this comparison on their own infrastructure. However, <a href="https://fireworks.ai">Fireworks</a> delivers it at 105.8 t/s, which flips the picture entirely and makes it the fastest model in the group on that provider.</p>
 
 <hr />
 
@@ -398,6 +406,11 @@
       <td>Text</td>
     </tr>
     <tr>
+      <td>DeepSeek V3.2</td>
+      <td>Text only</td>
+      <td>Text</td>
+    </tr>
+    <tr>
       <td>Qwen3.5 397B A17B</td>
       <td>Text + Image</td>
       <td>Text</td>
@@ -418,7 +431,9 @@
 
 <p><strong>GLM-5</strong> being text-only is arguably the sharpest limitation in its otherwise strong profile. It leads on intelligence, agentic reliability, and speed – but if your pipeline ever needs to process an image or a video frame, you cannot use it without a separate vision model upstream.</p>
 
-<p>The bottom line: if multimodality matters for your use case, Kimi K2.5 is the only complete answer. If static image support is enough, Qwen3.5 is a solid alternative with better speed. If your workflow is purely text, GLM-5’s other advantages come back into play.</p>
+<p><strong>DeepSeek V3.2</strong> is also text-only. This matters because it otherwise has strong raw intelligence. For vision-free workflows it is competitive; for anything involving images or video it is not an option without a separate model upstream.</p>
+
+<p>The bottom line: if multimodality matters for your use case, Kimi K2.5 is the only complete answer. If static image support is enough, Qwen3.5 is a solid alternative with better speed. If your workflow is purely text, GLM-5, DeepSeek V3.2, and MiniMax all have their respective advantages.</p>
 
 <hr />
 
@@ -435,6 +450,11 @@
     </tr>
   </thead>
   <tbody>
+    <tr>
+      <td>DeepSeek V3.2 (Reasoning)</td>
+      <td>$0.28</td>
+      <td>$0.42</td>
+    </tr>
     <tr>
       <td>MiniMax-M2.5 (Reasoning)</td>
       <td>$0.30</td>
@@ -472,7 +492,7 @@
 
 <p><strong>Providers</strong></p>
 
-<p>All four models are available on standard Western inference providers – no Chinese accounts required. <a href="https://deepinfra.com">DeepInfra</a> is the best single pick for both GLM-5 (~$1.24 blended, 126 t/s) and Kimi K2.5 (~$0.90 blended). <a href="https://together.ai">Together.ai</a> and <a href="https://fireworks.ai">Fireworks</a> are solid alternatives. All models are MIT or Apache 2.0 licensed and can be self-hosted if you have the hardware.</p>
+<p>All five models are available on standard Western inference providers – no Chinese accounts required. <a href="https://deepinfra.com">DeepInfra</a> is the best single pick for both GLM-5 (~$1.24 blended, 126 t/s) and Kimi K2.5 (~$0.90 blended). <a href="https://together.ai">Together.ai</a> and <a href="https://fireworks.ai">Fireworks</a> are solid alternatives for most models. For DeepSeek V3.2 (Reasoning) specifically, <a href="https://fireworks.ai">Fireworks</a> is the top pick for speed (105.8 t/s) and <a href="https://novita.ai">Novita</a> is the cheapest (~$0.30 blended). All models are MIT or Apache 2.0 licensed and can be self-hosted if you have the hardware.</p>
 
 <p><strong>Prompt caching</strong></p>
 
@@ -495,7 +515,7 @@
     <tr>
       <th>Model</th>
       <th>Intelligence</th>
-      <th>Agentic</th>
+      <th>Agentic (Terminal-Bench)</th>
       <th>Hallucination</th>
       <th>Coding (SciCode)</th>
     </tr>
@@ -503,34 +523,43 @@
   <tbody>
     <tr>
       <td>GLM-5</td>
-      <td>Best</td>
-      <td>Best</td>
+      <td>42 (top tier)</td>
+      <td>Best (43%)</td>
       <td>Best (66%)</td>
       <td>2nd (46%)</td>
     </tr>
     <tr>
+      <td>DeepSeek V3.2</td>
+      <td>42 (top tier)</td>
+      <td>36%</td>
+      <td>N/A†</td>
+      <td>N/A†</td>
+    </tr>
+    <tr>
       <td>Kimi K2.5</td>
-      <td>2nd</td>
-      <td>2nd</td>
+      <td>Competitive</td>
+      <td>2nd (41%)</td>
       <td>2nd (35%)</td>
       <td>Best (49%)</td>
     </tr>
     <tr>
       <td>Qwen3.5 397B</td>
       <td>3rd</td>
-      <td>3rd</td>
+      <td>3rd (35%)</td>
       <td>Poor (11%)</td>
       <td>3rd (42%)</td>
     </tr>
     <tr>
       <td>MiniMax-M2.5</td>
       <td>4th</td>
-      <td>3rd</td>
+      <td>3rd (35%)</td>
       <td>Poor (11%)</td>
       <td>3rd (43%)</td>
     </tr>
   </tbody>
 </table>
+
+<p>†DeepSeek V3.2 was not included in the hallucination and SciCode charts used in this post. See <a href="https://artificialanalysis.ai/models/deepseek-v3-2-reasoning">Artificial Analysis</a> for current scores.</p>
 
 <p><strong>Practical specs</strong></p>
 
@@ -568,6 +597,12 @@
       <td>49 t/s</td>
       <td>Text only</td>
     </tr>
+    <tr>
+      <td>DeepSeek V3.2</td>
+      <td>128k</td>
+      <td>33 t/s (native) / 106 t/s (Fireworks)</td>
+      <td>Text only</td>
+    </tr>
   </tbody>
 </table>
 
@@ -586,12 +621,20 @@
   </thead>
   <tbody>
     <tr>
-      <td>GLM-5</td>
-      <td>$1.00</td>
-      <td>$3.20</td>
+      <td>DeepSeek V3.2</td>
+      <td>$0.28</td>
+      <td>$0.42</td>
       <td>varies by provider</td>
       <td>varies by provider</td>
-      <td>Very high (110M tokens)</td>
+      <td>High (61M tokens)</td>
+    </tr>
+    <tr>
+      <td>MiniMax-M2.5</td>
+      <td>$0.30</td>
+      <td>$1.20</td>
+      <td>varies by provider</td>
+      <td>varies by provider</td>
+      <td>Moderate (56M tokens)</td>
     </tr>
     <tr>
       <td>Kimi K2.5</td>
@@ -610,12 +653,12 @@
       <td>High (86M tokens)</td>
     </tr>
     <tr>
-      <td>MiniMax-M2.5</td>
-      <td>$0.30</td>
-      <td>$1.20</td>
+      <td>GLM-5</td>
+      <td>$1.00</td>
+      <td>$3.20</td>
       <td>varies by provider</td>
       <td>varies by provider</td>
-      <td>Moderate (56M tokens)</td>
+      <td>Very high (110M tokens)</td>
     </tr>
     <tr>
       <td>Claude Sonnet 4.6</td>
