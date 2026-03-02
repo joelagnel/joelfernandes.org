@@ -126,4 +126,6 @@ For most agentic or assistant use cases: **GLM-5**. Best intelligence, best reli
 
 For coding-heavy workloads where speed is less critical, or if you need multimodal input (images, video): **Kimi K2.5**. It beats GLM-5 on SciCode, nearly matches it on terminal coding, has a bigger context window, and is the only one of these four that handles visual inputs.
 
+The analogy I keep coming back to: GLM-5 is the Claude Opus of the open source world -- the highest-capability option, the one you reach for when the task demands the most. Kimi K2.5 is the Sonnet -- fast, versatile, and covers more ground. The catch is that GLM-5's lack of vision support is a serious handicap. In practice that probably means running them together: GLM-5 as the primary model and Kimi K2.5 as the fallback or helper whenever a task involves images or video.
+
 I am still evaluating whether to actually run these for any of my own workflows. I still have a Claude Max subscription, and for me capability trumps everything. If Claude did not have an actual max subscription tier, I would probably be primarily using some combination of GLM-5 and Kimi K2.5 -- the price point is that attractive.
