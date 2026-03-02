@@ -127,16 +127,16 @@ The bottom line: if multimodality matters for your use case, Kimi K2.5 is the on
 
 ## Section 6: Cost and Providers
 
-The token prices tell the headline story clearly:
+The token prices tell the headline story clearly. All models below are reasoning/thinking variants -- the open source models are reasoning-only, and Anthropic prices Claude Sonnet and Opus identically whether you use the non-reasoning or the adaptive reasoning (max) variant. The thinking tokens still cost the same per token; the difference is how many get generated.
 
 | Model | Input (per 1M) | Output (per 1M) |
 |---|---|---|
-| MiniMax-M2.5 | $0.30 | $1.20 |
-| Kimi K2.5 | $0.60 | $3.00 |
-| Qwen3.5 397B A17B | $0.60 | $3.60 |
-| GLM-5 | $1.00 | $3.20 |
-| Claude Sonnet 4.6 | $3.00 | $15.00 |
-| Claude Opus 4.6 | $5.00 | $25.00 |
+| MiniMax-M2.5 (Reasoning) | $0.30 | $1.20 |
+| Kimi K2.5 (Reasoning) | $0.60 | $3.00 |
+| Qwen3.5 397B A17B (Reasoning) | $0.60 | $3.60 |
+| GLM-5 (Reasoning) | $1.00 | $3.20 |
+| Claude Sonnet 4.6 (non-reasoning or max) | $3.00 | $15.00 |
+| Claude Opus 4.6 (non-reasoning or max) | $5.00 | $25.00 |
 
 Open source models are 3-5x cheaper on input and 4-8x cheaper on output at face value. But there is an important caveat: GLM-5 and Kimi K2.5 are reasoning models that think through problems via internal chain-of-thought. They generate a lot of tokens you pay for but never see. Kimi K2.5 used 89M output tokens to complete Artificial Analysis's benchmark suite; Claude Sonnet 4.6 used 14M. Despite that 6x verbosity gap, the total benchmark cost was still $371 for Kimi vs $1,397 for Sonnet -- primarily because input tokens are where the big savings are. The short version: how much you save depends on your workload. Input-heavy tasks (RAG, long-context analysis) favor open source 3-4x. Balanced coding or agentic work is more like 2-3x. Pure generation tasks where output dominates the bill narrow the gap considerably, though this comparison is against Sonnet's non-reasoning variant -- with extended thinking on, Claude's verbosity rises sharply too.
 
