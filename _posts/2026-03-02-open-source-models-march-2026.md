@@ -172,10 +172,10 @@ The key nuance: caching only applies to input tokens. Output tokens are never ca
 | Kimi K2.5 | $0.60 | $3.00 | varies by provider | varies by provider | High (89M tokens) |
 | Qwen3.5 397B | $0.60 | $3.60 | varies by provider | varies by provider | High (86M tokens) |
 | MiniMax-M2.5 | $0.30 | $1.20 | varies by provider | varies by provider | Moderate (56M tokens) |
-| Claude Sonnet 4.6 | $3.00 | $15.00 | $0.30 (-90%) | $3.75 (+25%) | Low (14M tokens)* |
-| Claude Opus 4.6 | $5.00 | $25.00 | $0.50 (-90%) | $6.25 (+25%) | Low (11M tokens)* |
+| Claude Sonnet 4.6 | $3.00 | $15.00 | $0.30 (-90%) | $3.75 (+25%) | 14M (non-reasoning) / N/A (max)† |
+| Claude Opus 4.6 | $5.00 | $25.00 | $0.50 (-90%) | $6.25 (+25%) | 11M (non-reasoning) / N/A (max)† |
 
-*Non-reasoning variant. With extended thinking enabled, Claude output token counts rise sharply -- potentially matching or exceeding the open source models -- at $15-$25/M output rather than $3-$3.20/M. Caching helps on input but does nothing for those thinking tokens, which is where the cost gap becomes hardest for Claude to close.
+†The "max" (adaptive reasoning) variants show N/A verbosity because token counts vary per task depending on how much thinking is triggered. With full extended thinking, Claude's output token counts can match or exceed the open source reasoning models -- at $15-$25/M rather than $3-$3.20/M. Caching helps on input but does nothing for those thinking tokens, which is where the cost gap is hardest for Claude to close.
 
 For most agentic or assistant use cases: **GLM-5**. Best intelligence, best reliability, fastest response. The smaller context window and slightly higher verbosity cost are the tradeoffs.
 
