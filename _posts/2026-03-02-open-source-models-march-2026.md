@@ -224,6 +224,19 @@ The practical takeaway: caching helps on input costs, but input is only part of 
 | Qwen3.5 397B | 262k | 74 t/s | Text + Image |
 | MiniMax-M2.5 | 205k | 49 t/s | Text only |
 
+**Cost (per 1M tokens)**
+
+| Model | Input | Output | Cache read | Cache write | Verbosity |
+|---|---|---|---|---|---|
+| GLM-5 | $1.00 | $3.20 | varies by provider | varies by provider | Very high (110M tokens) |
+| Kimi K2.5 | $0.60 | $3.00 | varies by provider | varies by provider | High (89M tokens) |
+| Qwen3.5 397B | $0.60 | $3.60 | varies by provider | varies by provider | High (86M tokens) |
+| MiniMax-M2.5 | $0.30 | $1.20 | varies by provider | varies by provider | Moderate (56M tokens) |
+| Claude Sonnet 4.6 | $3.00 | $15.00 | $0.30 (-90%) | $3.75 (+25%) | Low (14M tokens)* |
+| Claude Opus 4.6 | $5.00 | $25.00 | $0.50 (-90%) | $6.25 (+25%) | Low (11M tokens)* |
+
+*Non-reasoning variant. With extended thinking enabled, Claude output token counts rise sharply -- potentially matching or exceeding the open source models -- at $15-$25/M output rather than $3-$3.20/M. Caching helps on input but does nothing for those thinking tokens, which is where the cost gap becomes hardest for Claude to close.
+
 For most agentic or assistant use cases: **GLM-5**. Best intelligence, best reliability, fastest response. The smaller context window and slightly higher verbosity cost are the tradeoffs.
 
 For coding-heavy workloads where speed is less critical, or if you need multimodal input (images, video): **Kimi K2.5**. It beats GLM-5 on SciCode, nearly matches it on terminal coding, has a bigger context window, and is the only one of these four that handles visual inputs.
