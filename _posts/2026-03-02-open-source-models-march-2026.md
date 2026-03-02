@@ -115,12 +115,23 @@ The bottom line: if multimodality matters for your use case, Kimi K2.5 is the on
 
 ## Summary
 
-| Model | Intelligence | Agentic | Hallucination | SciCode | Context | Speed | Multimodal |
-|---|---|---|---|---|---|---|---|
-| GLM-5 | Best | Best | Best (66%) | 2nd (46%) | 200k | Fast (75 t/s) | Text only |
-| Kimi K2.5 | 2nd | 2nd | 2nd (35%) | Best (49%) | 256k | Slow (48 t/s) | Text + Image + Video |
-| Qwen3.5 397B | 3rd | 3rd | Poor | 3rd | 262k | Fast (74 t/s) | Text + Image |
-| MiniMax-M2.5 | 4th | 3rd | Poor | 3rd | 205k | Mid (49 t/s) | Text only |
+**Performance**
+
+| Model | Intelligence | Agentic | Hallucination | Coding (SciCode) |
+|---|---|---|---|---|
+| GLM-5 | Best | Best | Best (66%) | 2nd (46%) |
+| Kimi K2.5 | 2nd | 2nd | 2nd (35%) | Best (49%) |
+| Qwen3.5 397B | 3rd | 3rd | Poor (11%) | 3rd (42%) |
+| MiniMax-M2.5 | 4th | 3rd | Poor (11%) | 3rd (43%) |
+
+**Practical specs**
+
+| Model | Context | Speed | Multimodal |
+|---|---|---|---|
+| GLM-5 | 200k | 75 t/s | Text only |
+| Kimi K2.5 | 256k | 48 t/s | Text + Image + Video |
+| Qwen3.5 397B | 262k | 74 t/s | Text + Image |
+| MiniMax-M2.5 | 205k | 49 t/s | Text only |
 
 For most agentic or assistant use cases: **GLM-5**. Best intelligence, best reliability, fastest response. The smaller context window and slightly higher verbosity cost are the tradeoffs.
 
