@@ -217,6 +217,8 @@ For coding-heavy workloads where speed is less critical, or if you need multimod
 
 The analogy I keep coming back to: GLM-5 is the Claude Opus of the open source world -- the highest-capability option, the one you reach for when the task demands the most. Kimi K2.5 is the Sonnet -- fast, versatile, and covers more ground. The catch is that GLM-5's lack of vision support is a serious handicap. In practice that probably means running them together: GLM-5 as the primary model and Kimi K2.5 as the fallback or helper whenever a task involves images or video.
 
+DeepSeek V3.2 (Reasoning) makes the most sense when cost is the overriding constraint and your workload is text-only with modest context requirements -- at $0.28/$0.42 per million tokens it is in a different pricing tier from everything else, and its intelligence score matches GLM-5. If your pipeline stays under 128k tokens per call and never touches images, it is hard to argue against.
+
 I am still evaluating whether to actually run these for any of my own workflows. I still have a Claude Max subscription, and for me capability trumps everything. If Claude did not have an actual max subscription tier, I would probably be primarily using some combination of GLM-5 and Kimi K2.5 -- the price point is that attractive.
 
 ---
@@ -229,4 +231,4 @@ As of March 2026, GLM-5 and Kimi K2.5 are not yet on OpenRouter, so direct is th
 
 **Use OpenRouter** when you are prototyping, want to switch models without code changes, or want automatic failover and consolidated billing at low to medium volume.
 
-**Use a direct provider** when volume is high enough that OpenRouter's small markup matters, you need provider-specific features (dedicated deployments, fine-tuning, SLAs), or the model is not yet on OpenRouter.
+**Use a direct provider** when caching hit rates matter (OpenRouter's load balancing across providers kills cache locality), you need provider-specific features (dedicated deployments, fine-tuning, SLAs), or the model is not yet on OpenRouter. Note: OpenRouter does not add a per-token markup -- provider pricing passes through exactly; they only charge a small fee on credit purchases.
