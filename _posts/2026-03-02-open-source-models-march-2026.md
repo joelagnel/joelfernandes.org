@@ -113,6 +113,39 @@ The bottom line: if multimodality matters for your use case, Kimi K2.5 is the on
 
 ---
 
+## Section 6: Cost and Providers
+
+Here is the raw token pricing for all four models compared to Claude Sonnet 4.6 and Claude Opus 4.6 as of March 2026:
+
+| Model | Input (per 1M) | Output (per 1M) |
+|---|---|---|
+| MiniMax-M2.5 | $0.30 | $1.20 |
+| Kimi K2.5 | $0.60 | $3.00 |
+| Qwen3.5 397B A17B | $0.60 | $3.60 |
+| GLM-5 | $1.00 | $3.20 |
+| **Claude Sonnet 4.6** | **$3.00** | **$15.00** |
+| **Claude Opus 4.6** | **$5.00** | **$25.00** |
+
+The gap is stark. Claude Sonnet 4.6 costs 3-5x more per input token than GLM-5, and on output tokens the difference is 4-8x. Claude Opus 4.6 is in a different league cost-wise -- at $25 per million output tokens, it is over 7x more expensive on output than GLM-5 and 20x more expensive than MiniMax.
+
+One important caveat for GLM-5: it is extremely verbose. It generated 110 million tokens to complete Artificial Analysis's benchmark suite, compared to around 14 million for Claude Sonnet 4.6 -- about 8x more output tokens for the same tasks. That verbosity narrows the real-world cost gap considerably. At the per-token rates, a task that costs $0.21 in Claude Sonnet output tokens would cost GLM-5 around $0.35 once you account for its tendency to generate longer responses. Still cheaper, but not as cheap as the headline rate suggests. Kimi K2.5 is also verbose (89M tokens on the same benchmark), so the same caveat applies.
+
+**Providers**
+
+These are open-weight models, which means you are not locked into a single vendor. All four are available through multiple third-party inference providers that Western developers already use -- no Chinese account required.
+
+For **GLM-5**, the best option right now is [DeepInfra](https://deepinfra.com), which leads on both speed (126 t/s) and price (~$1.24 blended per 1M tokens). [Fireworks](https://fireworks.ai) and [Together.ai](https://together.ai) are solid alternatives. Google also hosts it.
+
+For **Kimi K2.5**, [DeepInfra](https://deepinfra.com) is again the cheapest (~$0.90 blended), while [Together.ai](https://together.ai) has the lowest latency (0.54s to first token). [Baseten](https://baseten.co) is the fastest raw throughput option (338 t/s) if speed is the priority.
+
+MiniMax-M2.5 and Qwen3.5 are similarly available across DeepInfra, Together.ai, and others. All four models are MIT or Apache 2.0 licensed, so self-hosting is also an option if you have the hardware (GLM-5 is 744B parameters total, 40B active; Kimi K2.5 is 1T parameters, 32B active).
+
+**Most practical pick**
+
+If you want to start with one model and keep it simple, **Kimi K2.5 via DeepInfra or Together.ai** is probably the most practical entry point. It is cheaper than GLM-5 at the token level, available on familiar Western providers, handles images and video, and has the largest context window of the four. GLM-5 via DeepInfra is the pick if you need maximum intelligence and reliability and can live without vision.
+
+---
+
 ## Summary
 
 **Performance**
