@@ -128,7 +128,32 @@ Here is the raw token pricing for all four models compared to Claude Sonnet 4.6 
 
 The gap is stark. Claude Sonnet 4.6 costs 3-5x more per input token than GLM-5, and on output tokens the difference is 4-8x. Claude Opus 4.6 is in a different league cost-wise -- at $25 per million output tokens, it is over 7x more expensive on output than GLM-5 and 20x more expensive than MiniMax.
 
-One important caveat for GLM-5: it is extremely verbose. It generated 110 million tokens to complete Artificial Analysis's benchmark suite, compared to around 14 million for Claude Sonnet 4.6 -- about 8x more output tokens for the same tasks. That verbosity narrows the real-world cost gap considerably. At the per-token rates, a task that costs $0.21 in Claude Sonnet output tokens would cost GLM-5 around $0.35 once you account for its tendency to generate longer responses. Still cheaper, but not as cheap as the headline rate suggests. Kimi K2.5 is also verbose (89M tokens on the same benchmark), so the same caveat applies.
+The headline token rates look like a slam dunk for open source, but verbosity complicates the picture considerably -- especially for Kimi K2.5.
+
+Both GLM-5 and Kimi K2.5 are reasoning models. They think out loud, working through problems via internal chain-of-thought before producing an answer. That is part of what makes them capable -- but it also means they generate a lot of tokens you are paying for but never see in the final response.
+
+Artificial Analysis measured exactly this when running their benchmark suite:
+
+| Model | Output tokens (benchmark) | Output price | Output cost (benchmark) | Total cost (benchmark) |
+|---|---|---|---|---|
+| Claude Sonnet 4.6 | 14M | $15.00/M | $210 | $1,397 |
+| Claude Opus 4.6 | 11M | $25.00/M | $275 | ~$1,600 est. |
+| Kimi K2.5 | 89M | $3.00/M | $267 | $371 |
+| GLM-5 | 110M | $3.20/M | $352 | ~$500 est. |
+
+Look at the output cost column. Kimi K2.5 generates 6x more output tokens than Sonnet, and despite costing 5x less per token, ends up spending slightly *more* in raw output cost ($267 vs $210). GLM-5 is similar -- 8x the output tokens, slightly more expensive in output cost than Sonnet.
+
+The reason the total benchmark cost is still 3.8x cheaper for Kimi ($371 vs $1,397) is almost entirely the **input token savings**. Sonnet paid roughly $1,187 in input costs at $3.00/M; Kimi paid around $104 at $0.60/M for a similar volume of input. That 5x input price difference is where the real money is.
+
+What this means in practice depends heavily on your workload:
+
+**Input-heavy tasks (RAG, long-context analysis, document Q&A):** Kimi wins clearly. If your calls have 100k input tokens and modest output, the 5x input price difference drives the bill. Kimi will be 3-4x cheaper.
+
+**Balanced tasks (coding, agentic loops):** Kimi still wins, but the margin shrinks. The output verbosity eats into the savings. Expect roughly 2-3x cheaper.
+
+**Output-heavy tasks (long-form generation, detailed summaries where the model writes a lot):** The advantage nearly disappears. If Kimi generates 6x more tokens to produce the same answer, the lower per-token rate barely compensates. You might end up at parity or even slightly more expensive than Sonnet for pure generation tasks.
+
+The other thing worth noting: Sonnet 4.6 in this benchmark is the *non-reasoning* variant. If you compare Kimi K2.5 against Claude Sonnet with extended thinking enabled, Sonnet's token count would be much higher and closer to Kimi's. The comparison becomes more favorable for Kimi in that scenario.
 
 **Providers**
 
