@@ -232,3 +232,7 @@ As of March 2026, GLM-5 and Kimi K2.5 are not yet on OpenRouter, so direct is th
 **Use OpenRouter** when you are prototyping, want to switch models without code changes, or want automatic failover and consolidated billing at low to medium volume.
 
 **Use a direct provider** when caching hit rates matter (OpenRouter's load balancing across providers kills cache locality), you need provider-specific features (dedicated deployments, fine-tuning, SLAs), or the model is not yet on OpenRouter. Note: OpenRouter does not add a per-token markup -- provider pricing passes through exactly; they only charge a small fee on credit purchases.
+
+**Does OpenRouter support modality-based failover?** No -- failover triggers on provider availability failures, not capability mismatches. Sending an image to a text-only model will not automatically reroute to a vision-capable one; you need to handle that in your application layer.
+
+**Does OpenRouter support prompt caching?** It passes through caching to the underlying provider (e.g. Anthropic's `cache_control` markers work), but OpenRouter's default load balancing spreads requests across multiple providers, killing cache hit rates. To make caching reliable, pin to a single provider using the `provider.order` request parameter.
