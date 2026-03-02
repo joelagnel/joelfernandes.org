@@ -20,6 +20,10 @@ published: false
 
 I have been thinking about running local or API-hosted open source models for a while now. The price point has become genuinely attractive, so I decided to zero in on a few contenders and compare them head-to-head. The four models I am looking at are **GLM-5** (Zhipu AI), **Kimi K2.5** (Moonshot AI), **MiniMax-M2.5**, and **Qwen3.5 397B A17B** (Alibaba). All four are Chinese-lab models, which says something about where a lot of the open source momentum is right now.
 
+Throughout this post, I only consider the **thinking/reasoning variants** of all models. Where data for a non-thinking variant is referenced for comparison purposes, it is explicitly noted as *(non-thinking)* in context. For Claude, both the non-thinking and the adaptive reasoning (max) variants share the same per-token price -- the distinction matters for verbosity and total cost, not the rate itself.
+
+This post is intentionally approximate and high-level. The numbers and charts come from [Artificial Analysis](https://artificialanalysis.ai), which tracks live benchmark results and pricing across hundreds of models and providers. For precise, up-to-date data and methodology, I recommend going there directly.
+
 The short version: GLM-5 is the most well-rounded, Kimi K2.5 is the strongest pure coder, and the speed gap between the two is something you need to factor in. Let me go through each dimension.
 
 ---
