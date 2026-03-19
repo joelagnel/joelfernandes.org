@@ -1,240 +1,314 @@
 ---
 layout: post
-title: "Kernel Dependency Mess: An Age Old Reality!"
+title: "Kernel Dependency Mess: BPF and SRCU"
 date: 2026-03-19
 ---
 
-# Kernel Dependency Mess: An Age Old Reality!
+# Kernel Dependency Mess: BPF and SRCU
 
-The Linux kernel has always been a complex beast with intricate dependencies between subsystems. But sometimes, these dependencies create truly nasty bugs that highlight just how interconnected our kernel infrastructure has become. Recently, I've been diving into one such bug involving SRCU (Sleepable Read-Copy Update), RCU Tasks Trace, and PREEMPT_RT that perfectly illustrates the dependency mess we live with.
+The Linux kernel evolution continues to surprise us with unexpected interactions between subsystems designed years apart. This week, I've been tracking a nasty bug involving BPF local storage, SRCU (Sleepable Read-Copy Update), and PREEMPT_RT that perfectly illustrates how modern kernel features can collide in spectacular ways.
 
-## The Bug: When Modern Subsystems Clash
+The issue surfaced when Andrea Righi from NVIDIA hit problems with sched_ext (the extensible scheduler framework) calling BPF task storage deletion from atomic context. What started as a simple "invalid wait context" bug morphed into a circular deadlock when the initial fix exposed a fundamental lock ordering problem.
 
-The problem surfaced when newer kernel subsystems like BPF, sched_ext (the extensible scheduler), and various tracing mechanisms began calling `call_srcu()` from contexts where preemption is disabled. This wouldn't be a problem in a normal kernel, but with PREEMPT_RT (the real-time patches), it creates a perfect storm.
+Let me walk through both bugs in detail, because they represent two distinct facets of the same underlying problem: legacy subsystems meeting modern atomic context requirements.
 
-Here's what happens:
+## Bug 1: Invalid Wait Context (7.0.0-rc1)
 
-1. **SRCU traditionally uses sleeping locks** - SRCU (Sleepable RCU) was designed to allow blocking within read-side critical sections, unlike classic RCU. To support this, SRCU uses regular spinlocks internally, which can sleep under PREEMPT_RT.
+The first bug appeared when Andrea was testing the cosmos scheduler (a sched_ext implementation). The problem manifests when `bpf_task_storage_delete()` gets called from `sched_ext's ops.exit_task()` callback while holding the runqueue lock:
 
-2. **Modern subsystems call SRCU from atomic contexts** - BPF programs, sched_ext schedulers, and tracing code often run with preemption disabled for performance or correctness reasons. When they call `call_srcu()`, they're doing so from a context where sleeping is not allowed.
-
-3. **PREEMPT_RT converts spinlocks to sleeping locks** - Under PREEMPT_RT, regular spinlocks become mutex-like constructs that can block. This creates a fundamental conflict: atomic context code trying to acquire sleeping locks.
-
-## The Call Stacks: How We Got Here
-
-Let me show you some of the call stacks that trigger this issue. From the kernel source in `kernel/rcu/srcutree.c`, the problem flows like this:
-
-```c
-call_srcu(struct srcu_struct *ssp, struct rcu_head *rhp, rcu_callback_t func)
-{
-    __call_srcu(ssp, rhp, func, true);
-}
-
-static void __call_srcu(struct srcu_struct *ssp, struct rcu_head *rhp,
-                        rcu_callback_t func, bool do_norm)
-{
-    // ...
-    (void)srcu_gp_start_if_needed(ssp, rhp, do_norm);
-}
+```
+=============================
+[ BUG: Invalid wait context ]
+7.0.0-rc1-virtme #1 Not tainted
+-----------------------------
+(udev-worker)/115 is trying to lock:
+ffffffffa6970dd0 (rcu_tasks_trace_srcu_struct_srcu_usage.lock){....}-{3:3}, at: spin_lock_irqsave_ssp_contention+0x54/0x90
+other info that might help us debug this:
+context-{5:5}
+3 locks held by (udev-worker)/115:
+ #0: ffff8e16c634ce58 (&p->pi_lock){-.-.}-{2:2}, at: _task_rq_lock+0x2c/0x100
+ #1: ffff8e16fbdbdae0 (&rq->__lock){-.-.}-{2:2}, at: raw_spin_rq_lock_nested+0x24/0xb0
+ #2: ffffffffa6971b60 (rcu_read_lock){....}-{1:3}, at: __bpf_prog_enter+0x64/0x110
+...
+Sched_ext: cosmos_1.0.7_g780e898fc_dirty_x86_64_unknown_linux_gnu (enabled+all), task: runnable_at=-2ms
+Call Trace:
+ dump_stack_lvl+0x6f/0xb0
+ __lock_acquire+0xf86/0x1de0
+ lock_acquire+0xcf/0x310
+ _raw_spin_lock_irqsave+0x39/0x60
+ spin_lock_irqsave_ssp_contention+0x54/0x90
+ srcu_gp_start_if_needed+0x2a7/0x490
+ bpf_selem_unlink+0x24b/0x590
+ bpf_task_storage_delete+0x3a/0x90
+ bpf_prog_3b623b4be76cfb86_scx_pmu_task_fini+0x26/0x2a
+ bpf_prog_4b1530d9d9852432_cosmos_exit_task+0x1d/0x1f
+ bpf__sched_ext_ops_exit_task+0x4b/0xa7
+ __scx_disable_and_exit_task+0x10a/0x200
+ scx_disable_and_exit_task+0xe/0x60
 ```
 
-And in `srcu_gp_start_if_needed()`, we see the problematic lock acquisition:
+### The Root Cause
+
+The call path shows the problem clearly:
+
+1. `sched_ext's ops.exit_task()` runs with `&rq->__lock` (runqueue lock) held - this is a **raw spinlock**
+2. `bpf_task_storage_delete()` calls `bpf_selem_unlink()` 
+3. Eventually reaches `call_rcu_tasks_trace()` which internally uses SRCU
+4. SRCU's `spin_lock_irqsave_ssp_contention()` tries to acquire `rcu_tasks_trace_srcu_struct_srcu_usage.lock`
+5. **Problem**: This SRCU lock is a regular spinlock, not a raw spinlock
+
+Under PREEMPT_RT, regular spinlocks can sleep (they become mutex-like), but we're in atomic context holding a raw spinlock. Lockdep catches this as an "invalid wait context" - trying to acquire a {3:3} lock (sleeping) from context-{5:5} (atomic with raw locks held).
+
+### The Background: RCU Tasks Trace + SRCU
+
+The issue stems from a recent change where RCU Tasks Trace was converted to use SRCU internally. Previously, `call_rcu_tasks_trace()` was safe from raw spinlock contexts, but the SRCU conversion introduced this sleeping lock requirement.
+
+Kumar Kartikeya Dwivedi explained: *"It was always safe to call_rcu_tasks_trace() under raw spin lock, but became problematic on RT with the recent conversion that uses SRCU underneath."*
+
+## Bug 2: Circular Lock Dependency (7.0.0-rc4)
+
+Paul McKenney initially attempted to fix Bug 1 by converting SRCU's lock to a raw spinlock. This fixed the "invalid wait context" but immediately exposed a more serious circular deadlock. Andrea's testing revealed:
+
+```
+======================================================
+WARNING: possible circular locking dependency detected
+7.0.0-rc4-virtme #15 Not tainted
+------------------------------------------------------
+schbench/532 is trying to acquire lock:
+ffffffff9cd70d90 (rcu_tasks_trace_srcu_struct_srcu_usage.lock){....}-{2:2}, at: raw_spin_lock_irqsave_sdp_contention+0x5b/0xe0
+
+but task is already holding lock:
+ffff8df7fb9bdae0 (&rq->__lock){-.-.}-{2:2}, at: raw_spin_rq_lock_nested+0x24/0xb0
+
+which lock already depends on the new lock.
+
+the existing dependency chain (in reverse order) is:
+
+-> #3 (&rq->__lock){-.-.}-{2:2}:
+       lock_acquire+0xcf/0x310
+       _raw_spin_lock_nested+0x2e/0x40
+       raw_spin_rq_lock_nested+0x24/0xb0
+       ___task_rq_lock+0x42/0x110
+       wake_up_new_task+0x198/0x440
+       kernel_clone+0x118/0x3c0
+       user_mode_thread+0x61/0x90
+       rest_init+0x1e/0x160
+
+-> #2 (&p->pi_lock){-.-.}-{2:2}:
+       lock_acquire+0xcf/0x310
+       _raw_spin_lock_irqsave+0x39/0x60
+       try_to_wake_up+0x57/0xbb0
+       create_worker+0x17e/0x200
+       workqueue_init+0x28d/0x300
+
+-> #1 (&pool->lock){-.-.}-{2:2}:
+       lock_acquire+0xcf/0x310
+       _raw_spin_lock+0x30/0x40
+       __queue_work+0xdb/0x6d0
+       queue_delayed_work_on+0xc7/0xe0
+       srcu_gp_start_if_needed+0x3cc/0x540
+       __synchronize_srcu+0xf6/0x1b0
+
+-> #0 (rcu_tasks_trace_srcu_struct_srcu_usage.lock){....}-{2:2}:
+       check_prev_add+0xe1/0xd30
+       __lock_acquire+0x1561/0x1de0
+       lock_acquire+0xcf/0x310
+       _raw_spin_lock_irqsave+0x39/0x60
+       raw_spin_lock_irqsave_sdp_contention+0x5b/0xe0
+       srcu_gp_start_if_needed+0x92/0x540
+       bpf_selem_unlink+0x267/0x5c0
+       bpf_task_storage_delete+0x3a/0x90
+       bpf_prog_134dba630b11d3b7_scx_pmu_task_fini+0x26/0x2a
+
+Chain exists of:
+rcu_tasks_trace_srcu_struct_srcu_usage.lock --> &p->pi_lock --> &rq->__lock
+
+Possible unsafe locking scenario:
+
+        CPU0                    CPU1
+        ----                    ----
+   lock(&rq->__lock);
+                               lock(&p->pi_lock);
+                               lock(&rq->__lock);
+   lock(rcu_tasks_trace_srcu_struct_srcu_usage.lock);
+
+*** DEADLOCK ***
+```
+
+### Dissecting the Circular Dependency
+
+The deadlock chain is four locks deep, but the circular dependency involves three key relationships:
+
+**Chain Visualization:**
+```
+srcu_usage.lock -> pool->lock -> pi_lock -> rq->__lock
+       ^                                       |
+       |                                       |
+       +----------- DEADLOCK CYCLE -----------+
+```
+
+**The Dependency Chain:**
+
+1. **rq->__lock → srcu_usage.lock** (Bug 2 scenario)
+   - sched_ext holds `&rq->__lock` 
+   - Calls `bpf_task_storage_delete()`
+   - Eventually needs `srcu_usage.lock` in `srcu_gp_start_if_needed()`
+
+2. **srcu_usage.lock → pool->lock** (Existing dependency)
+   - `srcu_gp_start_if_needed()` holds `srcu_usage.lock`
+   - Calls `queue_delayed_work_on()`
+   - Needs workqueue `&pool->lock` in `__queue_work()`
+
+3. **pool->lock → pi_lock** (Existing dependency)  
+   - Workqueue initialization calls `create_worker()`
+   - `create_worker()` calls `try_to_wake_up()`
+   - `try_to_wake_up()` needs `&p->pi_lock`
+
+4. **pi_lock → rq->__lock** (Existing dependency)
+   - `wake_up_new_task()` holds `&p->pi_lock`
+   - Calls `___task_rq_lock()` → `raw_spin_rq_lock_nested()`
+   - Needs `&rq->__lock`
+
+**The Deadlock Scenario:**
+
+```
+CPU0: Holds rq->__lock, waiting for srcu_usage.lock
+CPU1: Holds srcu_usage.lock, queues work needing pool->lock
+CPU2: pool->lock → pi_lock → rq->__lock (blocks on CPU0)
+CPU0: Still waiting for srcu_usage.lock (blocks on CPU1)
+```
+
+The cycle completes because the workqueue subsystem establishes a lock ordering that eventually leads back to the runqueue lock.
+
+## The SRCU Context Problem
+
+Looking at the kernel source in `srcutree.c`, we can see how SRCU's locking works. The problematic function is:
 
 ```c
 static unsigned long srcu_gp_start_if_needed(struct srcu_struct *ssp,
                                              struct rcu_head *rhp, bool do_norm)
 {
-    // ...
-    raw_spin_lock_irqsave_sdp_contention(sdp, &flags);
-    // Critical section that can't sleep
-    // ...
-    raw_spin_unlock_irqrestore_rcu_node(sdp, flags);
-}
-```
-
-Wait, you might notice that this code uses `raw_spin_lock_*` functions, which suggests it's already using raw spinlocks. But here's the catch - this is just one part of the story.
-
-## The Root Cause: Legacy Design Meets Modern Reality
-
-The fundamental issue is that SRCU was designed in an era where its use cases were more limited. The original design assumptions were:
-
-1. **SRCU would primarily be used from sleepable contexts** - The "Sleepable" in SRCU wasn't just about read-side critical sections; it reflected the expected calling context.
-
-2. **Atomic context usage would be rare** - When SRCU was originally designed, most atomic context code used classic RCU, which has different (and stricter) guarantees.
-
-3. **PREEMPT_RT wasn't a major consideration** - Real-time kernels were more niche, and the interaction between SRCU and RT wasn't fully explored.
-
-But the kernel has evolved:
-
-- **BPF programs** often run with preemption disabled for performance and to maintain consistency of per-CPU data structures.
-- **sched_ext schedulers** need to call SRCU from the scheduler context, which is inherently atomic.
-- **Tracing infrastructure** calls SRCU from NMI and other atomic contexts.
-
-From looking at recent discussions, it seems the lock in question might be in the SRCU grace period machinery itself, where different parts of the implementation use different locking strategies.
-
-## The Different Perspectives: A Tale of Many Experts
-
-This bug has attracted attention from the kernel's top RCU and real-time experts, and their perspectives are fascinating:
-
-### Paul McKenney's View
-Paul E. McKenney, the father of RCU, has been deeply involved in the discussion. His approach typically focuses on maintaining the fundamental RCU guarantees while finding creative solutions. From the email threads I've been following, Paul seems to be exploring ways to make SRCU's locking more RT-friendly without breaking existing semantics.
-
-### Boqun Feng's Perspective  
-Boqun Feng, another RCU maintainer, brings deep knowledge of memory ordering and concurrency to the discussion. He's likely considering the memory model implications of any changes to SRCU's locking.
-
-### Sebastian Andrzej Siewior's RT Focus
-Sebastian, one of the key PREEMPT_RT maintainers, represents the real-time perspective. His concern is ensuring that RT kernels can maintain their latency guarantees while supporting modern subsystems.
-
-### Kumar Kartikeya Dwivedi's BPF Angle
-Kumar (KKD), known for his work on BPF, represents the consumer side of this issue. BPF programs need predictable, low-latency access to SRCU functionality.
-
-### Gary Guo's Input
-Gary brings additional perspective, likely from the Rust for Linux project, where memory safety guarantees interact with these low-level synchronization primitives.
-
-## The Approaches to Fix: Multiple Paths Forward
-
-Based on the discussions and code inspection, several approaches are being considered:
-
-### 1. Raw Spinlocks for SRCU
-One straightforward approach is converting more of SRCU's internal locking to raw spinlocks. This would make SRCU usable from atomic contexts even under PREEMPT_RT, but it comes with trade-offs:
-
-```c
-// Current problematic code (simplified):
-spin_lock_irqsave(&ssp->lock, flags);  // Can sleep under RT
-// ... critical section ...
-spin_unlock_irqrestore(&ssp->lock, flags);
-
-// Potential fix:
-raw_spin_lock_irqsave(&ssp->lock, flags);  // Never sleeps
-// ... critical section ...
-raw_spin_unlock_irqrestore(&ssp->lock, flags);
-```
-
-**Pros:** Simple, maintains existing API semantics
-**Cons:** Increases RT latency, might not be appropriate for all SRCU operations
-
-### 2. Deferred Work Approach
-Another approach is to defer the problematic SRCU work to a context where sleeping is allowed:
-
-```c
-call_srcu() in atomic context
-    ↓
-Queue work to workqueue
-    ↓  
-Workqueue runs __call_srcu() in sleepable context
-```
-
-**Pros:** Maintains RT properties, doesn't increase atomic section duration
-**Cons:** Adds complexity and latency to SRCU operations
-
-### 3. Context-Aware SRCU
-A more sophisticated approach would be to make SRCU context-aware:
-
-```c
-void call_srcu(struct srcu_struct *ssp, struct rcu_head *rhp, 
-               rcu_callback_t func)
-{
-    if (in_atomic())
-        call_srcu_atomic(ssp, rhp, func);  // Use raw locks
-    else
-        call_srcu_sleepable(ssp, rhp, func);  // Use regular locks
-}
-```
-
-**Pros:** Optimizes for both use cases
-**Cons:** Significant complexity increase, potential for subtle bugs
-
-### 4. Separate SRCU Variants
-The most radical approach would be to provide separate SRCU implementations:
-
-- `srcu_*()` - Original sleepable-only version
-- `srcu_atomic_*()` - Atomic context-safe version with raw locks
-
-**Pros:** Clear separation of concerns, optimal performance for each case
-**Cons:** API fragmentation, migration complexity
-
-## Kernel Code Deep Dive
-
-Let's look at some actual kernel code to understand the problem better. Here's the current `call_srcu()` implementation:
-
-```c
-void call_srcu(struct srcu_struct *ssp, struct rcu_head *rhp,
-               rcu_callback_t func)
-{
-    __call_srcu(ssp, rhp, func, true);
-}
-EXPORT_SYMBOL_GPL(call_srcu);
-```
-
-This calls `__call_srcu()`, which eventually leads to `srcu_gp_start_if_needed()`. Looking at that function:
-
-```c
-static unsigned long srcu_gp_start_if_needed(struct srcu_struct *ssp,
-                                             struct rcu_head *rhp, bool do_norm)
-{
+    unsigned long flags;
     // ... setup code ...
     
-    raw_spin_lock_irqsave_sdp_contention(sdp, &flags);
+    spin_lock_irqsave_sdp_contention(sdp, &flags);
     
     if (rhp)
         rcu_segcblist_enqueue(&sdp->srcu_cblist, rhp);
     
-    // ... grace period logic ...
-    
-    raw_spin_unlock_irqrestore_rcu_node(sdp, flags);
-    
+    // Grace period startup logic that can call queue_delayed_work_on()
     // ... more logic ...
+    
+    spin_unlock_irqrestore_rcu_node(sdp, flags);
+    // ... return ...
 }
 ```
 
-The interesting thing here is that this part of the code already uses raw spinlocks (`raw_spin_lock_irqsave_sdp_contention`). But the issue might be in other parts of the SRCU machinery, or in the interaction between SRCU and RCU Tasks Trace.
+The function `spin_lock_irqsave_sdp_contention()` eventually calls the locking wrappers. Even after Paul's raw spinlock conversion, the problem persists because SRCU's grace period logic calls into the workqueue subsystem while holding locks.
 
-From what I can see in the email threads, the problem specifically involves the interaction with RCU Tasks Trace under PREEMPT_RT. RCU Tasks Trace is used to track tasks that are running BPF programs, and when combined with SRCU in a PREEMPT_RT environment, the locking assumptions break down.
+The `srcu_gp_start_if_needed()` function calls `queue_delayed_work_on()` when starting grace periods:
 
-## The Broader Picture: Why Dependencies Are Hard
+```c
+if (likely(srcu_init_done))
+    queue_delayed_work(rcu_gp_wq, &sup->work, !!srcu_get_delay(ssp));
+```
 
-This bug perfectly illustrates why kernel development is so challenging. We have:
+This is where the `srcu_usage.lock → pool->lock` dependency gets established.
 
-1. **SRCU** - A synchronization primitive from the early 2000s
-2. **PREEMPT_RT** - Real-time patches that change fundamental lock semantics
-3. **BPF** - A modern subsystem that needs atomic context SRCU
-4. **sched_ext** - A brand new scheduler extensibility framework
-5. **RCU Tasks Trace** - A specialized RCU variant for tracking task execution
+## Why Fixing Bug 1 Created Bug 2
 
-None of these were designed with full knowledge of how they'd interact with the others. Each represents the state-of-the-art thinking of its time, but when combined, they create unexpected emergent behaviors.
+The evolution from Bug 1 to Bug 2 illustrates a classic kernel development challenge:
 
-## Where Things Stand: The Current Status
+**Bug 1 (Invalid wait context):** SRCU used regular spinlocks, couldn't be called from raw spinlock contexts
 
-As of this writing (March 2026), the discussion is ongoing. From what I can see in the NVIDIA email threads I've been following, the kernel developers are leaning toward a solution that involves:
+**Paul's initial fix:** Convert SRCU to raw spinlocks 
 
-1. **Strategic use of raw spinlocks** in critical SRCU paths
-2. **Possible API additions** to provide atomic context-safe variants
-3. **Careful testing** with RT kernels to ensure latency guarantees
+**Bug 2 (Circular dependency):** Raw spinlock SRCU can now be called from atomic context, but SRCU's grace period startup calls `queue_delayed_work_on()`, creating lock ordering cycles through the workqueue system
 
-The challenge is that any solution needs to:
-- Maintain backward compatibility
-- Not break RT latency guarantees  
-- Support the performance requirements of modern BPF and sched_ext workloads
-- Be maintainable long-term
+The fix for the immediate problem (sleeping in atomic context) exposed a deeper architectural issue: SRCU's grace period machinery was never designed to be called from the highly constrained atomic contexts that modern BPF and sched_ext require.
 
-This is exactly the kind of problem that makes kernel development both fascinating and frustrating. Every solution has trade-offs, and the "right" answer depends on which use case you prioritize.
+## Current Status and Proposed Solutions
 
-## Lessons for the Future
+Kumar Kartikeya Dwivedi pointed out that Andrea's attempted workaround (immediate free for dead tasks) won't work:
 
-This dependency mess teaches us several important lessons:
+*"The fix you provided below unfortunately can't work, we cannot free the selem immediately as the program may have formed pointers to the local storage before calling delete... So the right fix again would be in SRCU, which would be to defer the pi->lock -> rq->lock in call_srcu() when irqs_disabled() is true."*
 
-1. **Design for the future, not just today** - When creating kernel infrastructure, consider how it might be used in contexts you haven't imagined.
+The issue requires fixing SRCU's interaction with the workqueue system when called from atomic contexts. Possible approaches include:
 
-2. **Test interactions early and often** - Subsystem integration testing needs to include weird combinations, not just the obvious ones.
+### 1. Context-Aware SRCU Work Deferral
 
-3. **Document assumptions** - Every piece of kernel code makes assumptions about its calling context. Make those explicit.
+Modify SRCU to detect when it's called from atomic context (via `irqs_disabled()` or similar) and defer workqueue operations:
 
-4. **Plan for evolution** - Kernel ABIs need to be designed with extensibility in mind, because requirements will change.
+```c
+// Hypothetical fix in srcu_gp_start_if_needed()
+if (irqs_disabled() || in_atomic()) {
+    // Schedule work via different mechanism that doesn't
+    // establish the problematic lock dependency
+    srcu_defer_atomic_context_work(ssp);
+} else {
+    queue_delayed_work(rcu_gp_wq, &sup->work, delay);
+}
+```
 
-5. **Embrace incremental solutions** - Sometimes the "perfect" solution is the enemy of the "working" solution. 
+### 2. Separate Atomic-Safe SRCU Variant  
 
-The kernel dependency mess is an age-old reality because the kernel is a living system that must evolve while maintaining compatibility with decades of existing code. This SRCU/RCU Tasks Trace/PREEMPT_RT bug is just the latest chapter in that ongoing story.
+Provide atomic context-safe SRCU operations that bypass the workqueue dependency entirely. This would require substantial SRCU surgery but could offer better long-term isolation.
+
+### 3. BPF Storage Redesign
+
+Rethink BPF local storage deletion to avoid SRCU entirely in atomic contexts, perhaps using a different RCU flavor or deferral mechanism specifically designed for these constraints.
+
+## The Broader Implications
+
+This bug exemplifies several challenges facing modern kernel development:
+
+**Legacy System Integration:** SRCU was designed when sleepable contexts were the norm for its use cases. Modern subsystems like BPF and sched_ext have atomic context requirements that weren't anticipated.
+
+**Lock Ordering Complexity:** As the kernel grows more interconnected, establishing safe lock ordering becomes increasingly difficult. The workqueue system's lock requirements interact with scheduler locks in ways that constrain other subsystems.
+
+**RT Kernel Constraints:** PREEMPT_RT's conversion of regular spinlocks to sleeping locks exposes latent atomicity assumptions throughout the codebase.
+
+**Subsystem Boundaries:** Different kernel subsystems make different assumptions about calling context, lock ordering, and preemption behavior. When these assumptions clash, the interactions can be subtle and difficult to predict.
+
+## Steven Rostedt's Related Work
+
+Interestingly, this SRCU/atomic context problem isn't isolated to BPF. Steven Rostedt has been working on similar issues in the tracing subsystem, where tracepoints traditionally used `preempt_disable()` to protect callbacks:
+
+*"The current use of guard(preempt_notrace)() within __DECLARE_TRACE() to protect invocation of __DO_TRACE_CALL() means that BPF programs attached to tracepoints are non-preemptible. This is unhelpful in real-time systems..."*
+
+His v6 patch series changes tracepoints to use SRCU-fast instead, which likely encounters similar atomic context constraints.
+
+## Looking Forward
+
+The resolution of these bugs will likely influence how we approach atomic context synchronization throughout the kernel. The interaction between BPF, sched_ext, SRCU, and RT kernels represents the growing complexity of modern kernel subsystems.
+
+As Paul McKenney noted in his acknowledgment of the circular dependency issue, this is "*something to fix*" that requires careful consideration of the broader SRCU architecture.
+
+The kernel development community is grappling with fundamental questions: How do we maintain the flexibility and composability that makes Linux powerful while ensuring that subsystem interactions remain predictable and safe? 
+
+This BPF/SRCU dependency mess may be a specific bug, but it's also a window into the ongoing evolution of kernel synchronization primitives in an increasingly complex and real-time-aware world.
+
+## Reproduction
+
+Andrea provided a clean reproduction case:
+
+```bash
+$ cat << EOF > /tmp/config
+CONFIG_BPF=y
+CONFIG_BPF_SYSCALL=y
+CONFIG_SCHED_CLASS_EXT=y
+CONFIG_PREEMPT=y
+CONFIG_DEBUG_LOCKDEP=y
+CONFIG_DEBUG_ATOMIC_SLEEP=y
+CONFIG_PROVE_LOCKING=y
+EOF
+
+$ vng -vb --config /tmp/config
+$ vng -v -- "scx_cosmos & schbench -L -m 4 -t 48 -n 0"
+```
+
+This reliably triggers both the original invalid wait context and the circular dependency, depending on which kernel version and patches are applied.
 
 ---
 
-*This post is based on ongoing kernel development discussions and code analysis. The technical details may evolve as the final solution is implemented. For the most up-to-date information, follow the linux-kernel mailing list and the RCU development tree.*
+*This analysis is based on ongoing LKML discussions as of March 2026. The final resolution may involve different approaches as the kernel community continues to refine the solution.*
