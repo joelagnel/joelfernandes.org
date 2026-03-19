@@ -67,7 +67,9 @@ Kumar Kartikeya Dwivedi explained: *"It was always safe to call_rcu_tasks_trace(
 
 ## Bug 2: Circular Lock Dependency (7.0.0-rc4)
 
-Paul McKenney initially attempted to fix Bug 1 by converting SRCU's lock to a raw spinlock. This fixed the "invalid wait context" but immediately exposed a more serious circular deadlock. Andrea's testing revealed:
+**Important:** This is a completely separate class of problem from Bug 1. Bug 1 was about sleeping in atomic context. Bug 2 is a **lock ordering violation** that can cause a real deadlock, independent of PREEMPT_RT or atomic context constraints. It would exist on any kernel with lockdep enabled.
+
+Paul McKenney initially attempted to fix Bug 1 by converting SRCU's lock to a raw spinlock. This fixed the "invalid wait context" but immediately exposed a circular lock dependency. Andrea's testing revealed:
 
 ```
 ======================================================
@@ -217,46 +219,54 @@ This is where the `srcu_usage.lock → pool->lock` dependency gets established.
 
 ## Why Fixing Bug 1 Created Bug 2
 
-The evolution from Bug 1 to Bug 2 illustrates a classic kernel development challenge:
+The evolution from Bug 1 to Bug 2 illustrates a classic kernel development challenge, but it's crucial to understand that these are **different categories of bug**:
 
-**Bug 1 (Invalid wait context):** SRCU used regular spinlocks, couldn't be called from raw spinlock contexts
+**Bug 1 (Invalid wait context):** An atomic-context problem. SRCU used regular spinlocks (sleeping under RT), so calling it from raw spinlock context was illegal. This is specific to PREEMPT_RT.
 
-**Paul's initial fix:** Convert SRCU to raw spinlocks 
+**Paul's initial fix:** Convert SRCU's locks to raw spinlocks.
 
-**Bug 2 (Circular dependency):** Raw spinlock SRCU can now be called from atomic context, but SRCU's grace period startup calls `queue_delayed_work_on()`, creating lock ordering cycles through the workqueue system
+**Bug 2 (Circular lock dependency):** A lock ordering problem. Now that SRCU uses raw spinlocks, it *can* be called from atomic context, but `srcu_gp_start_if_needed()` calls `queue_delayed_work_on()` while holding `srcu_usage.lock`. This creates a dependency chain through the workqueue system that circles back to the runqueue lock. This is **not** an atomic-context issue. It's a genuine deadlock that lockdep catches regardless of PREEMPT_RT.
 
-The fix for the immediate problem (sleeping in atomic context) exposed a deeper architectural issue: SRCU's grace period machinery was never designed to be called from the highly constrained atomic contexts that modern BPF and sched_ext require.
+The fix for the immediate problem (sleeping in atomic context) unmasked a deeper architectural issue: SRCU's grace period machinery calls into the workqueue subsystem, and the workqueue's lock ordering is incompatible with being called while holding scheduler locks.
 
 ## Current Status and Proposed Solutions
 
-Kumar Kartikeya Dwivedi pointed out that Andrea's attempted workaround (immediate free for dead tasks) won't work:
+### Andrea's BPF-side workaround (rejected)
 
-*"The fix you provided below unfortunately can't work, we cannot free the selem immediately as the program may have formed pointers to the local storage before calling delete... So the right fix again would be in SRCU, which would be to defer the pi->lock -> rq->lock in call_srcu() when irqs_disabled() is true."*
+Andrea Righi proposed adding a `reuse_now` flag to `bpf_selem_unlink()` to free storage immediately via `call_rcu()` instead of `call_rcu_tasks_trace()` when the task is dead. Kumar Kartikeya Dwivedi shot this down:
 
-The issue requires fixing SRCU's interaction with the workqueue system when called from atomic contexts. Possible approaches include:
+*"The fix you provided below unfortunately can't work, we cannot free the selem immediately as the program may have formed pointers to the local storage before calling delete."*
 
-### 1. Context-Aware SRCU Work Deferral
+### irq_work deferral (short-term fix, but incomplete)
 
-Modify SRCU to detect when it's called from atomic context (via `irqs_disabled()` or similar) and defer workqueue operations:
+Boqun Feng proposed using `irq_work` to defer `call_srcu()` out of the atomic context, essentially restoring the pre-conversion behavior of `call_rcu_tasks_trace()`. Sebastian Siewior pushed for something more substantial, but Boqun argued this is a reasonable short-term fix for v7.0.
 
-```c
-// Hypothetical fix in srcu_gp_start_if_needed()
-if (irqs_disabled() || in_atomic()) {
-    // Schedule work via different mechanism that doesn't
-    // establish the problematic lock dependency
-    srcu_defer_atomic_context_work(ssp);
-} else {
-    queue_delayed_work(rcu_gp_wq, &sup->work, delay);
-}
+However, **irq_work deferral alone doesn't fix Bug 2**. The circular lock dependency exists because `srcu_gp_start_if_needed()` calls `queue_delayed_work_on()` while holding `srcu_usage.lock`, regardless of what context the original `call_srcu()` came from. Even if BPF defers its `call_srcu()` via irq_work, the dependency chain remains:
+
+```
+srcu_usage.lock -> pool->lock -> pi_lock -> rq->__lock
+       ^                                       |
+       |                                       |
+       +----------- DEADLOCK CYCLE -----------+
 ```
 
-### 2. Separate Atomic-Safe SRCU Variant  
+This cycle exists because SRCU's grace period machinery uses the workqueue system, and the workqueue's lock ordering (via `create_worker() -> try_to_wake_up()`) creates a path back to the runqueue lock. Any code path that holds `rq->__lock` and eventually calls `call_srcu()` will trigger this, with or without irq_work deferral.
 
-Provide atomic context-safe SRCU operations that bypass the workqueue dependency entirely. This would require substantial SRCU surgery but could offer better long-term isolation.
+Note: reverting the RCU Tasks Trace to SRCU conversion (commit c27cea4416a3) isn't straightforward either, since the original body of the RCU Tasks Trace code was deleted. Perhaps we should have kept an easier escape hatch.
 
-### 3. BPF Storage Redesign
+### The real fix needs to address `queue_delayed_work()` under SRCU locks
 
-Rethink BPF local storage deletion to avoid SRCU entirely in atomic contexts, perhaps using a different RCU flavor or deferral mechanism specifically designed for these constraints.
+Boqun noted that *"the root cause of the issues is that BPF is actually like a NMI unless the code is noinstr"* and proposed a general defer mechanism for BPF. But even a general BPF defer mechanism doesn't fix the `srcu_usage.lock -> pool->lock` dependency that SRCU itself creates.
+
+Kumar suggested the fix should be in SRCU: *"defer the pi->lock -> rq->lock in call_srcu() when irqs_disabled() is true."* But this really means SRCU needs to avoid calling `queue_delayed_work_on()` while holding its own locks, or use an alternative mechanism (like a timer, which Sebastian noted should be safe under rq/pi locks) to kick off grace period processing.
+
+### Possible longer-term approaches
+
+**1. SRCU avoids workqueue while holding locks:** Restructure `srcu_gp_start_if_needed()` so that the `queue_delayed_work_on()` call happens after releasing `srcu_usage.lock`, breaking the dependency chain.
+
+**2. Timer-based grace period initiation:** Replace the workqueue-based grace period scheduling with timers when called from constrained contexts. Timers don't take `pool->lock` and avoid the circular dependency.
+
+**3. General BPF defer mechanism:** A systematic way for BPF to defer lock-holding operations to a safe context. This addresses the broader problem (BPF calling `kfree_rcu()` and other lock-holding functions) but doesn't fix the SRCU-internal lock ordering issue by itself.
 
 ## The Broader Implications
 
