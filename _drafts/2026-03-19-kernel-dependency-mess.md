@@ -325,7 +325,6 @@ The resolution of these bugs will likely influence how we approach atomic contex
 
 As Paul McKenney noted in his acknowledgment of the circular dependency issue, this is "*something to fix*" that requires careful consideration of the broader SRCU architecture.
 
-This BPF/SRCU dependency mess may be a specific bug, but it's also a window into the ongoing evolution of kernel synchronization primitives in an increasingly complex and real-time-aware world.
 
 ## Reproduction
 
