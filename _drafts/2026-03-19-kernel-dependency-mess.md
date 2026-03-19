@@ -217,56 +217,95 @@ if (likely(srcu_init_done))
 
 This is where the `srcu_usage.lock → pool->lock` dependency gets established.
 
-## Why Fixing Bug 1 Created Bug 2
+## How Bug 1 Masked Bug 2
 
-The evolution from Bug 1 to Bug 2 illustrates a classic kernel development challenge, but it's crucial to understand that these are **different categories of bug**:
+It's crucial to understand that these are **different categories of bug**, and both were introduced by the same commit: the RCU Tasks Trace to SRCU conversion (c27cea4416a3).
 
 **Bug 1 (Invalid wait context):** An atomic-context problem. SRCU used regular spinlocks (sleeping under RT), so calling it from raw spinlock context was illegal. This is specific to PREEMPT_RT.
 
-**Paul's initial fix:** Convert SRCU's locks to raw spinlocks.
+**Bug 2 (Circular lock dependency):** A lock ordering problem. `srcu_gp_start_if_needed()` calls `queue_delayed_work_on()` while holding `srcu_usage.lock`, creating a dependency chain through the workqueue system that circles back to the runqueue lock. This is **not** an atomic-context issue. It's a genuine deadlock that would exist on any kernel, RT or not.
 
-**Bug 2 (Circular lock dependency):** A lock ordering problem. Now that SRCU uses raw spinlocks, it *can* be called from atomic context, but `srcu_gp_start_if_needed()` calls `queue_delayed_work_on()` while holding `srcu_usage.lock`. This creates a dependency chain through the workqueue system that circles back to the runqueue lock. This is **not** an atomic-context issue. It's a genuine deadlock that lockdep catches regardless of PREEMPT_RT.
+Both bugs were latent from the moment `call_rcu_tasks_trace()` started going through `call_srcu()`. Before the conversion, SRCU was never in the call path from BPF under scheduler locks, so neither bug could trigger.
 
-The fix for the immediate problem (sleeping in atomic context) unmasked a deeper architectural issue: SRCU's grace period machinery calls into the workqueue subsystem, and the workqueue's lock ordering is incompatible with being called while holding scheduler locks.
+So why was Bug 2 only discovered *after* Paul's raw spinlock fix? Because under PREEMPT_RT with regular spinlocks, lockdep hits the "invalid wait context" check **first** in `__lock_acquire()`. That check fires and aborts before lockdep reaches the circular dependency analysis. Bug 1 was masking Bug 2.
 
-## Current Status and Proposed Solutions
+Paul's fix converted to raw spinlocks, making the "invalid wait context" check pass. Lockdep then proceeded further, reached `check_prev_add()` / `check_noncircular()`, and discovered the cycle.
+
+On a non-RT kernel, Bug 1 wouldn't exist (regular spinlocks don't sleep), but Bug 2 **would still be there**, since all spinlocks are effectively raw. It just hadn't been triggered from this specific code path before the SRCU conversion.
+
+## Current Status and the Fixes
 
 ### Andrea's BPF-side workaround (rejected)
 
-Andrea Righi proposed adding a `reuse_now` flag to `bpf_selem_unlink()` to free storage immediately via `call_rcu()` instead of `call_rcu_tasks_trace()` when the task is dead. Kumar Kartikeya Dwivedi shot this down:
+Andrea Righi proposed adding a `reuse_now` flag to `bpf_selem_unlink()` to free storage immediately via `call_rcu()` instead of `call_rcu_tasks_trace()` when the task is dead. Kumar Kartikeya Dwivedi rejected this:
 
 *"The fix you provided below unfortunately can't work, we cannot free the selem immediately as the program may have formed pointers to the local storage before calling delete."*
 
-### irq_work deferral (short-term fix, but incomplete)
+### The two-commit fix (Boqun's srcu-fix branch)
 
-Boqun Feng proposed using `irq_work` to defer `call_srcu()` out of the atomic context, essentially restoring the pre-conversion behavior of `call_rcu_tasks_trace()`. Sebastian Siewior pushed for something more substantial, but Boqun argued this is a reasonable short-term fix for v7.0.
+Boqun Feng assembled the fix as two commits in his [srcu-fix branch](https://git.kernel.org/pub/scm/linux/kernel/git/boqun/linux.git/?h=srcu-fix), each targeting one of the two bugs:
 
-However, **irq_work deferral alone doesn't fix Bug 2**. The circular lock dependency exists because `srcu_gp_start_if_needed()` calls `queue_delayed_work_on()` while holding `srcu_usage.lock`, regardless of what context the original `call_srcu()` came from. Even if BPF defers its `call_srcu()` via irq_work, the dependency chain remains:
+#### Commit 1: `0490fe4b5c39` - Raw spinlocks for SRCU (fixes Bug 1)
+
+Paul McKenney's patch converts SRCU's internal spinlocks to raw spinlocks:
+
+> *"Tree SRCU has used non-raw spinlocks for many years, motivated by a desire to avoid unnecessary real-time latency and the absence of any reason to use raw spinlocks. However, the recent use of SRCU in tracing as the underlying implementation of RCU Tasks Trace means that call_srcu() is invoked from preemption-disabled regions of code, which in turn requires that any locks acquired by call_srcu() or its callees must be raw spinlocks."*
+
+This is a large patch (174 lines changed across `srcutree.c` and the headers), converting all SRCU locking macros and call sites from `spin_lock` to `raw_spin_lock`. It fixes Bug 1 directly: raw spinlocks never sleep, even under PREEMPT_RT, so calling `call_srcu()` from raw spinlock context no longer triggers "invalid wait context."
+
+But as we saw, this alone exposes Bug 2.
+
+#### Commit 2: `78dcdc35d85f` - irq_work intermediate for `process_srcu()` (fixes Bug 2)
+
+This is the key insight. The circular lock dependency exists because `srcu_gp_start_if_needed()` calls `queue_delayed_work()` **directly** while holding SRCU's internal locks. This creates the `srcu_usage.lock -> pool->lock` edge in the lock dependency graph, which chains through `pi_lock -> rq->__lock` and back to `srcu_usage.lock`.
+
+Boqun's fix breaks this dependency by inserting an `irq_work` hop between SRCU and the workqueue. Instead of calling `queue_delayed_work()` directly, SRCU now queues an `irq_work` that will call `queue_delayed_work()` later, **after SRCU's locks have been released**:
+
+```c
+// Before (in srcu_funnel_gp_start):
+if (likely(srcu_init_done))
+    queue_delayed_work(rcu_gp_wq, &sup->work,
+                       !!srcu_get_delay(ssp));
+
+// After:
+if (likely(srcu_init_done))
+    irq_work_queue(&sup->irq_work);
+```
+
+The `irq_work` handler is trivial:
+
+```c
+static void srcu_irq_work(struct irq_work *work)
+{
+    struct srcu_usage *sup;
+    struct srcu_struct *ssp;
+
+    sup = container_of(work, struct srcu_usage, irq_work);
+    ssp = sup->srcu_ssp;
+
+    queue_delayed_work(rcu_gp_wq, &sup->work,
+                       !!srcu_get_delay(ssp));
+}
+```
+
+This works because `irq_work` executes in interrupt context after returning from the current context, which means `srcu_usage.lock` is no longer held when `queue_delayed_work()` runs. The dependency chain breaks:
 
 ```
-srcu_usage.lock -> pool->lock -> pi_lock -> rq->__lock
-       ^                                       |
-       |                                       |
-       +----------- DEADLOCK CYCLE -----------+
+Before: srcu_usage.lock -> pool->lock -> pi_lock -> rq->__lock -> CYCLE
+After:  srcu_usage.lock -> (irq_work) ... pool->lock -> pi_lock -> rq->__lock
+                              ^                                         
+                    lock released here, no dependency edge
 ```
 
-This cycle exists because SRCU's grace period machinery uses the workqueue system, and the workqueue's lock ordering (via `create_worker() -> try_to_wake_up()`) creates a path back to the runqueue lock. Any code path that holds `rq->__lock` and eventually calls `call_srcu()` will trigger this, with or without irq_work deferral.
+The commit message describes this as following what the pre-SRCU RCU Tasks Trace implementation did: *"using an irq_work to delay the queuing of the work to start process_srcu()"*. This is fitting, since the original `call_rcu_tasks_trace()` never had this lock ordering problem precisely because it didn't go through SRCU's lock-holding `queue_delayed_work()` path.
 
-Note: reverting the RCU Tasks Trace to SRCU conversion (commit c27cea4416a3) isn't straightforward either, since the original body of the RCU Tasks Trace code was deleted. Perhaps we should have kept an easier escape hatch.
+Note: reverting the RCU Tasks Trace to SRCU conversion (commit c27cea4416a3) isn't straightforward, since the original body of the RCU Tasks Trace code was deleted. As I noted on the list, perhaps we should have kept an easier escape hatch.
 
-### The real fix needs to address `queue_delayed_work()` under SRCU locks
+### Broader BPF concerns
 
-Boqun noted that *"the root cause of the issues is that BPF is actually like a NMI unless the code is noinstr"* and proposed a general defer mechanism for BPF. But even a general BPF defer mechanism doesn't fix the `srcu_usage.lock -> pool->lock` dependency that SRCU itself creates.
+Boqun observed that *"the root cause of the issues is that BPF is actually like a NMI unless the code is noinstr"* and that the long-term solution is a general defer mechanism for BPF. BPF has similar issues with `kfree_rcu()` and other lock-holding functions. The two-commit SRCU fix addresses the immediate regression, but the wider problem of BPF calling into lock-holding infrastructure from arbitrary contexts remains open.
 
-Kumar suggested the fix should be in SRCU: *"defer the pi->lock -> rq->lock in call_srcu() when irqs_disabled() is true."* But this really means SRCU needs to avoid calling `queue_delayed_work_on()` while holding its own locks, or use an alternative mechanism (like a timer, which Sebastian noted should be safe under rq/pi locks) to kick off grace period processing.
-
-### Possible longer-term approaches
-
-**1. SRCU avoids workqueue while holding locks:** Restructure `srcu_gp_start_if_needed()` so that the `queue_delayed_work_on()` call happens after releasing `srcu_usage.lock`, breaking the dependency chain.
-
-**2. Timer-based grace period initiation:** Replace the workqueue-based grace period scheduling with timers when called from constrained contexts. Timers don't take `pool->lock` and avoid the circular dependency.
-
-**3. General BPF defer mechanism:** A systematic way for BPF to defer lock-holding operations to a safe context. This addresses the broader problem (BPF calling `kfree_rcu()` and other lock-holding functions) but doesn't fix the SRCU-internal lock ordering issue by itself.
+These fixes target v7.0, since that's the release where the RCU Tasks Trace to SRCU conversion introduced the regression.
 
 ## The Broader Implications
 
