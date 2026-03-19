@@ -326,27 +326,6 @@ The resolution of these bugs will likely influence how we approach atomic contex
 As Paul McKenney noted in his acknowledgment of the circular dependency issue, this is "*something to fix*" that requires careful consideration of the broader SRCU architecture.
 
 
-## Reproduction
-
-Andrea provided a clean reproduction case:
-
-```bash
-$ cat << EOF > /tmp/config
-CONFIG_BPF=y
-CONFIG_BPF_SYSCALL=y
-CONFIG_SCHED_CLASS_EXT=y
-CONFIG_PREEMPT=y
-CONFIG_DEBUG_LOCKDEP=y
-CONFIG_DEBUG_ATOMIC_SLEEP=y
-CONFIG_PROVE_LOCKING=y
-EOF
-
-$ vng -vb --config /tmp/config
-$ vng -v -- "scx_cosmos & schbench -L -m 4 -t 48 -n 0"
-```
-
-This reliably triggers both the original invalid wait context and the circular dependency, depending on which kernel version and patches are applied.
-
 ---
 
 *This analysis is based on ongoing LKML discussions as of March 2026. The final resolution may involve different approaches as the kernel community continues to refine the solution.*
