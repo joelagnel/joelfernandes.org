@@ -321,9 +321,9 @@ This bug exemplifies several challenges facing modern kernel development:
 
 ## Looking Forward
 
-The resolution of these bugs will likely influence how we approach atomic context synchronization throughout the kernel. The interaction between BPF, sched_ext, SRCU, and RT kernels represents the growing complexity of modern kernel subsystems.
-
 As Paul McKenney noted in his acknowledgment of the circular dependency issue, this is "*something to fix*" that requires careful consideration of the broader SRCU architecture.
+
+I noted on the list that these fixes need to land in v7.0 itself, not v7.1, since the regression was introduced in 7.0 by the RCU Tasks Trace to SRCU conversion. However, it remains to be seen how risky these changes are in practice, and some testing is needed before committing to the v7.0 timeline.
 
 
 ---
