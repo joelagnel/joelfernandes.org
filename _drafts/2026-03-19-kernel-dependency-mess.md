@@ -270,14 +270,6 @@ This bug exemplifies several challenges facing modern kernel development:
 
 **Subsystem Boundaries:** Different kernel subsystems make different assumptions about calling context, lock ordering, and preemption behavior. When these assumptions clash, the interactions can be subtle and difficult to predict.
 
-## Steven Rostedt's Related Work
-
-Interestingly, this SRCU/atomic context problem isn't isolated to BPF. Steven Rostedt has been working on similar issues in the tracing subsystem, where tracepoints traditionally used `preempt_disable()` to protect callbacks:
-
-*"The current use of guard(preempt_notrace)() within __DECLARE_TRACE() to protect invocation of __DO_TRACE_CALL() means that BPF programs attached to tracepoints are non-preemptible. This is unhelpful in real-time systems..."*
-
-His v6 patch series changes tracepoints to use SRCU-fast instead, which likely encounters similar atomic context constraints.
-
 ## Looking Forward
 
 The resolution of these bugs will likely influence how we approach atomic context synchronization throughout the kernel. The interaction between BPF, sched_ext, SRCU, and RT kernels represents the growing complexity of modern kernel subsystems.
