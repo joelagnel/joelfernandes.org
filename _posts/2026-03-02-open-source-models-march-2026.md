@@ -16,6 +16,7 @@ published: true
 6. [Cost and Providers](#section-6-cost-and-providers)
 7. [Summary](#summary)
 8. [Appendix: OpenRouter vs Direct Providers](#appendix-openrouter-vs-direct-providers)
+9. [Update (March 2026): MiniMax-M2.7 vs Kimi K2.5 for Agentic Work](#section-9-update-march-2026-minimax-m27-vs-kimi-k25)
 
 ---
 
@@ -48,6 +49,8 @@ Kimi K2.5 comes out a bit cheaper in practice once you account for verbosity. So
 **Note on DeepSeek V3.2 (Reasoning):** The charts above were generated before including DeepSeek in this comparison. DeepSeek V3.2 (Reasoning) scores 42 on the Artificial Analysis Intelligence Index -- matching GLM-5 -- while pricing at just $0.28/$0.42 per million input/output tokens. On the cost-vs-intelligence chart, it would sit far to the left of all other models at the same intelligence level, making it arguably the best value in this entire comparison. The caveats are a smaller 128k context window, text-only input, and slower native speed (though Fireworks brings it to 105 t/s).
 
 For the exact methodology behind the Intelligence Index, see [Artificial Analysis's documentation](https://artificialanalysis.ai).
+
+**Update:** As of mid-March 2026, MiniMax-M2.7 has taken the lead among open-weight models with an Intelligence Index of 50, and Kimi K2.5 follows at 47. See [Section 9](#section-9-update-march-2026-minimax-m27-vs-kimi-k25) for the updated comparison.
 
 ---
 
@@ -84,6 +87,8 @@ Where Kimi K2.5 fights back is on pure coding. The SciCode benchmark measures sc
 Kimi K2.5 takes the top spot here at 49%, with GLM-5 at 46% and the field tighter overall (Qwen and MiniMax at 42-43%). So if your use case is primarily code generation rather than open-ended agentic reasoning, Kimi K2.5 deserves serious consideration.
 
 **Note on DeepSeek V3.2 (Reasoning):** DeepSeek V3.2 was not included in the original benchmark charts above. On Terminal-Bench Hard it scores 36%, visible in the full leaderboard chart above. GDPval-AA, hallucination rate, and SciCode scores for DeepSeek V3.2 are not covered in these specific charts -- refer to [Artificial Analysis](https://artificialanalysis.ai/models/deepseek-v3-2-reasoning) for current agentic benchmark data.
+
+**Update:** MiniMax-M2.7 and Kimi K2.5 have since emerged as the top-rated open-weight models for agentic reasoning on Artificial Analysis. See [Section 9: MiniMax-M2.7 vs Kimi K2.5 for Agentic Work](#section-9-update-march-2026-minimax-m27-vs-kimi-k25) for a detailed head-to-head comparison, including SWE-Bench, GDPval-AA, BrowseComp, and Kimi's Agent Swarm architecture.
 
 ---
 
@@ -136,6 +141,8 @@ The other three models have varying levels of support:
 **GLM-5** being text-only is arguably the sharpest limitation in its otherwise strong profile. It leads on intelligence, agentic reliability, and speed -- but if your pipeline ever needs to process an image or a video frame, you cannot use it without a separate vision model upstream.
 
 **DeepSeek V3.2** is also text-only. This matters because it otherwise has strong raw intelligence. For vision-free workflows it is competitive; for anything involving images or video it is not an option without a separate model upstream.
+
+**Update:** This multimodal advantage becomes even more significant in agentic contexts. Kimi K2.5's vision capabilities let it "see" screenshots and UI layouts during autonomous task execution, while MiniMax-M2.7 remains text-only. See [Section 9](#section-9-update-march-2026-minimax-m27-vs-kimi-k25) for more.
 
 The bottom line: if multimodality matters for your use case, Kimi K2.5 is the only complete answer. If static image support is enough, Qwen3.5 is a solid alternative with better speed. If your workflow is purely text, GLM-5, DeepSeek V3.2, and MiniMax all have their respective advantages.
 
@@ -220,6 +227,57 @@ The analogy I keep coming back to: GLM-5 is the Claude Opus of the open source w
 DeepSeek V3.2 (Reasoning) makes the most sense when cost is the overriding constraint and your workload is text-only with modest context requirements -- at $0.28/$0.42 per million tokens it is in a different pricing tier from everything else, and its intelligence score matches GLM-5. If your pipeline stays under 128k tokens per call and never touches images, it is hard to argue against.
 
 I am still evaluating whether to actually run these for any of my own workflows. I still have a Claude Max subscription, and for me capability trumps everything. If Claude did not have an actual max subscription tier, I would probably be primarily using some combination of GLM-5 and Kimi K2.5 -- the price point is that attractive.
+
+---
+
+## Section 9: Update (March 2026): MiniMax-M2.7 vs Kimi K2.5
+
+On [ArtificialAnalysis.ai](https://artificialanalysis.ai), as of March 2026, MiniMax-M2.7 and Kimi K2.5 are the top-rated open-weight models for agentic reasoning. While MiniMax leads in overall intelligence and cost-efficiency, Kimi K2.5 is currently considered the superior "autonomous agent" due to its unique orchestration features.
+
+### Benchmark Comparison
+
+| Metric | Kimi K2.5 (Reasoning) | MiniMax-M2.7 |
+|---|---|---|
+| Intelligence Index (v4.0) | 47 | 50 (Leader) |
+| GDPval-AA Elo | 1309 | ~1285 (Estimate) |
+| SWE-Bench Verified | 76.8% | 80.2% |
+| BrowseComp (Web Research) | 78.4% (with Swarm) | 76.3% |
+| Tau2Bench (Tool Use) | ~79% | 80.2% |
+| HLE (Humanity's Last Exam) | 50.2% | 46.8% |
+
+### 1. GDPval-AA and Real-World Agency
+
+GDPval-AA measures a model's ability to perform economically valuable tasks (like building a presentation or financial analysis) using shell and web access.
+
+Kimi K2.5 holds a slight edge here with a confirmed Elo of 1309. It is currently the top open-weight model on this specific leaderboard, trailing only the newest GPT and Claude frontier models.
+
+MiniMax-M2.7 performs exceptionally well in technical accuracy but is slightly less "proactive" in correcting its own errors in long-horizon loops compared to Kimi.
+
+### 2. The "Agent Swarm" Factor
+
+The biggest differentiator for agentic tasks is Kimi's Self-Directed Agent Swarm.
+
+Kimi K2.5 can orchestrate up to 100 sub-agents to parallelize tasks. On the BrowseComp benchmark, this allows it to jump from 60.6% to 78.4% efficiency by having multiple "agents" search different parts of the web simultaneously.
+
+MiniMax-M2.7 relies on a single-agent reasoning loop. While its core logic is more robust (scoring higher on the general Intelligence Index), it lacks Kimi's native parallel execution framework.
+
+### 3. Engineering and Coding (SWE-Bench)
+
+MiniMax-M2.7 is the winner for pure software engineering. It scores over 80% on SWE-Bench Verified, making it one of the few open models that can genuinely compete with Claude 4.5/4.6 for autonomous repository editing.
+
+Kimi K2.5 is strong (76.8%) but is often noted for being overly verbose, sometimes generating "over-engineered" solutions that require a second pass to simplify.
+
+### 4. Multimodality and Context
+
+Kimi K2.5 is natively multimodal. It can "see" screenshots, UI layouts, and diagrams to inform its agentic decisions. For any task involving a GUI or visual document analysis, Kimi is the clear choice.
+
+MiniMax-M2.7 remains text-only, which limits its agency in workflows that require interacting with visual interfaces.
+
+### Final Verdict
+
+Use **MiniMax-M2.7** for software engineering and backend automation. It has higher pure intelligence (50 vs 47) and is nearly half the price, making it more efficient for high-volume coding agents.
+
+Use **Kimi K2.5** for complex web research and visual tasks. Its 1309 GDPval-AA score and "Agent Swarm" make it the most "human-like" in how it manages multi-step, multi-source projects.
 
 ---
 
