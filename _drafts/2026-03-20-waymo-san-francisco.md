@@ -18,7 +18,11 @@ I had a fairly early morning flight, so I ended up catching the Waymo quite earl
 
 I thought I'd take the Waymo all the way from San Francisco to SFO airport, but it turned out SFO is slightly outside of Waymo's service area. I could only drive it within the city. Even within the city, going from the Embarcadero to Union Square isn't always possible because the nearest Waymo might not be available or is too far away. This will probably change as more vehicles enter service. I ended up combining walking with Waymo rides around San Francisco, which worked out fine.
 
-![Union Square at night, empty with Macy's lit up](/resources/waymo/union-square-early-morning.jpg)
+<div style="display: flex; gap: 10px; align-items: flex-start;">
+  <img src="/resources/waymo/union-square-early-morning.jpg" alt="Union Square at night, empty with Macy's lit up" style="width: 49%;">
+  <img src="/resources/waymo/neiman-marcus-night.jpg" alt="Neiman Marcus building at night near Union Square" style="width: 49%;">
+</div>
+
 *Union Square in the early morning hours. Not a soul around.*
 
 ## The Driving Experience
