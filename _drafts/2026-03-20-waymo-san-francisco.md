@@ -1,0 +1,38 @@
+---
+layout: post
+title: "My First Waymo Ride in San Francisco"
+date: 2026-03-20
+categories: personal technology
+---
+
+I went to San Francisco recently to visit some friends, and realized I'd never actually sat in a Waymo before. So I decided to try it out. The thing I was most curious about: how does it *feel* to be in a car with no driver in the driver's seat?
+
+## Early Morning, Half the Price
+
+I had a fairly early morning flight, so I ended up catching the Waymo quite early. It turned out to be almost half the cost of what it would have been during peak hours. I can imagine a lot of early commuters taking Waymo to work in San Francisco. That early in the morning, though, very few breakfast spots are open and most shops are closed. But that was fine by me since I was mainly there for the Waymo experience, not to eat or shop at 5 AM.
+
+<!-- [1] Waymo on the outside, pitch black -->
+
+## Where You Can (and Can't) Go
+
+I thought I'd take the Waymo all the way from San Francisco to SFO airport, but it turned out SFO is slightly outside of Waymo's service area. I could only drive it within the city. Even within the city, going from the Embarcadero to Union Square isn't always possible because the nearest Waymo might not be available or is too far away. This will probably change as more vehicles enter service. I ended up combining walking with Waymo rides around San Francisco, which worked out fine.
+
+<!-- [3] Union Square that early in the morning -->
+
+## The Driving Experience
+
+I have a somewhat parallel experience with this: I'm a big fan of lane assist technology in cars, which is a huge stress reliever on long drives. So to my surprise, riding in the Waymo didn't feel odd at all. It just felt natural. Thanks to my experience with lane assist, I didn't get nervous. In fact, I quite enjoyed it.
+
+The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very carefully decelerates when it approaches a signal. The Waymo team has clearly calibrated this well. It made the ride genuinely comfortable.
+
+I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
+
+<!-- [2] Waymo with the door open -->
+
+## Not Perfect, But Close
+
+When I finally got out of the Waymo, I watched it depart. It pulled up to a signal and ended up straddling two lanes, sitting right on the lane divider at a red light. I'm not sure if that's technically a traffic violation, but being across two lanes at a red signal doesn't look great. As soon as the light turned green, it straightened itself out.
+
+<!-- [4] Waymo stuck between two lanes -->
+
+Baby steps, I suppose. But overall, I came away impressed. The experience was smooth, the cost was reasonable for early morning rides, and the lack of a human driver felt surprisingly normal. I'll definitely be using it again next time I'm in the city.
