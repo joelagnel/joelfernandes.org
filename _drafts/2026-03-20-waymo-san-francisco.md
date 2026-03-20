@@ -33,7 +33,6 @@ I have a somewhat parallel experience with this: I'm a big fan of lane assist te
 
 The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very carefully decelerates when it approaches a signal. The Waymo team appears to have clearly calibrated this well. It made the ride genuinely comfortable.
 
-I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
 
 <div style="text-align: center;">
 <img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%; display: block; margin: 0 auto;"><br>
