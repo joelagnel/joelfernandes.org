@@ -16,7 +16,7 @@ I had a fairly early morning flight, so I ended up catching the Waymo quite earl
 <em>The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5 AM.</em>
 </div>
 
-## Where You Can (and Can't) Go
+## Where should I take it?
 
 I thought I'd take the Waymo all the way from San Francisco to SFO airport, but it turned out SFO is slightly outside of Waymo's service area. I could only drive it within the city. Even within the city, going from the Embarcadero to Union Square isn't always possible because the nearest Waymo might not be available or is too far away. This will probably change as more vehicles enter service. I ended up combining walking with Waymo rides around San Francisco, which worked out fine.
 
