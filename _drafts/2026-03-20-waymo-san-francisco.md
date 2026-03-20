@@ -11,8 +11,10 @@ I went to San Francisco recently to visit some friends, and realized I'd never a
 
 I had a fairly early morning flight, so I ended up catching the Waymo quite early. It turned out to be almost half the cost of what it would have been during peak hours. I can imagine a lot of early commuters taking Waymo to work in San Francisco. That early in the morning, though, very few breakfast spots are open and most shops are closed. But that was fine by me since I was mainly there for the Waymo experience, not to eat or shop at 5 AM.
 
-![Waymo on the streets of San Francisco, early morning](/resources/waymo/waymo-outside-night.jpg)
-*The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5 AM.*
+<div style="text-align: center;">
+<img src="/resources/waymo/waymo-outside-night.jpg" alt="Waymo on the streets of San Francisco, early morning" style="width: 50%;"><br>
+<em>The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5 AM.</em>
+</div>
 
 ## Where You Can (and Can't) Go
 
@@ -33,14 +35,18 @@ The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very
 
 I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
 
-<img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%;">
-*Taking my time with the door open at 5 AM. No one around to judge.*
+<div style="text-align: center;">
+<img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%;"><br>
+<em>Taking my time with the door open at 5 AM. No one around to judge.</em>
+</div>
 
 ## Not Perfect, But Close
 
 When I finally got out of the Waymo, I watched it depart. It pulled up to a signal and ended up straddling two lanes, sitting right on the lane divider at a red light. I'm not sure if that's technically a traffic violation, but being across two lanes at a red signal doesn't look great. As soon as the light turned green, it straightened itself out.
 
-<img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%;">
-*The Waymo sitting right on the lane divider at a red light. It straightened out once the light turned green.*
+<div style="text-align: center;">
+<img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%;"><br>
+<em>The Waymo sitting right on the lane divider at a red light. It straightened out once the light turned green.</em>
+</div>
 
 Baby steps, I suppose. But overall, I came away impressed. The experience was smooth. I'll definitely be using it again next time I'm in the city. The future is here!
