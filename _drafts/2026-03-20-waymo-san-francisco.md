@@ -43,4 +43,4 @@ When I finally got out of the Waymo, I watched it depart. It pulled up to a sign
 <img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%;">
 *The Waymo sitting right on the lane divider at a red light. It straightened out once the light turned green.*
 
-Baby steps, I suppose. But overall, I came away impressed. The experience was smooth, the cost was reasonable for early morning rides, and the lack of a human driver felt surprisingly normal. I'll definitely be using it again next time I'm in the city.
+Baby steps, I suppose. But overall, I came away impressed. The experience was smooth. I'll definitely be using it again next time I'm in the city. The future is here!
