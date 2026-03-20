@@ -40,7 +40,7 @@ I did keep the door open for a few minutes so I could take some pictures for my 
 
 When I finally got out of the Waymo, I watched it depart. It pulled up to a signal and ended up straddling two lanes, sitting right on the lane divider at a red light. I'm not sure if that's technically a traffic violation, but being across two lanes at a red signal doesn't look great. As soon as the light turned green, it straightened itself out.
 
-![Waymo straddling two lanes at a red light](/resources/waymo/waymo-straddling-lanes.jpg)
+<img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%;">
 *The Waymo sitting right on the lane divider at a red light. It straightened out once the light turned green.*
 
 Baby steps, I suppose. But overall, I came away impressed. The experience was smooth, the cost was reasonable for early morning rides, and the lack of a human driver felt surprisingly normal. I'll definitely be using it again next time I'm in the city.
