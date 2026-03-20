@@ -37,7 +37,7 @@ I did keep the door open for a few minutes so I could take some pictures for my 
 
 <div style="text-align: center;">
 <img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%; display: block; margin: 0 auto;"><br>
-<em>Taking my time with the door open at 5 AM. No one around to judge.</em>
+<em>Beautiful on the inside</em>
 </div>
 
 ## Not Perfect, But Close
