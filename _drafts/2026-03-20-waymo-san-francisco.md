@@ -45,7 +45,7 @@ I did keep the door open for a few minutes so I could take some pictures for my 
 When I finally got out of the Waymo, I watched it depart. It pulled up to a signal and ended up straddling two lanes, sitting right on the lane divider at a red light. I'm not sure if that's technically a traffic violation, but being across two lanes at a red signal doesn't look great. As soon as the light turned green, it straightened itself out.
 
 <div style="text-align: center;">
-<img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%;"><br>
+<img src="/resources/waymo/waymo-straddling-lanes.jpg" alt="Waymo straddling two lanes at a red light" style="width: 50%; display: block; margin: 0 auto;"><br>
 <em>The Waymo sitting right on the lane divider at a red light. It straightened out once the light turned green.</em>
 </div>
 
