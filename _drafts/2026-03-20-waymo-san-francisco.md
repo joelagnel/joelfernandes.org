@@ -9,11 +9,11 @@ I went to San Francisco recently to visit some friends, and realized I'd never a
 
 ## Early Morning, Half the Price
 
-I had a fairly early morning flight, so I ended up catching the Waymo quite early. It turned out to be almost half the cost of what it would have been during peak hours. I can imagine a lot of early commuters taking Waymo to work in San Francisco. That early in the morning, though, very few breakfast spots are open and most shops are closed. But that was fine by me since I was mainly there for the Waymo experience, not to eat or shop at 5 AM.
+I had a fairly early morning flight, so I ended up catching the Waymo quite early. It turned out to be almost half the cost of what it would have been during peak hours. I can imagine a lot of early commuters taking Waymo to work in San Francisco. That early in the morning, though, very few breakfast spots are open and most shops are closed. But that was fine by me since I was mainly there for the Waymo experience, not to eat or shop at 5.30 AM.
 
 <div style="text-align: center;">
 <img src="/resources/waymo/waymo-outside-night.jpg" alt="Waymo on the streets of San Francisco, early morning" style="width: 50%; display: block; margin: 0 auto;"><br>
-<em>The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5 AM.</em>
+<em>The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5.30 AM.</em>
 </div>
 
 ## Where should I take it?
