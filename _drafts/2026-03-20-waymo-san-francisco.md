@@ -12,7 +12,7 @@ I went to San Francisco recently to visit some friends, and realized I'd never a
 I had a fairly early morning flight, so I ended up catching the Waymo quite early. It turned out to be almost half the cost of what it would have been during peak hours. I can imagine a lot of early commuters taking Waymo to work in San Francisco. That early in the morning, though, very few breakfast spots are open and most shops are closed. But that was fine by me since I was mainly there for the Waymo experience, not to eat or shop at 5 AM.
 
 <div style="text-align: center;">
-<img src="/resources/waymo/waymo-outside-night.jpg" alt="Waymo on the streets of San Francisco, early morning" style="width: 50%;"><br>
+<img src="/resources/waymo/waymo-outside-night.jpg" alt="Waymo on the streets of San Francisco, early morning" style="width: 50%; display: block; margin: 0 auto;"><br>
 <em>The Waymo Jaguar I-PACE waiting on a dark San Francisco street at 5 AM.</em>
 </div>
 
@@ -36,7 +36,7 @@ The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very
 I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
 
 <div style="text-align: center;">
-<img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%;"><br>
+<img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%; display: block; margin: 0 auto;"><br>
 <em>Taking my time with the door open at 5 AM. No one around to judge.</em>
 </div>
 
