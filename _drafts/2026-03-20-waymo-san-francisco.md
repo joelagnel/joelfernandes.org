@@ -33,7 +33,7 @@ The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very
 
 I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
 
-![Waymo with door open on an empty San Francisco street](/resources/waymo/waymo-door-open.jpg)
+<img src="/resources/waymo/waymo-door-open.jpg" alt="Waymo with door open on an empty San Francisco street" style="width: 50%;">
 *Taking my time with the door open at 5 AM. No one around to judge.*
 
 ## Not Perfect, But Close
