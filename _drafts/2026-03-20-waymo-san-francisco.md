@@ -29,7 +29,7 @@ I thought I'd take the Waymo all the way from San Francisco to SFO airport, but 
 
 I have a somewhat parallel experience with this: I'm a big fan of lane assist technology in cars, which is a huge stress reliever on long drives. So to my surprise, riding in the Waymo didn't feel odd at all. It just felt natural. Thanks to my experience with lane assist, I didn't get nervous. In fact, I quite enjoyed it.
 
-The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very carefully decelerates when it approaches a signal. The Waymo team has clearly calibrated this well. It made the ride genuinely comfortable.
+The gentle braking was a pleasant surprise. Unlike human drivers, the Waymo very carefully decelerates when it approaches a signal. The Waymo team appears to have clearly calibrated this well. It made the ride genuinely comfortable.
 
 I did keep the door open for a few minutes so I could take some pictures for my memory. At 5 AM, there wasn't anyone around to judge me.
 
