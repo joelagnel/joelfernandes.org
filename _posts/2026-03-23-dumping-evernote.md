@@ -2,6 +2,7 @@
 layout: post
 title: "Dumping Evernote After 13 Years"
 date: 2026-03-23
+categories: personal
 published: false
 ---
 
