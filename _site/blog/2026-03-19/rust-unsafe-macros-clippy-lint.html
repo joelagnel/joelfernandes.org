@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Rust Macros That Are Unsafe Are Not Lint Friendly - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Rust Macros That Are Unsafe Are Not Lint Friendly</h1>
+<p class="meta">19 Mar 2026</p>
+
+<div class="post">
+<p>When a Rust macro needs to perform unsafe operations internally, you have a design choice: does the macro itself contain the <code class="language-plaintext highlighter-rouge">unsafe</code> block, or does the caller write it? It sounds like a small API decision, but it has surprising consequences for Clippy’s lint system. I ran into this while upstreaming <a href="https://lore.kernel.org/all/20260317201710.712702-2-joelagnelf@nvidia.com/"><code class="language-plaintext highlighter-rouge">CList</code></a>, a Rust abstraction for iterating C linked lists in the Linux kernel, and the resulting LKML discussion surfaced several interesting perspectives.</p>
+
+<p>This post walks through the problem, the three Clippy lints that interact (sometimes poorly) with unsafe macros, the different approaches proposed by kernel Rust developers, and test programs I wrote to study the behavior.</p>
+
+<h2 id="the-clist-macro">The CList Macro</h2>
+
+<p>CList provides a way for Rust code to iterate over C’s <code class="language-plaintext highlighter-rouge">struct list_head</code> linked lists. The <code class="language-plaintext highlighter-rouge">clist_create!</code> macro computes the byte offset of the <code class="language-plaintext highlighter-rouge">list_head</code> field at compile time via const generics and creates a typed <code class="language-plaintext highlighter-rouge">CList</code> object:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">#[macro_export]</span>
+<span class="nd">macro_rules!</span> <span class="n">clist_create</span> <span class="p">{</span>
+    <span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="nv">$head:ident</span><span class="p">,</span> <span class="nv">$rust_type:ty</span><span class="p">,</span> <span class="nv">$c_type:ty</span><span class="p">,</span> <span class="nv">$</span><span class="p">(</span><span class="nv">$field:tt</span><span class="p">)</span>.<span class="o">+</span> <span class="p">})</span> <span class="k">=&gt;</span> <span class="p">{{</span>
+        <span class="c1">// Compile-time check that field path is a `list_head`.</span>
+        <span class="c1">// SAFETY: `p` is a valid pointer to `$c_type`.</span>
+        <span class="k">let</span> <span class="n">_</span><span class="p">:</span> <span class="k">fn</span><span class="p">(</span><span class="o">*</span><span class="k">const</span> <span class="nv">$c_type</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="o">*</span><span class="k">const</span> <span class="nv">$crate</span><span class="p">::</span><span class="nn">bindings</span><span class="p">::</span><span class="n">list_head</span> <span class="o">=</span>
+            <span class="p">|</span><span class="n">p</span><span class="p">|</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="o">&amp;</span><span class="n">raw</span> <span class="k">const</span> <span class="p">(</span><span class="o">*</span><span class="n">p</span><span class="p">)</span>.<span class="nv">$</span><span class="p">(</span><span class="nv">$field</span><span class="p">)</span>.<span class="o">+</span> <span class="p">};</span>
+
+        <span class="c1">// Calculate offset and create `CList`.</span>
+        <span class="k">const</span> <span class="n">OFFSET</span><span class="p">:</span> <span class="nb">usize</span> <span class="o">=</span> <span class="p">::</span><span class="nn">core</span><span class="p">::</span><span class="nn">mem</span><span class="p">::</span><span class="nd">offset_of!</span><span class="p">(</span><span class="nv">$c_type</span><span class="p">,</span> <span class="nv">$</span><span class="p">(</span><span class="nv">$field</span><span class="p">)</span>.<span class="o">+</span><span class="p">);</span>
+        <span class="c1">// SAFETY: The caller of this macro is responsible for ensuring safety.</span>
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="nv">$crate</span><span class="p">::</span><span class="nn">interop</span><span class="p">::</span><span class="nn">list</span><span class="p">::</span><span class="nn">CList</span><span class="p">::</span><span class="o">&lt;</span><span class="nv">$rust_type</span><span class="p">,</span> <span class="n">OFFSET</span><span class="o">&gt;</span><span class="p">::</span><span class="nf">from_raw</span><span class="p">(</span><span class="nv">$head</span><span class="p">)</span> <span class="p">}</span>
+    <span class="p">}};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>The caller uses it like this:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// SAFETY: `head` is valid and initialized, items are `SampleItemC` with</span>
+<span class="c1">// embedded `link` field, and `Item` is `#[repr(transparent)]` over `SampleItemC`.</span>
+<span class="k">let</span> <span class="n">list</span> <span class="o">=</span> <span class="nd">clist_create!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">head</span><span class="p">,</span> <span class="n">Item</span><span class="p">,</span> <span class="n">SampleItemC</span><span class="p">,</span> <span class="n">link</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<p>Notice the <code class="language-plaintext highlighter-rouge">unsafe</code> keyword inside the macro arguments. This is not a real Rust <code class="language-plaintext highlighter-rouge">unsafe</code> block. It’s a token pattern matched by the macro’s <code class="language-plaintext highlighter-rouge">(unsafe { ... })</code> arm. The idea is to make the call site <em>look</em> unsafe, signaling to the reader that safety obligations exist. The actual <code class="language-plaintext highlighter-rouge">unsafe</code> blocks live inside the macro expansion.</p>
+
+<p>This pattern creates problems with three Clippy lints.</p>
+
+<h2 id="the-three-clippy-lints">The Three Clippy Lints</h2>
+
+<h3 id="1-unnecessary_safety_comment">1. <code class="language-plaintext highlighter-rouge">unnecessary_safety_comment</code></h3>
+
+<p>Clippy requires <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comments only before real <code class="language-plaintext highlighter-rouge">unsafe</code> blocks. Since the <code class="language-plaintext highlighter-rouge">unsafe</code> in <code class="language-plaintext highlighter-rouge">clist_create!(unsafe { ... })</code> is just a matched token, Clippy doesn’t see any unsafe block at the call site. If you write a <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comment (as you should for any unsafe operation), Clippy complains:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>error: statement has unnecessary safety comment
+  --&gt; src/test_error.rs:23:5
+   |
+23 |     let _a = create_from_raw!(unsafe { p });
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   |
+help: consider removing the safety comment
+  --&gt; src/test_error.rs:22:8
+   |
+22 |     // SAFETY: `p` points to a valid i32.
+   |        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</code></pre></div></div>
+
+<p>This is a false positive. The macro <em>does</em> perform unsafe operations. The caller <em>should</em> document why the preconditions are satisfied. But Clippy tells them to delete the comment.</p>
+
+<p>Alice Ryhl (Google) <a href="https://lkml.org/lkml/2026/3/18/1229">flagged this</a> during review of v13. Miguel Ojeda had <a href="https://lkml.org/lkml/2026/3/12/1852">previously identified the same issue</a> on v12, noting that “the supposed to be <code class="language-plaintext highlighter-rouge">unsafe</code> block does not count as one for Clippy.”</p>
+
+<h3 id="2-undocumented_unsafe_blocks">2. <code class="language-plaintext highlighter-rouge">undocumented_unsafe_blocks</code></h3>
+
+<p>Inside the macro, the <code class="language-plaintext highlighter-rouge">unsafe</code> blocks need <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comments too. But when the macro is expanded at a call site, Clippy checks whether the <em>expanded</em> code has safety comments in the right positions. The comment placement that looks correct inside the macro definition can end up in the wrong position after expansion.</p>
+
+<p>Alexandre Courbot (NVIDIA) <a href="https://lkml.org/lkml/2026/3/19/1111">hit this</a> when using <code class="language-plaintext highlighter-rouge">clist_create!</code> in the GPU buddy allocator:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>warning: unsafe block missing a safety comment
+  --&gt; rust/kernel/interop/list.rs:335:17
+   |
+335 |     |p| unsafe { &amp;raw const (*p).$($field).+ };
+     |         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</code></pre></div></div>
+
+<p>The fix was to move the <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comment to directly above the closure (on the <code class="language-plaintext highlighter-rouge">|p|</code> line) rather than above the <code class="language-plaintext highlighter-rouge">let</code> binding.</p>
+
+<h3 id="3-macro_metavars_in_unsafe">3. <code class="language-plaintext highlighter-rouge">macro_metavars_in_unsafe</code></h3>
+
+<p>This lint catches macros that expand caller-provided expressions (<code class="language-plaintext highlighter-rouge">$expr</code>) inside an <code class="language-plaintext highlighter-rouge">unsafe</code> block. The concern is that the caller can sneak arbitrary code into an unsafe context without writing <code class="language-plaintext highlighter-rouge">unsafe</code> themselves. Using <code class="language-plaintext highlighter-rouge">:ident</code> instead of <code class="language-plaintext highlighter-rouge">:expr</code> for <code class="language-plaintext highlighter-rouge">$head</code> avoids this, since an identifier is just a name and cannot contain arbitrary unsafe code.</p>
+
+<p>This is why <code class="language-plaintext highlighter-rouge">clist_create!</code> uses <code class="language-plaintext highlighter-rouge">$head:ident</code> rather than <code class="language-plaintext highlighter-rouge">$head:expr</code>. As I noted in the <a href="https://lkml.org/lkml/2026/3/18/2206">thread</a>: “Not doing <code class="language-plaintext highlighter-rouge">:ident</code> was causing clippy errors.”</p>
+
+<p>Alice Ryhl <a href="https://lkml.org/lkml/2026/3/18/1229">pointed out</a> this forces callers to put the pointer in a local variable first, rather than passing an expression like <code class="language-plaintext highlighter-rouge">&amp;raw mut my_struct.head</code> directly. A minor ergonomic cost, but one that avoids a legitimate safety concern.</p>
+
+<h2 id="the-approaches">The Approaches</h2>
+
+<p>The LKML discussion produced four distinct approaches to this problem. Here they are, with test programs demonstrating each.</p>
+
+<h3 id="approach-1-safety-comment-hack-miguels-temporary-fix">Approach 1: <code class="language-plaintext highlighter-rouge">SAFETY*:</code> Comment Hack (Miguel’s Temporary Fix)</h3>
+
+<p>Miguel Ojeda <a href="https://lkml.org/lkml/2026/3/12/1852">suggested</a> using <code class="language-plaintext highlighter-rouge">// SAFETY*:</code> instead of <code class="language-plaintext highlighter-rouge">// SAFETY:</code> as a temporary workaround. Clippy’s lint only triggers on the exact string <code class="language-plaintext highlighter-rouge">SAFETY:</code>, so the asterisk dodges the false positive while still communicating intent to human readers.</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// SAFETY*: `p` points to a valid i32 on the stack.</span>
+<span class="k">let</span> <span class="n">_a</span> <span class="o">=</span> <span class="nd">create_from_raw!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">p</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<p>This compiles cleanly with Clippy. Miguel was clear this is a <a href="https://lkml.org/lkml/2026/3/18/2197">stopgap</a>: “I suggested it as a temporary thing we could do if we want to use that ‘fake <code class="language-plaintext highlighter-rouge">unsafe</code> block in macro matcher’ pattern more and more.”</p>
+
+<p>Danilo Krummrich (Red Hat) <a href="https://lkml.org/lkml/2026/3/19/1202">agreed</a> this was acceptable for now: “if this is what we want to do in such cases, we should probably document it somewhere in the coding guidelines.”</p>
+
+<h3 id="approach-2-remove-fake-unsafe-let-caller-write-real-unsafe-garys-approach">Approach 2: Remove Fake-Unsafe, Let Caller Write Real <code class="language-plaintext highlighter-rouge">unsafe</code> (Gary’s Approach)</h3>
+
+<p>Gary Guo <a href="https://lkml.org/lkml/2026/3/19/1029">proposed</a> the most radical simplification: drop the <code class="language-plaintext highlighter-rouge">unsafe</code> keyword from the macro entirely and don’t wrap the internal unsafe operations. The caller is forced to write a real <code class="language-plaintext highlighter-rouge">unsafe { }</code> block, and all Clippy lints work perfectly:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">macro_rules!</span> <span class="n">create_from_raw_no_fake</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$ptr:ident</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nf">deref_ptr</span><span class="p">(</span><span class="nv">$ptr</span><span class="p">)</span>   <span class="c1">// unsafe call -- NOT wrapped</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="c1">// SAFETY: `p` points to a valid i32 on the stack.</span>
+<span class="k">let</span> <span class="n">_b</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="nd">create_from_raw_no_fake!</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="p">};</span>
+</code></pre></div></div>
+
+<p>The compiler enforces that the call site is inside an <code class="language-plaintext highlighter-rouge">unsafe</code> block (because the macro expands to an unsafe function call), and Clippy correctly associates the <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comment with it.</p>
+
+<p>Gary’s reasoning: “I am not sure why the macro should have unsafe keyword in it, rather than just being <code class="language-plaintext highlighter-rouge">clist_create(a, b, c, d)</code> and just have user write unsafe.”</p>
+
+<p>Danilo <a href="https://lkml.org/lkml/2026/3/19/1114">pushed back</a>: if the macro doesn’t wrap its internal unsafe operations, “then the calls within the macro are not justified individually.” Gary <a href="https://lkml.org/lkml/2026/3/19/1141">clarified</a>: since the only safety justification is “the caller of this macro is responsible for ensuring safety” (which defers entirely to the caller anyway), there’s no loss. For macros that expand to <em>items</em> (like <code class="language-plaintext highlighter-rouge">impl_device_context_deref!</code>), the caller <em>can’t</em> write an outer <code class="language-plaintext highlighter-rouge">unsafe {}</code>, so the fake-unsafe pattern is the only option. But for expression-position macros like <code class="language-plaintext highlighter-rouge">clist_create!</code>, the caller can.</p>
+
+<h3 id="approach-3-outer-unsafe-block-in-macro-expansion-joels-revised-approach">Approach 3: Outer <code class="language-plaintext highlighter-rouge">unsafe</code> Block in Macro Expansion (Joel’s Revised Approach)</h3>
+
+<p>I proposed <a href="https://lkml.org/lkml/2026/3/18/2168">reworking the macro</a> so the <code class="language-plaintext highlighter-rouge">unsafe</code> keyword is part of the expansion rather than just a pattern match. The macro still matches <code class="language-plaintext highlighter-rouge">unsafe { ... }</code> for visual clarity, but emits an outer <code class="language-plaintext highlighter-rouge">unsafe { }</code> that wraps the entire body:</p>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">macro_rules!</span> <span class="n">create_from_raw_outer</span> <span class="p">{</span>
+    <span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="nv">$ptr:ident</span> <span class="p">})</span> <span class="k">=&gt;</span> <span class="p">(</span>
+        <span class="c1">// SAFETY: The caller of this macro ensures `$ptr` is valid.</span>
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="p">{</span>
+            <span class="nf">deref_ptr</span><span class="p">(</span><span class="nv">$ptr</span><span class="p">)</span>
+        <span class="p">}</span> <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// SAFETY: `p` points to a valid i32 on the stack.</span>
+<span class="k">let</span> <span class="n">_a</span> <span class="o">=</span> <span class="nd">create_from_raw_outer!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">p</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<p>This keeps the <code class="language-plaintext highlighter-rouge">unsafe</code> visual marker at the call site while making the safety comments work correctly. Alex Courbot <a href="https://lkml.org/lkml/2026/3/19/1111">liked this approach</a>: “it preserves the expected use of <code class="language-plaintext highlighter-rouge">SAFETY:</code> without that confusing <code class="language-plaintext highlighter-rouge">*</code>.”</p>
+
+<h3 id="approach-4-upstream-clippy-fix-future">Approach 4: Upstream Clippy Fix (Future)</h3>
+
+<p>Miguel noted that the right long-term fix is to teach Clippy to recognize the “fake unsafe block in macro matcher” pattern: “if we plan to use the pattern more, then I am happy to ask upstream if it would make sense for Clippy to recognize it.” He also pointed to the <a href="https://github.com/Rust-for-Linux/linux/issues/354">Rust-for-Linux wishlist</a> for proper <code class="language-plaintext highlighter-rouge">unsafe</code> macro support in the language itself, which would let individual macro arms be marked as unsafe.</p>
+
+<h2 id="studying-the-behavior">Studying the Behavior</h2>
+
+<p>To verify these behaviors independently of the kernel build system, I wrote test programs using vanilla Rust and Clippy. All tests below use <code class="language-plaintext highlighter-rouge">rustc 1.93.0</code> / <code class="language-plaintext highlighter-rouge">clippy 0.1.93</code>. Note: the kernel uses nightly toolchains where <code class="language-plaintext highlighter-rouge">macro_metavars_in_unsafe</code> is enabled via <code class="language-plaintext highlighter-rouge">-W clippy::all</code>; on stable, you may need to enable it explicitly.</p>
+
+<h3 id="test-fake-unsafe-blocks-are-invisible-to-clippy">Test: Fake <code class="language-plaintext highlighter-rouge">unsafe</code> Blocks Are Invisible to Clippy</h3>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">#![deny(clippy::unnecessary_safety_comment)]</span>
+<span class="nd">#![deny(clippy::undocumented_unsafe_blocks)]</span>
+
+<span class="k">unsafe</span> <span class="k">fn</span> <span class="nf">deref_ptr</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="o">*</span><span class="k">const</span> <span class="nb">i32</span><span class="p">)</span> <span class="k">-&gt;</span> <span class="nb">i32</span> <span class="p">{</span>
+    <span class="c1">// SAFETY: Caller guarantees `p` is valid.</span>
+    <span class="k">unsafe</span> <span class="p">{</span> <span class="o">*</span><span class="n">p</span> <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="nd">macro_rules!</span> <span class="n">create_from_raw</span> <span class="p">{</span>
+    <span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="nv">$ptr:ident</span> <span class="p">})</span> <span class="k">=&gt;</span> <span class="p">{{</span>
+        <span class="c1">// SAFETY: The caller ensures `$ptr` is valid.</span>
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="nf">deref_ptr</span><span class="p">(</span><span class="nv">$ptr</span><span class="p">)</span> <span class="p">}</span>
+    <span class="p">}};</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">x</span><span class="p">:</span> <span class="nb">i32</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">p</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span> <span class="k">as</span> <span class="o">*</span><span class="k">const</span> <span class="nb">i32</span><span class="p">;</span>
+
+    <span class="c1">// SAFETY: `p` points to a valid i32.          &lt;-- Clippy ERROR</span>
+    <span class="k">let</span> <span class="n">_a</span> <span class="o">=</span> <span class="nd">create_from_raw!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">p</span> <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Running <code class="language-plaintext highlighter-rouge">clippy-driver --edition 2024 -D clippy::unnecessary_safety_comment</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>error: statement has unnecessary safety comment
+  --&gt; test_error.rs:23:5
+   |
+23 |     let _a = create_from_raw!(unsafe { p });
+   |     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+</code></pre></div></div>
+
+<p><strong>Clippy does not see <code class="language-plaintext highlighter-rouge">unsafe</code> in the macro matcher as a real unsafe block.</strong> The safety comment is rejected.</p>
+
+<h3 id="test-safety-workaround-compiles-clean">Test: <code class="language-plaintext highlighter-rouge">SAFETY*:</code> Workaround Compiles Clean</h3>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    <span class="c1">// SAFETY*: `p` points to a valid i32. (Clippy workaround)</span>
+    <span class="k">let</span> <span class="n">_a</span> <span class="o">=</span> <span class="nd">create_from_raw!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">p</span> <span class="p">});</span>
+</code></pre></div></div>
+
+<p>Compiles with zero warnings. The asterisk makes Clippy ignore the comment while preserving the documentation intent.</p>
+
+<h3 id="test-caller-written-unsafe-works-perfectly">Test: Caller-Written <code class="language-plaintext highlighter-rouge">unsafe</code> Works Perfectly</h3>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">macro_rules!</span> <span class="n">create_from_raw_no_fake</span> <span class="p">{</span>
+    <span class="p">(</span><span class="nv">$ptr:ident</span><span class="p">)</span> <span class="k">=&gt;</span> <span class="p">{</span>
+        <span class="nf">deref_ptr</span><span class="p">(</span><span class="nv">$ptr</span><span class="p">)</span>
+    <span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">x</span><span class="p">:</span> <span class="nb">i32</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">p</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span> <span class="k">as</span> <span class="o">*</span><span class="k">const</span> <span class="nb">i32</span><span class="p">;</span>
+
+    <span class="c1">// SAFETY: `p` points to a valid i32 on the stack.</span>
+    <span class="k">let</span> <span class="n">_b</span> <span class="o">=</span> <span class="k">unsafe</span> <span class="p">{</span> <span class="nd">create_from_raw_no_fake!</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="p">};</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Compiles clean. Clippy correctly sees the real <code class="language-plaintext highlighter-rouge">unsafe {}</code> block and accepts the <code class="language-plaintext highlighter-rouge">// SAFETY:</code> comment.</p>
+
+<h3 id="test-outer-unsafe-wrapper-also-works">Test: Outer <code class="language-plaintext highlighter-rouge">unsafe</code> Wrapper Also Works</h3>
+
+<div class="language-rust highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nd">macro_rules!</span> <span class="n">create_from_raw_outer</span> <span class="p">{</span>
+    <span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="nv">$ptr:ident</span> <span class="p">})</span> <span class="k">=&gt;</span> <span class="p">(</span>
+        <span class="c1">// SAFETY: The caller ensures `$ptr` is valid.</span>
+        <span class="k">unsafe</span> <span class="p">{</span> <span class="p">{</span>
+            <span class="nf">deref_ptr</span><span class="p">(</span><span class="nv">$ptr</span><span class="p">)</span>
+        <span class="p">}</span> <span class="p">}</span>
+    <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">fn</span> <span class="nf">main</span><span class="p">()</span> <span class="p">{</span>
+    <span class="k">let</span> <span class="n">x</span><span class="p">:</span> <span class="nb">i32</span> <span class="o">=</span> <span class="mi">42</span><span class="p">;</span>
+    <span class="k">let</span> <span class="n">p</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">x</span> <span class="k">as</span> <span class="o">*</span><span class="k">const</span> <span class="nb">i32</span><span class="p">;</span>
+
+    <span class="c1">// SAFETY: `p` points to a valid i32 on the stack.</span>
+    <span class="k">let</span> <span class="n">_a</span> <span class="o">=</span> <span class="nd">create_from_raw_outer!</span><span class="p">(</span><span class="k">unsafe</span> <span class="p">{</span> <span class="n">p</span> <span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Also compiles clean. The real <code class="language-plaintext highlighter-rouge">unsafe {}</code> in the expansion makes Clippy happy, and the caller can write their own <code class="language-plaintext highlighter-rouge">// SAFETY:</code> on the outer real unsafe.</p>
+
+<h2 id="where-things-stand">Where Things Stand</h2>
+
+<p>For CList v13, we went with the <code class="language-plaintext highlighter-rouge">SAFETY*:</code> workaround plus constraining <code class="language-plaintext highlighter-rouge">$head</code> to <code class="language-plaintext highlighter-rouge">:ident</code>. Danilo is picking up the patch as a dependency for the GPU buddy allocator. The longer-term fix depends on either:</p>
+
+<ol>
+  <li>Gary’s approach gaining consensus (drop fake-unsafe for expression-position macros),</li>
+  <li>Upstream Clippy learning to recognize the macro-matcher pattern, or</li>
+  <li>Rust itself gaining <a href="https://github.com/Rust-for-Linux/linux/issues/354">unsafe macro support</a> as a language feature.</li>
+</ol>
+
+<p>The core tension is between two valid goals: macros should visually signal that they involve unsafe operations (the fake-unsafe pattern), and Clippy’s lint infrastructure should be able to verify safety documentation (which requires real <code class="language-plaintext highlighter-rouge">unsafe</code> blocks). Right now, you can’t have both.</p>
+
+<p>For anyone writing Rust macros that wrap unsafe operations, the practical takeaway: <strong>use <code class="language-plaintext highlighter-rouge">:ident</code> over <code class="language-plaintext highlighter-rouge">:expr</code> for arguments that end up inside <code class="language-plaintext highlighter-rouge">unsafe</code> blocks</strong>, and be aware that Clippy’s safety-comment lints don’t see token-level <code class="language-plaintext highlighter-rouge">unsafe</code> in macro matchers. If your macro expands to an expression (not an item), consider letting the caller write the real <code class="language-plaintext highlighter-rouge">unsafe {}</code> block.</p>
+
+<hr />
+
+<p><em>LKML thread: <a href="https://lore.kernel.org/all/20260317201710.712702-2-joelagnelf@nvidia.com/">[PATCH v13 1/1] rust: interop: Add list module for C linked list interface</a></em></p>
+
+<p><em>Related Rust-for-Linux issue: <a href="https://github.com/Rust-for-Linux/linux/issues/354">#354 - Unsafe macros</a></em></p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
