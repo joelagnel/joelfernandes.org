@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Happy Accidents - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+<li class="recent">2023-01-29 &raquo;<br><a href="/blog/2023-01-29/figuring-out-herd7.html">Figuring out herd7 memory models</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Happy Accidents</h1>
+<p class="meta">24 Feb 2026</p>
+
+<div class="post">
+<p>I am often fascinated by happy accidents in history. The most profound, life-changing discoveries of the past were not the result of brilliant master plans – they were unintentional happy accidents. This article goes over a few examples to inspire the reader.</p>
+
+<h2 id="galileo-and-the-moons-of-jupiter">Galileo and the Moons of Jupiter</h2>
+
+<p>In January 1610, Galileo was not hunting for undiscovered worlds. He had just built a telescope that could magnify objects 20 to 30 times – far better than anything else available at the time – and he simply pointed it at the brightest thing in the night sky to see what it looked like up close. Jupiter was the obvious choice. What he saw looked like three tiny stars lined up near the planet, and he did not think much of it at first.</p>
+
+<p>He looked again the next night, expecting Jupiter to have moved past those background stars. Instead, the stars had moved with Jupiter. Over the following weeks he tracked them every night and found a fourth. These were not background stars at all – they were orbiting Jupiter, just like the Moon orbits Earth. That discovery, born from the simple curiosity of testing a new tool on a bright light, shattered the centuries-old belief that everything in the universe revolves around Earth. <a href="#bib1">[1]</a></p>
+
+<h2 id="the-messy-lab-bench">The Messy Lab Bench</h2>
+
+<p>In 1928, Alexander Fleming was not trying to invent a miracle drug. He was studying staph bacteria, and before heading off on a two-week holiday, he left a pile of bacteria-covered petri dishes sitting out on his lab bench instead of cleaning them up. When he returned on September 3rd, one dish had a problem: a blob of mold had drifted in through an open window and landed on it. A less curious scientist would have thrown it out.</p>
+
+<p>Fleming noticed that around the mold, the bacteria were dead. The mold was secreting something that dissolved them. “That’s funny,” he reportedly said. That funny observation – from a dish that should have been cleaned – became the foundation of antibiotics, medicines that have since saved hundreds of millions of lives. It would take another decade and a world war before Howard Florey and Ernst Chain turned Fleming’s accident into a drug people could actually take. <a href="#bib2">[2]</a></p>
+
+<h2 id="the-intelligence-nobody-planned-for">The Intelligence Nobody Planned For</h2>
+
+<p>For decades, AI researchers had one simple goal: build a program that could guess the next word in a sentence. Feed it enough text from the internet and it would get better at guessing. Nobody expected much beyond a very convincing autocomplete. When researchers scaled up their models from GPT-2 to GPT-3, they were not trying to create a reasoning machine – they just wanted a better word-predictor.</p>
+
+<p>What came out was something nobody designed for. The model could translate between languages it had never been explicitly taught. It could write working code. It could solve logic puzzles. Researchers call this “emergence” – abilities that appear spontaneously once a model crosses a certain size. To perfectly predict the next word in a physics paper, it turns out, the model has to learn something about physics. The intelligence was a side effect of doing one simple thing at enormous scale. <a href="#bib3">[3]</a></p>
+
+<h2 id="crispr-started-with-yogurt">CRISPR Started with Yogurt</h2>
+
+<p>In the 1980s, a Spanish microbiologist named Francisco Mojica kept noticing strange, repeating patterns in bacterial DNA that seemed to serve no purpose. Nobody knew what they were for, so researchers gave them a name – CRISPR – and mostly moved on. The mystery sat quietly in the literature for years.</p>
+
+<p>The answer came by accident from food science. Researchers at a dairy company were trying to figure out why the bacteria used to make yogurt kept getting wiped out by viral infections. When they examined those mysterious repeating sequences, they realized the gaps between the repeats were actually fragments of viral DNA – a kind of biological memory the bacteria kept of past infections. By 2012, Jennifer Doudna and Emmanuelle Charpentier realized they could reprogram this same system to cut any DNA with precision, including human DNA. A tool now being used to treat genetic diseases started because someone wanted to understand why yogurt goes bad. <a href="#bib4">[4]</a></p>
+
+<hr />
+
+<h2 id="my-own-happy-accident">My Own Happy Accident</h2>
+
+<p>These are my favorite happy accident stories and I’ll keep adding to this list. While I am not a full-time researcher at work, a large part of what I do is driven by research – and these stories inspire me. The most important findings were not the result of someone setting out to find them. They happened because a curious person noticed something odd and did not look away.</p>
+
+<p>One such moment came for me in 2022, while working on the Linux kernel. I was digging through trace data looking at how RCU callbacks were being processed on a mostly-idle system. What I noticed was that a constant low-level trickle of callbacks was confusing the hardware power management – the system thought it was still busy, even when there was nothing meaningful left to do. Batching those callbacks and flushing them lazily turned out to cut package power draw noticeably on real hardware. I was not looking for a power-saving technique. I was just staring at trace output. That work became what is now known as Lazy RCU in the Linux kernel. <a href="#bib5">[5]</a></p>
+
+<p>Happy accident-ing!</p>
+
+<hr />
+
+<h2 id="bibliography">Bibliography</h2>
+
+<p><a id="bib1"></a>[1] NASA Science. <em>Jupiter Moons</em>. NASA Solar System Exploration. <a href="https://science.nasa.gov/jupiter/jupiter-moons/">https://science.nasa.gov/jupiter/jupiter-moons/</a></p>
+
+<p><a id="bib2"></a>[2] Tan, S.Y. and Tatsumura, Y. (2015). <em>Alexander Fleming (1881-1955): Discoverer of penicillin</em>. Singapore Medical Journal. National Institutes of Health, PMC. <a href="https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4520913/">https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4520913/</a></p>
+
+<p><a id="bib3"></a>[3] Wei, J. et al. (2022). <em>Emergent Abilities of Large Language Models</em>. arXiv:2206.07682. <a href="https://arxiv.org/abs/2206.07682">https://arxiv.org/abs/2206.07682</a></p>
+
+<p><a id="bib4"></a>[4] Broad Institute. <em>Questions and Answers about CRISPR</em>. <a href="https://www.broadinstitute.org/what-broad/areas-focus/project-spotlight/questions-and-answers-about-crispr">https://www.broadinstitute.org/what-broad/areas-focus/project-spotlight/questions-and-answers-about-crispr</a></p>
+
+<p><a id="bib5"></a>[5] Fernandes, J. (2022). <em>Make RCU do less to save power (Lazy RCU)</em>. Linux Plumbers Conference, 2022. <a href="https://www.joelfernandes.org/resources/lpc2022-rcu-do-less.pdf">https://www.joelfernandes.org/resources/lpc2022-rcu-do-less.pdf</a></p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+</body>
+</html>
