@@ -493,19 +493,41 @@ div.highlight, pre.highlight {
 }
 
 [data-theme="dark"] .post code {
-  background-color: #252838;
+  background-color: #1e2235 !important;
   border-color: #3a3a54;
-  color: #e0e0f0;
+  color: #c8e6ff;
+}
+
+[data-theme="dark"] code {
+  background-color: #1e2235 !important;
+  color: #c8e6ff;
 }
 
 [data-theme="dark"] div.highlighter-rouge {
-  background-color: #1e2130;
+  background-color: #151825 !important;
   border-color: #3a3a54;
 }
 
+[data-theme="dark"] div.highlight,
+[data-theme="dark"] pre.highlight {
+  background-color: #151825 !important;
+}
+
 [data-theme="dark"] pre {
-  color: #c8c8d8;
+  color: #c8d8e8 !important;
+  background-color: #151825 !important;
+}
+
+[data-theme="dark"] pre.plain {
+  background-color: #151825 !important;
+  color: #c8d8e8 !important;
+}
+
+[data-theme="dark"] pre code,
+[data-theme="dark"] .highlight code {
   background-color: transparent !important;
+  color: #c8d8e8 !important;
+  border: none !important;
 }
 
 [data-theme="dark"] .footer {
@@ -516,3 +538,15 @@ div.highlight, pre.highlight {
 [data-theme="dark"] .footer .contact a { color: #7ec8e3; }
 
 [data-theme="dark"] .meta { color: #666; }
+
+/* Dark mode: override mobile media query backgrounds for code/pre */
+@media only screen and (max-device-width: 960px) {
+  [data-theme="dark"] pre {
+    background-color: #151825 !important;
+    color: #c8d8e8 !important;
+  }
+  [data-theme="dark"] code {
+    background-color: #1e2235 !important;
+    color: #c8e6ff !important;
+  }
+}
