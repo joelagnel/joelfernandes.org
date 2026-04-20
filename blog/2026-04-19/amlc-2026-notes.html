@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Notes from the Applied Machine Learning Conference 2026 - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-02-24 &raquo;<br><a href="/blog/2023-02-24/ycm-working.html">Getting YouCompleteMe working for kernel development</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Notes from the Applied Machine Learning Conference 2026</h1>
+<p class="meta">19 Apr 2026</p>
+
+<div class="post">
+<div style="display:flex; gap:1em; align-items:flex-start; flex-wrap:wrap; margin: 0 0 2em 0;">
+  <figure style="flex:1; min-width:220px; margin:0; text-align:center;">
+    <img src="/images/amlc-2026-joel.jpg" alt="Joel at UVA School of Data Science, AMLC 2026" style="width:100%; height:auto;" />
+    <figcaption style="font-size:0.9em; color:#666; margin-top:0.5em;">Outside the UVA School of Data Science -- day 2 venue for AMLC 2026</figcaption>
+  </figure>
+  <figure style="flex:1; min-width:220px; margin:0; text-align:center;">
+    <img src="/images/amlc-2026-property-graphs-slide.png" alt="Organizational Intelligence with Property Graphs, Agentic AI, and MCP -- MacKenzye Leroy, S&amp;P Global" style="width:100%; height:auto;" />
+    <figcaption style="font-size:0.9em; color:#666; margin-top:0.5em;">MacKenzye Leroy (S&amp;P Global) -- "Organizational Intelligence with Property Graphs, Agentic AI, and MCP"</figcaption>
+  </figure>
+</div>
+
+<p>The <a href="https://appliedml.us/2026/">Applied Machine Learning Conference</a> (AMLC) ran April 17–18 in Charlottesville, Virginia. Day one was keynotes and talks at Violet Crown Cinema downtown; day two was four hands-on 90-minute workshops at UVA’s School of Data Science. I’m covering the workshops first, since I was particularly keen on capturing the practical takeaways before getting into the talks.</p>
+
+<hr />
+
+<h1 id="day-2-workshops">Day 2: Workshops</h1>
+
+<figure style="text-align:center; margin: 0 0 2em 0;">
+  <img src="/images/amlc-2026-workshop-room.jpg" alt="Workshop room at UVA School of Data Science" style="max-width:600px; width:100%; height:auto;" />
+  <figcaption style="font-size:0.9em; color:#666; margin-top:0.5em;">Room 305, UVA School of Data Science -- tiered seating, plenty of power, and floor-to-ceiling windows</figcaption>
+</figure>
+
+<h2 id="workshop-docling--document-parsing-into-property-graphs-ibm">Workshop: Docling – Document Parsing into Property Graphs (IBM)</h2>
+
+<p>The Docling workshop was about building a documentation parsing system where financial documents were parsed into a <a href="https://networkx.org/">NetworkX</a> property graph format using <a href="https://github.com/docling-project/docling">Docling</a>, IBM’s open-source document processing library. Docling uses AI models internally to parse documents into a structured format defined by a schema, making the resulting data far more queryable than raw text.</p>
+
+<p>The workflow: define a (Pydantic) schema describing the entities and relationships in your document domain → feed documents to Docling → it extracts structured data conforming to the schema → load into a graph for querying. For financial documents, for instance, nodes might be companies, filings, executives, and financial metrics, with edges representing relationships like “filed by”, “reported”, “employed”.</p>
+
+<p><strong>The schema problem.</strong> The catch – and I raised this directly – is that a schema must be defined upfront. For many real-world applications, the schema is genuinely unknown ahead of time. The presenter acknowledged this tension: for open-ended or exploratory retrieval, traditional RAG is probably the better fit. The proposed middle ground (see below for other related tasks): use AI to draft and iteratively critique the schema itself before ingestion.</p>
+
+<hr />
+
+<h2 id="workshop-evidence-based-agentic-engineering--amir-feizpour-aiscience">Workshop: Evidence-Based Agentic Engineering – Amir Feizpour (ai.science)</h2>
+
+<p>Amir Feizpour runs <a href="https://ai.science">ai.science</a> and normally runs a multi-day bootcamp on AI engineering. For AMLC he distilled it into a workshop built around a set of copy-paste prompts that walk you through building various components of an <strong>Agentic pipeline involving knowledge management and spec-driven development</strong>. All the prompts from the workshop are available at <a href="https://sherpa-b.ai.science/docs/guide/onboarding/">sherpa-b.ai.science/docs/guide/onboarding</a>.</p>
+
+<p>The prompts covered two main areas:</p>
+
+<p><strong>Spec-driven development with AI.</strong> Rather than going straight from idea to code, the workflow uses LLMs to help write, critique, and refine specs before any implementation begins. The prompts guide you through generating a spec, having the AI critique it, iterating, and only then generating code against the agreed spec. This keeps the AI grounded.</p>
+
+<p><strong>Extracting lessons learned from AI CLI transcripts.</strong> After a coding session with an AI agent, the transcripts contain a lot of implicit knowledge – what worked, what didn’t, what the agent had to backtrack on. Amir’s prompts extract these lessons and feed them into a <strong>knowledge ops database</strong>, building up an institutional memory over time. This is closely related to what the CMM project does – in fact, Amir mentioned he was looking into integrating with CMM.</p>
+
+<p>Crucially, the workshop wasn’t just about prompts as static text – it was about building <strong>AI agents</strong> that assist at each distinct stage of the development workflow:</p>
+
+<ul>
+  <li><strong>Ideation agents</strong> – evaluate ideas before any spec is written</li>
+  <li><strong>Spec agents</strong> – draft and critique specifications iteratively</li>
+  <li><strong>Knowledge ops agents</strong> – store lessons learned and retrieve past experience for future sessions</li>
+</ul>
+
+<p>The insight is that each stage has different needs, so a single general-purpose agent is the wrong abstraction. Composing purpose-built agents per workflow stage, with shared knowledge storage underneath, is more robust.</p>
+
+<p>The framing he used for the overall discipline: <strong>“MLOps”</strong> – like DevOps, but with <strong>knowledge and prompts</strong> sitting at the center of the engineering lifecycle instead of source code. Just as DevOps brought versioning, testing, CI/CD, and monitoring to software deployment, this applies the same rigor to prompt and knowledge management.</p>
+
+<p>Most teams today treat prompts like config files at best – no versioning, no regression tests, no rollback. The MLOps framing argues these should be first-class artifacts.</p>
+
+<hr />
+
+<h2 id="workshop-building-an-incident-investigation-agent-python">Workshop: Building an Incident Investigation Agent (Python)</h2>
+
+<p>This was a practical workshop building a Python agent to investigate and fix issues in an e-commerce website. The agent’s task: read application logs, identify the root cause of an incident, and produce a structured report. So how is this different from just using claude CLI? The agent built is specific - it has a set of “functions” it can call to do everything it needs, so it purpose-built and hence efficient for the required task.</p>
+
+<p>A few things I took away:</p>
+
+<p><strong>Completions APIs</strong>: The agentic loop essentially calls a “completions API” endpoint over stateless HTTP requests, passing it the entire messages array. Tool call requests are “responses” from the LLM API that are appended along with appending tool outputs.</p>
+
+<p><strong>APIs are stateless – the entire messages array travels with every request.</strong> This is the fundamental constraint of agentic loops. There is no server-side session. Every turn requires sending the full conversation history from the beginning: user messages, assistant messages, tool calls, tool results – everything. The practical implication: careful context window management and cost control is required. In fact, for some LLMs, I know that they reject it if you don’t pass back even the reasoning tokens generated so far.</p>
+
+<p><strong>How AI API tools are wired up in Python.</strong> Tools were defined as plain Python functions with typed inputs and outputs, then passed to the OpenAI (or Anthropic) API as a JSON schema via the <code class="language-plaintext highlighter-rouge">tools</code> parameter. The API returns a tool call request when it wants to invoke one; your code executes the function and appends the result to the messages array; the loop continues.</p>
+
+<hr />
+
+<h2 id="workshop-mcp-toolbox-for-databases-google">Workshop: MCP Toolbox for Databases (Google)</h2>
+
+<p>Google’s <a href="https://googleapis.github.io/genai-toolbox/getting-started/introduction/">MCP Toolbox for Databases</a> connects various backends – Cloud SQL, Spanner, AlloyDB, and others – to a single MCP server. The idea: instead of wiring up separate database connections and query APIs for each data source, you point MCP Toolbox at them and let AI agents query through a unified interface.</p>
+
+<p>The hands-on part was straightforward. But a more interesting point came up around <strong>prompt caching and tool calls</strong>.</p>
+
+<p>When an agent calls a tool, you get back a result. On the next turn, you need to include both the tool <em>call</em> (what the LLM requested) and the tool <em>result</em> (what came back) in the messages array. The presenter argued he preferred to send only the tool <em>outputs</em>, not the inputs.</p>
+
+<p>I pushed back: the tool inputs matter for caching. When you include the full tool call + result pair, the completion API can use the assistant’s tool-call message as a cache key. This means the prefix up to and including that tool call can be cached, significantly reducing token costs in long agentic runs. If you strip the tool inputs and send only outputs, you break the cache prefix – every subsequent turn reprocesses from scratch. This is easy to get wrong and the cost implications in production compound quickly.</p>
+
+<p>A few other things I took away:</p>
+
+<p><strong>MCP tools</strong>: In the original versions of MCP which is still the most popular, MCP tools are injected as regular tools parameter (as mentioned in previous workshop), with a name that looks like “mcp__servername__toolname”. This is called “client bridging” and the LLM is unaware that MCP is what is behind these tool calls.</p>
+
+<p><strong>Text to SQL</strong> MCP toolbox essentially converts tool calls to SQL queries (depending on which backing db MCP tool box is routing to). So it goes like LLM -&gt; tool call (MCP) with param1, param2 -&gt; MCP toolbox -&gt; Make pre-determined SQL queries with param1, param2 interpolated into the query.  This is nice in the sense, an AI agent can interact with a wide range of database by making uniform tool calls without dealing with query languages.</p>
+
+<hr />
+
+<h1 id="day-1-keynotes-and-talks">Day 1: Keynotes and Talks</h1>
+
+<h2 id="keynote-graphics-ai-and-the-quest-for-new-experiences-at-nvidia">Keynote: Graphics, AI, and the Quest for New Experiences at NVIDIA</h2>
+
+<p>David Luebke co-founded NVIDIA Research in 2006 after eight years on the faculty at UVA. He’s now VP of Research, running a group of ~35 researchers focused on “New Experiences” – generative neural networks, graphics, VR. His keynote was a great talk on the nature of industrial research.</p>
+
+<p>A few things that stuck:</p>
+
+<p><strong>Fail fast, and don’t be married to ideas.</strong> Don’t get emotionally attached to a research direction. The willingness to abandon a failing idea quickly is a competitive advantage. Successful researchers don’t usually fall in love with their approach rather than their problem.</p>
+
+<p><strong>Industrial Research has no value without impact.</strong> In an academic setting you can justify work by its intellectual merit alone. In industry, that’s not enough. Research must eventually connect to something real – a product, a capability, a competitive position. That’s not a constraint to resent; it’s what makes industrial research exciting.</p>
+
+<p><strong>Publish carefully.</strong> Luebke gave ray tracing as a concrete example. NVIDIA published extensively in the early days of real-time ray tracing. Later, once they were building ray tracing <em>hardware</em> (what became RTX), the publishing slowed/stopped as the focus switched to products and competitive advantages. The lesson: publication serves scrutiny and scientific progress, but timing matters.</p>
+
+<hr />
+
+<h2 id="agents-everywhere--challenges-at-scale">Agents Everywhere – Challenges at Scale</h2>
+
+<p>This talk covered the messy reality of deploying agentic AI systems in production. The headline observation: agents fail in ways that are qualitatively different from traditional software bugs.</p>
+
+<p><strong>Authentication and security.</strong> Agents need to act on behalf of users across multiple systems, which creates a tangle of credentials, OAuth flows, and permission scopes. The impact of a misconfigured agent is large. Agents also are usually short-lived and don’t have the same identities that humans do, making this challenging.</p>
+
+<p><strong>Governance.</strong> Several case studies of companies that took significant financial or operational losses because an agent made an unchecked decision.</p>
+
+<p><strong>The “workaround” failure mode.</strong> Agents are remarkably good at finding paths to accomplish their immediate goal while missing the bigger picture. An agent tasked with fixing a test failure might comment out the test. This is a known problem with RL-style optimization, but it manifests in LLM agents too.</p>
+
+<p><strong>Agent registries.</strong> One proposed mitigation: a centralized registry of vetted, high-quality agents that teams can draw from, similar to package registries for software. A smaller set of well-tested agents causes less harm than a proliferation of ad-hoc ones.</p>
+
+<p><strong>A note on ROI.</strong> Research cited in the talk suggested that spending disproportionately on raw token budget – relative to human training and upskilling – has diminishing returns. Getting humans to understand what agents can and can’t do reliably is at least as important as giving agents more compute.</p>
+
+<p>The last slide grouped the key challenges into four areas: <em>identity</em>, <em>governance</em>, <em>security</em>, and <em>people</em> – a reasonable set to note for anyone thinking about agentic deployment seriously.</p>
+
+<hr />
+
+<h2 id="breast-cancer-screening-for-developing-countries-efficient-vision-models-via-distillation">Breast Cancer Screening for Developing Countries: Efficient Vision Models via Distillation</h2>
+
+<p>This talk was about making powerful medical AI models accessible in resource-constrained environments – specifically, deploying breast cancer screening tools in countries that can’t run large foundation models locally.</p>
+
+<p>The core technique was <strong>knowledge distillation</strong>: training a small, efficient student model to mimic the outputs of a large teacher model. Here they used <a href="https://ai.meta.com/sam2/">SAM2</a> (Segment Anything Model 2) as the teacher. The finding: the distilled student matched SAM2’s performance on their benchmark, showing that distillation can be highly effective even for complex segmentation tasks.</p>
+
+<p>I also picked up a few techniques I hadn’t spent much time with:</p>
+
+<ul>
+  <li><strong>LoRA (Low-Rank Adaptation)</strong> and <strong>PEFT (Parameter-Efficient Fine-Tuning)</strong> – fine-tuning large models without updating all parameters, dramatically reducing compute requirements.</li>
+  <li><strong>Distillation</strong> – Reducing the number of parameters of a student model using knowledge-transfer from a larger teacher model.</li>
+  <li><strong>CNN + Vision Transformer hybrids.</strong> Pure transformers capture global context well but are expensive. CNNs capture local spatial features efficiently. Combining them gives you benefits of both – an active research direction for medical imaging where local texture and global structure both matter.</li>
+</ul>
+
+<p>The framing of the talk was compelling: distillation makes power models accessible. A model that requires a large GPU cluster may not be a model that helps a hospital in a rural area.</p>
+
+<hr />
+
+<h2 id="cognitive-memory-for-ai-coding-agents--cmm">Cognitive Memory for AI Coding Agents – CMM</h2>
+
+<p>This talk, and a subsequent hallway conversation with presenters <strong>Sazan Khalid</strong> and <strong>Amit Arora</strong>, was one of the most directly relevant sessions to my own work.</p>
+
+<p>The project is <a href="https://github.com/sazandkhalid/cmm">CMM (Cognitive Memory Manager)</a>. The core problem: AI coding assistants are powerful but amnesiac. Every new session starts from scratch. The agent re-discovers the same codebase quirks, falls into the same debugging traps, and repeats work another team member’s agent already solved last week.</p>
+
+<p>CMM builds a <strong>persistent reasoning memory</strong> by ingesting session transcripts from coding agents (Claude Code, Cursor, Windsurf), extracting reasoning patterns, and consolidating them into durable knowledge: architectural insights, known pitfalls, proven debugging strategies.</p>
+
+<p>The extraction pipeline models each session as a <strong>directed graph of reasoning nodes</strong>:</p>
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">HYPOTHESIS</code> → agent forms a theory</li>
+  <li><code class="language-plaintext highlighter-rouge">INVESTIGATION</code> → agent examines evidence</li>
+  <li><code class="language-plaintext highlighter-rouge">DISCOVERY</code> → unexpected finding</li>
+  <li><code class="language-plaintext highlighter-rouge">PIVOT</code> → change of approach</li>
+  <li><code class="language-plaintext highlighter-rouge">DEAD_END</code> → failed approach</li>
+  <li><code class="language-plaintext highlighter-rouge">SOLUTION</code> → working resolution</li>
+</ul>
+
+<p>These get clustered and promoted into a shared team knowledge base, with human review required before anything becomes team-visible – a deliberate design choice to prevent adding knowledge specific to a single project to the entire team.</p>
+
+<p><strong>My hallway conversation with Amit:</strong></p>
+
+<p><em>On overfitting during extraction</em> – what if the memory captures something true in one environment but not another? Amit’s answer: <strong>temporal decay</strong>. If a memory item doesn’t get reinforced by future sessions, its weight decreases and it eventually gets retired. Situational knowledge fades; durable patterns persist.</p>
+
+<p><em>On team-level vs. individual-level promotion.</em> At the individual level, automatic promotion is fine. At the team level, human review matters – it’s not clear that one developer’s insight generalizes to everyone. The exception: patterns that surface repeatedly across multiple developers are strong candidates for team-level promotion, because repetition is itself a signal of generalizability.</p>
+
+<p>Amit showed productivity and satisfaction metrics from AWS deployments that were encouraging. This is not purely theoretical work.</p>
+
+<hr />
+
+<h2 id="property-graphs-for-ai-building-smarter-knowledge-retrieval">Property Graphs for AI: Building Smarter Knowledge Retrieval</h2>
+
+<p>This talk by <strong>MacKenzye Leroy</strong>, Lead Data Scientist at S&amp;P Global Market Intelligence, covered using <strong>property graphs</strong> as an alternative to vector RAG for structured knowledge retrieval. The specific use case was representing hierarchies of entities in a company or organization.</p>
+
+<p>Instead of chunking documents and embedding them into a vector store, you parse documents into a graph where nodes are entities (people, organizations, locations, products) and edges are typed relationships between them. Queries traverse the graph rather than doing nearest-neighbor search over embeddings.</p>
+
+<p><strong>Why this works well for the right use cases:</strong></p>
+
+<ul>
+  <li>Relational queries are natural. “Find the site owner nearest to this incident location” is trivial as a graph traversal and painful as a similarity search.</li>
+  <li>Organization structures, geographic hierarchies, and dependency trees are naturally graph-shaped and get mangled when flattened into vectors.</li>
+  <li>Fewer tokens per query – you retrieve the exact subgraph needed, not potentially irrelevant passages.</li>
+</ul>
+
+<p>The talk used the <a href="https://github.com/neo4j-contrib/mcp-neo4j/tree/main/servers/mcp-neo4j-memory">Graph MCP</a> project to expose a property graph through a single MCP server, consolidating multiple knowledge sources. The pitch: instead of one MCP server per knowledge base, load everything into a graph and serve it from one endpoint – fewer tool calls, fewer tokens.</p>
+
+<p><strong>My takeaways</strong></p>
+<ul>
+  <li>Property graphs are rigid, unlike semantic search, so there’s a tradeoff - we
+trade flexibility for more efficient look up.</li>
+  <li>It is possible to combine property graphs with semantic search, example we
+can find all “nodes” closest to a particular query vector and then perform
+graph traversal on those.</li>
+</ul>
+
+<hr />
+
+<h2 id="closing-thoughts">Closing Thoughts</h2>
+
+<p>AMLC was well worth attending. My main takeaway was learning about property graphs – several talks and workshops explored this (CMM, Neo4J MCP, Docling). I also learnt about embeddings, how LLM APIs work, how agentic loops work, and tool calling. Finally, David’s keynote was quite insightful about practical industrial research.</p>
+
+<hr />
+
+<p><em>Notes from AMLC 2026, Charlottesville, Virginia, April 17–18.</em></p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
