@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Giralph</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reset.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/theme/black.css" id="theme">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/monokai.css">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --gold:        #F4C055;
+  --gold-bright: #FFD66B;
+  --brown:       #B8720A;
+  --brown-dark:  #5C3A05;
+  --pink:        #FF69B4;
+  --bg:          #1a1410;
+  --bg-mid:      #2b1f12;
+  --cyan:        #5CE1E6;
+  --red:         #FF6B6B;
+  --green:       #4ADE80;
+  --paper:       #f5e9d4;
+}
+
+/* ─── Base typography & background ──────────────────────────────────── */
+.reveal {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-weight: 400;
+  font-size: 28px;
+  color: var(--paper);
+  background: radial-gradient(ellipse at top, #2b1f12 0%, #1a1410 70%);
+}
+
+.reveal .slides { text-align: left; }
+
+/* With disableLayout: true reveal stops auto-scaling slides so the
+   browser's native zoom (Ctrl/Cmd +/-) works.  Force each section to
+   100vh and centre its content with flexbox. */
+html, body { height: 100%; margin: 0; }
+.reveal { height: 100vh !important; }
+.reveal .slides { height: 100vh !important; }
+
+.reveal .slides > section,
+.reveal .slides > section > section {
+  /* Asymmetric padding biases content toward the upper third.  With
+     padding-top 4vh and padding-bottom 14vh, the content-box centre
+     lands at ~45vh from the slide top — about 5vh above the geometric
+     centre.  Short slides therefore feel "upper-half" without looking
+     stuck to the top; tall slides still use their natural height. */
+  padding: 4vh 5vw 14vh 5vw !important;
+  box-sizing: border-box !important;
+  height: 100vh !important;
+  width: 100vw !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: center !important;
+}
+
+/* Flex children that should NOT stretch to full slide width */
+.reveal .slides > section > .tag,
+.reveal .slides > section > .stamp {
+  align-self: flex-start;
+}
+
+.reveal h1, .reveal h2, .reveal h3, .reveal h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  color: var(--gold-bright);
+  text-transform: none;
+  letter-spacing: -0.015em;
+  line-height: 1.15;
+  margin: 0 0 0.85em 0;     /* breathing room between heading and body */
+}
+
+.reveal h1 { font-size: 3.4em; }
+.reveal h2 { font-size: 1.8em; }
+.reveal h3 { font-size: 1.15em; color: var(--gold); margin-bottom: 0.5em; }
+.reveal h4 { font-size: 0.95em; color: var(--gold); margin-bottom: 0.4em; }
+
+.reveal p, .reveal li {
+  color: var(--paper);
+  line-height: 1.55;
+  margin: 0.55em 0;
+}
+
+.reveal ul { list-style: none; padding-left: 0; }
+.reveal ul li::before { content: "▸ "; color: var(--gold); font-weight: 700; }
+
+.reveal code, .reveal pre { font-family: 'JetBrains Mono', monospace; }
+
+.reveal pre {
+  background: #0d0807;
+  border: 2px solid var(--brown);
+  border-radius: 10px;
+  box-shadow: 5px 5px 0 var(--brown);
+  font-size: 0.5em;
+  margin: 0.5em 0;
+}
+
+.reveal pre code { padding: 0.6em 0.8em; line-height: 1.45; }
+
+.reveal code.inline {
+  background: #0d0807;
+  color: var(--gold);
+  padding: 1px 7px;
+  border-radius: 4px;
+  border: 1px solid var(--brown);
+  font-size: 0.9em;
+}
+
+.reveal a { color: var(--cyan); text-decoration: none; }
+
+/* ─── Section tag ───────────────────────────────────────────────────── */
+.tag {
+  display: inline-block;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55em;
+  color: var(--bg);
+  background: var(--gold);
+  padding: 3px 12px;
+  border-radius: 99px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  margin-bottom: 0.4em;
+  font-weight: 700;
+}
+
+/* ─── Title slide ───────────────────────────────────────────────────── */
+.title-slide {
+  text-align: center;
+  align-items: center;
+  justify-content: center;
+}
+
+.title-slide h1 {
+  font-size: 6em;
+  margin: 0;
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 50%, var(--brown) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(3px 3px 0 var(--brown-dark));
+  animation: title-bob 4s ease-in-out infinite;
+}
+
+.title-slide .subtitle {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 1.3em;
+  color: var(--paper);
+  margin-top: 0.2em;
+  letter-spacing: 0.02em;
+}
+
+.title-slide .author {
+  font-size: 0.7em;
+  color: var(--gold);
+  margin-top: 1em;
+  opacity: 0.8;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes title-bob {
+  0%, 100% { transform: translateY(0) rotate(-1deg); }
+  50%      { transform: translateY(-10px) rotate(1deg); }
+}
+
+/* ─── Giraffe mascot ────────────────────────────────────────────────── */
+.giraffe-large {
+  width: 200px;
+  margin: 0 auto;
+  filter: drop-shadow(6px 6px 0 var(--brown-dark));
+  animation: giraffe-walk 3s ease-in-out infinite;
+}
+
+.giraffe-small {
+  width: 60px;
+  vertical-align: middle;
+  filter: drop-shadow(2px 2px 0 var(--brown-dark));
+}
+
+@keyframes giraffe-walk {
+  0%, 100% { transform: rotate(-3deg) translateY(0); }
+  50%      { transform: rotate(3deg) translateY(-6px); }
+}
+@keyframes giraffe-wave {
+  0%, 100% { transform: rotate(-8deg); }
+  50%      { transform: rotate(8deg); }
+}
+
+/* ─── Cards ─────────────────────────────────────────────────────────── */
+.card {
+  background: rgba(244, 192, 85, 0.07);
+  border: 2px solid var(--brown);
+  border-radius: 12px;
+  padding: 1em 1.4em;
+  margin: 0.7em 0;
+  box-shadow: 4px 4px 0 var(--brown);
+}
+.card-good { border-color: var(--green); box-shadow: 4px 4px 0 #1c3d2a; }
+.card-bad  { border-color: var(--red);   box-shadow: 4px 4px 0 #4a1c1c; }
+.card-cyan { border-color: var(--cyan);  box-shadow: 4px 4px 0 #1a4a4d; }
+
+.card h3, .card h4 { margin-top: 0; }
+
+/* ─── Pills ─────────────────────────────────────────────────────────── */
+.pill {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 99px;
+  background: var(--brown);
+  color: var(--gold-bright);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55em;
+  margin: 1px;
+  font-weight: 600;
+  vertical-align: middle;
+}
+.pill-cyan  { background: #1a4a4d; color: var(--cyan); }
+.pill-green { background: #1c3d2a; color: var(--green); }
+.pill-red   { background: #4a1c1c; color: var(--red); }
+.pill-pink  { background: #4a1c3d; color: var(--pink); }
+
+/* ─── Layout helpers ────────────────────────────────────────────────── */
+.cols { display: grid; gap: 28px; }
+.cols-2 { grid-template-columns: 1fr 1fr; }
+.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+.cols-3-1 { grid-template-columns: 3fr 1fr; }
+.cols-1-2 { grid-template-columns: 1fr 2fr; }
+.cols-2-1 { grid-template-columns: 2fr 1fr; }
+
+.center { text-align: center; }
+
+/* ─── Flow diagram styles ───────────────────────────────────────────── */
+.loop-svg {
+  width: 100%;
+  max-width: 1100px;
+  display: block;
+  margin: 0.4em auto;
+}
+
+.node-text {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 600;
+  fill: #1a1410;
+  text-anchor: middle;
+  dominant-baseline: middle;
+}
+
+.flow-arrow      { stroke: var(--gold-bright); stroke-width: 4; fill: none; stroke-linecap: round; stroke-dasharray: 12 8; animation: flow-dash 1s linear infinite; }
+.flow-arrow-back { stroke: var(--cyan);        stroke-width: 4; fill: none; stroke-linecap: round; stroke-dasharray: 8 8; animation: flow-dash-rev 1.4s linear infinite; }
+.flow-arrow-stop { stroke: var(--green);       stroke-width: 4; fill: none; stroke-linecap: round; }
+.flow-arrow-warn { stroke: var(--red);         stroke-width: 4; fill: none; stroke-linecap: round; stroke-dasharray: 6 6; animation: flow-dash 1s linear infinite; }
+
+@keyframes flow-dash      { to { stroke-dashoffset: -20; } }
+@keyframes flow-dash-rev  { to { stroke-dashoffset:  16; } }
+
+.pulse { animation: pulse 1.6s ease-in-out infinite; transform-origin: center; transform-box: fill-box; }
+@keyframes pulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Reveal slide: ghost giraffe overlay fades in after the diagram.
+   Vertical scale is negative so the giraffe renders upside-down. */
+.reveal .present .giraffe-overlay {
+  animation: giraffe-reveal 1.4s ease-out 0.4s both;
+  transform-origin: center;
+  transform-box: fill-box;
+}
+@keyframes giraffe-reveal {
+  0%   { opacity: 0; transform: scale(0.85, -0.85) translateX(-30px); }
+  60%  { opacity: 1; transform: scale(1.04, -1.04) translateX(0); }
+  100% { opacity: 1; transform: scale(1, -1) translateX(0); }
+}
+
+/* ─── Quote ─────────────────────────────────────────────────────────── */
+blockquote.q {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 500;
+  font-size: 1.15em;
+  color: var(--paper);
+  border-left: 4px solid var(--gold);
+  padding: 0.4em 0.9em;
+  margin: 0.4em 0;
+  background: rgba(244, 192, 85, 0.05);
+  font-style: italic;
+}
+
+/* ─── Highlights ────────────────────────────────────────────────────── */
+.hl       { color: var(--gold-bright); font-weight: 600; }
+.hl-cyan  { color: var(--cyan); font-weight: 600; }
+.hl-red   { color: var(--red); font-weight: 600; }
+.hl-green { color: var(--green); font-weight: 600; }
+.hl-pink  { color: var(--pink); font-weight: 600; }
+
+/* ─── Stamp (used as fragment so it animates in) ────────────────────── */
+.stamp {
+  display: inline-block;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 0.95em;
+  font-weight: 700;
+  padding: 6px 14px;
+  border: 3px solid;
+  border-radius: 5px;
+  transform: rotate(-7deg);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.stamp-good { color: var(--green); border-color: var(--green); }
+.stamp-bad  { color: var(--red);   border-color: var(--red); }
+.stamp-warn { color: var(--gold);  border-color: var(--gold); }
+
+/* fragment grow gives a satisfying "thunk" when the stamp lands */
+.fragment.stamp-drop {
+  opacity: 0;
+  transform: scale(2) rotate(15deg);
+  transition: all 0.4s cubic-bezier(.5,1.6,.4,1);
+}
+.fragment.stamp-drop.visible {
+  opacity: 1;
+  transform: rotate(-7deg) scale(1);
+}
+
+/* ─── Comparison table ──────────────────────────────────────────────── */
+.tbl {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 4px;
+  font-size: 0.65em;
+}
+.tbl th {
+  background: var(--brown);
+  color: var(--gold-bright);
+  padding: 6px 10px;
+  text-align: left;
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+}
+.tbl td {
+  background: rgba(244, 192, 85, 0.06);
+  color: var(--paper);
+  padding: 6px 10px;
+  border-top: 1px solid var(--brown);
+  border-bottom: 1px solid var(--brown);
+  font-size: 0.95em;
+}
+.tbl td:first-child { border-left: 1px solid var(--brown); border-radius: 6px 0 0 6px; }
+.tbl td:last-child  { border-right: 1px solid var(--brown); border-radius: 0 6px 6px 0; }
+
+/* ─── Big number ────────────────────────────────────────────────────── */
+.bignum {
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 3em;
+  line-height: 1;
+  background: linear-gradient(180deg, var(--gold-bright), var(--brown));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ─── Money / token meter ───────────────────────────────────────────── */
+.meter {
+  height: 14px;
+  background: #0d0807;
+  border: 2px solid var(--brown);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 4px 0;
+}
+.meter-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--green), var(--gold), var(--red));
+  width: 0;
+  transition: width 0.8s ease;
+}
+.meter-fill.fragment.visible { width: var(--w, 50%); }
+
+.money {
+  display: inline-block;
+  background: var(--green);
+  color: #0d2818;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 6px;
+  box-shadow: 3px 3px 0 #0a4d2a;
+  transform: rotate(-2deg);
+  font-size: 0.85em;
+}
+
+/* ─── Caption ───────────────────────────────────────────────────────── */
+.caption {
+  text-align: center;
+  font-style: italic;
+  color: var(--gold);
+  opacity: 0.7;
+  font-size: 0.65em;
+  margin-top: 0.4em;
+}
+
+/* ─── Terminal mock ─────────────────────────────────────────────────── */
+.term {
+  background: #0d0807;
+  border: 2px solid var(--brown);
+  border-radius: 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.55em;
+  padding: 0.4em 0.7em;
+  margin: 0.4em 0;
+  box-shadow: 5px 5px 0 var(--brown);
+}
+.term-header {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--brown);
+}
+.term-dot { width: 11px; height: 11px; border-radius: 50%; }
+.term-dot-r { background: #ff5f56; }
+.term-dot-y { background: #ffbd2e; }
+.term-dot-g { background: #27c93f; }
+.term-prompt { color: var(--green); }
+.term-cmd    { color: var(--paper); }
+.term-out    { color: #999; font-style: italic; }
+.term-warn   { color: var(--gold); }
+.term-err    { color: var(--red); }
+.term-ok     { color: var(--green); }
+
+/* ─── Reveal slide-number tweaks ────────────────────────────────────── */
+.reveal .slide-number {
+  background: var(--brown);
+  color: var(--gold-bright);
+  font-family: 'JetBrains Mono', monospace;
+  border-radius: 99px;
+  padding: 2px 10px;
+  font-size: 14px;
+}
+
+/* ─── Step circle for example flow ──────────────────────────────────── */
+.step {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px; height: 44px;
+  border-radius: 50%;
+  background: var(--gold);
+  color: var(--bg);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 700;
+  font-size: 1.1em;
+  margin-right: 12px;
+  vertical-align: middle;
+  box-shadow: 3px 3px 0 var(--brown);
+}
+
+/* ─── Floating note ─────────────────────────────────────────────────── */
+.note {
+  background: rgba(92, 225, 230, 0.08);
+  border-left: 3px solid var(--cyan);
+  padding: 0.4em 0.8em;
+  font-size: 0.78em;
+  font-style: italic;
+  color: var(--cyan);
+  margin: 0.3em 0;
+}
+
+/* fragment-aware re-draws */
+.fragment.fade-up { transform: translateY(20px); opacity: 0; transition: all 0.4s ease; }
+.fragment.fade-up.visible { transform: translateY(0); opacity: 1; }
+</style>
+</head>
+<body>
+
+<!-- ─── Reusable giraffe symbol ────────────────────────────────────── -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="giraffe" viewBox="0 0 400 450">
+      <rect fill="#F4C055" stroke="#B8720A" stroke-width="2" x="145" y="60" width="50" height="160" rx="20"/>
+      <ellipse fill="#B8720A" cx="160" cy="100" rx="8" ry="6"/>
+      <ellipse fill="#B8720A" cx="180" cy="130" rx="7" ry="5"/>
+      <ellipse fill="#B8720A" cx="158" cy="165" rx="6" ry="7"/>
+      <ellipse fill="#F4C055" stroke="#B8720A" stroke-width="2" cx="195" cy="250" rx="85" ry="55"/>
+      <ellipse fill="#B8720A" cx="160" cy="240" rx="12" ry="9"/>
+      <ellipse fill="#B8720A" cx="210" cy="230" rx="10" ry="8"/>
+      <ellipse fill="#B8720A" cx="230" cy="260" rx="11" ry="7"/>
+      <ellipse fill="#B8720A" cx="180" cy="270" rx="9" ry="6"/>
+      <ellipse fill="#B8720A" cx="145" cy="260" rx="8" ry="10"/>
+      <rect fill="#F4C055" stroke="#B8720A" stroke-width="2" x="135" y="290" width="18" height="80" rx="6"/>
+      <rect fill="#F4C055" stroke="#B8720A" stroke-width="2" x="170" y="290" width="18" height="80" rx="6"/>
+      <rect fill="#F4C055" stroke="#B8720A" stroke-width="2" x="205" y="290" width="18" height="80" rx="6"/>
+      <rect fill="#F4C055" stroke="#B8720A" stroke-width="2" x="240" y="290" width="18" height="80" rx="6"/>
+      <ellipse fill="#F4C055" stroke="#B8720A" stroke-width="2" cx="170" cy="50" rx="40" ry="35"/>
+      <circle cx="155" cy="42" r="3" fill="#1a1410"/>
+      <circle cx="185" cy="42" r="3" fill="#1a1410"/>
+      <ellipse cx="158" cy="62" rx="2" ry="3" fill="#1a1410"/>
+      <ellipse cx="172" cy="62" rx="2" ry="3" fill="#1a1410"/>
+      <path fill="#FF69B4" stroke="#D45A9D" stroke-width="1.5" d="M165 75 Q170 85 175 75 Q175 95 170 100 Q165 95 165 75 Z"/>
+      <line stroke="#B8720A" stroke-width="2" x1="155" y1="20" x2="150" y2="5"/>
+      <circle cx="148" cy="3" r="5" fill="#B8720A"/>
+      <line stroke="#B8720A" stroke-width="2" x1="185" y1="20" x2="190" y2="5"/>
+      <circle cx="192" cy="3" r="5" fill="#B8720A"/>
+      <path fill="#F4C055" stroke="#B8720A" stroke-width="2" d="M280 320 Q310 340 320 380 Q300 370 280 360 Z"/>
+    </symbol>
+    <!-- Arrow markers -->
+    <marker id="ar-gold"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FFD66B"/></marker>
+    <marker id="ar-cyan"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#5CE1E6"/></marker>
+    <marker id="ar-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4ADE80"/></marker>
+    <marker id="ar-red"   viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FF6B6B"/></marker>
+    <marker id="ar-pink"  viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FF69B4"/></marker>
+  </defs>
+</svg>
+
+<div class="reveal">
+<div class="slides">
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION A · SETUP                                                         -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 1. Title -->
+<section data-background-color="#1a1410">
+  <div class="title-slide" style="display: flex; flex-direction: column; align-items: center;">
+    <svg class="giraffe-large" viewBox="0 0 400 450"><use href="#giraffe"/></svg>
+    <h1>Giralph</h1>
+    <div class="subtitle">A Greatly Improved Ralph Loop (with a long neck)</div>
+    <div class="author">Joel Fernandes</div>
+  </div>
+</section>
+
+<!-- 2. What is a Ralph loop? -->
+<section data-background-color="#1a1410">
+  <span class="tag">📖 chapter one</span>
+  <h2>What's a Ralph loop?</h2>
+  <p>The simplest possible idea in agentic AI:</p>
+  <blockquote class="q">Keep handing the same prompt to the AI <span class="hl">over and over</span> until it decides it's finally <span class="hl-green">done</span>.</blockquote>
+  <p style="opacity: 0.85; font-size: 0.9em">Iterative refinement, taken to its most ridiculous, beautiful extreme — and somehow it works.</p>
+</section>
+
+<!-- 3. The dumbest possible thing -->
+<section data-background-color="#1a1410">
+  <span class="tag">📜 the canonical form</span>
+  <h2>The dumbest possible thing</h2>
+  <pre><code class="language-bash" data-trim>while :; do
+  cat PROMPT.md | claude-code
+done</code></pre>
+  <div class="note">Three lines. That's the whole technique. Everything else is hardening on top.</div>
+</section>
+
+<!-- 4. Why does it work? -->
+<section data-background-color="#1a1410">
+  <span class="tag">💡 why it works</span>
+  <h2>Single-shot is hard. Loops are easy.</h2>
+  <div class="cols cols-2">
+    <div class="card card-bad">
+      <h3>One prompt, one shot</h3>
+      <p>Model has to nail it on the first try. P(success) per attempt = <span class="hl-red">low</span>.</p>
+    </div>
+    <div class="card card-good">
+      <h3>One prompt, N tries</h3>
+      <p>If P(success) is even 5%, after 100 loops you're at <span class="hl-green">99.4%</span>.<br>1 − (1−0.05)<sup>100</sup>.</p>
+    </div>
+  </div>
+  <p class="caption">Persistence beats perfection.</p>
+</section>
+
+<!-- 5. Origin -->
+<section data-background-color="#1a1410">
+  <span class="tag">⏳ origin story</span>
+  <h2>Where it came from</h2>
+  <div class="cols cols-2-1" style="align-items: center">
+    <div>
+      <div class="card">
+        <strong style="color: var(--pink)">Geoffrey Huntley · mid-2025</strong>
+        <p>Publishes "Ralph Wiggum as a Software Engineer."</p>
+        <p>Named after the Simpsons kid who eats glue. The pitch: <em>do the dumbest possible thing.</em></p>
+      </div>
+      <p style="opacity: 0.85; font-size: 0.85em">Goes viral within a week. Blog posts, dev twitter, conference talks.</p>
+    </div>
+    <div class="center">
+      <svg viewBox="0 0 200 200" width="200" height="200">
+        <circle cx="100" cy="100" r="75" fill="none" stroke="#F4C055" stroke-width="4"
+                stroke-dasharray="10 5" marker-end="url(#ar-gold)"
+                style="animation: spin 8s linear infinite; transform-origin: 100px 100px;"/>
+        <text x="100" y="100" text-anchor="middle" font-family="Space Grotesk" font-weight="700" fill="#FFD66B" font-size="42">∞</text>
+        <text x="100" y="130" text-anchor="middle" font-family="Inter" fill="#F4C055" font-size="14">retry</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 6. The receipts -->
+<section data-background-color="#1a1410">
+  <span class="tag">💰 the receipt that broke twitter</span>
+  <h2>The $297 contract</h2>
+  <div class="cols cols-2" style="align-items: stretch">
+    <div class="card card-good center" style="display: flex; flex-direction: column; justify-content: center">
+      <div class="bignum">$297</div>
+      <p style="margin-top: 0.3em; font-size: 0.85em">total API spend</p>
+      <p style="font-size: 0.75em; opacity: 0.85; margin-top: 0.6em">→ delivered a <span class="money">$50,000 contract</span></p>
+    </div>
+    <div>
+      <p style="font-size: 0.85em">Geoffrey Huntley shared the receipt:</p>
+      <ul style="font-size: 0.8em">
+        <li><span class="hl">MVP delivered, tested + reviewed</span></li>
+        <li>Greenfield — no legacy code, no integration tax</li>
+        <li>Reviewed using <code class="inline">@AmpCode</code></li>
+        <li>Shared as an iMessage screenshot, then went viral</li>
+      </ul>
+    </div>
+  </div>
+  <p class="caption">A $50k client deliverable for the price of a fancy dinner.</p>
+</section>
+
+<!-- 7. Cursed Lang -->
+<section data-background-color="#1a1410">
+  <span class="tag">🧪 case study · cursed lang</span>
+  <h2>An entire programming language</h2>
+  <div class="cols cols-2-1" style="align-items: center">
+    <div>
+      <p>Huntley used Ralph to build <span class="hl-pink">Cursed Lang</span> — a working programming language, solo, over <span class="hl">~3 months</span>.</p>
+      <ul style="font-size: 0.85em">
+        <li>Implemented in <span class="pill">C</span>, then ported to <span class="pill">Rust</span>, then <span class="pill">Zig</span></li>
+        <li>Has its own standard library</li>
+        <li>Reached a <span class="hl-green">stage-2 self-hosting compiler</span></li>
+      </ul>
+      <p style="font-size: 0.85em; opacity: 0.85; margin-top: 0.4em">No team. No interns. Just one human + Ralph + a long iteration budget.</p>
+    </div>
+    <div class="center">
+      <svg viewBox="0 0 180 180" width="170" height="170">
+        <circle cx="90" cy="90" r="70" fill="none" stroke="#FF69B4" stroke-width="3" stroke-dasharray="6 4"
+                style="animation: spin 12s linear infinite; transform-origin: 90px 90px"/>
+        <text x="90" y="85" text-anchor="middle" font-family="JetBrains Mono" font-weight="700" fill="#FF69B4" font-size="22">{ }</text>
+        <text x="90" y="110" text-anchor="middle" font-family="Inter" font-weight="600" fill="#FFD66B" font-size="13">Cursed</text>
+        <text x="90" y="128" text-anchor="middle" font-family="Inter" font-weight="600" fill="#FFD66B" font-size="13">Lang</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Community forks -->
+<section data-background-color="#1a1410">
+  <span class="tag">🧪 prior art</span>
+  <h2>Community forks bloom</h2>
+  <table class="tbl">
+    <thead>
+      <tr><th>Tool</th><th>Twist</th><th>Verdict</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><strong>frankbria/ralph-claude-code</strong></td><td>Smarter exit detection + circuit breaker</td><td><span class="pill pill-cyan">refined</span></td></tr>
+      <tr><td><strong>continuous-claude</strong></td><td>Each iter → branch → PR → wait for CI → merge or close</td><td><span class="pill pill-cyan">CI as oracle 🎯</span></td></tr>
+      <tr><td><strong>OpenClaw</strong></td><td>Persistent daemon, Markdown memory, Telegram/Slack/Discord output</td><td><span class="pill pill-pink">full platform</span></td></tr>
+      <tr><td><strong>infinite-agentic-loop</strong></td><td>Two-prompt experiment: generator + critic</td><td><span class="pill pill-red">PoC</span></td></tr>
+      <tr><td><strong>snarktank/ralph</strong></td><td>PRD-driven loop with checkbox tracking</td><td><span class="pill pill-cyan">opinionated</span></td></tr>
+    </tbody>
+  </table>
+  <p class="caption">All Bash. All trust the AI's self-assessment.</p>
+</section>
+
+<!-- 8. Anthropic's official Ralph -->
+<section data-background-color="#1a1410">
+  <span class="tag">🏛️ official</span>
+  <h2>Anthropic ships an official Ralph plugin</h2>
+  <div class="card">
+    <h3>What it adds</h3>
+    <ul>
+      <li>Dual-condition exit gates (completion JSON + explicit signal)</li>
+      <li>Rate limiting</li>
+      <li>Circuit breaker for stuck loops</li>
+      <li>tmux monitoring, task import from PRDs and GitHub issues</li>
+    </ul>
+  </div>
+  <blockquote class="q">"There's no way in heck would I use Ralph in an existing code base." — Geoffrey Huntley, on his own creation</blockquote>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION B · HOOKS (BEFORE GIRALPH)                                        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 9. What are Claude Code hooks? -->
+<section data-background-color="#1a1410">
+  <span class="tag">🪝 hooks 101</span>
+  <h2>What are Claude Code hooks?</h2>
+  <p>User-defined shell commands that Claude Code <span class="hl">runs automatically</span> at lifecycle events.</p>
+
+  <div class="cols cols-3" style="font-size: 0.85em">
+    <div class="card"><h4>SessionStart</h4><p>fires when a session boots</p></div>
+    <div class="card"><h4>UserPromptSubmit</h4><p>before each user message</p></div>
+    <div class="card"><h4>PreToolUse / PostToolUse</h4><p>around each tool call</p></div>
+    <div class="card"><h4>Notification</h4><p>when Claude needs a permission</p></div>
+    <div class="card" style="border-color: var(--gold); box-shadow: 4px 4px 0 var(--gold)"><h4 style="color: var(--gold-bright)">Stop ⭐</h4><p>before the assistant turn ends</p></div>
+    <div class="card"><h4>SubagentStop</h4><p>before a subagent ends</p></div>
+  </div>
+
+  <div class="note">Configured in <code class="inline">~/.claude/settings.json</code>. The hook command gets a JSON payload on stdin and writes a JSON decision on stdout.</div>
+</section>
+
+<!-- 10. Lifecycle of a Claude turn -->
+<section data-background-color="#1a1410">
+  <span class="tag">🔄 lifecycle</span>
+  <h2>Lifecycle of one Claude turn</h2>
+
+  <svg class="loop-svg" viewBox="0 0 1100 240">
+    <g class="node-text">
+      <rect x="20"   y="65"  width="170" height="100" rx="10" fill="#C8E6C9" stroke="#2E7D32" stroke-width="3"/>
+      <text x="105"  y="118" font-size="16">UserPromptSubmit</text>
+
+      <rect x="220"  y="65"  width="170" height="100" rx="10" fill="#FFE0B2" stroke="#E65100" stroke-width="3"/>
+      <text x="305"  y="118" font-size="17">Claude thinks</text>
+
+      <rect x="420"  y="65"  width="170" height="100" rx="10" fill="#BBDEFB" stroke="#1565C0" stroke-width="3"/>
+      <text x="505"  y="98"  font-size="15">PreToolUse</text>
+      <text x="505"  y="118" font-size="13">tool call</text>
+      <text x="505"  y="138" font-size="15">PostToolUse</text>
+
+      <rect x="620"  y="65"  width="170" height="100" rx="10" fill="#FFE0B2" stroke="#E65100" stroke-width="3"/>
+      <text x="705"  y="118" font-size="17">final message</text>
+
+      <rect x="820"  y="65"  width="240" height="100" rx="10" fill="#FFF59D" stroke="#F57F17" stroke-width="4">
+        <animate attributeName="stroke-width" values="4;7;4" dur="1.5s" repeatCount="indefinite"/>
+      </rect>
+      <text x="940"  y="118" font-size="20" font-weight="700">⭐ Stop hook</text>
+    </g>
+
+    <path class="flow-arrow" d="M190 115 L218 115" marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow" d="M390 115 L418 115" marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow" d="M590 115 L618 115" marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow" d="M790 115 L818 115" marker-end="url(#ar-gold)"/>
+  </svg>
+  <p class="caption">The Stop hook is the last gate before Claude actually stops. That's our hook.</p>
+</section>
+
+<!-- 11. The Stop hook -->
+<section data-background-color="#1a1410">
+  <span class="tag">⭐ the stop hook</span>
+  <h2>What the Stop hook can do</h2>
+  <div class="cols cols-2">
+    <div>
+      <div class="card">
+        <h3>It runs <em>before</em> Claude exits</h3>
+        <p>Last chance to inspect what just happened.</p>
+      </div>
+      <div class="card">
+        <h3>It can override the stop</h3>
+        <p>Reply with <code class="inline">{"decision":"block","reason":"..."}</code> and Claude keeps going with that reason as a new system message.</p>
+      </div>
+    </div>
+    <div>
+      <div class="card">
+        <h3>It receives a payload</h3>
+        <p>JSON on stdin: <code class="inline">session_id</code>, <code class="inline">transcript_path</code>, <code class="inline">cwd</code>, model, ...</p>
+      </div>
+      <div class="card">
+        <h3>It must be fast</h3>
+        <p>Synchronous. Anything slow stalls the turn ending.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 12. Stop hook anatomy -->
+<section data-background-color="#1a1410">
+  <span class="tag">🔬 anatomy</span>
+  <h2>Stop hook in / out</h2>
+  <div class="cols cols-2">
+    <div>
+      <h4>📥 stdin (from Claude Code)</h4>
+      <pre><code class="language-json" data-trim>{
+  "session_id": "abc123...",
+  "transcript_path": "/.../session.jsonl",
+  "cwd": "/home/joel/repo",
+  "stop_hook_active": false
+}</code></pre>
+    </div>
+    <div>
+      <h4>📤 stdout (your reply)</h4>
+      <pre><code class="language-json" data-trim>{
+  "decision": "block",
+  "reason": "task not yet verified —
+             keep working"
+}</code></pre>
+      <p style="font-size: 0.78em; opacity: 0.85">Or empty/<code class="inline">{}</code> to allow the stop.</p>
+    </div>
+  </div>
+  <div class="note">Giralph's <code class="inline">giralph stop-hook</code> subcommand is exactly this: read JSON in, decide, write JSON out.</div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION C · WHY PLAIN RALPH ISN'T ENOUGH                                  -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 13. Flaw 1: Self-graded -->
+<section data-background-color="#1a1410">
+  <span class="tag">⚠️ flaw 1</span>
+  <h2>The judge is also the defendant</h2>
+  <div class="cols cols-2-1" style="align-items: center">
+    <div>
+      <p>Existing Ralph loops let Claude decide whether Claude is done.</p>
+      <p>Self-assessment is a <span class="hl-red">well-documented failure mode</span>:</p>
+      <ul style="font-size: 0.95em">
+        <li>Claude says "tests pass" without running tests</li>
+        <li>Claude says "fixed!" with broken code on disk</li>
+        <li>Claude says "complete" because it wants to stop</li>
+      </ul>
+    </div>
+    <div class="center">
+      <span class="fragment stamp-drop"><span class="stamp stamp-bad">⚠ self-graded</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- 14. Flaw 2: state on disk -->
+<section data-background-color="#1a1410">
+  <span class="tag">⚠️ flaw 2</span>
+  <h2>State on disk = AI can wreck it</h2>
+  <p>If your loop's "running" state is in <code class="inline">.ralph/state.json</code>, then:</p>
+  <pre><code class="language-bash" data-trim># inside the loop, Claude has tool access:
+$ rm -rf .ralph/
+# loop controller wakes up, sees no state, exits clean
+# AI escapes the budget without doing the work</code></pre>
+  <div class="cols cols-3-1" style="align-items: center; margin-top: 0.6em">
+    <p>The loop trusted the filesystem. The AI has the filesystem.</p>
+    <div class="center">
+      <span class="fragment stamp-drop"><span class="stamp stamp-bad">💥 unsafe</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- 15. Flaw 3: untestable -->
+<section data-background-color="#1a1410">
+  <span class="tag">⚠️ flaw 3</span>
+  <h2>Stop hooks in Bash are untestable</h2>
+  <ul>
+    <li>The official plugin's stop-hook is a multi-hundred-line Bash script</li>
+    <li>Has had real bash 3.x compatibility bugs</li>
+    <li>Edge cases in transcript parsing fail silently</li>
+    <li>You cannot unit-test JSON parsing in Bash without painful mocking</li>
+  </ul>
+  <div class="cols cols-3-1" style="align-items: center; margin-top: 0.6em">
+    <blockquote class="q">"I'll just sed-extract this JSON field" → 6 hours later</blockquote>
+    <div class="center">
+      <span class="fragment stamp-drop"><span class="stamp stamp-bad">🐚 fragile</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- 16. Flaw 4: no real verification -->
+<section data-background-color="#1a1410">
+  <span class="tag">⚠️ flaw 4</span>
+  <h2>No real verification pipeline</h2>
+  <p>Existing tools leave verification entirely <span class="hl-red">inside the prompt</span>.</p>
+  <div class="card card-bad">
+    <p style="margin: 0">"Only emit the completion token when you have <em>genuinely</em> run the tests..."</p>
+  </div>
+  <p style="margin-top: 0.6em">There's no programmatic <em>"actually run <code class="inline">go test ./...</code>"</em> step. There's no independent reviewer. The prompt is the only line of defense.</p>
+  <div class="center" style="margin-top: 0.4em">
+    <span class="fragment stamp-drop"><span class="stamp stamp-bad">🤷 no oracle</span></span>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION D · ENTER GIRALPH                                                 -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 17. Giralph at a glance -->
+<section data-background-color="#1a1410">
+  <span class="tag">🦒 enter giralph</span>
+  <h2>Giralph: the G is for <em>greatly improved</em></h2>
+  <div class="cols cols-3">
+    <div class="card card-good">
+      <h3>🧠 Independent verifier</h3>
+      <p>A separate Claude reads the transcript and grades the work.</p>
+    </div>
+    <div class="card card-good">
+      <h3>🔒 Daemon-held state</h3>
+      <p>State lives outside the AI's reach. Filesystem hacks don't work.</p>
+    </div>
+    <div class="card card-good">
+      <h3>🧪 Compiled & tested</h3>
+      <p>Single Go binary. Real unit tests. Not yet-another-bash-script.</p>
+    </div>
+  </div>
+  <p class="caption">A Ralph loop with brains, armor, and unit tests.</p>
+</section>
+
+<!-- 18. The full loop diagram -->
+<section data-background-color="#1a1410">
+  <span class="tag">🔁 the loop</span>
+  <h2>The Giralph loop, end-to-end</h2>
+
+  <svg class="loop-svg" viewBox="0 0 1100 350">
+    <g class="node-text">
+      <rect x="20"  y="140" width="150" height="70" rx="12" fill="#FFE0B2" stroke="#E65100" stroke-width="3"/>
+      <text x="95"  y="180" font-size="17">🤖 Claude</text>
+
+      <rect x="210" y="140" width="150" height="70" rx="12" fill="#C8E6C9" stroke="#2E7D32" stroke-width="3"/>
+      <text x="285" y="170" font-size="15">stop-hook</text>
+      <text x="285" y="190" font-size="13">(intercept)</text>
+
+      <rect x="400" y="140" width="150" height="70" rx="12" fill="#BBDEFB" stroke="#1565C0" stroke-width="3"/>
+      <text x="475" y="170" font-size="15">giralph</text>
+      <text x="475" y="190" font-size="13">client (IPC)</text>
+
+      <rect x="600" y="105" width="200" height="140" rx="14" fill="#D1C4E9" stroke="#4527A0" stroke-width="3" class="pulse"/>
+      <text x="700" y="160" font-size="19">giralph daemon</text>
+      <text x="700" y="190" font-size="13">in-memory state</text>
+      <text x="700" y="210" font-size="13">retry budget · sessions</text>
+
+      <rect x="850" y="40"  width="170" height="70" rx="12" fill="#FFF59D" stroke="#F57F17" stroke-width="3"/>
+      <text x="935" y="70"  font-size="15">🔍 Verifier</text>
+      <text x="935" y="92"  font-size="13">(another Claude)</text>
+
+      <rect x="850" y="240" width="170" height="70" rx="12" fill="#FFCDD2" stroke="#B71C1C" stroke-width="3"/>
+      <text x="935" y="270" font-size="15">🛑 STOP</text>
+      <text x="935" y="292" font-size="13">task verified</text>
+    </g>
+
+    <!-- forward path -->
+    <path class="flow-arrow" d="M170 175 L208 175" marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow" d="M360 175 L398 175" marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow" d="M550 175 L598 175" marker-end="url(#ar-gold)"/>
+
+    <!-- daemon ↔ verifier -->
+    <path class="flow-arrow"      d="M780 110 Q830 70 850 80"  marker-end="url(#ar-gold)"/>
+    <path class="flow-arrow-back" d="M850 100 Q820 130 780 130" marker-end="url(#ar-cyan)"/>
+
+    <!-- daemon → STOP -->
+    <path class="flow-arrow-stop" d="M780 240 Q830 270 850 275" marker-end="url(#ar-green)"/>
+
+    <!-- re-invoke loopback -->
+    <path d="M700 245 Q400 320 95 215" fill="none" stroke="#FF69B4" stroke-width="3"
+          stroke-dasharray="5 6" style="animation: flow-dash 1.4s linear infinite" marker-end="url(#ar-pink)"/>
+    <text x="380" y="312" fill="#FF69B4" font-family="Inter" font-weight="600" font-size="14">re-invoke if not done</text>
+
+    <text x="189" y="130" text-anchor="middle" fill="#FFD66B" font-family="Inter" font-size="12">promise</text>
+    <text x="379" y="130" text-anchor="middle" fill="#FFD66B" font-family="Inter" font-size="12">forward</text>
+    <text x="574" y="130" text-anchor="middle" fill="#FFD66B" font-family="Inter" font-size="12">IPC</text>
+    <text x="935" y="22"  text-anchor="middle" fill="#FFD66B" font-family="Inter" font-size="12">verify?</text>
+    <text x="935" y="135" text-anchor="middle" fill="#5CE1E6" font-family="Inter" font-size="12">PASS / FAIL</text>
+    <text x="935" y="232" text-anchor="middle" fill="#4ADE80" font-family="Inter" font-size="12">verified</text>
+  </svg>
+</section>
+
+<!-- 18b. The reveal — same diagram, ghost giraffe overlay -->
+<section data-background-color="#1a1410">
+  <span class="tag">🦒 wait a sec...</span>
+  <h2>...is that a giraffe?</h2>
+
+  <svg class="loop-svg" viewBox="0 0 1100 350">
+    <!-- Same diagram (so visual transition feels seamless) -->
+    <g class="node-text">
+      <rect x="20"  y="140" width="150" height="70" rx="12" fill="#FFE0B2" stroke="#E65100" stroke-width="3"/>
+      <text x="95"  y="180" font-size="17">🤖 Claude</text>
+
+      <rect x="210" y="140" width="150" height="70" rx="12" fill="#C8E6C9" stroke="#2E7D32" stroke-width="3"/>
+      <text x="285" y="170" font-size="15">stop-hook</text>
+      <text x="285" y="190" font-size="13">(intercept)</text>
+
+      <rect x="400" y="140" width="150" height="70" rx="12" fill="#BBDEFB" stroke="#1565C0" stroke-width="3"/>
+      <text x="475" y="170" font-size="15">giralph</text>
+      <text x="475" y="190" font-size="13">client (IPC)</text>
+
+      <rect x="600" y="105" width="200" height="140" rx="14" fill="#D1C4E9" stroke="#4527A0" stroke-width="3"/>
+      <text x="700" y="160" font-size="19">giralph daemon</text>
+      <text x="700" y="190" font-size="13">in-memory state</text>
+      <text x="700" y="210" font-size="13">retry budget · sessions</text>
+
+      <rect x="850" y="40"  width="170" height="70" rx="12" fill="#FFF59D" stroke="#F57F17" stroke-width="3"/>
+      <text x="935" y="70"  font-size="15">🔍 Verifier</text>
+      <text x="935" y="92"  font-size="13">(another Claude)</text>
+
+      <rect x="850" y="240" width="170" height="70" rx="12" fill="#FFCDD2" stroke="#B71C1C" stroke-width="3"/>
+      <text x="935" y="270" font-size="15">🛑 STOP</text>
+      <text x="935" y="292" font-size="13">task verified</text>
+    </g>
+
+    <path d="M170 175 L208 175"  stroke="#FFD66B" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-gold)"/>
+    <path d="M360 175 L398 175"  stroke="#FFD66B" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-gold)"/>
+    <path d="M550 175 L598 175"  stroke="#FFD66B" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-gold)"/>
+    <path d="M780 110 Q830 70 850 80"   stroke="#FFD66B" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-gold)"/>
+    <path d="M850 100 Q820 130 780 130" stroke="#5CE1E6" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-cyan)"/>
+    <path d="M780 240 Q830 270 850 275" stroke="#4ADE80" stroke-width="2" fill="none" opacity="0.4" marker-end="url(#ar-green)"/>
+    <path d="M700 245 Q400 320 95 215"  stroke="#FF69B4" stroke-width="2" fill="none" opacity="0.4" stroke-dasharray="5 6" marker-end="url(#ar-pink)"/>
+
+    <!-- Ghost giraffe — mirrored + rotated 90° left + stretched across
+         the full slide width.  Head at the LEFT, long horizontal neck
+         curving across the worker chain, body at the RIGHT covering the
+         Verifier/STOP column, legs descending below the body, tail
+         flicking off the right edge.  Outline-only so the diagram
+         underneath still reads; fades in on slide-load. -->
+    <g class="giraffe-overlay" opacity="0.78">
+      <!-- HEAD at upper-LEFT (rendered at the BOTTOM after CSS flip) -->
+      <ellipse cx="80" cy="80" rx="45" ry="36"
+               fill="none" stroke="#FFD66B" stroke-width="3"/>
+      <!-- Eye facing left -->
+      <circle cx="58" cy="72" r="3" fill="#1a1410"/>
+      <!-- Snout dots -->
+      <circle cx="40" cy="85" r="1.8" fill="#1a1410"/>
+      <circle cx="40" cy="92" r="1.8" fill="#1a1410"/>
+      <!-- Tongue sticking out to the LEFT -->
+      <path d="M 48 100 Q 42 110 36 106 Q 30 116 38 119 Q 44 116 48 100 Z"
+            fill="#FF69B4"/>
+      <!-- Horns above head -->
+      <line x1="62" y1="50" x2="55" y2="28" stroke="#FFD66B" stroke-width="3"/>
+      <circle cx="53" cy="26" r="4" fill="#FFD66B"/>
+      <line x1="100" y1="50" x2="108" y2="28" stroke="#FFD66B" stroke-width="3"/>
+      <circle cx="110" cy="26" r="4" fill="#FFD66B"/>
+
+      <!-- Long horizontal NECK arching across the slide from head to body -->
+      <path d="M 115 95 Q 320 40 600 70 Q 780 95 845 175"
+            stroke="#FFD66B" stroke-width="22" stroke-linecap="round"
+            fill="none" opacity="0.34"/>
+      <!-- Spots along the neck -->
+      <circle cx="240" cy="62" r="4" fill="#B8720A"/>
+      <circle cx="370" cy="55" r="3" fill="#B8720A"/>
+      <circle cx="500" cy="62" r="4" fill="#B8720A"/>
+      <circle cx="640" cy="80" r="3" fill="#B8720A"/>
+      <circle cx="770" cy="115" r="4" fill="#B8720A"/>
+
+      <!-- BODY + LEGS + TAIL — rotated 90° clockwise as the viewer sees
+           it (the negative angle compensates for the parent's vertical
+           flip, which inverts rotation direction).  Head and neck
+           remain where they are. -->
+      <g transform="rotate(-90 900 175)">
+        <!-- BODY ellipse -->
+        <ellipse cx="900" cy="215" rx="155" ry="58"
+                 fill="none" stroke="#FFD66B" stroke-width="3"/>
+        <!-- Body spots -->
+        <circle cx="850" cy="200" r="6" fill="#B8720A"/>
+        <circle cx="900" cy="230" r="5" fill="#B8720A"/>
+        <circle cx="950" cy="210" r="5" fill="#B8720A"/>
+        <circle cx="830" cy="235" r="4" fill="#B8720A"/>
+        <circle cx="970" cy="240" r="4" fill="#B8720A"/>
+
+        <!-- 4 LEGS -->
+        <rect x="780" y="265" width="14" height="65" rx="4"
+              fill="none" stroke="#FFD66B" stroke-width="3"/>
+        <rect x="828" y="268" width="14" height="62" rx="4"
+              fill="none" stroke="#FFD66B" stroke-width="3"/>
+        <rect x="950" y="268" width="14" height="62" rx="4"
+              fill="none" stroke="#FFD66B" stroke-width="3"/>
+        <rect x="998" y="265" width="14" height="65" rx="4"
+              fill="none" stroke="#FFD66B" stroke-width="3"/>
+
+        <!-- TAIL -->
+        <path d="M 1055 215 Q 1080 232 1095 250"
+              stroke="#FFD66B" stroke-width="3" fill="none"/>
+        <circle cx="1095" cy="250" r="4" fill="#FFD66B"/>
+      </g>
+    </g>
+  </svg>
+
+  <p class="caption">(now you know why we call it <em>Giralph</em>.)</p>
+</section>
+
+<!-- 19. The verifier is separate -->
+<section data-background-color="#1a1410">
+  <span class="tag">🔍 the killer feature</span>
+  <h2>The verifier is a <em>separate</em> Claude</h2>
+  <div class="cols cols-2" style="align-items: center">
+    <div>
+      <p>The promise is the AI's <span class="hl">claim</span>.<br>The transcript is the <span class="hl">evidence</span>.</p>
+      <div class="card card-bad">
+        <p style="margin: 0">🪙 <strong>Claim:</strong> "I fixed the flaky test."</p>
+        <p style="margin: 0.2em 0">📜 <strong>Evidence:</strong> No <code class="inline">go test</code> in the transcript.</p>
+        <p style="margin: 0">⚖️ <strong>Verdict:</strong> <span class="hl-red">Loop continues.</span></p>
+      </div>
+    </div>
+    <div>
+      <svg viewBox="0 0 360 240" width="100%">
+        <g>
+          <rect x="20" y="80" width="120" height="100" rx="12" fill="#FFE0B2" stroke="#E65100" stroke-width="3"/>
+          <text x="80" y="118" text-anchor="middle" font-size="22">🤖</text>
+          <text x="80" y="146" text-anchor="middle" font-family="Inter" font-weight="600" font-size="14">Worker</text>
+          <text x="80" y="166" text-anchor="middle" font-family="Inter" font-size="11">"trust me"</text>
+        </g>
+        <g>
+          <rect x="220" y="80" width="120" height="100" rx="12" fill="#FFF59D" stroke="#F57F17" stroke-width="3"/>
+          <text x="280" y="118" text-anchor="middle" font-size="22">🧐</text>
+          <text x="280" y="146" text-anchor="middle" font-family="Inter" font-weight="600" font-size="14">Verifier</text>
+          <text x="280" y="166" text-anchor="middle" font-family="Inter" font-size="11">"prove it"</text>
+        </g>
+        <path class="flow-arrow"      d="M140 110 L218 110" marker-end="url(#ar-gold)"/>
+        <path class="flow-arrow-back" d="M218 150 L140 150" marker-end="url(#ar-red)" style="stroke: #FF6B6B"/>
+        <text x="180" y="100" text-anchor="middle" font-family="Inter" font-size="12" fill="#FFD66B">claim</text>
+        <text x="180" y="172" text-anchor="middle" font-family="Inter" font-size="12" fill="#FF6B6B">cross-check</text>
+        <text x="180" y="220" text-anchor="middle" font-size="32">👀</text>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- 20. State in a daemon -->
+<section data-background-color="#1a1410">
+  <span class="tag">🔒 untouchable state</span>
+  <h2>State lives in a daemon, not in a file</h2>
+  <div class="cols cols-2">
+    <div>
+      <h3>Why a daemon?</h3>
+      <ul>
+        <li>The AI has full FS access — it can <code class="inline">rm -rf</code> any file</li>
+        <li>A separate process is a different trust boundary</li>
+        <li>The AI must <em>explicitly</em> connect to its socket — no accidents</li>
+      </ul>
+    </div>
+    <div>
+      <h3>What it holds</h3>
+      <ul>
+        <li>Active sessions (keyed by Claude's <code class="inline">session_id</code>)</li>
+        <li>Retry budgets, iteration counts</li>
+        <li>Verification config per loop</li>
+        <li>Recent stop-hook timestamps (thrash detection)</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION E · EXAMPLE FLOW (story arc)                                      -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 21. Example: starting -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 1/8</span>
+  <h2><span class="step">1</span>You start a loop</h2>
+  <p>Inside an active Claude Code session, you type:</p>
+  <div class="term">
+    <div class="term-header"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span></div>
+    <div><span class="term-prompt">claude&gt;</span> <span class="term-cmd">/giralph-start Fix the flaky integration test --retry 50</span></div>
+    <div class="term-out">  → registering loop with daemon...</div>
+    <div class="term-ok">  → loop registered: sid=abc123, retry=50, verify=agent</div>
+  </div>
+  <p style="font-size: 0.85em; opacity: 0.85">Slash command runs <code class="inline">giralph start</code> which IPC-calls the daemon.</p>
+</section>
+
+<!-- 22. Example: claude works -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 2/8</span>
+  <h2><span class="step">2</span>Claude works on the task</h2>
+  <div class="term">
+    <div class="term-header"><span class="term-dot term-dot-r"></span><span class="term-dot term-dot-y"></span><span class="term-dot term-dot-g"></span></div>
+    <div class="term-cmd">  &lt;Read internal/integration/flaky_test.go&gt;</div>
+    <div class="term-cmd">  &lt;Grep "WaitFor"&gt;</div>
+    <div class="term-cmd">  &lt;Edit: replace timeout 100ms → 500ms&gt;</div>
+    <div class="term-cmd">  &lt;Bash: go test ./internal/integration/ -count=10&gt;</div>
+    <div class="term-out">  PASS · 10/10 runs</div>
+    <div class="term-cmd">  &lt;Assistant: "I've made the test more robust. Done."&gt;</div>
+  </div>
+  <p style="font-size: 0.85em; opacity: 0.85">Normal Claude turn — file edits, tool calls, reasoning. Nothing giralph-specific yet.</p>
+</section>
+
+<!-- 23. Example: emit promise -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 3/8</span>
+  <h2><span class="step">3</span>Claude emits a promise</h2>
+  <p>Two paths exist. Either is fine. The one Claude is <em>told</em> about is the fence:</p>
+  <pre><code class="language-text" data-trim>```ralph-promise
+{"summary": "Increased flaky test timeout from 100ms to 500ms;
+             test now passes 10/10.",
+ "artifacts": ["/abs/path/internal/integration/flaky_test.go"]}
+```</code></pre>
+  <p style="font-size: 0.85em">Or via Bash IPC: <code class="inline">!giralph promise '{"summary": "...", ...}'</code></p>
+  <div class="note">The promise is a <em>claim</em>. The daemon doesn't trust it yet.</div>
+</section>
+
+<!-- 24. Example: stop hook fires -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 4/8</span>
+  <h2><span class="step">4</span>Claude is about to stop → Stop hook fires</h2>
+  <p>Claude Code is finishing the turn. Before it exits, it pipes JSON to <code class="inline">giralph stop-hook</code>:</p>
+  <pre><code class="language-json" data-trim>{
+  "session_id": "abc123",
+  "transcript_path": "/home/joel/.claude/projects/-repo-x/abc123.jsonl",
+  "cwd": "/home/joel/repo/x",
+  "stop_hook_active": false
+}</code></pre>
+  <p>The stop-hook binary forwards this over the Unix socket to the daemon.</p>
+</section>
+
+<!-- 25. Example: daemon dispatches verify -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 5/8</span>
+  <h2><span class="step">5</span>Daemon dispatches verification</h2>
+  <ul>
+    <li>Daemon looks up <code class="inline">abc123</code> in its sessions map → finds the loop</li>
+    <li>Slices <em>this loop's events</em> out of the transcript JSONL → writes to a temp file</li>
+    <li>Spawns the verifier (acpx → Claude Code), passes <code class="inline">$GIRALPH_TRANSCRIPT</code> in env</li>
+    <li>Verifier reads the promise + transcript and decides PASS or FAIL</li>
+  </ul>
+  <pre><code class="language-text" data-trim>verifier prompt:
+  Promise summary: "Increased flaky test timeout from 100ms..."
+  Transcript: $GIRALPH_TRANSCRIPT
+  → Did the AI actually do what it claimed?</code></pre>
+</section>
+
+<!-- 26. Example: rejected -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 6/8</span>
+  <h2><span class="step">6</span>Verifier rejects (this time)</h2>
+  <div class="card card-bad">
+    <p style="margin: 0">Suppose the AI <em>didn't</em> actually run <code class="inline">go test</code>:</p>
+    <pre style="margin-top: 0.5em"><code class="language-text" data-trim>verifier verdict: FAIL
+reason: promise claims test passes 10/10, but no
+        `go test` tool call appears in transcript.</code></pre>
+  </div>
+  <div class="term" style="margin-top: 0.4em">
+    <div class="term-warn">  daemon → stop-hook → Claude Code:</div>
+    <div class="term-cmd">  {"decision":"block",
+       "reason":"verification failed: ..."}</div>
+  </div>
+  <p style="font-size: 0.85em">Claude Code now <em>doesn't stop</em>. It continues the turn with the reason as a system message.</p>
+</section>
+
+<!-- 27. Example: re-invoke -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 7/8</span>
+  <h2><span class="step">7</span>Loop continues — Claude tries again</h2>
+  <p>With the verifier's feedback in context, Claude actually runs the tests this time:</p>
+  <div class="term">
+    <div class="term-cmd">  &lt;Bash: go test ./internal/integration/ -count=10&gt;</div>
+    <div class="term-ok">  PASS · 10/10 runs</div>
+    <div class="term-cmd">  &lt;Emit ralph-promise with new artifact list&gt;</div>
+  </div>
+  <p>Stop hook fires again. Daemon dispatches verifier again.</p>
+  <div class="note">Iteration counter ticks. If <code class="inline">retry=50</code>, the loop has 49 attempts left.</div>
+</section>
+
+<!-- 28. Example: verified, stop -->
+<section data-background-color="#1a1410">
+  <span class="tag">🎬 example · step 8/8</span>
+  <h2><span class="step">8</span>Verified → loop ends</h2>
+  <pre><code class="language-text" data-trim>verifier verdict: PASS
+reason: transcript shows `go test ... -count=10` succeeded
+        immediately before the promise.</code></pre>
+  <div class="term">
+    <div class="term-ok">  daemon: marking loop completed</div>
+    <div class="term-ok">  daemon → stop-hook → Claude Code: {} (allow stop)</div>
+    <div class="term-ok">  Claude exits cleanly.</div>
+  </div>
+  <p style="text-align: center; margin-top: 0.6em; font-size: 1.2em">🎉 <span class="hl-green">Task done</span> — and we have an independent reviewer's word on it.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION F · HARDENING FEATURES (specs)                                    -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 29. SPEC-005: retry budget -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-005</span>
+  <h2>Retry budget — exhaustion protection</h2>
+  <div class="cols cols-2">
+    <div>
+      <p>Every loop is bounded by <code class="inline">--retry N</code>:</p>
+      <ul>
+        <li>Default: <span class="hl">100</span></li>
+        <li><code class="inline">--retry 50</code>: cap at 50</li>
+        <li><code class="inline">--retry 0</code>: unlimited (opt-in)</li>
+      </ul>
+    </div>
+    <div>
+      <p>When budget hits zero:</p>
+      <pre><code class="language-text" data-trim>Loop.Iteration >= MaxRetries
+→ status: "exhausted"
+→ stop-hook returns: allow stop
+→ daemon evicts the loop</code></pre>
+    </div>
+  </div>
+  <div class="note">A broken or stubborn AI cannot loop forever. The budget is the universal kill switch.</div>
+</section>
+
+<!-- 30. SPEC-007: password gate -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-007</span>
+  <h2>Password gate — modify &amp; cancel</h2>
+  <p><code class="inline">giralph modify</code> and <code class="inline">giralph cancel</code> require the operator's local-account password, read from <code class="inline">/dev/tty</code>.</p>
+  <div class="cols cols-2">
+    <div class="card card-good">
+      <h3>👤 Operator (terminal)</h3>
+      <p>Has a controlling tty. Sees the password prompt. Types it. ✅</p>
+    </div>
+    <div class="card card-bad">
+      <h3>🤖 Claude (no tty)</h3>
+      <p>No controlling terminal. Opening <code class="inline">/dev/tty</code> fails. ❌</p>
+    </div>
+  </div>
+  <p style="font-size: 0.85em; opacity: 0.85">Validated against the system password DB via PAM's setuid <code class="inline">unix_chkpwd</code>. The prompt itself is the gate.</p>
+</section>
+
+<!-- 31. SPEC-009: daemon -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-009</span>
+  <h2>The daemon — out-of-process state</h2>
+  <ul>
+    <li>Long-lived <code class="inline">giralph daemon</code> service (systemd / launchd)</li>
+    <li>Listens on a per-user 0600 Unix socket</li>
+    <li>All loop state held in-memory, keyed by <code class="inline">session_id</code></li>
+    <li>Shared token + UID check on every IPC request</li>
+    <li>Unknown-session stop-hook payloads pass through cleanly (no false positives for unrelated Claude sessions)</li>
+  </ul>
+  <div class="note">No filesystem state file means no <code class="inline">rm -rf</code> bypass.</div>
+</section>
+
+<!-- 32. SPEC-011: thrash -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-011</span>
+  <h2>Loop-hack detection (thrash reset)</h2>
+  <div class="cols cols-2">
+    <div class="card card-bad">
+      <h4>The attack</h4>
+      <p>AI emits empty turns to drain the budget:</p>
+      <pre style="font-size: 0.55em"><code data-trim>turn 1 (2s) STOP
+turn 2 (3s) STOP
+turn 3 (1s) STOP  ⚠️</code></pre>
+    </div>
+    <div class="card card-good">
+      <h4>The defense</h4>
+      <p>3 stops in &lt;60s →</p>
+      <pre style="font-size: 0.55em"><code data-trim>iteration: 47 → 0
+budget restored
+loop survives 🦒</code></pre>
+    </div>
+  </div>
+  <p class="caption">Stealth: the AI-facing reason text never mentions "thrash." The mechanism stays invisible.</p>
+</section>
+
+<!-- 33. SPEC-012: nag escalation -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-012</span>
+  <h2>Nag escalation — talk back smarter</h2>
+  <p>Same nag 50 times = wasted tokens. The wording <span class="hl">escalates</span> by repeat count.</p>
+  <div class="cols cols-3">
+    <div class="card">
+      <h4>Tier 1 · ≤3</h4>
+      <p>Polite reminder of the fence path.</p>
+    </div>
+    <div class="card">
+      <h4>Tier 2 · 4–9</h4>
+      <p>+ a "did you know?" block with the IPC alternative.</p>
+    </div>
+    <div class="card">
+      <h4>Tier 3 · ≥10</h4>
+      <p>+ an operator hint: "the loop has rejected your last 10 turns…"</p>
+    </div>
+  </div>
+  <p style="font-size: 0.78em; opacity: 0.75">A real run logged <strong>797</strong> identical nags before this spec. Never again.</p>
+</section>
+
+<!-- 34. SPEC-013: re-inject -->
+<section data-background-color="#1a1410">
+  <span class="tag">🛡️ spec-013</span>
+  <h2>Re-inject after auto-compaction</h2>
+  <p>When Claude Code's context overflows, it <span class="hl">compacts</span> — replacing the working window with a Claude-written summary.</p>
+  <p>The summary preserves <em>task progress</em>, not the verbatim Step 0 contract. Claude forgets how to signal completion.</p>
+  <svg viewBox="0 0 700 130" width="100%" style="max-width: 700px; margin: 0.4em auto; display: block;">
+    <rect x="20" y="40" width="180" height="50" fill="#C8E6C9" stroke="#2E7D32" stroke-width="2" rx="8"/>
+    <text x="110" y="72" text-anchor="middle" font-family="Inter" font-weight="600" font-size="14">full context</text>
+    <text x="240" y="68" text-anchor="middle" font-size="22">✂️</text>
+    <rect x="290" y="40" width="180" height="50" fill="#FFCDD2" stroke="#B71C1C" stroke-width="2" rx="8" class="pulse"/>
+    <text x="380" y="68" text-anchor="middle" font-family="Inter" font-weight="600" font-size="14" fill="#B71C1C">summary only</text>
+    <rect x="510" y="40" width="180" height="50" fill="#FFE0B2" stroke="#E65100" stroke-width="2" rx="8"/>
+    <text x="600" y="62" text-anchor="middle" font-family="Inter" font-weight="600" font-size="14">re-inject</text>
+    <text x="600" y="80" text-anchor="middle" font-family="Inter" font-size="11">contract block</text>
+    <path d="M200 65 L240 65" stroke="#FFD66B" stroke-width="3" marker-end="url(#ar-gold)"/>
+    <path d="M470 65 L508 65" stroke="#FFD66B" stroke-width="3" marker-end="url(#ar-gold)"/>
+  </svg>
+  <p class="caption">Daemon detects the compaction marker → next stop-hook prepends the contract.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION G · CLI SUBCOMMANDS                                                -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 36. install -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · install</span>
+  <h2><code class="inline">giralph install &lt;claude|codex&gt;</code></h2>
+  <p>One-time, idempotent setup that wires giralph into your AI CLI.</p>
+  <ul>
+    <li>Installs the systemd unit (Linux) / launchd plist (macOS)</li>
+    <li>Merges a Stop-hook entry into <code class="inline">~/.claude/settings.json</code></li>
+    <li>Writes <code class="inline">/giralph-start</code> and <code class="inline">/giralph-cancel</code> slash commands</li>
+    <li>Creates <code class="inline">~/.giralph.json</code></li>
+  </ul>
+  <div class="note">Each subtask is independently idempotent — re-running prints "skipped: already up to date" for anything already done.</div>
+</section>
+
+<!-- 37. start -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · start</span>
+  <h2><code class="inline">giralph start</code></h2>
+  <p>Register a loop with the daemon. Normally invoked via the <code class="inline">/giralph-start</code> slash command.</p>
+  <pre><code class="language-bash" data-trim># In a Claude session:
+/giralph-start Fix the flaky test --retry 50
+
+# Or directly (debugging):
+giralph start --task "..." --retry 50 --verify-cmd "make check"</code></pre>
+  <p>Auto-detects the session id from <code class="inline">~/.claude/projects/&lt;cwd-hash&gt;/</code>.</p>
+</section>
+
+<!-- 38. promise -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · promise</span>
+  <h2><code class="inline">giralph promise &lt;json&gt;</code></h2>
+  <p>The <em>alternative</em> way to signal completion (besides the markdown fence).</p>
+  <pre><code class="language-bash" data-trim>!giralph promise '{"summary":"fixed bug",
+                   "artifacts":["/abs/file.go"]}'</code></pre>
+  <ul>
+    <li>Auto-detects session id</li>
+    <li>Sends <code class="inline">summary</code> + <code class="inline">artifacts</code> to the daemon over IPC</li>
+    <li>Useful when the markdown fence is awkward (e.g., final turn is short)</li>
+  </ul>
+</section>
+
+<!-- 39. stop-hook -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · stop-hook</span>
+  <h2><code class="inline">giralph stop-hook</code> · internal</h2>
+  <p>Reads stop-hook JSON from stdin, forwards to daemon, writes decision JSON to stdout.</p>
+  <p>You don't run this — Claude Code does, automatically, via the hook config that <code class="inline">install</code> wrote.</p>
+  <div class="card card-good">
+    <p style="margin: 0">🛟 <strong>Fail-open:</strong> if the daemon is down, this exits cleanly with an empty decision so a broken giralph never bricks Claude Code.</p>
+  </div>
+</section>
+
+<!-- 40. list -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · list</span>
+  <h2><code class="inline">giralph list</code></h2>
+  <p>Show every loop registered with the daemon.</p>
+  <div class="term">
+    <div><span class="term-prompt">$</span> <span class="term-cmd">giralph list</span></div>
+    <div class="term-out">SID       TASK                          ITER  STATUS    CWD</div>
+    <div class="term-out">abc123    Fix the flaky test            7/50  active    /repo/x</div>
+    <div class="term-out">def456    Refactor IPC layer            2/100 active    /repo/y</div>
+    <div class="term-out">ghi789    Add dark mode                 99/100 exhausted /repo/z</div>
+  </div>
+  <p style="font-size: 0.85em">Compact per-row view. For full detail use <code class="inline">show</code>.</p>
+</section>
+
+<!-- 41. show -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · show</span>
+  <h2><code class="inline">giralph show &lt;sid&gt;</code></h2>
+  <p>Every field of one loop:</p>
+  <pre><code class="language-yaml" data-trim>sid:        abc123
+task:       Fix the flaky integration test
+status:     active
+iteration:  7
+max_retry:  50
+verify:     agent
+cwd:        /home/joel/repo/x
+created:    2026-05-01T08:30:01Z
+last_stop:  2026-05-01T08:43:17Z (12s ago)
+verify_pass: 0
+verify_fail: 7
+nag_count:   2</code></pre>
+</section>
+
+<!-- 42. modify -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · modify</span>
+  <h2><code class="inline">giralph modify &lt;sid&gt;</code> 🔒</h2>
+  <p>Tweak an in-flight loop without cancelling it.</p>
+  <pre><code class="language-bash" data-trim>giralph modify abc123 --retry 100
+giralph modify abc123 --task "new task text"
+giralph modify abc123 --verify-cmd "make check"</code></pre>
+  <p style="font-size: 0.9em"><span class="hl">🔒 password-gated.</span> The AI cannot bump its own retry budget.</p>
+</section>
+
+<!-- 43. cancel -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · cancel</span>
+  <h2><code class="inline">giralph cancel &lt;sid&gt;</code> 🔒</h2>
+  <p>Stop a loop mid-flight.</p>
+  <pre><code class="language-bash" data-trim>$ giralph cancel abc123
+[sudo-style] Password: ●●●●●●●●
+loop abc123 cancelled (status: cancelled)</code></pre>
+  <p style="font-size: 0.9em">Removes the loop from the daemon's sessions map. Next stop-hook for that session passes through cleanly.</p>
+  <div class="note">🔒 password-gated — same gate as <code class="inline">modify</code>.</div>
+</section>
+
+<!-- 44. logs -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · logs</span>
+  <h2><code class="inline">giralph logs</code></h2>
+  <p>Print or follow the daemon's structured log.</p>
+  <pre><code class="language-bash" data-trim>giralph logs            # print recent
+giralph logs --follow   # tail -f style
+giralph logs --sid abc123  # filter by loop</code></pre>
+  <div class="term" style="margin-top: 0.4em">
+    <div class="term-out">2026-05-01T08:30:01Z INFO  loop_start   sid=abc123 retry=50</div>
+    <div class="term-out">2026-05-01T08:32:15Z INFO  stop_hook    sid=abc123 iter=1</div>
+    <div class="term-warn">2026-05-01T08:32:18Z WARN  verify_fail  sid=abc123 reason="..."</div>
+    <div class="term-warn">2026-05-01T08:43:00Z WARN  thrash_reset sid=abc123 was=47</div>
+  </div>
+</section>
+
+<!-- 45. uninstall -->
+<section data-background-color="#1a1410">
+  <span class="tag">⌨️ cli · uninstall</span>
+  <h2><code class="inline">giralph uninstall &lt;claude|codex&gt;</code></h2>
+  <p>Reverses <code class="inline">install</code> in the opposite order, idempotently.</p>
+  <ol style="list-style: decimal; padding-left: 1.5em">
+    <li>Disables and removes the service unit</li>
+    <li>Deletes <code class="inline">/giralph-start</code> and <code class="inline">/giralph-cancel</code> commands</li>
+    <li>Removes <em>only</em> giralph's hook entry from settings (other hooks left intact)</li>
+  </ol>
+  <p style="font-size: 0.85em"><code class="inline">~/.giralph.json</code> and runtime state are kept by default. Pass <code class="inline">--purge</code> to delete them too.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION H · WHEN TO USE / NOT / HOW NOT                                   -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 46. ✅ prototypes -->
+<section data-background-color="#1a1410">
+  <span class="tag">✅ when to use · 1/2</span>
+  <h2>🚀 Use it for prototypes</h2>
+  <p>Greenfield exploration. The thing has no users yet. You want a working blob, not a polished product.</p>
+  <ul>
+    <li>Scratch a script that compiles</li>
+    <li>Try a library you've never used</li>
+    <li>Sketch a CLI to see if the UX makes sense</li>
+    <li>Validate a hypothesis before investing real engineering</li>
+  </ul>
+  <div class="center" style="margin-top: 0.6em">
+    <span class="fragment stamp-drop"><span class="stamp stamp-good">✓ great fit</span></span>
+  </div>
+</section>
+
+<!-- 47. ✅ weak/cheap models -->
+<section data-background-color="#1a1410">
+  <span class="tag">✅ when to use · 2/2</span>
+  <h2>🐢 Use it with weaker / cheaper models</h2>
+  <p>The model needs many tries to reach the goal — and each try is cheap. Quantity beats quality, statistically.</p>
+  <div class="card">
+    <p style="margin: 0">Haiku × 50 retries &gt; one Opus shot, when you can verify the result.</p>
+  </div>
+  <div class="cols cols-2" style="margin-top: 0.6em; align-items: center">
+    <div class="bignum center">∞ × 🐢 = 🏁</div>
+    <p style="font-style: italic; opacity: 0.85">Slow + persistent &gt; fast + flaky.</p>
+  </div>
+  <div class="center" style="margin-top: 0.4em">
+    <span class="fragment stamp-drop"><span class="stamp stamp-good">✓ great fit</span></span>
+  </div>
+</section>
+
+<!-- 48. 🚫 building products -->
+<section data-background-color="#1a1410">
+  <span class="tag">🚫 when not to use · 1/2</span>
+  <h2>🏗️ Don't use it to ship a product</h2>
+  <p>Giralph chases the goal. It will gladly produce something that compiles, runs, and is <span class="hl-red">ugly inside</span>.</p>
+  <ul>
+    <li>Code style, abstractions, design choices</li>
+    <li>Module boundaries, naming, organization</li>
+    <li>The "feel" of the codebase</li>
+  </ul>
+  <p>These are <em>hard to verify</em>, so the loop will skip them. The loop optimizes for what the verifier can check.</p>
+  <div class="center" style="margin-top: 0.4em">
+    <span class="fragment stamp-drop"><span class="stamp stamp-bad">✗ wrong tool</span></span>
+  </div>
+</section>
+
+<!-- 49. 🚫 taste-based -->
+<section data-background-color="#1a1410">
+  <span class="tag">🚫 when not to use · 2/2</span>
+  <h2>🎨 Don't use it for anything taste-based</h2>
+  <p>UIs. Marketing copy. Visual design. Anything where the success metric is <span class="hl-red">human taste</span>.</p>
+  <div class="card card-bad">
+    <p style="margin: 0">The verifier can confirm the button <em>exists</em>.<br>It cannot confirm the button is <em>beautiful</em>.</p>
+  </div>
+  <blockquote class="q">If you can't write a check that fails when the answer is wrong, a loop won't save you — it'll just tell you confidently it's right.</blockquote>
+  <div class="center">
+    <span class="fragment stamp-drop"><span class="stamp stamp-bad">✗ unverifiable</span></span>
+  </div>
+</section>
+
+<!-- 50. 💸 expensive models -->
+<section data-background-color="#1a1410">
+  <span class="tag">💸 how not to use</span>
+  <h2>Don't pair it with expensive models</h2>
+  <p>A loop is a token-burning machine. <span class="hl-red">Every iteration</span> re-reads context, re-tries, and the verifier costs more tokens on top.</p>
+  <p style="margin-bottom: 0.3em; font-size: 0.85em">Token spend over 100 iterations:</p>
+
+  <div style="font-size: 0.78em">
+    <p style="margin: 4px 0">Haiku in a loop &nbsp;<span class="pill pill-green">cheap</span></p>
+    <div class="meter"><div class="meter-fill fragment fade-in" style="--w: 25%"></div></div>
+
+    <p style="margin: 4px 0">Sonnet in a loop &nbsp;<span class="pill">moderate</span></p>
+    <div class="meter"><div class="meter-fill fragment fade-in" style="--w: 60%"></div></div>
+
+    <p style="margin: 4px 0">Opus in a loop &nbsp;<span class="pill pill-red">😱 your wallet</span></p>
+    <div class="meter"><div class="meter-fill fragment fade-in" style="--w: 100%"></div></div>
+  </div>
+  <p class="caption">Match the model to the verifiability. Cheap + persistent + verified = giralph's sweet spot.</p>
+</section>
+
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+<!-- SECTION I · CLOSING                                                        -->
+<!-- ════════════════════════════════════════════════════════════════════════ -->
+
+<!-- 51. TL;DR -->
+<section data-background-color="#1a1410">
+  <span class="tag">🦒 in summary</span>
+  <h2>Giralph in one sentence</h2>
+  <blockquote class="q" style="font-size: 1.3em">A Ralph loop with an <span class="hl">independent verifier</span>, <span class="hl-cyan">hardened against agent hacking</span>, and a <span class="hl-pink">fast stop-hook</span>.</blockquote>
+  <pre style="margin-top: 0.6em"><code data-trim>giralph install claude
+/giralph-start Fix the flaky integration test</code></pre>
+  <p class="caption">Two commands. Then go make a cup of tea.</p>
+</section>
+
+<!-- 52. Thanks -->
+<section data-background-color="#1a1410">
+  <div class="title-slide" style="display: flex; flex-direction: column; align-items: center;">
+    <svg viewBox="0 0 400 450" style="width: 160px; animation: giraffe-wave 1.5s ease-in-out infinite; filter: drop-shadow(6px 6px 0 var(--brown-dark))"><use href="#giraffe"/></svg>
+    <h1 style="font-size: 4.5em">Thanks!</h1>
+    <div class="subtitle" style="margin: 1em 0 1.2em">Now go build something <span class="hl">stupid</span> that runs <span class="hl">forever</span> 🦒</div>
+    <div class="author" style="margin-top: 2em; opacity: 0.65">
+      Giralph · Apache 2.0 · © 2026 Joel Fernandes
+      <div style="margin-top: 0.8em">
+        <code class="inline">←</code> / <code class="inline">→</code> &nbsp;·&nbsp; <code class="inline">F</code> fullscreen &nbsp;·&nbsp; <code class="inline">ESC</code> overview
+      </div>
+    </div>
+  </div>
+</section>
+
+</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/dist/reveal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/highlight/highlight.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/reveal.js@4.6.1/plugin/notes/notes.js"></script>
+
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    controls: true,
+    progress: true,
+    transition: 'slide',
+    transitionSpeed: 'fast',
+    backgroundTransition: 'fade',
+    /* Don't auto-scale slides — let the browser handle zoom natively
+       (Ctrl/Cmd +/- and pinch-zoom on touch). */
+    disableLayout: true,
+    plugins: [ RevealHighlight, RevealNotes ]
+  });
+</script>
+</body>
+</html>
