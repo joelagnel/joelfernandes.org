@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Teaching a Bigram Model Where It Is: Positional Encoding in makemore - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-25 &raquo;<br><a href="/blog/2023-04-25/ppc-stack-guards.html">PowerPC stack guard false positives in Linux kernel</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</h1>
+<p class="meta">29 Jun 2026</p>
+
+<div class="post">
+<blockquote>
+  <p><strong>Context:</strong> This post follows Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=TCH_1BHY58I">makemore Part 1</a> — the
+spelled-out intro to language modeling. The positional-encoding twist below
+is my own addition on top of his bigram model. If you haven’t watched Part 1
+yet, it’s excellent. Part 2 (MLP) is the natural next step after this:</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=PaCmpygFfXo" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/PaCmpygFfXo/maxresdefault.jpg" alt="Building makemore Part 2: MLP — Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      ▶ <strong>Building makemore Part 2: MLP</strong> — Andrej Karpathy &nbsp;·&nbsp; 1.1M views
+    </div>
+  </a>
+</div>
+
+<p><em>How adding a “position-in-the-word” signal to Karpathy’s neural bigram model
+cut the loss by ~6.7%.</em></p>
+
+<hr />
+
+<h2 id="table-of-contents">Table of Contents</h2>
+
+<ul>
+  <li><a href="#background">Background</a>
+    <ul>
+      <li><a href="#the-dataset-and-bigrams">The dataset and bigrams</a></li>
+      <li><a href="#the-neural-bigram-model">The neural bigram model</a></li>
+      <li><a href="#the-baseline-loss">The baseline loss</a></li>
+    </ul>
+  </li>
+  <li><a href="#the-idea-a-bigram-model-is-blind-to-position">The idea: a bigram model is blind to position</a></li>
+  <li><a href="#the-implementation">The implementation</a>
+    <ul>
+      <li><a href="#augmenting-the-input-vector">Augmenting the input vector</a></li>
+      <li><a href="#growing-the-weight-matrix">Growing the weight matrix</a></li>
+    </ul>
+  </li>
+  <li><a href="#results">Results</a></li>
+  <li><a href="#why-it-works">Why it works</a></li>
+  <li><a href="#sampling-with-positions">Sampling with positions</a></li>
+  <li><a href="#caveats-and-next-steps">Caveats and next steps</a></li>
+  <li><a href="#conclusion">Conclusion</a></li>
+</ul>
+
+<hr />
+
+<h2 id="background">Background</h2>
+
+<p>This post follows Andrej Karpathy’s excellent
+<a href="https://www.youtube.com/watch?v=TCH_1BHY58I">“The spelled-out intro to language modeling: building makemore”</a>
+(Part 1). The positional-encoding twist described here is my own addition on top
+of his bigram model.</p>
+
+<p>If you’ve already watched the video, skip ahead to
+<a href="#the-idea-a-bigram-model-is-blind-to-position">The idea</a>. Otherwise, here’s the
+minimum you need.</p>
+
+<h3 id="the-dataset-and-bigrams">The dataset and bigrams</h3>
+
+<p><code class="language-plaintext highlighter-rouge">makemore</code> learns to generate new names from a list of ~32,000 real names
+(<code class="language-plaintext highlighter-rouge">names.txt</code>). Each name is wrapped with a special boundary token <code class="language-plaintext highlighter-rouge">.</code> and broken
+into <strong>bigrams</strong> — pairs of adjacent characters. For the name <code class="language-plaintext highlighter-rouge">emma</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.e   e m   m m   m a   a .
+</code></pre></div></div>
+
+<p>We map each of the 27 tokens (<code class="language-plaintext highlighter-rouge">.</code> + <code class="language-plaintext highlighter-rouge">a</code>–<code class="language-plaintext highlighter-rouge">z</code>) to an integer with <code class="language-plaintext highlighter-rouge">stoi</code>/<code class="language-plaintext highlighter-rouge">itos</code>,
+and build two parallel tensors: <code class="language-plaintext highlighter-rouge">xs</code> (the current character) and <code class="language-plaintext highlighter-rouge">ys</code> (the next
+character we want to predict). Over the whole dataset that’s <strong>228,146</strong> bigram
+examples.</p>
+
+<h3 id="the-neural-bigram-model">The neural bigram model</h3>
+
+<p>Instead of just counting bigram frequencies, Karpathy frames the bigram model as
+a tiny one-layer neural net:</p>
+
+<ol>
+  <li><strong>One-hot encode</strong> the input character into a 27-dim vector.</li>
+  <li><strong>Matrix-multiply</strong> by a weight matrix <code class="language-plaintext highlighter-rouge">W</code> of shape <code class="language-plaintext highlighter-rouge">(27, 27)</code> to get
+<em>logits</em> (log-counts).</li>
+  <li><strong>Softmax</strong> the logits into a probability distribution over the next
+character.</li>
+</ol>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">xenc</span>   <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">xs</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">27</span><span class="p">).</span><span class="nf">float</span><span class="p">()</span>  <span class="c1"># (N, 27)
+</span><span class="n">logits</span> <span class="o">=</span> <span class="n">xenc</span> <span class="o">@</span> <span class="n">W</span>                                <span class="c1"># (N, 27)
+</span><span class="n">counts</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nf">exp</span><span class="p">()</span>
+<span class="n">probs</span>  <span class="o">=</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">counts</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>   <span class="c1"># softmax -&gt; (N, 27)
+</span></code></pre></div></div>
+
+<p>We train <code class="language-plaintext highlighter-rouge">W</code> by minimizing the <strong>average negative log-likelihood</strong> (NLL) of the
+true next character, with a little L2 regularization, using plain gradient
+descent:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">probs</span><span class="p">[</span><span class="n">torch</span><span class="p">.</span><span class="nf">arange</span><span class="p">(</span><span class="n">num</span><span class="p">),</span> <span class="n">ys</span><span class="p">].</span><span class="nf">log</span><span class="p">().</span><span class="nf">mean</span><span class="p">()</span> <span class="o">+</span> <span class="mf">0.01</span><span class="o">*</span><span class="p">(</span><span class="n">W</span><span class="o">**</span><span class="mi">2</span><span class="p">).</span><span class="nf">mean</span><span class="p">()</span>
+<span class="n">loss</span><span class="p">.</span><span class="nf">backward</span><span class="p">()</span>
+<span class="n">W</span><span class="p">.</span><span class="n">data</span> <span class="o">+=</span> <span class="o">-</span><span class="mi">50</span> <span class="o">*</span> <span class="n">W</span><span class="p">.</span><span class="n">grad</span>
+</code></pre></div></div>
+
+<h3 id="the-baseline-loss">The baseline loss</h3>
+
+<p>After 200 steps of gradient descent, the baseline bigram model settles at:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>199  2.4829957485198975
+</code></pre></div></div>
+
+<p>So our number to beat is <strong>loss ≈ 2.483</strong>.</p>
+
+<hr />
+
+<h2 id="the-idea-a-bigram-model-is-blind-to-position">The idea: a bigram model is blind to position</h2>
+
+<p>A pure bigram model makes the next-character prediction using <strong>only the current
+character</strong>. Feed it an <code class="language-plaintext highlighter-rouge">a</code> and it always returns the exact same distribution,
+whether that <code class="language-plaintext highlighter-rouge">a</code> is the first letter of the name or the seventh.</p>
+
+<p>But position clearly matters in names:</p>
+
+<ul>
+  <li>The <strong>first</strong> character (right after <code class="language-plaintext highlighter-rouge">.</code>) follows a very different
+distribution than a mid-word character — some letters are common name-starters,
+others almost never start a name.</li>
+  <li>The probability of ending the word (emitting <code class="language-plaintext highlighter-rouge">.</code>) grows the <strong>further into the
+word</strong> we are. A 1-letter name is rare; after 6–7 characters the name is very
+likely to end soon.</li>
+</ul>
+
+<p>A vanilla bigram simply cannot express “I’m at position 5, so <code class="language-plaintext highlighter-rouge">.</code> is now more
+likely.” So the idea: <strong>tell the model where in the word each character sits</strong>,
+and let it learn position-dependent behavior.</p>
+
+<p>This is the same intuition behind <em>positional encoding</em> in Transformers — an
+attention/bigram mechanism that is otherwise order-agnostic gets an explicit
+signal about position.</p>
+
+<hr />
+
+<h2 id="the-implementation">The implementation</h2>
+
+<h3 id="augmenting-the-input-vector">Augmenting the input vector</h3>
+
+<p>The input to the network is just a one-hot vector. So we <strong>concatenate a second
+one-hot</strong> that encodes the position of the character within its word. With a cap
+of 23 positions (the longest names in the dataset), the input grows from 27 to
+<strong>50</strong> dimensions:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[ 27-dim character one-hot | 23-dim position one-hot ]
+</code></pre></div></div>
+
+<p>For the bigrams of <code class="language-plaintext highlighter-rouge">emma</code>, the augmented encodings look like this (note the
+second <code class="language-plaintext highlighter-rouge">1</code> marching across the positional block):</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>.  -&gt;  char[0]=1                  pos[0]=1
+e  -&gt;  char[5]=1                  pos[1]=1
+m  -&gt;  char[13]=1                 pos[2]=1
+m  -&gt;  char[13]=1                 pos[3]=1
+a  -&gt;  char[1]=1                  pos[4]=1
+</code></pre></div></div>
+
+<h3 id="growing-the-weight-matrix">Growing the weight matrix</h3>
+
+<p>The only other change is that <code class="language-plaintext highlighter-rouge">W</code> grows from <code class="language-plaintext highlighter-rouge">(27, 27)</code> to <code class="language-plaintext highlighter-rouge">(50, 27)</code>. The first
+27 rows are the familiar character weights; the new 23 rows are
+<strong>per-position weight vectors</strong>. Because the matmul is linear, the logits become
+the <strong>sum of a character contribution and a position contribution</strong>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">((</span><span class="mi">50</span><span class="p">,</span> <span class="mi">27</span><span class="p">),</span> <span class="n">generator</span><span class="o">=</span><span class="n">g</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">xenc</span>   <span class="o">=</span> <span class="nf">encode_xs</span><span class="p">(</span><span class="n">xs</span><span class="p">)</span>   <span class="c1"># (N, 50)  &lt;- now includes position
+</span><span class="n">logits</span> <span class="o">=</span> <span class="n">xenc</span> <span class="o">@</span> <span class="n">W</span>        <span class="c1"># (N, 27)
+</span></code></pre></div></div>
+
+<p>Everything downstream — softmax, loss, backward, update — is <strong>byte-for-byte
+identical</strong> to the baseline. The entire modification lives in the input encoding
+and the shape of <code class="language-plaintext highlighter-rouge">W</code>.</p>
+
+<hr />
+
+<h2 id="results">Results</h2>
+
+<p>Same data, same training loop, same 200 steps, same learning rate. The only
+difference is the positional input and the shape of <code class="language-plaintext highlighter-rouge">W</code>:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Model</th>
+      <th><code class="language-plaintext highlighter-rouge">W</code> shape</th>
+      <th>Input dim</th>
+      <th>Final loss (step 199)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Baseline bigram</td>
+      <td><code class="language-plaintext highlighter-rouge">(27, 27)</code></td>
+      <td>27</td>
+      <td><strong>2.4830</strong></td>
+    </tr>
+    <tr>
+      <td>Bigram + positional encoding</td>
+      <td><code class="language-plaintext highlighter-rouge">(50, 27)</code></td>
+      <td>50</td>
+      <td><strong>2.3170</strong></td>
+    </tr>
+  </tbody>
+</table>
+
+<p>That’s a drop of <code class="language-plaintext highlighter-rouge">2.4830 − 2.3170 = 0.1660</code>, a <strong>~6.7% reduction in loss</strong> — a
+meaningful improvement for a model that is still, fundamentally, a single linear
+layer.</p>
+
+<p>The positional model’s training tail:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>195  2.3171677589416504
+196  2.317129611968994
+197  2.317091464996338
+198  2.317054510116577
+199  2.317017078399658
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="why-it-works">Why it works</h2>
+
+<p>Because the matmul is linear, the augmented model computes:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>logits = (character weights for this char) + (position weights for this position)
+</code></pre></div></div>
+
+<p>The position rows act as a <strong>learned, position-dependent bias</strong> added on top of
+the bigram logits. With that extra freedom the model can finally express things
+the vanilla bigram never could:</p>
+
+<ul>
+  <li>At <strong>position 0</strong> (right after <code class="language-plaintext highlighter-rouge">.</code>), push up the logits of common
+name-starting letters.</li>
+  <li>At <strong>later positions</strong>, steadily raise the logit of the end-token <code class="language-plaintext highlighter-rouge">.</code>, so long
+partial names are encouraged to terminate.</li>
+</ul>
+
+<p>None of this required a deeper network, an embedding table, or attention — just a
+richer input representation and 23 extra weight vectors.</p>
+
+<hr />
+
+<h2 id="sampling-with-positions">Sampling with positions</h2>
+
+<p>Generation has to feed the position too, since <code class="language-plaintext highlighter-rouge">W</code> now expects a 50-dim input.
+During sampling we track the current length of the generated string and set the
+corresponding position bit:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">out</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">ix</span>  <span class="o">=</span> <span class="mi">0</span>
+<span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="n">pos</span> <span class="o">=</span> <span class="nf">len</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+    <span class="n">extra_cells</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">23</span><span class="p">))</span>
+    <span class="n">extra_cells</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="n">xenc</span>   <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">ix</span><span class="p">]),</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">27</span><span class="p">).</span><span class="nf">float</span><span class="p">()</span>
+    <span class="n">xenc</span>   <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">cat</span><span class="p">((</span><span class="n">xenc</span><span class="p">,</span> <span class="n">extra_cells</span><span class="p">),</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>   <span class="c1"># (1, 50)
+</span>    <span class="n">logits</span> <span class="o">=</span> <span class="n">xenc</span> <span class="o">@</span> <span class="n">W</span>
+    <span class="n">p</span>      <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nf">exp</span><span class="p">()</span> <span class="o">/</span> <span class="n">logits</span><span class="p">.</span><span class="nf">exp</span><span class="p">().</span><span class="nf">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+    <span class="n">ix</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">multinomial</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">num_samples</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">replacement</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">generator</span><span class="o">=</span><span class="n">g</span><span class="p">).</span><span class="nf">item</span><span class="p">()</span>
+    <span class="n">out</span><span class="p">.</span><span class="nf">append</span><span class="p">(</span><span class="n">itos</span><span class="p">[</span><span class="n">ix</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">ix</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">break</span>
+</code></pre></div></div>
+
+<p>A nice qualitative side effect: with the position signal, sampled names are
+shorter and terminate more naturally (the model has learned that <code class="language-plaintext highlighter-rouge">.</code> becomes more
+likely deeper into the word), instead of occasionally rambling on:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>baseline:     momasurailezitynn.   konimittain.   ...
+positional:   moman.   raile.   kayha.   konimi.   ...
+</code></pre></div></div>
+
+<hr />
+
+<h2 id="caveats-and-next-steps">Caveats and next steps</h2>
+
+<p>A few honest limitations worth calling out:</p>
+
+<ul>
+  <li><strong>Sampling can overflow if names exceed 23 chars.</strong> <code class="language-plaintext highlighter-rouge">extra_cells[0, pos] = 1</code>
+would index out of bounds; in practice generated names stay short, but a clamp
+there would make it robust.</li>
+  <li><strong>One-hot positions don’t generalize between positions.</strong> Position 5 and
+position 6 are as unrelated to the model as position 5 and position 20. A dense
+or sinusoidal encoding would let nearby positions share structure.</li>
+</ul>
+
+<p>The natural next step is to watch Part 3, the third video in the series.</p>
+
+<hr />
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>Starting from Karpathy’s neural bigram model, a single conceptual change — <em>tell
+the model where each character sits in its word</em> — bought a <strong>~6.7% loss
+reduction</strong> with no change to the training loop and only 23 extra weight vectors.</p>
+
+<hr />
+
+<p><em>Based on Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=PaCmpygFfXo">makemore Part 2</a>. The positional
+encoding extension and analysis are my own.</em></p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
