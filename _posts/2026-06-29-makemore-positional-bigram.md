@@ -9,10 +9,10 @@ published: true
 ---
 
 > **Context:** This post follows Andrej Karpathy's
-> [makemore Part 1](https://www.youtube.com/watch?v=TCH_1BHY58I) — the
-> spelled-out intro to language modeling. The positional-encoding twist below
-> is my own addition on top of his bigram model. If you haven't watched Part 1
-> yet, it's excellent. Part 2 (MLP) is the natural next step after this:
+> [makemore](https://www.youtube.com/watch?v=TCH_1BHY58I) (Part 2 of the
+> spelled-out intro series) — the intro to language modeling. The positional-encoding twist below
+> is my own addition on top of his bigram model. If you haven't watched it
+> yet, it's excellent. Part 3 (MLP) is the natural next step after this:
 
 <div style="margin: 1.5em 0 2em 0; text-align: center;">
   <a href="https://www.youtube.com/watch?v=PaCmpygFfXo" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
@@ -52,7 +52,7 @@ cut the loss by ~6.7%.*
 
 This post follows Andrej Karpathy's excellent
 ["The spelled-out intro to language modeling: building makemore"](https://www.youtube.com/watch?v=TCH_1BHY58I)
-(Part 1). The positional-encoding twist described here is my own addition on top
+(Part 2 of the series). The positional-encoding twist described here is my own addition on top
 of his bigram model.
 
 If you've already watched the video, skip ahead to
