@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Joel Agnel Fernandes - Resume</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  @page {
+    size: letter;
+    margin: 0;
+  }
+
+  body {
+    font-family: 'Carlito', 'Calibri', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+    font-size: 10pt;
+    line-height: 1.3;
+    color: #333;
+    background: white;
+  }
+
+  .page {
+    width: 8.5in;
+    min-height: 11in;
+    padding: 0.5in 0.55in 0.45in 0.55in;
+    position: relative;
+    page-break-after: always;
+  }
+
+  .header {
+    margin-bottom: 0.12in;
+  }
+
+  .header h1 {
+    font-family: 'Carlito', 'Calibri', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+    font-size: 20pt;
+    font-weight: 400;
+    color: #222;
+    margin-bottom: 3px;
+  }
+
+  .header .subtitle {
+    font-size: 10pt;
+    color: #555;
+  }
+
+  .layout {
+    display: flex;
+    gap: 0.3in;
+  }
+
+  .main-col {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .side-col {
+    width: 2.05in;
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-family: 'Carlito', 'Calibri', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+    font-size: 9pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-bottom: 7px;
+    margin-top: 12px;
+    padding-bottom: 2px;
+    border-bottom: 1px solid currentColor;
+  }
+
+  .section-title.blue { color: #4a7fb5; }
+  .section-title.red  { color: #c0392b; }
+
+  .section-title:first-child {
+    margin-top: 0;
+  }
+
+  .job {
+    margin-bottom: 8px;
+  }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 4px;
+  }
+
+  .job-title {
+    font-family: 'Carlito', 'Calibri', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+    font-size: 10.5pt;
+    font-weight: 700;
+    color: #222;
+  }
+
+  .job-date {
+    font-size: 8.5pt;
+    color: #666;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .job-desc {
+    font-size: 9.5pt;
+    line-height: 1.32;
+    color: #444;
+    text-align: justify;
+    margin-top: 2px;
+  }
+
+  .job-desc p {
+    margin-bottom: 3px;
+  }
+
+  .job-desc p:last-child {
+    margin-bottom: 0;
+  }
+
+  .contact-info {
+    font-size: 9pt;
+    line-height: 1.55;
+    margin-bottom: 4px;
+  }
+
+  .contact-info a {
+    color: #4a7fb5;
+    text-decoration: none;
+  }
+
+  .side-text {
+    font-size: 8.5pt;
+    line-height: 1.42;
+    color: #444;
+  }
+
+  .edu-entry {
+    margin-bottom: 7px;
+  }
+
+  .edu-entry .edu-title {
+    font-size: 9pt;
+    font-weight: 700;
+    color: #222;
+    line-height: 1.3;
+  }
+
+  .edu-entry .edu-date {
+    font-size: 8pt;
+    color: #666;
+    margin-bottom: 2px;
+  }
+
+  .edu-entry ul {
+    margin-left: 13px;
+    margin-top: 1px;
+  }
+
+  .edu-entry ul li {
+    font-size: 8pt;
+    line-height: 1.3;
+    color: #444;
+    margin-bottom: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="header">
+    <h1>Joel Agnel Fernandes</h1>
+    <div class="subtitle">16+ years of systems software development experience.</div>
+  </div>
+
+  <div class="layout">
+    <div class="main-col">
+      <div class="section-title blue">Experience</div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Principal Engineer – NVIDIA, Virginia</div>
+          <div class="job-date">2025 – Present</div>
+        </div>
+        <div class="job-desc">
+          <p><strong>GPU performance:</strong> Optimized GPU interrupt handling and engine context-switch scheduling for cloud-gaming workloads (CUDA/Vulkan), cutting GR engine context switches and IRQ rate to deliver 7–15% FPS gains and ~40% lower context-switch overhead.</p>
+          <p><strong>CPU scheduling &amp; Linux kernel:</strong> Co-maintainer of the RCU subsystem, with improvements merged upstream. Contributor to the sched_ext (BPF) scheduling framework — added CPU starvation protection and idle-CPU selection improvements.</p>
+          <p><strong>Linux kernel — Rust GPU driver:</strong> Lead author of memory-management and interrupt-handling support for NVIDIA's open-source Rust GPU driver for Hopper/Blackwell.</p>
+          <p><strong>CUDA:</strong> Performed CUDA architecture investigations by tracing CUDA initialization, OS/firmware interactions to define the bring-up path on new GPU drivers. Optimized LLM inference (vLLM on Grace Blackwell): raised throughput ~14% and cut latency ~13% under heavy load, with a 7× reduction in p99 tail-latency jitter, via CPU isolation, NUMA-aware pinning of tensor-parallel workers, and real-time scheduling with a sched_ext (BPF) scheduler.</p>
+        </div>
+      </div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Staff Software Engineer – Google, Virginia</div>
+          <div class="job-date">2016 – 2025</div>
+        </div>
+        <div class="job-desc">Worked on Linux kernel RCU and scheduler fixes and improvements for Android and ChromeOS Linux. Helped out with Linux kernel stability testing for upstream RCU. Upstreamed mremap(2) changes to the Linux kernel causing several-fold performance improvements to the new Android garbage collector. Developed and upstream Core scheduling features in the Linux kernel for hyper-thread isolation. Worked on C++ code development for the open source Chrome browser project, made performance improvements to Chrome browser display and audio threads. Worked on CPU scheduling power-saving features for the Linux kernel.</div>
+      </div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Senior Systems Engineer – Amazon, Sunnyvale</div>
+          <div class="job-date">2014 – 2016</div>
+        </div>
+        <div class="job-desc">Worked on device bring up of various products including Amazon Echo, Show, Dot, Kindle etc. Fixed issues in MMC and PMIC driver stack by working closely with Hardware engineers. Worked on a mechanism to write kernel function execution traces to PSTORE (persistent store) of the Linux kernel and upstreamed them. Fixed bugs in the Linux kernel's tracing infrastructure and upstreamed them.</div>
+      </div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Systems Engineer – Texas Instruments, Dallas</div>
+          <div class="job-date">2012 – 2014</div>
+        </div>
+        <div class="job-desc">Team member in the base port bring-up team in the Linux Core Product Development (LCPD) group. Performed bring up of various ARM hardware Boards including Beagleboards. Tweaked Ethernet and USB stacks to make network boot possible. Maintained the EDMA DMA Engine driver. Authored several improvements to DMA (performance and framework). Author of various cryptographic drivers for OMAP SoCs. Worked on every level of the kernel stack including machine layer, early boot code (ARM), boot loader, block layer, file systems, networking and display drivers. Optimized performance and fixed bugs with heavy use of tracing, profile and debug tools. Responsible for core Linux kernel support for TI's Davinci, OMAP and Sitara line of ARM based SoCs.</div>
+      </div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Full Stack Developer – Atlantis Computing, Bangalore</div>
+          <div class="job-date">2008 – 2010</div>
+        </div>
+        <div class="job-desc">Developed a JavaScript, Ruby-On-Rails and Erlang application for a browser-based product that allows users to interact with a virtual machine.</div>
+      </div>
+
+      <div class="job">
+        <div class="job-header">
+          <div class="job-title">Networking Researcher – University of Texas, Dallas</div>
+          <div class="job-date">2010 – 2012</div>
+        </div>
+        <div class="job-desc">Conducted research and experiments on different metrics to estimate the link conditions and thus improve routing. Modified drivers and mac80211 Linux Kernel code and carried out experiments. Worked on TCP/IP, UDP and other areas. Fixed bugs in wireless driver and routing code. Worked with professor Ravi Prakash on research assistance.</div>
+      </div>
+
+    </div>
+
+    <div class="side-col">
+      <div class="contact-info">
+        Joel Agnel Fernandes<br>
+        <a href="mailto:joel@joelfernandes.org">joel@joelfernandes.org</a><br><br>
+        <a href="https://joelfernandes.org">Full list of conference talks and publications at joelfernandes.org</a>
+      </div>
+
+      <div class="section-title red">Skills</div>
+      <div class="side-text">
+        Programming: C, C++, Python, JavaScript, Ruby, Rust, Assembly, TLA+, Lisp, Perl, Erlang, LaTeX, Verilog.<br><br>
+        Processors: ARM Cortex-A, Cortex-M, ARM9, MSP430, x86, x86-64, 8051.<br><br>
+        OS's: Linux, Android, Windows.<br><br>
+        Debug Tools: GDB, KGDB, KDB, Ftrace, SystemTap, ktap, Lauterbach, OpenOCD, Eclipse, Wireshark. Other Tools: Git, SVN, Vim, Emacs, cscope, Gnuplot, Matlab, ModelSim, Pandas, matplotlib.
+      </div>
+
+      <div class="section-title red">Community</div>
+      <div class="side-text">
+        Contributed patches to various open source projects including Linux kernel operating system.<br><br>
+        Presented talks at various conferences including Linux Plumbers conference, Kernel Recipes, OSPM, Embedded Linux Conference in America and Europe.<br><br>
+        Taught several classes on Linux Internals and Embedded Systems.
+      </div>
+
+      <div class="section-title blue">Education</div>
+
+      <div class="edu-entry">
+        <div class="edu-title">University of Texas at Dallas, Richardson TX</div>
+        <div class="edu-date">Masters, Computer Engineering — Aug 2010 – May 2012</div>
+        <ul>
+          <li>GPA 3.97/4.0. "A" in 10/11 courses.</li>
+          <li>Full tuition waiver scholarship, Spring 2011.</li>
+        </ul>
+      </div>
+
+      <div class="edu-entry">
+        <div class="edu-title">Visvesvaraya Technological University</div>
+        <div class="edu-date">B.E. Electronics &amp; Communication — 2003 – 2007</div>
+        <ul>
+          <li>First class with distinction, second rank in college.</li>
+          <li>Merit Scholarship 2004–2006.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
