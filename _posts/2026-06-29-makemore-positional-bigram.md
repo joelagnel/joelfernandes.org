@@ -12,15 +12,15 @@ published: true
 > [makemore](https://www.youtube.com/watch?v=TCH_1BHY58I) (Part 2 of the
 > spelled-out intro series) — the intro to language modeling. The positional-encoding twist below
 > is my own addition on top of his bigram model. If you haven't watched it
-> yet, it's excellent. Part 3 (MLP) is the natural next step after this:
+> yet, it's excellent — here it is:
 
 <div style="margin: 1.5em 0 2em 0; text-align: center;">
-  <a href="https://www.youtube.com/watch?v=PaCmpygFfXo" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
-    <img src="https://img.youtube.com/vi/PaCmpygFfXo/maxresdefault.jpg"
-         alt="Building makemore Part 2: MLP — Andrej Karpathy"
+  <a href="https://www.youtube.com/watch?v=TCH_1BHY58I" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/TCH_1BHY58I/maxresdefault.jpg"
+         alt="Building makemore Part 1: bigram model — Andrej Karpathy"
          style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);">
     <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
-      ▶ <strong>Building makemore Part 2: MLP</strong> — Andrej Karpathy &nbsp;·&nbsp; 1.1M views
+      ▶ <strong>Building makemore Part 1: bigram model</strong> — Andrej Karpathy
     </div>
   </a>
 </div>
@@ -293,5 +293,5 @@ reduction** with no change to the training loop and only 23 extra weight vectors
 ---
 
 *Based on Andrej Karpathy's
-[makemore Part 2](https://www.youtube.com/watch?v=PaCmpygFfXo). The positional
+[makemore Part 1](https://www.youtube.com/watch?v=TCH_1BHY58I). The positional
 encoding extension and analysis are my own.*
