@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Final Exam — Batch Norm vs Vanishing Gradients</title>
+<title>Final Exam: Batch Norm vs Vanishing Gradients</title>
 <style>
   :root {
     --primary: #1976d2;
@@ -20,7 +20,7 @@
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-    max-width: 820px; margin: 2em auto; padding: 0 1em;
+    max-width: max(820px, 96%); margin: 2em auto; padding: 0 1em;
     line-height: 1.6; color: var(--text); background: white;
   }
   h1 { border-bottom: 3px solid var(--primary); padding-bottom: 0.4em; margin-top: 0.5em; }
@@ -98,11 +98,11 @@
 </head>
 <body>
 
-<h1>Final Exam — Batch Norm vs Vanishing Gradients</h1>
+<h1>Final Exam: Batch Norm vs Vanishing Gradients</h1>
 
 <div class="intro">
   <p>Answer every question, then click <b>Submit</b> at the bottom. Each question is worth equal weight.</p>
-  <p><b>Passing score: 70/100.</b> No state is saved — you can retry as many times as you like.</p>
+  <p><b>Passing score: 70/100.</b> No state is saved; you can retry as many times as you like.</p>
 </div>
 
 <div class="nav">
@@ -114,14 +114,14 @@
   <div class="question" data-id="1" data-answer="c"
        data-explain="The sigmoid's slope is s(1&minus;s), maximized at s = 1/2 where it equals exactly 0.25 (measured over a fine grid in <a href='module-0.html'>Module 0</a>). Even a sigmoid at its very steepest attenuates a passing gradient to a quarter.">
     <p class="q-text">1. <span class="module-marker">[Module 0]</span> A gradient passes backward through a single sigmoid neuron that happens to be at its steepest possible operating point. By what factor is the gradient scaled?</p>
-    <label><input type="radio" name="q1" value="a"> 1.0 &mdash; a sigmoid at its steepest passes gradients unchanged</label>
+    <label><input type="radio" name="q1" value="a"> 1.0: a sigmoid at its steepest passes gradients unchanged</label>
     <label><input type="radio" name="q1" value="b"> 0.5</label>
     <label><input type="radio" name="q1" value="c"> 0.25</label>
     <label><input type="radio" name="q1" value="d"> 0.017</label>
   </div>
 
   <div class="question" data-id="2" data-answer="0.693|0.6931|0.69315|.693|ln 2|ln2|ln(2)"
-       data-explain="ln 2 &asymp; 0.693 is what binary cross-entropy assigns to p = 0.5 on every example &mdash; the score of a network that shrugs at every input. A loss curve pinned there means nothing was learned; see <a href='module-0.html'>Module 0</a> and the flatlined run in <a href='module-3.html'>Module 3</a>.">
+       data-explain="ln 2 &asymp; 0.693 is what binary cross-entropy assigns to p = 0.5 on every example: the score of a network that shrugs at every input. A loss curve pinned there means nothing was learned; see <a href='module-0.html'>Module 0</a> and the flatlined run in <a href='module-3.html'>Module 3</a>.">
     <p class="q-text">2. <span class="module-marker">[Module 0]</span> On a balanced binary task, a training-loss curve that flatlines at a specific value tells you the network has learned nothing at all. What is that value, to three decimal places?</p>
     <input type="text" name="q2" autocomplete="off" spellcheck="false">
   </div>
@@ -129,10 +129,10 @@
   <div class="question" data-id="3" data-answer="b"
        data-explain="The output gradient is p &minus; y = 0.9 &minus; 1 = &minus;0.1. Small, and rightly so: the model is nearly correct on this example, so there is little to fix. <a href='module-0.html'>Module 0</a> verified the p &minus; y formula against autograd to six decimal places.">
     <p class="q-text">3. <span class="module-marker">[Module 0]</span> The network predicts p = 0.9 for an example whose true label is y = 1. What gradient does the loss send to the output logit, and what does its size mean?</p>
-    <label><input type="radio" name="q3" value="a"> +0.9 &mdash; a strong correction is needed</label>
-    <label><input type="radio" name="q3" value="b"> &minus;0.1 &mdash; a small nudge; the prediction is already nearly right</label>
-    <label><input type="radio" name="q3" value="c"> &minus;0.9 &mdash; the sign flips because y = 1</label>
-    <label><input type="radio" name="q3" value="d"> 0 &mdash; correct-side predictions send no gradient</label>
+    <label><input type="radio" name="q3" value="a"> +0.9: a strong correction is needed</label>
+    <label><input type="radio" name="q3" value="b"> &minus;0.1, a small nudge; the prediction is already nearly right</label>
+    <label><input type="radio" name="q3" value="c"> &minus;0.9: the sign flips because y = 1</label>
+    <label><input type="radio" name="q3" value="d"> 0: correct-side predictions send no gradient</label>
   </div>
 
   <div class="question" data-id="4" data-answer="false"
@@ -143,7 +143,7 @@
   </div>
 
   <div class="question" data-id="5" data-answer="d"
-       data-explain="Vanishing gradients is a compounding per-layer effect &mdash; one sub-unity factor multiplies in at each layer &mdash; so it only becomes visible with depth. A wide, shallow net would learn the moons easily and hide the phenomenon entirely; see <a href='module-1.html'>Module 1</a>.">
+       data-explain="Vanishing gradients is a compounding per-layer effect (one sub-unity factor multiplies in at each layer), so it only becomes visible with depth. A wide, shallow net would learn the moons easily and hide the phenomenon entirely; see <a href='module-1.html'>Module 1</a>.">
     <p class="q-text">5. <span class="module-marker">[Module 1]</span> A single 16-neuron hidden layer would solve two moons easily. Why does the workshop use four 4-neuron layers instead?</p>
     <label><input type="radio" name="q5" value="a"> Deeper networks always generalize better on small data</label>
     <label><input type="radio" name="q5" value="b"> Fewer parameters per layer prevents overfitting the noise</label>
@@ -152,16 +152,16 @@
   </div>
 
   <div class="question" data-id="6" data-answer="b"
-       data-explain="Measured directly: consecutive backward-signal ratios of 0.096, 0.104, 0.120 &mdash; about 0.1 per layer, decomposable as (sigmoid slope &asymp; 0.24) &times; (weight scale &asymp; 0.5). See the core table in <a href='module-2.html'>Module 2</a>.">
+       data-explain="Measured directly: consecutive backward-signal ratios of 0.096, 0.104, 0.120: about 0.1 per layer, decomposable as (sigmoid slope &asymp; 0.24) &times; (weight scale &asymp; 0.5). See the core table in <a href='module-2.html'>Module 2</a>.">
     <p class="q-text">6. <span class="module-marker">[Module 2]</span> For the plain 4-layer network at initialization, roughly what fraction of the backward signal survives each layer crossing, as measured?</p>
-    <label><input type="radio" name="q6" value="a"> About 0.9 &mdash; each layer costs only a little</label>
-    <label><input type="radio" name="q6" value="b"> About 0.1 &mdash; each layer keeps a tenth of the signal</label>
-    <label><input type="radio" name="q6" value="c"> About 0.25 &mdash; exactly the sigmoid&rsquo;s maximum slope</label>
-    <label><input type="radio" name="q6" value="d"> About 0.5 &mdash; the weight matrices&rsquo; typical scaling</label>
+    <label><input type="radio" name="q6" value="a"> About 0.9: each layer costs only a little</label>
+    <label><input type="radio" name="q6" value="b"> About 0.1: each layer keeps a tenth of the signal</label>
+    <label><input type="radio" name="q6" value="c"> About 0.25: exactly the sigmoid&rsquo;s maximum slope</label>
+    <label><input type="radio" name="q6" value="d"> About 0.5: the weight matrices&rsquo; typical scaling</label>
   </div>
 
   <div class="question" data-id="7" data-answer="c"
-       data-explain="Measured: 3.32e-04, i.e. layer 1&rsquo;s weight gradient is 3,015&times; smaller than the output layer&rsquo;s, before training starts (<code>results.log</code> line 40, <a href='module-2.html'>Module 2</a>). Four hops at ~0.1 each is the geometric-decay arithmetic.">
+       data-explain="Measured: 3.32e-04, i.e. layer 1&rsquo;s weight gradient is 3,015&times; smaller than the output layer&rsquo;s, before training starts (<a href='results-log.html'><code>results.log</code></a> line 40, <a href='module-2.html'>Module 2</a>). Four hops at ~0.1 each is the geometric-decay arithmetic.">
     <p class="q-text">7. <span class="module-marker">[Module 2]</span> At initialization, the plain 4-layer network&rsquo;s first hidden layer receives weight gradients how much smaller than its output layer&rsquo;s?</p>
     <label><input type="radio" name="q7" value="a"> About 4&times; smaller</label>
     <label><input type="radio" name="q7" value="b"> About 30&times; smaller</label>
@@ -170,12 +170,12 @@
   </div>
 
   <div class="question" data-id="8" data-answer="a"
-       data-explain="The measured mean slopes (0.2313&ndash;0.2467, against a theoretical max of 0.25) show the sigmoids operating at nearly their steepest &mdash; the opposite of saturated. The collapse is a scale effect: small weights &times; slope &le; 0.25 per layer. This is <a href='module-2.html'>Module 2</a>&rsquo;s &ldquo;honest surprise.&rdquo;">
+       data-explain="The measured mean slopes (0.2313&ndash;0.2467, against a theoretical max of 0.25) show the sigmoids operating at nearly their steepest, the opposite of saturated. The collapse is a scale effect: small weights &times; slope &le; 0.25 per layer. This is <a href='module-2.html'>Module 2</a>&rsquo;s &ldquo;honest surprise.&rdquo;">
     <p class="q-text">8. <span class="module-marker">[Module 2]</span> The plain network&rsquo;s measured mean sigmoid slopes at initialization are 0.23&ndash;0.25. What does this measurement rule out as the cause of its vanishing gradients?</p>
-    <label><input type="radio" name="q8" value="a"> Saturation &mdash; the sigmoids are near their steepest, not in their flat zones</label>
-    <label><input type="radio" name="q8" value="b"> Small weights &mdash; the slopes prove the weights are large enough</label>
-    <label><input type="radio" name="q8" value="c"> The chain rule &mdash; multiplication of factors cannot occur at these slopes</label>
-    <label><input type="radio" name="q8" value="d"> Nothing &mdash; slopes near 0.25 are exactly what saturation looks like</label>
+    <label><input type="radio" name="q8" value="a"> Saturation: the sigmoids are near their steepest, not in their flat zones</label>
+    <label><input type="radio" name="q8" value="b"> Small weights: the slopes prove the weights are large enough</label>
+    <label><input type="radio" name="q8" value="c"> The chain rule: multiplication of factors cannot occur at these slopes</label>
+    <label><input type="radio" name="q8" value="d"> Nothing: slopes near 0.25 are exactly what saturation looks like</label>
   </div>
 
   <div class="question" data-id="9" data-answer="c"
@@ -188,9 +188,9 @@
   </div>
 
   <div class="question" data-id="10" data-answer="b"
-       data-explain="A loss pinned at the know-nothing value means no useful gradient reaches the layers that would need to change; the first diagnostic is a per-layer gradient measurement, which takes one forward/backward pass. Cranking the learning rate fights the symptom &mdash; and <a href='module-3.html'>Module 3</a> shows it stops working entirely at depth 8.">
+       data-explain="A loss pinned at the know-nothing value means no useful gradient reaches the layers that would need to change; the first diagnostic is a per-layer gradient measurement, which takes one forward/backward pass. Cranking the learning rate fights the symptom, and <a href='module-3.html'>Module 3</a> shows it stops working entirely at depth 8.">
     <p class="q-text">10. <span class="module-marker">[Module 3]</span> A colleague&rsquo;s deep sigmoid classifier sits at loss 0.693 for 300 epochs. Per this workshop, what is the best <em>first</em> action?</p>
-    <label><input type="radio" name="q10" value="a"> Train longer &mdash; deep networks converge slowly</label>
+    <label><input type="radio" name="q10" value="a"> Train longer: deep networks converge slowly</label>
     <label><input type="radio" name="q10" value="b"> Measure per-layer gradient norms with one forward/backward pass</label>
     <label><input type="radio" name="q10" value="c"> Increase the learning rate 10&times; and rerun</label>
     <label><input type="radio" name="q10" value="d"> Add more neurons per layer to increase capacity</label>
@@ -204,8 +204,8 @@
   </div>
 
   <div class="question" data-id="12" data-answer="c"
-       data-explain="5.70 is far above the 0.693 know-nothing score: the network is confidently wrong, not ignorant. The gradient imbalance means steps sized to move the starved bottom layers fling the healthy top layers past every minimum &mdash; the crank has a cliff on both sides (<a href='module-3.html'>Module 3</a>).">
-    <p class="q-text">12. <span class="module-marker">[Module 3]</span> At lr = 50 the plain network&rsquo;s final training loss is 5.70 &mdash; far <em>above</em> the 0.693 plateau. What happened?</p>
+       data-explain="5.70 is far above the 0.693 know-nothing score: the network is confidently wrong, not ignorant. The gradient imbalance means steps sized to move the starved bottom layers fling the healthy top layers past every minimum; the crank has a cliff on both sides (<a href='module-3.html'>Module 3</a>).">
+    <p class="q-text">12. <span class="module-marker">[Module 3]</span> At lr = 50 the plain network&rsquo;s final training loss is 5.70, far <em>above</em> the 0.693 plateau. What happened?</p>
     <label><input type="radio" name="q12" value="a"> The gradients vanished even faster at the higher learning rate</label>
     <label><input type="radio" name="q12" value="b"> The loss function overflowed numerically</label>
     <label><input type="radio" name="q12" value="c"> The well-conditioned top layers were flung past minima, leaving the net confidently wrong</label>
@@ -213,47 +213,47 @@
   </div>
 
   <div class="question" data-id="13" data-answer="b"
-       data-explain="Measured: BN&rsquo;s slopes (0.2009&ndash;0.2025) are <em>lower</em> than plain&rsquo;s (0.2313&ndash;0.2467), yet its layer-1 gradient is ~800&times; larger. BN widens the pre-activation spread to std 1, pushing more mass toward the sigmoid&rsquo;s shoulders &mdash; and fixes the network anyway, because the mechanism is scale, not saturation (<a href='module-4.html'>Module 4</a>).">
+       data-explain="Measured: BN&rsquo;s slopes (0.2009&ndash;0.2025) are <em>lower</em> than plain&rsquo;s (0.2313&ndash;0.2467), yet its layer-1 gradient is ~800&times; larger. BN widens the pre-activation spread to std 1, pushing more mass toward the sigmoid&rsquo;s shoulders, and fixes the network anyway, because the mechanism is scale, not saturation (<a href='module-4.html'>Module 4</a>).">
     <p class="q-text">13. <span class="module-marker">[Module 4]</span> Comparing measured mean sigmoid slopes at identical weights: what did adding batch norm do to them, and why does it matter?</p>
     <label><input type="radio" name="q13" value="a"> Raised them toward 0.25, confirming BN works by avoiding saturation</label>
-    <label><input type="radio" name="q13" value="b"> Lowered them &mdash; while gradients grew ~800&times; &mdash; refuting the saturation explanation</label>
+    <label><input type="radio" name="q13" value="b"> Lowered them (while gradients grew ~800&times;), refuting the saturation explanation</label>
     <label><input type="radio" name="q13" value="c"> Left them exactly unchanged, since the weights are identical</label>
     <label><input type="radio" name="q13" value="d"> Drove them to zero, which is why &gamma; and &beta; are needed</label>
   </div>
 
   <div class="question" data-id="14" data-answer="a"
-       data-explain="Differentiating (z &minus; &mu;)/&sigma; puts 1/&sigma;<sub>B</sub> into the backward path: the small pre-activation spread (0.23&ndash;0.56) becomes a 2&ndash;4&times; per-layer boost that cancels the slope-and-weights shrinkage. Measured hop factors: 0.82, 0.70, 0.97 &mdash; no compounding. See <a href='module-4.html'>Module 4</a>.">
+       data-explain="Differentiating (z &minus; &mu;)/&sigma; puts 1/&sigma;<sub>B</sub> into the backward path: the small pre-activation spread (0.23&ndash;0.56) becomes a 2&ndash;4&times; per-layer boost that cancels the slope-and-weights shrinkage. Measured hop factors: 0.82, 0.70, 0.97; no compounding. See <a href='module-4.html'>Module 4</a>.">
     <p class="q-text">14. <span class="module-marker">[Module 4]</span> Mechanically, how does batch norm restore the <em>backward</em> signal?</p>
-    <label><input type="radio" name="q14" value="a"> Its backward pass divides by the small batch std &mdash; a per-layer gain boost that pins the hop factor near 1</label>
+    <label><input type="radio" name="q14" value="a"> Its backward pass divides by the small batch std, a per-layer gain boost that pins the hop factor near 1</label>
     <label><input type="radio" name="q14" value="b"> It clips gradients below a threshold so they cannot shrink further</label>
     <label><input type="radio" name="q14" value="c"> It adds &gamma; and &beta;, whose gradients are large and propagate downward</label>
     <label><input type="radio" name="q14" value="d"> It skips the sigmoid during backpropagation</label>
   </div>
 
   <div class="question" data-id="15" data-answer="c"
-       data-explain="&gamma; and &beta; return the choice of distribution to the network. The trained net exercised it: layer 1&rsquo;s neuron 2 learned &gamma; = 4.70, spreading its inputs ~5&times; wider than standard &mdash; deliberately buying saturation to act as a sharp threshold. See <a href='module-4.html'>Module 4</a>.">
-    <p class="q-text">15. <span class="module-marker">[Module 4]</span> BN standardizes to mean 0, spread 1 &mdash; then immediately lets learned &gamma;, &beta; re-scale and re-shift. What did the trained network&rsquo;s &gamma; = 4.70 on one neuron demonstrate?</p>
+       data-explain="&gamma; and &beta; return the choice of distribution to the network. The trained net exercised it: layer 1&rsquo;s neuron 2 learned &gamma; = 4.70, spreading its inputs ~5&times; wider than standard, deliberately buying saturation to act as a sharp threshold. See <a href='module-4.html'>Module 4</a>.">
+    <p class="q-text">15. <span class="module-marker">[Module 4]</span> BN standardizes to mean 0, spread 1, then immediately lets learned &gamma;, &beta; re-scale and re-shift. What did the trained network&rsquo;s &gamma; = 4.70 on one neuron demonstrate?</p>
     <label><input type="radio" name="q15" value="a"> A training instability: &gamma; should stay near 1 in a healthy network</label>
     <label><input type="radio" name="q15" value="b"> That &gamma; compensates for the learning rate being too small</label>
-    <label><input type="radio" name="q15" value="c"> The network chose a much wider input spread for that neuron &mdash; deliberately buying saturation for a switch-like response</label>
+    <label><input type="radio" name="q15" value="c"> The network chose a much wider input spread for that neuron, deliberately buying saturation for a switch-like response</label>
     <label><input type="radio" name="q15" value="d"> That &gamma; converges to the batch std &sigma;<sub>B</sub></label>
   </div>
 
   <div class="question" data-id="16" data-answer="b"
-       data-explain="ReLU&rsquo;s slope is exactly 1 wherever the unit is active, so an active path passes gradients with no attenuation at all &mdash; versus the sigmoid&rsquo;s at-best 0.25 per layer. (Its slope is 0 when inactive, which is the dead-neuron wrinkle behind the 93% result.) See <a href='module-5.html'>Module 5</a>.">
+       data-explain="ReLU&rsquo;s slope is exactly 1 wherever the unit is active, so an active path passes gradients with no attenuation at all, versus the sigmoid&rsquo;s at-best 0.25 per layer. (Its slope is 0 when inactive, which is the dead-neuron wrinkle behind the 93% result.) See <a href='module-5.html'>Module 5</a>.">
     <p class="q-text">16. <span class="module-marker">[Module 5]</span> Which property of ReLU attacks the vanishing-gradient factor?</p>
     <label><input type="radio" name="q16" value="a"> It is bounded between 0 and 1, like the sigmoid but cheaper</label>
-    <label><input type="radio" name="q16" value="b"> Its slope is exactly 1 wherever the unit is active &mdash; zero attenuation on active paths</label>
+    <label><input type="radio" name="q16" value="b"> Its slope is exactly 1 wherever the unit is active: zero attenuation on active paths</label>
     <label><input type="radio" name="q16" value="c"> It normalizes each batch to mean 0 and spread 1</label>
     <label><input type="radio" name="q16" value="d"> Its outputs are always positive, which keeps weights growing</label>
   </div>
 
   <div class="question" data-id="17" data-answer="c"
-       data-explain="Accuracy that depends on batch size is BN&rsquo;s batch statistics talking: the model is in train mode, normalizing each request batch by its own mean/std. Measured on this workshop&rsquo;s net: 100% in eval mode, 71.5% in train mode with batches of 2 &mdash; while the full-batch offline check still showed 100%. Fix: <code>model.eval()</code>. See <a href='module-5.html'>Module 5</a>.">
+       data-explain="Accuracy that depends on batch size is BN&rsquo;s batch statistics talking: the model is in train mode, normalizing each request batch by its own mean/std. Measured on this workshop&rsquo;s net: 100% in eval mode, 71.5% in train mode with batches of 2, while the full-batch offline check still showed 100%. Fix: <code>model.eval()</code>. See <a href='module-5.html'>Module 5</a>.">
     <p class="q-text">17. <span class="module-marker">[Module 5]</span> A deployed BN model aces offline evaluation (one large batch) but gives erratic, batch-size-dependent predictions on live traffic arriving in ones and twos. What is the diagnosis?</p>
     <label><input type="radio" name="q17" value="a"> Distribution shift between offline data and live traffic</label>
     <label><input type="radio" name="q17" value="b"> The learning rate was too high in the final epochs</label>
-    <label><input type="radio" name="q17" value="c"> The model was left in train mode &mdash; BN is normalizing each tiny batch by its own statistics; call <code>model.eval()</code></label>
+    <label><input type="radio" name="q17" value="c"> The model was left in train mode: BN is normalizing each tiny batch by its own statistics; call <code>model.eval()</code></label>
     <label><input type="radio" name="q17" value="d"> Dead ReLU neurons activated by the smaller batches</label>
   </div>
 
@@ -313,7 +313,7 @@ function grade() {
   scoreEl.hidden = false;
   scoreEl.className = passed ? 'pass' : 'fail';
   scoreEl.textContent =
-    'Score: ' + score + '/100 — ' + correct + '/' + total + ' correct — ' +
+    'Score: ' + score + '/100 (' + correct + '/' + total + ' correct): ' +
     (passed ? 'PASS' : 'FAIL');
   scoreEl.scrollIntoView({behavior: 'smooth', block: 'center'});
 }
