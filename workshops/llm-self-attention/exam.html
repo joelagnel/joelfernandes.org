@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final Exam: LLM Self-Attention by Hand</title>
+<style>
+  :root {
+    --primary: #1976d2;
+    --primary-dark: #0d47a1;
+    --pass: #2e7d32;
+    --pass-bg: #c8e6c9;
+    --fail: #c62828;
+    --fail-bg: #ffcdd2;
+    --bg: #fafafa;
+    --border: #d0d0d0;
+    --text: #212121;
+    --muted: #616161;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    max-width: max(820px, 96%); margin: 2em auto; padding: 0 1em;
+    line-height: 1.6; color: var(--text); background: white;
+  }
+  h1 { border-bottom: 3px solid var(--primary); padding-bottom: 0.4em; margin-top: 0.5em; }
+  .intro {
+    background: #e3f2fd; padding: 1em 1.2em; border-left: 4px solid var(--primary);
+    margin: 1em 0; border-radius: 0 6px 6px 0;
+  }
+  .nav { margin: 1em 0; font-size: 0.95em; }
+  .nav a { color: var(--primary); text-decoration: none; }
+  .nav a:hover { text-decoration: underline; }
+  .question {
+    border: 1px solid var(--border); padding: 1em 1.2em; margin: 1em 0;
+    border-radius: 8px; background: var(--bg);
+  }
+  .question.correct { border-color: var(--pass); background: #f1f8e9; }
+  .question.incorrect { border-color: var(--fail); background: #ffebee; }
+  .question .q-text { font-weight: 600; margin-top: 0; }
+  .question label {
+    display: block; margin: 0.4em 0; padding: 0.4em 0.6em; cursor: pointer;
+    border-radius: 4px; transition: background 0.15s;
+  }
+  .question label:hover { background: rgba(25, 118, 210, 0.08); }
+  .question input[type="text"] {
+    width: 100%; padding: 0.5em; font-size: 1em;
+    font-family: "Roboto Mono", "Menlo", monospace;
+    border: 1px solid var(--border); border-radius: 4px;
+  }
+  .explanation {
+    margin-top: 0.8em; padding: 0.7em 0.9em; background: white;
+    border-left: 3px solid var(--muted); font-size: 0.95em;
+  }
+  .explanation .verdict { font-weight: 600; }
+  .explanation .verdict.ok { color: var(--pass); }
+  .explanation .verdict.bad { color: var(--fail); }
+  code {
+    background: #f0f0f0; padding: 0.1em 0.4em; border-radius: 3px;
+    font-family: "Roboto Mono", "Menlo", monospace; font-size: 0.92em;
+  }
+  .actions { margin: 1.5em 0; text-align: center; }
+  button {
+    padding: 0.8em 1.8em; font-size: 1.05em; cursor: pointer;
+    background: var(--primary); color: white; border: none; border-radius: 6px;
+    font-weight: 600;
+  }
+  button:hover { background: var(--primary-dark); }
+  button.secondary { background: white; color: var(--primary); border: 1px solid var(--primary); margin-left: 0.5em; }
+  button.secondary:hover { background: #e3f2fd; }
+  #score {
+    font-size: 1.5em; text-align: center; padding: 1em; margin: 1.5em 0;
+    border-radius: 8px; font-weight: 600;
+  }
+  #score.pass { background: var(--pass-bg); color: var(--pass); border: 2px solid var(--pass); }
+  #score.fail { background: var(--fail-bg); color: var(--fail); border: 2px solid var(--fail); }
+  .module-marker {
+    color: var(--muted); font-size: 0.85em; font-weight: 400;
+    margin-left: 0.5em;
+  }
+
+  @media (max-width: 600px) {
+    body { margin: 1em auto; padding: 0 .65em; font-size: 15px; }
+    h1 { font-size: 1.35em; }
+    .intro { padding: .85em 1em; }
+    .question { padding: .85em 1em; margin: .9em 0; border-radius: 6px; }
+    .question .q-text { font-size: 1em; }
+    .question label { font-size: .98em; padding: .5em .55em; margin: .35em 0; }
+    .question input[type="text"] { font-size: 1em; padding: .55em .6em; }
+    .module-marker { display: block; margin: .15em 0 .3em; margin-left: 0; }
+    .actions { margin: 1.2em 0; }
+    button { width: 100%; padding: .85em 1em; font-size: 1em; }
+    button.secondary { margin: .5em 0 0; }
+    #score { font-size: 1.2em; padding: .85em; }
+    .explanation { padding: .6em .75em; font-size: .9em; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Final Exam: LLM Self-Attention by Hand</h1>
+
+<div class="intro">
+  <p>Answer every question, then click <b>Submit</b> at the bottom. Each question is worth equal weight.</p>
+  <p><b>Passing score: 70/100.</b> No state is saved; you can retry as many times as you like.</p>
+</div>
+
+<div class="nav">
+  &larr; Back to the <a href="index.html">workshop overview</a>
+</div>
+
+<form id="exam" onsubmit="event.preventDefault(); grade();">
+
+  <div class="question" data-id="1" data-answer="b"
+       data-explain="The dot product multiplies matching slots and adds the products, so it is large exactly when both vectors have large values on the same axes. See <a href='module-0.html'>Module 0</a>, Tool 1.">
+    <p class="q-text">1. <span class="module-marker">[Module 0]</span> A large positive dot product between two word vectors tells you that:</p>
+    <label><input type="radio" name="q1" value="a"> The two words usually appear next to each other in text</label>
+    <label><input type="radio" name="q1" value="b"> The two vectors have large values on the same axes, i.e. they point in similar directions</label>
+    <label><input type="radio" name="q1" value="c"> Both vectors contain only positive numbers</label>
+    <label><input type="radio" name="q1" value="d"> The two vectors have the same number of dimensions</label>
+  </div>
+
+  <div class="question" data-id="2" data-answer="0.25"
+       data-explain="Softmax only responds to differences between scores. Four equal scores mean four equal exponentials, so each takes a quarter of the sum. See <a href='module-0.html'>Module 0</a>, Tool 2 (and quiz question 1).">
+    <p class="q-text">2. <span class="module-marker">[Module 0]</span> Four words all score exactly 7.0. What share does softmax give each of them? (Answer as a decimal, e.g. <code>0.10</code>)</p>
+    <input type="text" name="q2" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="question" data-id="3" data-answer="c"
+       data-explain="Module 0 measured it: softmax([0, 0.54, 0.99]) gave the zero-scoring word an 18.5% share, because e^0 = 1, not 0. Shares always sum to 1 and are always positive, but a zero score does NOT mean a zero share. See <a href='module-0.html'>Module 0</a>.">
+    <p class="q-text">3. <span class="module-marker">[Module 0]</span> Which statement about softmax is FALSE?</p>
+    <label><input type="radio" name="q3" value="a"> The output shares always sum to exactly 1</label>
+    <label><input type="radio" name="q3" value="b"> A bigger score always gets a bigger share</label>
+    <label><input type="radio" name="q3" value="c"> A score of exactly 0 gets a share of exactly 0</label>
+    <label><input type="radio" name="q3" value="d"> Multiplying all scores by 5 makes the largest share bigger whenever the scores differ</label>
+  </div>
+
+  <div class="question" data-id="4" data-answer="b"
+       data-explain="A vector dotted with itself sums the squares of its own entries: every axis agrees with itself perfectly, while another word can only match on shared axes. This self-match fact is why Module 1's attention is self-focused, and part of what <a href='module-2.html'>Module 2</a>'s queries and keys fix.">
+    <p class="q-text">4. <span class="module-marker">[Module 0]</span> In the toy world, bank's highest dot product (0.990) is with itself, beating even "river" (0.540). Why?</p>
+    <label><input type="radio" name="q4" value="a"> "bank" happens to be the longest vector in the table</label>
+    <label><input type="radio" name="q4" value="b"> A vector dotted with itself sums the squares of its entries, so every axis matches perfectly</label>
+    <label><input type="radio" name="q4" value="c"> The table was hand-designed to make this happen; learned embeddings behave differently</label>
+    <label><input type="radio" name="q4" value="d"> Softmax boosts the diagonal of every score matrix</label>
+  </div>
+
+  <div class="question" data-id="5" data-answer="a"
+       data-explain="Row i, column j of <code>X @ X.T</code> is the dot product of word i's embedding with word j's: the entire pairwise similarity table in one expression. Softmax and the blend are the other two lines. See <a href='module-1.html'>Module 1</a>.">
+    <p class="q-text">5. <span class="module-marker">[Module 1]</span> In <code>simple_attention</code>, the expression <code>X @ X.T</code> computes:</p>
+    <label><input type="radio" name="q5" value="a"> Every pairwise dot-product score between words in the sentence</label>
+    <label><input type="radio" name="q5" value="b"> The blended output vectors</label>
+    <label><input type="radio" name="q5" value="c"> The attention weights, ready to use</label>
+    <label><input type="radio" name="q5" value="d"> A normalized copy of the embeddings</label>
+  </div>
+
+  <div class="question" data-id="6" data-answer="false"
+       data-explain="The script checked this directly (log line 28): the embedding row for &quot;bank&quot; is byte-identical in both sentences. Context enters only through the attention OUTPUT, never the lookup. See <a href='module-1.html'>Module 1</a>.">
+    <p class="q-text">6. <span class="module-marker">[Module 1]</span> True or false: in "the money bank", the input embedding row for "bank" is different from its row in "the river bank".</p>
+    <label><input type="radio" name="q6" value="true"> True</label>
+    <label><input type="radio" name="q6" value="false"> False</label>
+  </div>
+
+  <div class="question" data-id="7" data-answer="b"
+       data-explain="Bank's blend took 31.7% of river's vector, and river carries 0.9 water-ness (0.317 x 0.9 = 0.285 of the final 0.435). Nothing rewrote bank's own row; the water arrived through the weighted average. See <a href='module-1.html'>Module 1</a>, the payoff section.">
+    <p class="q-text">7. <span class="module-marker">[Module 1]</span> After simple attention on "the river bank", bank's output was watery (water 0.435 vs money 0.149). Where did the extra water-ness come from?</p>
+    <label><input type="radio" name="q7" value="a"> The embedding table's "bank" row was updated for this sentence</label>
+    <label><input type="radio" name="q7" value="b"> The blend mixed in 31.7% of river's vector, which carries 0.9 on the water axis</label>
+    <label><input type="radio" name="q7" value="c"> Softmax suppressed the money axis of every word</label>
+    <label><input type="radio" name="q7" value="d"> The water axis is listed first, so it receives the largest weight</label>
+  </div>
+
+  <div class="question" data-id="8" data-answer="b"
+       data-explain="Each ROW of the score matrix goes through softmax independently, and softmax output always sums to 1. Columns are just where shares happen to land. See <a href='module-1.html'>Module 1</a> (and <a href='module-0.html'>Module 0</a>, Tool 2).">
+    <p class="q-text">8. <span class="module-marker">[Module 1]</span> In an attention weight matrix, every row sums to 1 but columns do not. Why the rows?</p>
+    <label><input type="radio" name="q8" value="a"> The embeddings are normalized to length 1 before scoring</label>
+    <label><input type="radio" name="q8" value="b"> Each row is one word's scores passed through softmax, which always produces shares summing to 1</label>
+    <label><input type="radio" name="q8" value="c"> The score matrix is symmetric, which forces the rows to balance</label>
+    <label><input type="radio" name="q8" value="d"> NumPy's <code>@</code> operator normalizes its output rows</label>
+  </div>
+
+  <div class="question" data-id="9" data-answer="b"
+       data-explain="Queries ask, keys advertise: the score pairs word i's QUESTION with word j's BADGE, which is what lets a word seek something other than its own identity. See <a href='module-2.html'>Module 2</a>.">
+    <p class="q-text">9. <span class="module-marker">[Module 2]</span> With queries and keys, the score <code>q_i . k_j</code> is best read as:</p>
+    <label><input type="radio" name="q9" value="a"> How similar the identities of words i and j are</label>
+    <label><input type="radio" name="q9" value="b"> How well word j's advertisement answers word i's question</label>
+    <label><input type="radio" name="q9" value="c"> How close words i and j are in the sentence</label>
+    <label><input type="radio" name="q9" value="d"> How likely word j is to follow word i in real text</label>
+  </div>
+
+  <div class="question" data-id="10" data-answer="false"
+       data-explain="score(i,j) = q_i . k_j and score(j,i) = q_j . k_i use DIFFERENT vector pairs, so nothing forces equality: the wired head measured bank-to-river at 1.620 but river-to-bank at 0.360 (log line 63). Only Module 1's X @ X.T is forced symmetric. See <a href='module-2.html'>Module 2</a>.">
+    <p class="q-text">10. <span class="module-marker">[Module 2]</span> True or false: even with separate query and key matrices, the score matrix must stay symmetric (score(i,j) = score(j,i)).</p>
+    <label><input type="radio" name="q10" value="true"> True</label>
+    <label><input type="radio" name="q10" value="false"> False</label>
+  </div>
+
+  <div class="question" data-id="11" data-answer="b"
+       data-explain="Under the wired head, bank's row became [0.159, 0.500, 0.341]: half its update comes from &quot;river&quot; (log line 69). Its question is &quot;who carries topic?&quot;, which it does not best answer itself: self-focus broken. See <a href='module-2.html'>Module 2</a>.">
+    <p class="q-text">11. <span class="module-marker">[Module 2]</span> Under the hand-wired query/key head, which word receives the LARGEST share of bank's attention in "the river bank"?</p>
+    <label><input type="radio" name="q11" value="a"> bank itself, as always</label>
+    <label><input type="radio" name="q11" value="b"> river</label>
+    <label><input type="radio" name="q11" value="c"> the</label>
+    <label><input type="radio" name="q11" value="d"> It splits exactly evenly</label>
+  </div>
+
+  <div class="question" data-id="12" data-answer="c"
+       data-explain="Section 5 measured both halves: dot-product spread grows like sqrt(d_k) (std 16.03 at d = 256), and unscaled softmax drifts to winner-take-all (avg top weight 0.941). Dividing by sqrt(d_k) cancels the measured growth so the head behaves identically at every size. See <a href='module-2.html'>Module 2</a>.">
+    <p class="q-text">12. <span class="module-marker">[Module 2]</span> The real reason attention divides scores by sqrt(d_k) is:</p>
+    <label><input type="radio" name="q12" value="a"> To keep the weights positive</label>
+    <label><input type="radio" name="q12" value="b"> To make the score matrix invertible</label>
+    <label><input type="radio" name="q12" value="c"> Dot-product spread grows like sqrt(d_k), and unscaled scores push softmax into winner-take-all; the division cancels the growth</label>
+    <label><input type="radio" name="q12" value="d"> To make the computation faster on GPUs</label>
+  </div>
+
+  <div class="question" data-id="13" data-answer="10"
+       data-explain="The measured law: score spread is about sqrt(d_k). sqrt(100) = 10, matching the pattern in the log (1.97 at d=4, 4.02 at 16, 8.01 at 64, 16.03 at 256). See <a href='module-2.html'>Module 2</a>, the scaling measurement.">
+    <p class="q-text">13. <span class="module-marker">[Module 2]</span> Queries and keys have 100 dimensions with unit-variance entries. By the workshop's measured growth law, the typical spread (standard deviation) of the raw scores is about: (a whole number)</p>
+    <input type="text" name="q13" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="question" data-id="14" data-answer="a"
+       data-explain="Module 0 measured that a score of 0 still earns e^0 = 1, an 18.5% share in the three-word example. Only e^(-infinity) = 0 silences a position exactly. See <a href='module-3.html'>Module 3</a>, the causal mask.">
+    <p class="q-text">14. <span class="module-marker">[Module 3]</span> The causal mask sets future scores to negative infinity rather than 0 because:</p>
+    <label><input type="radio" name="q14" value="a"> A score of 0 still gets a positive softmax share (e^0 = 1); only negative infinity produces an exactly-zero share</label>
+    <label><input type="radio" name="q14" value="b"> Zero would divide by zero inside softmax</label>
+    <label><input type="radio" name="q14" value="c"> Negative infinity is faster for the hardware to process</label>
+    <label><input type="radio" name="q14" value="d"> It prevents the exponential from overflowing</label>
+  </div>
+
+  <div class="question" data-id="15" data-answer="1"
+       data-explain="The mask leaves the first word exactly one visible word: itself. Softmax over that single score is that exponential divided by itself, so the first word's whole weight (1.000) lands on itself, for any sentence and any matrices (the measured table shows 1.000, 0.000, 0.000). See <a href='module-3.html'>Module 3</a>.">
+    <p class="q-text">15. <span class="module-marker">[Module 3]</span> Under a causal mask, how many words (including itself) can the FIRST word of any sentence attend to? (a whole number)</p>
+    <input type="text" name="q15" autocomplete="off" spellcheck="false">
+  </div>
+
+  <div class="question" data-id="16" data-answer="false"
+       data-explain="2.22e-16 is machine epsilon for double precision (2 to the power -52): at the scale of these outputs, the gap between one representable number and the next. Disagreement at that level means the two codebases compute the same function with slightly different arithmetic ordering; a real bug would show up many orders of magnitude larger. See <a href='module-3.html'>Module 3</a>.">
+    <p class="q-text">16. <span class="module-marker">[Module 3]</span> True or false: the measured 2.22e-16 difference between the NumPy head and PyTorch's implementation indicates a small bug in one of them.</p>
+    <label><input type="radio" name="q16" value="true"> True</label>
+    <label><input type="radio" name="q16" value="false"> False</label>
+  </div>
+
+  <div class="question" data-id="17" data-answer="b"
+       data-explain="No formula in the mechanism ever consults a position index: scores depend only on vector contents, so reversing the sentence just permutes the output rows (measured: bank's output is identical in &quot;bank river the&quot;). That is why models add position information to the embeddings BEFORE attention. See <a href='module-3.html'>Module 3</a>.">
+    <p class="q-text">17. <span class="module-marker">[Module 3]</span> The workshop measured that attention alone gives "bank" the identical output in "the river bank" and "bank river the". The root cause is:</p>
+    <label><input type="radio" name="q17" value="a"> Softmax sorts the scores before normalizing them</label>
+    <label><input type="radio" name="q17" value="b"> Scores depend only on the content of the vectors; no part of the computation uses a word's position</label>
+    <label><input type="radio" name="q17" value="c"> The causal mask removes word-order information</label>
+    <label><input type="radio" name="q17" value="d"> The toy embeddings are too small to encode order</label>
+  </div>
+
+  <div class="question" data-id="18" data-answer="c"
+       data-explain="The MLP processes each word's vector separately, the tokenizer just looks up IDs, and the output softmax scores vocabulary entries. Self-attention's blend across positions is the ONLY step where information moves between words. See <a href='module-3.html'>Module 3</a>, the GPT-2 stack.">
+    <p class="q-text">18. <span class="module-marker">[Module 3]</span> Inside a transformer block, the only place where information moves BETWEEN words is:</p>
+    <label><input type="radio" name="q18" value="a"> The MLP</label>
+    <label><input type="radio" name="q18" value="b"> The tokenizer</label>
+    <label><input type="radio" name="q18" value="c"> The self-attention blend</label>
+    <label><input type="radio" name="q18" value="d"> The final next-token softmax</label>
+  </div>
+
+</form>
+
+<div class="actions">
+  <button onclick="grade()">Submit Exam</button>
+  <button class="secondary" onclick="reset_exam()">Reset</button>
+</div>
+
+<div id="score" hidden></div>
+
+<script>
+function grade() {
+  const questions = document.querySelectorAll('.question');
+  let correct = 0;
+
+  questions.forEach(q => {
+    const id = q.dataset.id;
+    const expected = (q.dataset.answer || '').trim().toLowerCase();
+    const explain = q.dataset.explain || '';
+    let actual = '';
+
+    const radio = q.querySelector('input[name="q' + id + '"]:checked');
+    if (radio) actual = (radio.value || '').trim().toLowerCase();
+    const text = q.querySelector('input[type="text"][name="q' + id + '"]');
+    if (text) actual = (text.value || '').trim().toLowerCase();
+
+    const isCorrect = actual !== '' && actual === expected;
+    q.classList.remove('correct', 'incorrect');
+    q.classList.add(isCorrect ? 'correct' : 'incorrect');
+
+    let exp = q.querySelector('.explanation');
+    if (!exp) {
+      exp = document.createElement('div');
+      exp.className = 'explanation';
+      q.appendChild(exp);
+    }
+    const verdictClass = isCorrect ? 'ok' : 'bad';
+    const verdictText = isCorrect ? 'Correct.' : 'Incorrect.';
+    const yoursLabel = actual === '' ? '(no answer)' : actual;
+    exp.innerHTML =
+      '<span class="verdict ' + verdictClass + '">' + verdictText + '</span> ' +
+      'Your answer: <code>' + escape_html(yoursLabel) + '</code>. ' +
+      'Expected: <code>' + escape_html(expected) + '</code>. ' +
+      explain;
+
+    if (isCorrect) correct++;
+  });
+
+  const total = questions.length;
+  const score = total ? Math.round((correct / total) * 100) : 0;
+  const passed = score >= 70;
+  const scoreEl = document.getElementById('score');
+  scoreEl.hidden = false;
+  scoreEl.className = passed ? 'pass' : 'fail';
+  scoreEl.textContent =
+    'Score: ' + score + '/100 | ' + correct + '/' + total + ' correct | ' +
+    (passed ? 'PASS' : 'FAIL');
+  scoreEl.scrollIntoView({behavior: 'smooth', block: 'center'});
+}
+
+function reset_exam() {
+  document.querySelectorAll('.question').forEach(q => {
+    q.classList.remove('correct', 'incorrect');
+    const exp = q.querySelector('.explanation');
+    if (exp) exp.remove();
+  });
+  document.getElementById('exam').reset();
+  const scoreEl = document.getElementById('score');
+  scoreEl.hidden = true;
+  scoreEl.className = '';
+  scoreEl.textContent = '';
+  window.scrollTo({top: 0, behavior: 'smooth'});
+}
+
+function escape_html(s) {
+  return String(s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+</script>
+
+</body>
+</html>
