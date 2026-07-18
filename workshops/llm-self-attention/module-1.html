@@ -941,9 +941,82 @@ stacks its looked-up rows into a matrix, one row per word of that sentence:</p>
 <span class="sd">    """</span>
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">EMBED</span><span class="p">[</span><span class="n">w</span><span class="p">]</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="n">sentence</span><span class="p">])</span>
 </code></pre></div>
-<p>When <a href="experiment-source.html">Section 3's pass of the script</a> starts, the first thing it
-does is embed both test sentences and check the claim just made: does "bank" really get
-the same row in both matrices? This is what writes
+<p>For the two test sentences, the helper stacks these rows (straight from Module 0's
+embedding table, <a href="results-log.html">log lines 9-13</a>):</p>
+<p><code>X_river</code>, for "the river bank":</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th></th>
+<th align="right">water</th>
+<th align="right">money</th>
+<th align="right">place</th>
+<th align="right">filler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">1.0</td>
+</tr>
+<tr>
+<td>river</td>
+<td align="right">0.9</td>
+<td align="right">0.0</td>
+<td align="right">0.3</td>
+<td align="right">0.0</td>
+</tr>
+<tr>
+<td>bank</td>
+<td align="right">0.3</td>
+<td align="right">0.3</td>
+<td align="right">0.9</td>
+<td align="right">0.0</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>X_money</code>, for "the money bank":</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th></th>
+<th align="right">water</th>
+<th align="right">money</th>
+<th align="right">place</th>
+<th align="right">filler</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>the</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">0.0</td>
+<td align="right">1.0</td>
+</tr>
+<tr>
+<td>money</td>
+<td align="right">0.0</td>
+<td align="right">0.9</td>
+<td align="right">0.1</td>
+<td align="right">0.0</td>
+</tr>
+<tr>
+<td>bank</td>
+<td align="right">0.3</td>
+<td align="right">0.3</td>
+<td align="right">0.9</td>
+<td align="right">0.0</td>
+</tr>
+</tbody>
+</table></div>
+<p>Only the middle row differs between the two matrices. The "bank" row is visibly the same
+four numbers in both: the problem this module exists to fix, sitting in plain sight. When
+<a href="experiment-source.html">Section 3's pass of the script</a> starts, the first thing it does
+is build both matrices and check that fact exactly; this is what writes
 <a href="results-log.html"><code>captures/results.log</code> line 28</a>:</p>
 <div class="codehilite"><pre><span></span><code>    <span class="n">X_river</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">SENT_RIVER</span><span class="p">)</span>
     <span class="n">X_money</span> <span class="o">=</span> <span class="n">embed</span><span class="p">(</span><span class="n">SENT_MONEY</span><span class="p">)</span>
