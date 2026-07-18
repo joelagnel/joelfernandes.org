@@ -333,3 +333,22 @@ iframe.sitenav {
 		overflow-x: hidden;
 	}
 }
+
+/* Mobile top-bar nav: replaces the fixed left pane, which is hidden below
+   1050px. Appended last so it wins over the older flat .navmobile rules in the
+   768px/960px blocks above. */
+div.navmobile { display: none; }
+@media screen and (max-width: 1050px) {
+	div.navmobile {
+		display: block;
+		visibility: visible;
+		padding: 8px 6px;
+		background-color: #f0f0f0;
+		font-family: Avenir, Arial, sans-serif;
+		font-size: 14px;
+		line-height: 1.7em;
+		text-align: center;
+	}
+	div.navmobile a { margin: 0 7px; white-space: nowrap; display: inline-block; }
+	div.navmobile .navsep { color: #999; }
+}
