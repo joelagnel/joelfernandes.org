@@ -4,28 +4,93 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Final Exam: LLM Self-Attention by Hand</title>
+<script>(function(){var t='aurora';try{t=localStorage.getItem('handson-theme')||t;}catch(e){}document.documentElement.setAttribute('data-theme',t);})();</script>
 <style>
-  :root {
-    --primary: #1976d2;
-    --primary-dark: #0d47a1;
-    --pass: #2e7d32;
-    --pass-bg: #c8e6c9;
-    --fail: #c62828;
-    --fail-bg: #ffcdd2;
-    --bg: #fafafa;
-    --border: #d0d0d0;
-    --text: #212121;
-    --muted: #616161;
+  /* Themes: shared with the workshop pages via localStorage['handson-theme'];
+     the exam has no picker and simply follows the choice made there. */
+  :root, [data-theme=aurora] {
+    color-scheme: dark;
+    --primary: #22d3ee;   --primary-dark: #67e8f9;  --btn-fg: #08303a;
+    --pass: #a3e635;      --pass-bg: #1d2e10;
+    --fail: #f87171;      --fail-bg: #3b1111;
+    --ok-tint: #131f0b;   --bad-tint: #2b0d0d;
+    --page-bg: #0d0b1e;   --panel: #171432;         --intro-bg: #0e2233;
+    --exp-bg: #100d24;    --border: #2b2650;
+    --text: #e6e4f5;      --muted: #a5a0c8;
+    --code-bg: #2b1f4d;   --code-fg: #d8b4fe;
+    --hover-tint: rgba(34,211,238,.12);
+  }
+  [data-theme=midnight] {
+    color-scheme: dark;
+    --primary: #60a5fa;   --primary-dark: #93c5fd;  --btn-fg: #0b1220;
+    --pass: #4ade80;      --pass-bg: #143124;
+    --fail: #f87171;      --fail-bg: #3f1212;
+    --ok-tint: #0d1f17;   --bad-tint: #2a0e0e;
+    --page-bg: #0b1220;   --panel: #131c2e;         --intro-bg: #122236;
+    --exp-bg: #0d1422;    --border: #243049;
+    --text: #e2e8f0;      --muted: #94a3b8;
+    --code-bg: #1e3a5f;   --code-fg: #bfdbfe;
+    --hover-tint: rgba(96,165,250,.12);
+  }
+  [data-theme=synthwave] {
+    color-scheme: dark;
+    --primary: #ff6ad5;   --primary-dark: #ff8fe0;  --btn-fg: #33041f;
+    --pass: #4ade80;      --pass-bg: #0c2d1c;
+    --fail: #fb7185;      --fail-bg: #3f0d1c;
+    --ok-tint: #081f14;   --bad-tint: #2b0714;
+    --page-bg: #16072b;   --panel: #22103f;         --intro-bg: #131046;
+    --exp-bg: #120524;    --border: #3b2a63;
+    --text: #f3e8ff;      --muted: #b795e0;
+    --code-bg: #3b1a63;   --code-fg: #f5d0fe;
+    --hover-tint: rgba(255,106,213,.14);
+  }
+  [data-theme=paper] {
+    color-scheme: light;
+    --primary: #1976d2;   --primary-dark: #0d47a1;  --btn-fg: #ffffff;
+    --pass: #2e7d32;      --pass-bg: #c8e6c9;
+    --fail: #c62828;      --fail-bg: #ffcdd2;
+    --ok-tint: #f1f8e9;   --bad-tint: #ffebee;
+    --page-bg: #ffffff;   --panel: #fafafa;         --intro-bg: #e3f2fd;
+    --exp-bg: #ffffff;    --border: #d0d0d0;
+    --text: #212121;      --muted: #616161;
+    --code-bg: #f0f0f0;   --code-fg: #212121;
+    --hover-tint: rgba(25,118,210,.08);
+  }
+  [data-theme=sepia] {
+    color-scheme: light;
+    --primary: #b45309;   --primary-dark: #92400e;  --btn-fg: #ffffff;
+    --pass: #4d7c0f;      --pass-bg: #e8f0d8;
+    --fail: #b91c1c;      --fail-bg: #f6d5d5;
+    --ok-tint: #f2f7e8;   --bad-tint: #f9eaea;
+    --page-bg: #f3ecdd;   --panel: #fbf6ea;         --intro-bg: #f6ecd9;
+    --exp-bg: #fbf6ea;    --border: #e0d3bd;
+    --text: #3f3226;      --muted: #6b5a48;
+    --code-bg: #ecdcc3;   --code-fg: #7c4a03;
+    --hover-tint: rgba(180,83,9,.1);
+  }
+  @media print {
+    :root {
+      color-scheme: light;
+      --primary: #1976d2;   --primary-dark: #0d47a1;  --btn-fg: #ffffff;
+      --pass: #2e7d32;      --pass-bg: #c8e6c9;
+      --fail: #c62828;      --fail-bg: #ffcdd2;
+      --ok-tint: #f1f8e9;   --bad-tint: #ffebee;
+      --page-bg: #ffffff;   --panel: #fafafa;         --intro-bg: #e3f2fd;
+      --exp-bg: #ffffff;    --border: #d0d0d0;
+      --text: #212121;      --muted: #616161;
+      --code-bg: #f0f0f0;   --code-fg: #212121;
+      --hover-tint: rgba(25,118,210,.08);
+    }
   }
   * { box-sizing: border-box; }
   body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     max-width: max(820px, 96%); margin: 2em auto; padding: 0 1em;
-    line-height: 1.6; color: var(--text); background: white;
+    line-height: 1.6; color: var(--text); background: var(--page-bg);
   }
   h1 { border-bottom: 3px solid var(--primary); padding-bottom: 0.4em; margin-top: 0.5em; }
   .intro {
-    background: #e3f2fd; padding: 1em 1.2em; border-left: 4px solid var(--primary);
+    background: var(--intro-bg); padding: 1em 1.2em; border-left: 4px solid var(--primary);
     margin: 1em 0; border-radius: 0 6px 6px 0;
   }
   .nav { margin: 1em 0; font-size: 0.95em; }
@@ -33,41 +98,42 @@
   .nav a:hover { text-decoration: underline; }
   .question {
     border: 1px solid var(--border); padding: 1em 1.2em; margin: 1em 0;
-    border-radius: 8px; background: var(--bg);
+    border-radius: 8px; background: var(--panel);
   }
-  .question.correct { border-color: var(--pass); background: #f1f8e9; }
-  .question.incorrect { border-color: var(--fail); background: #ffebee; }
+  .question.correct { border-color: var(--pass); background: var(--ok-tint); }
+  .question.incorrect { border-color: var(--fail); background: var(--bad-tint); }
   .question .q-text { font-weight: 600; margin-top: 0; }
   .question label {
     display: block; margin: 0.4em 0; padding: 0.4em 0.6em; cursor: pointer;
     border-radius: 4px; transition: background 0.15s;
   }
-  .question label:hover { background: rgba(25, 118, 210, 0.08); }
+  .question label:hover { background: var(--hover-tint); }
   .question input[type="text"] {
     width: 100%; padding: 0.5em; font-size: 1em;
     font-family: "Roboto Mono", "Menlo", monospace;
     border: 1px solid var(--border); border-radius: 4px;
+    background: var(--page-bg); color: var(--text);
   }
   .explanation {
-    margin-top: 0.8em; padding: 0.7em 0.9em; background: white;
+    margin-top: 0.8em; padding: 0.7em 0.9em; background: var(--exp-bg);
     border-left: 3px solid var(--muted); font-size: 0.95em;
   }
   .explanation .verdict { font-weight: 600; }
   .explanation .verdict.ok { color: var(--pass); }
   .explanation .verdict.bad { color: var(--fail); }
   code {
-    background: #f0f0f0; padding: 0.1em 0.4em; border-radius: 3px;
+    background: var(--code-bg); color: var(--code-fg); padding: 0.1em 0.4em; border-radius: 3px;
     font-family: "Roboto Mono", "Menlo", monospace; font-size: 0.92em;
   }
   .actions { margin: 1.5em 0; text-align: center; }
   button {
     padding: 0.8em 1.8em; font-size: 1.05em; cursor: pointer;
-    background: var(--primary); color: white; border: none; border-radius: 6px;
+    background: var(--primary); color: var(--btn-fg); border: none; border-radius: 6px;
     font-weight: 600;
   }
   button:hover { background: var(--primary-dark); }
-  button.secondary { background: white; color: var(--primary); border: 1px solid var(--primary); margin-left: 0.5em; }
-  button.secondary:hover { background: #e3f2fd; }
+  button.secondary { background: transparent; color: var(--primary); border: 1px solid var(--primary); margin-left: 0.5em; }
+  button.secondary:hover { background: var(--intro-bg); }
   #score {
     font-size: 1.5em; text-align: center; padding: 1em; margin: 1.5em 0;
     border-radius: 8px; font-weight: 600;
@@ -122,7 +188,7 @@
 
   <div class="question" data-id="2" data-answer="0.25"
        data-explain="Softmax only responds to differences between scores. Four equal scores mean four equal exponentials, so each takes a quarter of the sum. See <a href='module-0.html'>Module 0</a>, Tool 2 (and quiz question 1).">
-    <p class="q-text">2. <span class="module-marker">[Module 0]</span> Four words all score exactly 7.0. What share does softmax give each of them? (Answer as a decimal, e.g. <code>0.10</code>)</p>
+    <p class="q-text">2. <span class="module-marker">[Module 0]</span> Four words all score exactly 7.0. What share does softmax give each of them? (decimal or fraction both fine, e.g. <code>0.10</code> or <code>1/10</code>)</p>
     <input type="text" name="q2" autocomplete="off" spellcheck="false">
   </div>
 
@@ -154,7 +220,7 @@
   </div>
 
   <div class="question" data-id="6" data-answer="false"
-       data-explain="The script checked this directly (log line 28): the embedding row for &quot;bank&quot; is byte-identical in both sentences. Context enters only through the attention OUTPUT, never the lookup. See <a href='module-1.html'>Module 1</a>.">
+       data-explain="The script checked this directly: the embedding row for &quot;bank&quot; is byte-identical in both sentences. Context enters only through the attention OUTPUT, never the lookup. See <a href='module-1.html'>Module 1</a>.">
     <p class="q-text">6. <span class="module-marker">[Module 1]</span> True or false: in "the money bank", the input embedding row for "bank" is different from its row in "the river bank".</p>
     <label><input type="radio" name="q6" value="true"> True</label>
     <label><input type="radio" name="q6" value="false"> False</label>
@@ -188,14 +254,14 @@
   </div>
 
   <div class="question" data-id="10" data-answer="false"
-       data-explain="score(i,j) = q_i . k_j and score(j,i) = q_j . k_i use DIFFERENT vector pairs, so nothing forces equality: the wired head measured bank-to-river at 1.620 but river-to-bank at 0.360 (log line 63). Only Module 1's X @ X.T is forced symmetric. See <a href='module-2.html'>Module 2</a>.">
+       data-explain="score(i,j) = q_i . k_j and score(j,i) = q_j . k_i use DIFFERENT vector pairs, so nothing forces equality: the wired head measured bank-to-river at 1.620 but river-to-bank at 0.360. Only Module 1's X @ X.T is forced symmetric. See <a href='module-2.html'>Module 2</a>.">
     <p class="q-text">10. <span class="module-marker">[Module 2]</span> True or false: even with separate query and key matrices, the score matrix must stay symmetric (score(i,j) = score(j,i)).</p>
     <label><input type="radio" name="q10" value="true"> True</label>
     <label><input type="radio" name="q10" value="false"> False</label>
   </div>
 
   <div class="question" data-id="11" data-answer="b"
-       data-explain="Under the wired head, bank's row became [0.159, 0.500, 0.341]: half its update comes from &quot;river&quot; (log line 69). Its question is &quot;who carries topic?&quot;, which it does not best answer itself: self-focus broken. See <a href='module-2.html'>Module 2</a>.">
+       data-explain="Under the wired head, bank's row became [0.159, 0.500, 0.341]: half its update comes from &quot;river&quot;. Its question is &quot;who carries topic?&quot;, which it does not best answer itself: self-focus broken. See <a href='module-2.html'>Module 2</a>.">
     <p class="q-text">11. <span class="module-marker">[Module 2]</span> Under the hand-wired query/key head, which word receives the LARGEST share of bank's attention in "the river bank"?</p>
     <label><input type="radio" name="q11" value="a"> bank itself, as always</label>
     <label><input type="radio" name="q11" value="b"> river</label>
@@ -268,6 +334,29 @@
 <div id="score" hidden></div>
 
 <script>
+/* Parse a numeric answer: plain decimals (0.25, .25, 25e-2) and simple
+   fractions (1/4). Returns NaN when the string is not numeric. */
+function parse_num(s) {
+  s = String(s).trim();
+  const frac = s.match(/^([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)\s*\/\s*([+-]?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?)$/i);
+  if (frac) {
+    const d = parseFloat(frac[2]);
+    return d === 0 ? NaN : parseFloat(frac[1]) / d;
+  }
+  if (/^[+-]?(\d+\.?\d*|\.\d+)(e[+-]?\d+)?$/i.test(s)) return parseFloat(s);
+  return NaN;
+}
+
+/* Numeric answers match by value (so 0.25, .25, 0.250 and 1/4 all pass
+   against "0.25"); everything else falls back to the exact string. */
+function answers_match(expected, actual) {
+  if (actual === '') return false;
+  if (actual === expected) return true;
+  const e = parse_num(expected), a = parse_num(actual);
+  if (isNaN(e) || isNaN(a)) return false;
+  return Math.abs(a - e) <= Math.max(1e-9, Math.abs(e) * 1e-6);
+}
+
 function grade() {
   const questions = document.querySelectorAll('.question');
   let correct = 0;
@@ -283,7 +372,7 @@ function grade() {
     const text = q.querySelector('input[type="text"][name="q' + id + '"]');
     if (text) actual = (text.value || '').trim().toLowerCase();
 
-    const isCorrect = actual !== '' && actual === expected;
+    const isCorrect = answers_match(expected, actual);
     q.classList.remove('correct', 'incorrect');
     q.classList.add(isCorrect ? 'correct' : 'incorrect');
 
