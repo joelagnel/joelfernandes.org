@@ -990,16 +990,99 @@ word can seek something it does not itself have.</p>
     river   q = [ 0.60,  0.00]   k = [ 0.90,  0.30]
     bank    q = [ 1.80,  0.00]   k = [ 0.60,  0.90]
 </code></pre></div>
-<p>Let's go deeper, hand-checking two of them against the wiring (the embedding rows these
-start from are on <a href="results-log.html">log lines 9-13</a>). Bank's embedding is
-<code>[0.3, 0.3, 0.9, 0.0]</code>; its query is its place-ness routed through the gain of 2.0:
-<code>0.9 * 2.0 = 1.80</code> on the topic channel. It asks, loudly, for topic words, <em>because</em> it is
-a strongly place-flavored word: exactly the "ambiguous place word seeking context"
-behavior we wanted. Its key is <code>[0.3 + 0.3, 0.9] = [0.60, 0.90]</code>: it advertises a bit of
-topic content and a lot of place-ness. Meanwhile "the", whose embedding <code>[0, 0, 0, 1]</code> is
-pure filler, asks for places (its filler-ness of 1.0 times the wired 1.5 gives <code>1.50</code> on
-the place channel) and advertises <em>nothing</em> (<code>[0.00, 0.00]</code>): there is no badge for pure
-filler.</p>
+<p>Let's go deeper and build two of these by hand from the wiring above, because every row
+of that log is just one embedding pushed through one matrix. The inputs are the embedding
+rows (<a href="results-log.html">log lines 9-13</a>): the <code>[0, 0, 0, 1]</code>, river <code>[0.9, 0, 0.3, 0]</code>,
+bank <code>[0.3, 0.3, 0.9, 0]</code>.</p>
+<p>A key is <code>x @ W_K_WIRED</code>: each axis of the embedding flows through its own row of the
+wiring, and the partial results add up, exactly like Module 1's slow-motion blend.
+River's key, axis by axis:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>term</th>
+<th align="right">topic</th>
+<th align="right">place</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.9 x water row <code>[1.0, 0.0]</code></td>
+<td align="right">0.90</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td>0.0 x money row <code>[1.0, 0.0]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td>0.3 x place row <code>[0.0, 1.0]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.30</td>
+</tr>
+<tr>
+<td>0.0 x filler row <code>[0.0, 0.0]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td><strong>sum: <code>k_river</code></strong></td>
+<td align="right"><strong>0.90</strong></td>
+<td align="right"><strong>0.30</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>River's badge reads: "I carry topic content (0.90, from my water-ness), and I am a
+little place-like (0.30, from my own place-ness)." Note which path each number took:
+river's place badge comes from river's place axis, not from its water axis. The wiring
+routes each <em>quality</em> uniformly for every word; facts about an individual word stay in
+that word's embedding row.</p>
+<p>A query is the same recipe through the other matrix. Bank's, axis by axis:</p>
+<div class="table-wrapper"><table>
+<thead>
+<tr>
+<th>term</th>
+<th align="right">topic</th>
+<th align="right">place</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.3 x water row <code>[0.0, 0.0]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td>0.3 x money row <code>[0.0, 0.0]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td>0.9 x place row <code>[2.0, 0.0]</code></td>
+<td align="right">1.80</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td>0.0 x filler row <code>[0.0, 1.5]</code></td>
+<td align="right">0.00</td>
+<td align="right">0.00</td>
+</tr>
+<tr>
+<td><strong>sum: <code>q_bank</code></strong></td>
+<td align="right"><strong>1.80</strong></td>
+<td align="right"><strong>0.00</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>Bank asks, loudly, for topic words <em>because</em> it is a strongly place-flavored word:
+exactly the "ambiguous place word seeking context" behavior we wanted. The other four
+rows of the log check the same way; two are worth reading aloud. Bank's key is
+<code>[0.60, 0.90]</code>: its water and money each advertise as topic (<code>0.3 + 0.3 = 0.60</code>) and its
+0.9 place-ness is its place badge. And "the", pure filler, gets its whole query from the
+filler row of <code>W_Q_WIRED</code> (<code>1.0 x [0.0, 1.5] = [0.00, 1.50]</code>, asking for places) and its
+whole key from the filler row of <code>W_K_WIRED</code> (<code>1.0 x [0.0, 0.0] = [0.00, 0.00]</code>): there
+is no badge for pure filler.</p>
 <p>Scoring is now every query against every key. The score matrix
 (<a href="results-log.html">lines 58-63</a>):</p>
 <div class="codehilite"><pre><span></span><code>  score matrix Q @ K.T:
