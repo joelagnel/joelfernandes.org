@@ -20,7 +20,11 @@
   --pico-line-height: 1.65;
 }
 
-:root, [data-theme=aurora] {
+/* Selectors are written as :root[data-theme=x] (specificity 0,2,0) so they
+   out-rank the vendored Pico sheet's own :root:not([data-theme=dark]) light
+   block, which would otherwise force light text/background variables onto
+   every theme not literally named 'dark'. */
+:root:not([data-theme]), :root[data-theme=aurora] {
   color-scheme: dark;
   --pico-primary:        #22d3ee;
   --pico-primary-hover:  #67e8f9;
@@ -66,7 +70,7 @@
   --shadow:          0 2px 8px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.35);
 }
 
-[data-theme=midnight] {
+:root[data-theme=midnight] {
   color-scheme: dark;
   --pico-primary:        #60a5fa;
   --pico-primary-hover:  #93c5fd;
@@ -112,7 +116,7 @@
   --shadow:          0 2px 8px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.3);
 }
 
-[data-theme=synthwave] {
+:root[data-theme=synthwave] {
   color-scheme: dark;
   --pico-primary:        #ff6ad5;
   --pico-primary-hover:  #ff8fe0;
@@ -158,7 +162,7 @@
   --shadow:          0 2px 8px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.35);
 }
 
-[data-theme=paper] {
+:root[data-theme=paper] {
   color-scheme: light;
   --pico-primary:        #2563eb;
   --pico-primary-hover:  #1d4ed8;
@@ -204,7 +208,7 @@
   --shadow:          0 1px 4px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
 }
 
-[data-theme=sepia] {
+:root[data-theme=sepia] {
   color-scheme: light;
   --pico-primary:        #b45309;
   --pico-primary-hover:  #92400e;
@@ -250,9 +254,28 @@
   --shadow:          0 1px 4px rgba(60,40,10,.1), 0 1px 2px rgba(60,40,10,.06);
 }
 
+/* Map Pico's surface variables onto the active theme, so element styling
+   that Pico owns (table cells, cards, blockquotes, inline code) follows the
+   palette instead of Pico's own light/dark blocks. */
+:root, :root[data-theme] {
+  --pico-background-color: var(--bg);
+  --pico-card-background-color: var(--surface);
+  --pico-card-sectioning-background-color: var(--surface);
+  --pico-card-border-color: var(--border);
+  --pico-table-border-color: var(--border);
+  --pico-table-row-stripped-background-color: var(--table-row-hover);
+  --pico-muted-border-color: var(--border);
+  --pico-blockquote-border-color: var(--border);
+  --pico-code-background-color: var(--code-bg);
+  --pico-code-color: var(--code-fg);
+  --pico-secondary: var(--text-muted);
+  --pico-secondary-hover: var(--text);
+  --pico-contrast: var(--heading);
+}
+
 /* Printing always uses the paper palette, whatever theme is active. */
 @media print {
-  :root {
+  :root, :root[data-theme] {
   color-scheme: light;
   --pico-primary:        #2563eb;
   --pico-primary-hover:  #1d4ed8;
