@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>How Do You Turn Off Thinking In a Model That Was Trained to Always Think? - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-10 &raquo;<br><a href="/blog/2023-06-10/selinux-procfs.html">SELinux Debugging on ChromeOS</a></li>
+
+
+
+
+
+
+<li class="recent">2023-04-28 &raquo;<br><a href="/blog/2023-04-28/hazard-pointers.html">Understanding Hazard Pointers</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</h1>
+<p class="meta">23 Jul 2026</p>
+
+<div class="post">
+<p>Here is a puzzle that sounds like a contradiction. You take a reasoning model, one that was trained on example after example where the assistant dutifully opens a <code class="language-plaintext highlighter-rouge">&lt;think&gt;</code> block, reasons for a while, closes the block, and only then answers. Every single training example told it: think first. Then someone flips <code class="language-plaintext highlighter-rouge">enable_thinking: false</code> in llama.cpp, and the reasoning just… stops. The model answers immediately, no visible chain of thought.</p>
+
+<p>If the model was trained to always think, how can a runtime flag talk it out of thinking?</p>
+
+<p>The short version: nobody edited the model. They edited the sentence the model was in the middle of reading.</p>
+
+<h2 id="the-model-has-no-rule-that-says-always-think">The model has no rule that says “always think”</h2>
+
+<p>The trick rests on one idea, so it is worth sitting with for a moment. An autoregressive language model does not really learn a rule like “emit a thinking block.” It does not carry rules in that sense at all. What it learns is a single conditional probability:</p>
+
+<p><code class="language-plaintext highlighter-rouge">P(next token | every token that came before it)</code></p>
+
+<p>Given the tokens so far, what is the likely next token. It practices this across billions of contexts, and what is remarkable about a large transformer is that this one skill, done well, ends up looking like reasoning, knowledge, and style.</p>
+
+<p>So when the training data looks like this:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Assistant&gt;&lt;think&gt;
+reasoning reasoning reasoning
+&lt;/think&gt;
+final answer
+</code></pre></div></div>
+
+<p>the model is not learning “always think.” It is learning two separate continuations:</p>
+
+<ul>
+  <li>After <code class="language-plaintext highlighter-rouge">&lt;Assistant&gt;&lt;think&gt;</code>, the likely next tokens are reasoning.</li>
+  <li>After <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code>, the likely next tokens are the final answer.</li>
+</ul>
+
+<p>Both facts live in the weights at the same time. The model saw reasoning follow the open tag, and it also saw the answer follow the close tag. It has learned both neighborhoods of the sentence.</p>
+
+<p>That second neighborhood is the one we can lead it into.</p>
+
+<h2 id="change-the-prefix-not-the-network">Change the prefix, not the network</h2>
+
+<p>At inference time, the runtime gets to write the beginning of the sentence before handing control to the model. This is called the generation prefix. Whoever controls the prefix controls which of those two learned continuations the model falls into.</p>
+
+<ul>
+  <li>End the prefix with <code class="language-plaintext highlighter-rouge">&lt;think&gt;</code> and the model, obediently predicting the next token, starts reasoning.</li>
+  <li>End the prefix with <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code> and the model, just as obediently, behaves as though the reasoning already happened and starts writing the answer.</li>
+</ul>
+
+<p>The model never generated that opening or closing tag. The template stapled it onto the prompt before the model woke up. Same weights, same network, same everything. Only the context changed.</p>
+
+<p style="text-align:center;margin:1.6em 0 0.4em;">
+  <img src="/images/thinking-toggle/fork.png" alt="Same weights, two different prefixes, two different behaviors" style="width:100%;max-width:440px;height:auto;" />
+</p>
+
+<p style="text-align:center;font-size:0.85em;margin:0 0 1.6em;">Source: <a href="/images/thinking-toggle/fork.d2">fork.d2</a> · vector: <a href="/images/thinking-toggle/fork.svg">fork.svg</a></p>
+
+<p>Notice there is exactly one model in that picture, drawn twice. The “same weights” box on the top path is byte-for-byte identical to the one on the bottom path. The only thing that differs is what we handed it to read.</p>
+
+<h2 id="what-llamacpp-actually-does-for-deepseek-v4">What llama.cpp actually does for DeepSeek V4</h2>
+
+<p>Concretely, it comes down to a few lines of a Jinja chat template. The current DeepSeek V4 template contains logic that boils down to:</p>
+
+<div class="language-jinja highlighter-rouge"><div class="highlight"><pre class="highlight"><code>
+  <span class="nt">&lt;/think&gt;</span>
+
+</code></pre></div></div>
+
+<p>The template maps the runtime’s <code class="language-plaintext highlighter-rouge">enable_thinking</code> argument onto its internal <code class="language-plaintext highlighter-rouge">thinking</code> variable and picks the tag accordingly:</p>
+
+<ul>
+  <li>Thinking enabled: the prompt ends with <code class="language-plaintext highlighter-rouge">&lt;Assistant&gt;&lt;think&gt;</code>, and the model continues by reasoning.</li>
+  <li>Thinking disabled: the prompt ends with <code class="language-plaintext highlighter-rouge">&lt;Assistant&gt;&lt;/think&gt;</code>, and the model continues as if the reasoning is already behind it.</li>
+</ul>
+
+<p>Conceptually, the two runs are just:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>prompt + &lt;think&gt;   =&gt;   reasoning tokens
+prompt + &lt;/think&gt;  =&gt;   answer tokens
+</code></pre></div></div>
+
+<p>The weights are identical in both lines. Only the context presented to the weights changes. The flag is not a switch inside the neural network. It is a decision about how to end the prompt.</p>
+
+<h2 id="but-what-if-it-was-truly-only-ever-trained-to-think">But what if it was truly, only ever trained to think?</h2>
+
+<p>Fair challenge. Suppose every single answer in training was wrapped in a reasoning block. No plain answers, ever. Does the trick still work?</p>
+
+<p>Mostly, yes, and here is the subtle reason. Even in that world, during teacher forcing the model still saw final-answer tokens sitting immediately after <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code>. That transition, close-tag then answer, was in the data every time. So when llama.cpp feeds it <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code> up front, the model recognizes the neighborhood: “ah, tokens after this marker are supposed to look like a final answer,” and it produces one.</p>
+
+<p>What it did not get is the reasoning that normally comes before that marker. It has been dropped into the last act of the play without reading the first two. The consequences are exactly what you would expect:</p>
+
+<ul>
+  <li>Easy questions still come out fine. The answer did not need the scratchpad.</li>
+  <li>Hard reasoning questions can get worse, because the working-out that would have carried the answer never happened.</li>
+  <li>Some models resist the trick and start reasoning anyway, because the pull toward “think first” is strong enough to override the nudge. It is a little like the colleague who is asked to just give the answer and opens with “sure, but first, some context.” You asked it to skip the thinking; it briefly considered that request and reasoned its way to a no.</li>
+  <li>If the injected prefix is far outside anything the model saw in training, the output can drift into odd territory.</li>
+</ul>
+
+<p>A model that was explicitly trained on both thinking and non-thinking examples toggles far more reliably, because for that model the marker is a genuine learned mode switch. For a thinking-only model, injecting <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code> is less a switch and more a stage direction: skip ahead to the answer, please.</p>
+
+<h2 id="llamacpp-can-also-physically-cut-thinking-short">llama.cpp can also physically cut thinking short</h2>
+
+<p>Everything above is prompt conditioning: you choose how the sentence starts and let the model flow. There is a second, blunter mechanism that has nothing to do with the prefix, and it is worth not confusing the two.</p>
+
+<p>It is the reasoning budget. The <code class="language-plaintext highlighter-rouge">--reasoning-budget</code> sampler watches for the thinking start marker and counts the reasoning tokens as they stream out. When the budget runs out, it stops asking the model nicely. It reaches into the sampler and sets every candidate token’s logit to negative infinity except the one required to close the block:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>logit(token) = original   if token is the required &lt;/think&gt;
+             = -infinity   for every other token
+</code></pre></div></div>
+
+<p>Negative infinity means zero probability after softmax. Whatever the model would have preferred next, the only move left on the board is <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code>. With a budget of zero, this happens on the very first step, so the block closes before any reasoning escapes.</p>
+
+<p style="text-align:center;margin:1.6em 0 0.4em;">
+  <img src="/images/thinking-toggle/budget.png" alt="The reasoning-budget sampler forcing the close tag" style="width:100%;max-width:620px;height:auto;" />
+</p>
+
+<p style="text-align:center;font-size:0.85em;margin:0 0 1.6em;">Source: <a href="/images/thinking-toggle/budget.d2">budget.d2</a> · vector: <a href="/images/thinking-toggle/budget.svg">budget.svg</a></p>
+
+<p>Worth being precise about what this is: it is not the model deciding to wrap up. It is llama.cpp casting the deciding vote on the model’s behalf.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Model wants:    another reasoning token
+llama.cpp allows: only &lt;/think&gt;
+</code></pre></div></div>
+
+<p>Useful when reasoning runs long and you need a hard cap. But it is a guillotine, not a gentle nudge, and if it lands mid-thought it can chop off the very reasoning that would have produced a good answer.</p>
+
+<h2 id="three-controls-that-are-easy-to-run-together">Three controls that are easy to run together</h2>
+
+<p>There are three separate knobs here, and they are easy to blur together because they all touch “thinking.” They act at completely different layers.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Control</th>
+      <th>What it actually does</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">enable_thinking: false</code></td>
+      <td>Changes the chat-template prefix, usually placing generation after <code class="language-plaintext highlighter-rouge">&lt;/think&gt;</code>. Prompt-level.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">--reasoning-budget 0</code></td>
+      <td>Forces an already-open reasoning block to close immediately, by clamping logits. Sampler-level.</td>
+    </tr>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">--reasoning-format none / deepseek</code></td>
+      <td>Changes how generated reasoning is parsed and returned to you, not whether it was generated. Output-level.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The first decides where the model starts. The second can cut it off after it starts. The third only decides whether you get to see the reasoning in the response payload. llama.cpp documents these as distinct arguments, and it is easy to reach for one while expecting the behavior of another, which is usually why “turning off thinking” seems to act in three different ways.</p>
+
+<h2 id="the-idea-worth-keeping">The idea worth keeping</h2>
+
+<p>Strip away the templates and samplers and it comes down to a single sentence:</p>
+
+<blockquote>
+  <p>Thinking is toggled mainly by conditioning the autoregressive sequence, not by switching off part of the neural network.</p>
+</blockquote>
+
+<p>The transformer runs the same internal computation either way. Every layer fires, every attention head attends, whether thinking is on or off. “Thinking off” does not mean the model computes less. It means the model does not emit a long intermediate reasoning sequence out loud. The scratchpad is hidden, not removed. The machine under the hood is doing exactly as much work as it always does. It has just been asked to keep its notes to itself.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
