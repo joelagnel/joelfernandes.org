@@ -2,6 +2,9 @@
 layout: post
 title: "How Do You Turn Off Thinking In a Model That Was Trained to Always Think?"
 date: 2026-07-23
+categories: [ai, llm]
+tags: [ai, llm, llama-cpp, inference, reasoning, deepseek, autoregressive]
+description: "How a runtime flag can switch off a reasoning model's thinking block even when every training example told it to think first, by conditioning the autoregressive prefix rather than changing the weights."
 ---
 
 Here is a puzzle that sounds like a contradiction. You take a reasoning model, one that was trained on example after example where the assistant dutifully opens a `<think>` block, reasons for a while, closes the block, and only then answers. Every single training example told it: think first. Then someone flips `enable_thinking: false` in llama.cpp, and the reasoning just... stops. The model answers immediately, no visible chain of thought.
