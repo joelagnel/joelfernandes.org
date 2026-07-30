@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 260" width="860" height="260" font-family="Helvetica, Arial, sans-serif">
+  <rect width="860" height="260" fill="#ffffff"/>
+  <text x="430" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">The whole backward pass as one picture</text>
+
+  <!-- one-hot mask M -->
+  <g>
+    <text x="92" y="72" text-anchor="middle" font-size="13" fill="#666">one-hot mask M</text>
+    <rect x="30" y="86" width="124" height="96" rx="6" fill="#ffffff" stroke="#1e7a46" stroke-width="2"/>
+    <line x1="92" y1="86" x2="92" y2="182" stroke="#e4e4e4" stroke-width="1"/>
+    <line x1="30" y1="134" x2="154" y2="134" stroke="#e4e4e4" stroke-width="1"/>
+    <text x="61" y="120" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e7a46">1</text>
+    <text x="123" y="120" text-anchor="middle" font-size="18" fill="#bbb">0</text>
+    <text x="61" y="168" text-anchor="middle" font-size="18" fill="#bbb">0</text>
+    <text x="123" y="168" text-anchor="middle" font-size="18" font-weight="bold" fill="#1e7a46">1</text>
+    <text x="92" y="204" text-anchor="middle" font-size="11" fill="#888">1 at each row's argmax</text>
+  </g>
+
+  <text x="192" y="142" text-anchor="middle" font-size="24" fill="#555">&#215;</text>
+
+  <!-- broadcast G -->
+  <g>
+    <text x="292" y="72" text-anchor="middle" font-size="13" fill="#666">G broadcast across columns</text>
+    <rect x="230" y="86" width="124" height="96" rx="6" fill="#ffffff" stroke="#c0392b" stroke-width="2"/>
+    <line x1="292" y1="86" x2="292" y2="182" stroke="#e4e4e4" stroke-width="1"/>
+    <line x1="230" y1="134" x2="354" y2="134" stroke="#e4e4e4" stroke-width="1"/>
+    <text x="261" y="120" text-anchor="middle" font-size="17" fill="#c0392b">G1</text>
+    <text x="323" y="120" text-anchor="middle" font-size="17" fill="#c0392b">G1</text>
+    <text x="261" y="168" text-anchor="middle" font-size="17" fill="#c0392b">G2</text>
+    <text x="323" y="168" text-anchor="middle" font-size="17" fill="#c0392b">G2</text>
+    <text x="292" y="204" text-anchor="middle" font-size="11" fill="#888">the 2x1 upstream gradient, copied</text>
+  </g>
+
+  <text x="392" y="142" text-anchor="middle" font-size="24" fill="#555">=</text>
+
+  <!-- result -->
+  <g>
+    <text x="492" y="72" text-anchor="middle" font-size="13" fill="#666">dL/dA</text>
+    <rect x="430" y="86" width="124" height="96" rx="6" fill="#fffdf5" stroke="#333" stroke-width="2"/>
+    <line x1="492" y1="86" x2="492" y2="182" stroke="#e4e4e4" stroke-width="1"/>
+    <line x1="430" y1="134" x2="554" y2="134" stroke="#e4e4e4" stroke-width="1"/>
+    <text x="461" y="120" text-anchor="middle" font-size="17" font-weight="bold" fill="#c0392b">G1</text>
+    <text x="523" y="120" text-anchor="middle" font-size="17" fill="#bbb">0</text>
+    <text x="461" y="168" text-anchor="middle" font-size="17" fill="#bbb">0</text>
+    <text x="523" y="168" text-anchor="middle" font-size="17" font-weight="bold" fill="#c0392b">G2</text>
+    <text x="492" y="204" text-anchor="middle" font-size="11" fill="#888">same shape as A, losers zeroed</text>
+  </g>
+
+  <!-- side note -->
+  <rect x="600" y="86" width="232" height="96" rx="8" fill="#f7f9fb" stroke="#ccd6dd" stroke-width="1.5"/>
+  <text x="716" y="112" text-anchor="middle" font-size="13" fill="#333" font-weight="bold">Assuming</text>
+  <text x="716" y="134" text-anchor="middle" font-size="13" fill="#555">A11 &gt; A12 in row 1</text>
+  <text x="716" y="154" text-anchor="middle" font-size="13" fill="#555">A22 &gt; A21 in row 2</text>
+  <text x="716" y="174" text-anchor="middle" font-size="12" fill="#888">so the mask is not symmetric</text>
+</svg>
