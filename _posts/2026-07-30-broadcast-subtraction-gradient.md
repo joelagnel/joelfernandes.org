@@ -2,8 +2,8 @@
 layout: post
 title: "Why the Gradient of a Broadcast Subtraction Is a Sum"
 date: 2026-07-30
-categories: [ml, backpropagation]
-tags: [backpropagation, autograd, broadcasting, gradients, pytorch, neural-networks]
+categories: [machine-learning, neural-networks, backpropagation]
+tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, broadcasting, numpy, pytorch, calculus]
 author: Joel Fernandes
 description: "A 3x3 matrix minus a 3x1 column vector. The forward pass is trivial. The backward pass quietly sums a whole row, and the reason is worth understanding once, properly."
 published: false
