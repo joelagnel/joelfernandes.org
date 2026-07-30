@@ -6,7 +6,7 @@ categories: [machine-learning, neural-networks, backpropagation]
 tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, max, argmax, one-hot, softmax, relu, numpy, pytorch, calculus]
 author: Joel Fernandes
 description: "Part 2. A row-wise max collapses a matrix to a column. Backward, the entire gradient goes to whichever element won, and every loser gets exactly zero."
-published: false
+published: true
 ---
 
 > **Context:** Like part 1, this comes out of Andrej Karpathy's
