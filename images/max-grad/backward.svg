@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 360" width="720" height="360" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowLive" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arrowDead" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#cccccc"/>
+    </marker>
+  </defs>
+
+  <rect width="720" height="360" fill="#ffffff"/>
+  <text x="360" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Backward: all of the gradient goes to the winner, zero to the loser</text>
+
+  <!-- L -> B1 -> max -->
+  <line x1="592" y1="170" x2="534" y2="170" stroke="#c0392b" stroke-width="3" marker-end="url(#arrowLive)" stroke-dasharray="7,4"/>
+  <line x1="466" y1="170" x2="336" y2="170" stroke="#c0392b" stroke-width="3" marker-end="url(#arrowLive)" stroke-dasharray="7,4"/>
+  <!-- max -> A11 live -->
+  <line x1="252" y1="142" x2="115" y2="85" stroke="#c0392b" stroke-width="3" marker-end="url(#arrowLive)" stroke-dasharray="7,4"/>
+  <!-- max -> A12 dead -->
+  <line x1="252" y1="198" x2="115" y2="255" stroke="#cccccc" stroke-width="2" marker-end="url(#arrowDead)" stroke-dasharray="3,5"/>
+
+  <!-- nodes -->
+  <circle cx="90" cy="70" r="30" fill="#fdecea" stroke="#c0392b" stroke-width="3"/>
+  <circle cx="90" cy="270" r="30" fill="#fafafa" stroke="#cccccc" stroke-width="2"/>
+  <circle cx="500" cy="170" r="30" fill="#eaf2f8" stroke="#2c5f8a" stroke-width="2"/>
+  <circle cx="630" cy="170" r="28" fill="#f2f2f2" stroke="#555" stroke-width="2"/>
+  <rect x="245" y="142" width="86" height="56" rx="10" fill="#ffffff" stroke="#1e7a46" stroke-width="2"/>
+
+  <g font-size="15" text-anchor="middle" fill="#1a1a1a">
+    <text x="90" y="76" font-weight="bold">A11</text>
+    <text x="90" y="276" fill="#bbbbbb">A12</text>
+    <text x="500" y="176">B1</text>
+    <text x="630" y="176" font-style="italic">L</text>
+  </g>
+  <text x="288" y="176" text-anchor="middle" font-size="16" font-weight="bold" fill="#1e7a46">max</text>
+
+  <g font-size="14" font-weight="bold">
+    <text x="563" y="156" text-anchor="middle" fill="#c0392b">G1</text>
+    <text x="400" y="156" text-anchor="middle" fill="#c0392b">G1</text>
+    <text x="176" y="104" text-anchor="middle" fill="#c0392b">G1</text>
+    <text x="176" y="240" text-anchor="middle" fill="#bbbbbb">0</text>
+  </g>
+
+  <g font-size="13">
+    <text x="90" y="126" text-anchor="middle" fill="#c0392b">dL/dA11 = G1</text>
+    <text x="90" y="322" text-anchor="middle" fill="#999999">dL/dA12 = 0</text>
+  </g>
+
+  <text x="360" y="348" text-anchor="middle" font-size="12" fill="#888">Nothing is split and nothing is averaged. One live arrow, one dead arrow.</text>
+</svg>
