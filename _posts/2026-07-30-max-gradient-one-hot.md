@@ -9,6 +9,25 @@ description: "Part 2. A row-wise max collapses a matrix to a column. Backward, t
 published: false
 ---
 
+> **Context:** Like part 1, this comes out of Andrej Karpathy's
+> [Becoming a Backprop Ninja](https://www.youtube.com/watch?v=q8SA3rM6ckI) (Part 4 of the
+> spelled-out intro series), where you hand-write every backward pass instead of calling
+> `.backward()`. These notes are the longer explanation I want on hand the next time I go
+> back to the video. If you have not watched it, start there:
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg"
+         alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy"
+         style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);">
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+---
+
 This is a follow-up to [Why the Gradient of a Broadcast Subtraction Is a Sum]({% post_url 2026-07-30-broadcast-subtraction-gradient %}). Same setup, same style, different operator. Last time the forward pass *copied* a value, and the backward pass had to *sum*. This time the forward pass *selects* a value, and the backward pass has to do the opposite of selecting.
 
 A 2x2 matrix is enough to see everything, so let us use one.
