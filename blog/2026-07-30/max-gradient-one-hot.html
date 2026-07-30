@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Backprop: Why the Gradient of a Max Is a One-Hot Mask - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+<li class="recent">2023-06-25 &raquo;<br><a href="/blog/2023-06-25/svm-vectors.html">SVM and vectors for the curious</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Backprop: Why the Gradient of a Max Is a One-Hot Mask</h1>
+<p class="meta">30 Jul 2026</p>
+
+<div class="post">
+<blockquote>
+  <p><strong>Context:</strong> Like part 1, this comes out of Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=q8SA3rM6ckI">Becoming a Backprop Ninja</a> (Part 4 of the
+spelled-out intro series), where you hand-write every backward pass instead of calling
+<code class="language-plaintext highlighter-rouge">.backward()</code>. These notes are the longer explanation I want on hand the next time I go
+back to the video. If you have not watched it, start there:</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg" alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+<hr />
+
+<p>This is a follow-up to <a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Why the Gradient of a Broadcast Subtraction Is a Sum</a>. Same setup, same style, different operator. Last time the forward pass <em>copied</em> a value, and the backward pass had to <em>sum</em>. This time the forward pass <em>selects</em> a value, and the backward pass has to do the opposite of selecting.</p>
+
+<p>A 2x2 matrix is enough to see everything, so let us use one.</p>
+
+<h2 id="the-forward-pass">The forward pass</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A = | A11  A12 |
+    | A21  A22 |
+</code></pre></div></div>
+
+<p>Take the max of each row. Two rows go in, two numbers come out, so the result <code class="language-plaintext highlighter-rouge">B</code> is a 2x1 column:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>B1 = max(A11, A12)
+B2 = max(A21, A22)
+</code></pre></div></div>
+
+<p>To make this concrete, assume <code class="language-plaintext highlighter-rouge">A11 &gt; A12</code> in the first row, and <code class="language-plaintext highlighter-rouge">A22 &gt; A21</code> in the second. I deliberately picked different winning columns so the pattern that emerges is not a coincidence of symmetry. So:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>B1 = A11
+B2 = A22
+</code></pre></div></div>
+
+<p>Notice what happened to <code class="language-plaintext highlighter-rouge">A12</code> and <code class="language-plaintext highlighter-rouge">A21</code>. They were read, they were compared, and then they were discarded. Their values do not appear anywhere in <code class="language-plaintext highlighter-rouge">B</code>.</p>
+
+<h2 id="the-key-insight">The key insight</h2>
+
+<p>Upstream gives us <code class="language-plaintext highlighter-rouge">G = dL/dB</code>, shape 2x1, with elements <code class="language-plaintext highlighter-rouge">G1</code> and <code class="language-plaintext highlighter-rouge">G2</code>. We need <code class="language-plaintext highlighter-rouge">dL/dA</code>, which must be 2x2.</p>
+
+<p>Here is the whole thing in one observation: <strong>locally, <code class="language-plaintext highlighter-rouge">B1</code> is not some blend of <code class="language-plaintext highlighter-rouge">A11</code> and <code class="language-plaintext highlighter-rouge">A12</code>. It literally is <code class="language-plaintext highlighter-rouge">A11</code>.</strong></p>
+
+<p>Nudge <code class="language-plaintext highlighter-rouge">A11</code> up by a tiny epsilon and <code class="language-plaintext highlighter-rouge">B1</code> goes up by exactly epsilon, because <code class="language-plaintext highlighter-rouge">A11</code> is still the larger of the two and still wins.</p>
+
+<p>Nudge <code class="language-plaintext highlighter-rouge">A12</code> up by a tiny epsilon and <code class="language-plaintext highlighter-rouge">B1</code> does not move at all. <code class="language-plaintext highlighter-rouge">A12</code> was losing before and it is still losing. The output does not know anything happened.</p>
+
+<p>So the local derivatives are as simple as they get:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dB1/dA11 = 1        dB1/dA12 = 0
+</code></pre></div></div>
+
+<p>There is no partial credit here. <code class="language-plaintext highlighter-rouge">max</code> is a step function in disguise: within a small neighborhood of the current values, it is just a wire connected to the winner.</p>
+
+<p>Applying the chain rule to both rows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dA11 = G1 * 1 = G1        dL/dA12 = G1 * 0 = 0
+dL/dA21 = G2 * 0 = 0         dL/dA22 = G2 * 1 = G2
+</code></pre></div></div>
+
+<h2 id="the-computational-graph">The computational graph</h2>
+
+<p>Take just the first row. Forward, both <code class="language-plaintext highlighter-rouge">A11</code> and <code class="language-plaintext highlighter-rouge">A12</code> are inputs to the <code class="language-plaintext highlighter-rouge">max</code> node, but only one of them survives it:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/max-grad/forward.svg" alt="Forward computational graph: A11 and A12 both feed a max node, but only A11 wins and its value becomes B1, which flows into the loss L." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Now reverse the arrows. The gradient <code class="language-plaintext highlighter-rouge">G1</code> comes back from <code class="language-plaintext highlighter-rouge">L</code>, passes through <code class="language-plaintext highlighter-rouge">B1</code>, reaches the <code class="language-plaintext highlighter-rouge">max</code> node, and then takes only one of the two available exits:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/max-grad/backward.svg" alt="Backward computational graph: gradient G1 flows back from the loss through B1 to the max node, then entirely to A11, while the arrow to A12 is dead and carries zero." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>One live arrow and one dead arrow. Compare that to part 1, where <code class="language-plaintext highlighter-rouge">B1</code> had two live arrows arriving and they had to be added together. Different forward structure, different backward structure, same chain rule producing both.</p>
+
+<h2 id="writing-it-as-a-matrix">Writing it as a matrix</h2>
+
+<p>Doing this element by element is fine for a 2x2 but hopeless in real code. The vectorized form uses a <strong>one-hot mask</strong>: a matrix the same shape as <code class="language-plaintext highlighter-rouge">A</code>, with a 1 at each row’s argmax and 0 everywhere else.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>M = | 1  0 |        row 1 argmax is column 0
+    | 0  1 |        row 2 argmax is column 1
+</code></pre></div></div>
+
+<p>Then broadcast <code class="language-plaintext highlighter-rouge">G</code> back across the columns and gate it with the mask. That is elementwise multiplication:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/max-grad/mask.svg" alt="The one-hot mask M multiplied elementwise by the upstream gradient G broadcast across columns, giving dL/dA with G1 and G2 in the winning positions and zeros elsewhere." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>The broadcast in the middle is exactly the copy operation from part 1, showing up again from the other direction. Here it is doing the work of getting a 2x1 gradient back out to a 2x2 shape.</p>
+
+<p>In PyTorch, the mask is literally what <code class="language-plaintext highlighter-rouge">one_hot</code> gives you:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="n">idx</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                                  <span class="c1"># which column won, per row
+</span><span class="n">M</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">num_classes</span><span class="o">=</span><span class="n">A</span><span class="p">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]).</span><span class="nf">float</span><span class="p">()</span>     <span class="c1"># the mask
+</span><span class="n">dA</span> <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">G</span>                                             <span class="c1"># G is (2, 1), broadcasts across columns
+</span></code></pre></div></div>
+
+<p>That is the entire backward pass for a row-wise max in three lines.</p>
+
+<h2 id="two-things-worth-knowing">Two things worth knowing</h2>
+
+<p><strong>Ties.</strong> If two elements in a row are exactly equal, <code class="language-plaintext highlighter-rouge">max</code> is not differentiable there. There is a corner in the function and no single slope. Frameworks resolve this by picking one index, usually the first, and giving it all the gradient. That is a legitimate subgradient choice, not a bug, and in practice exact ties in floating point are rare enough that it never comes up.</p>
+
+<p><strong>Losers really do get nothing.</strong> <code class="language-plaintext highlighter-rouge">A12</code> gets a gradient of exactly zero through this path. No small nudge, no encouragement to try harder next time. If that path is the only route from <code class="language-plaintext highlighter-rouge">A12</code> to the loss, it receives no update at all this step. This is the same mechanism behind dead ReLUs, where a unit stuck on the flat side of <code class="language-plaintext highlighter-rouge">max(0, x)</code> stops learning entirely. Gating operations route gradients, and anything not on the selected route gets nothing.</p>
+
+<h2 id="verifying-it">Verifying it</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="n">A</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">values</span>     <span class="c1"># shape (2, 1)
+</span>
+<span class="n">G</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">B</span><span class="p">.</span><span class="nf">backward</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+
+<span class="n">M</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">one_hot</span><span class="p">(</span><span class="n">A</span><span class="p">.</span><span class="nf">argmax</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="n">num_classes</span><span class="o">=</span><span class="mi">2</span><span class="p">).</span><span class="nf">float</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">A</span><span class="p">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">M</span> <span class="o">*</span> <span class="n">G</span><span class="p">))</span>      <span class="c1"># True
+</span></code></pre></div></div>
+
+<h2 id="the-pair-of-rules">The pair of rules</h2>
+
+<p>Two posts, two operators, and the pattern behind both is about counting paths:</p>
+
+<ul>
+  <li><strong>Forward copies (broadcast), so backward sums.</strong> One input reached the loss by several routes, and the chain rule adds over routes.</li>
+  <li><strong>Forward selects (max), so backward scatters into the winner and zeroes the rest.</strong> The losers reached the loss by no route at all.</li>
+</ul>
+
+<p>The shape argument works for both, too. Part 1 had to squeeze a 3x3 gradient down into 3x1, so it summed. Here we have to expand a 2x1 gradient back out to 2x2, so we broadcast and then mask. Before doing any calculus, look at the two shapes and ask which direction you are going. That alone tells you which operation to reach for.</p>
+
+<p>And these two rules are not academic. The standard numerically stable softmax starts with:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">logits</span> <span class="o">-</span> <span class="n">logits</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">values</span>
+</code></pre></div></div>
+
+<p>which is a row-wise max feeding a broadcast subtraction. Backpropagating that single line requires both of these rules, one after the other.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
