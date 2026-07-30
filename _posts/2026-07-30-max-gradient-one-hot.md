@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Why the Gradient of a Max Is a One-Hot Mask"
+title: "Backprop: Why the Gradient of a Max Is a One-Hot Mask"
 date: 2026-07-30
 categories: [machine-learning, neural-networks, backpropagation]
 tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, max, argmax, one-hot, softmax, relu, numpy, pytorch, calculus]

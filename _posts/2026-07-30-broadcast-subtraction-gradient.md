@@ -1,6 +1,6 @@
 ---
 layout: post
-title: "Why the Gradient of a Broadcast Subtraction Is a Sum"
+title: "Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum"
 date: 2026-07-30
 categories: [machine-learning, neural-networks, backpropagation]
 tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, broadcasting, numpy, pytorch, calculus]
