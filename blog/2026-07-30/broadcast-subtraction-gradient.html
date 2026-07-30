@@ -327,6 +327,26 @@
 <p class="meta">30 Jul 2026</p>
 
 <div class="post">
+<blockquote>
+  <p><strong>Context:</strong> This post comes out of Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=q8SA3rM6ckI">Becoming a Backprop Ninja</a> (Part 4 of the
+spelled-out intro series), where you hand-write every backward pass instead of calling
+<code class="language-plaintext highlighter-rouge">.backward()</code>. That exercise is where these gradients clicked for me. What follows is my
+slower walk through one of them, the kind of thing I want waiting for me the next time I
+revisit the video. If you have not watched it, start there:</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg" alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+<hr />
+
 <p>Here is an operation you write without thinking:</p>
 
 <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">C</span> <span class="o">=</span> <span class="n">A</span> <span class="o">-</span> <span class="n">B</span>     <span class="c1"># A is (3, 3), B is (3, 1)
