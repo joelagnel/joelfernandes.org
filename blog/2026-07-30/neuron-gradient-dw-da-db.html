@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Backprop: Propagating Gradient Through a Neuron - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-08 &raquo;<br><a href="/blog/2026-02-08/rust-clist-kernel.html">CList: Iterating C Linked Lists from Rust in the Kernel</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Backprop: Propagating Gradient Through a Neuron</h1>
+<p class="meta">30 Jul 2026</p>
+
+<div class="post">
+<blockquote>
+  <p><strong>Context:</strong> Like <a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">part 1</a> and
+<a href="/blog/2026-07-30/max-gradient-one-hot.html">part 2</a>, this comes out of Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=q8SA3rM6ckI">Becoming a Backprop Ninja</a> (Part 4 of the
+spelled-out intro series), where you hand-write every backward pass instead of calling
+<code class="language-plaintext highlighter-rouge">.backward()</code>. These notes are the longer explanation I want on hand the next time I go
+back to the video. If you have not watched it, start there:</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg" alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+<hr />
+
+<p>The first two posts covered single operations. This one covers a linear layer.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">N</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">W</span> <span class="o">+</span> <span class="n">b</span>
+</code></pre></div></div>
+
+<p>The results are <code class="language-plaintext highlighter-rouge">dW = A.T @ dN</code>, <code class="language-plaintext highlighter-rouge">dA = dN @ W.T</code>, and <code class="language-plaintext highlighter-rouge">db = dN.sum(0)</code>. The transposes are easy to get backwards from memory. Writing out a small case by hand shows where they come from, which is easier to reconstruct later than the formulas themselves.</p>
+
+<h2 id="the-setup">The setup</h2>
+
+<p>Two inputs, two neurons, and a batch of two samples. The batch size of two matters here, because with a single sample the bias gradient reduces to a copy and the summation is not visible.</p>
+
+<p><code class="language-plaintext highlighter-rouge">A</code> holds the inputs, one row per sample:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A = | a1  a2 |     &lt;- sample 1
+    | a3  a4 |     &lt;- sample 2
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">W</code> holds the weights, where <code class="language-plaintext highlighter-rouge">W_ij</code> is the weight from input <code class="language-plaintext highlighter-rouge">i</code> into neuron <code class="language-plaintext highlighter-rouge">j</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>W = | W11  W12 |
+    | W21  W22 |
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">b</code> is one bias per neuron, a single row that gets broadcast down to every sample:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>b = [ b1  b2 ]
+</code></pre></div></div>
+
+<p>Multiplying out <code class="language-plaintext highlighter-rouge">N = A @ W + b</code> gives a 2x2, one row per sample:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>N1 = a1·W11 + a2·W21 + b1        N2 = a1·W12 + a2·W22 + b2      &lt;- sample 1
+N3 = a3·W11 + a4·W21 + b1        N4 = a3·W12 + a4·W22 + b2      &lt;- sample 2
+</code></pre></div></div>
+
+<p>Here is that same computation as a picture, with both samples drawn out:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/fwd.svg" alt="Two panels. Sample 1: inputs a1 and a2 connect to neurons N1 and N2 through four labeled weights W11, W12, W21, W22, with biases b1 and b2 added. Sample 2: inputs a3 and a4 connect to N3 and N4 through the same four weights and the same two biases." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Two things to note from the diagram.</p>
+
+<p>Within a sample, every input reaches every neuron, so <code class="language-plaintext highlighter-rouge">a1</code> is used twice, once per neuron.</p>
+
+<p>Across panels, the two panels are the same layer applied to a second sample, not two different layers. <code class="language-plaintext highlighter-rouge">W11</code> appears in both panels, and so does <code class="language-plaintext highlighter-rouge">b1</code>. <code class="language-plaintext highlighter-rouge">N1</code> and <code class="language-plaintext highlighter-rouge">N3</code> are the same neuron with different inputs, as are <code class="language-plaintext highlighter-rouge">N2</code> and <code class="language-plaintext highlighter-rouge">N4</code>.</p>
+
+<p>So <code class="language-plaintext highlighter-rouge">W</code> and <code class="language-plaintext highlighter-rouge">b</code> are shared across samples, while each <code class="language-plaintext highlighter-rouge">a</code> belongs to one sample. The rest of the post follows from that.</p>
+
+<p>Backprop gives us the upstream gradient, matching <code class="language-plaintext highlighter-rouge">N</code> in shape:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dN = | dN1  dN2 |
+     | dN3  dN4 |
+</code></pre></div></div>
+
+<p>and we need to produce <code class="language-plaintext highlighter-rouge">dW</code>, <code class="language-plaintext highlighter-rouge">dA</code> and <code class="language-plaintext highlighter-rouge">db</code>.</p>
+
+<p>Each one comes from the same question used in the earlier posts: where does this variable appear in the output, and how many times?</p>
+
+<h2 id="dw-summing-over-the-batch">dW: summing over the batch</h2>
+
+<p>Take <code class="language-plaintext highlighter-rouge">W11</code>. Search the four expressions above for it. It shows up twice:</p>
+
+<ul>
+  <li>in <code class="language-plaintext highlighter-rouge">N1</code>, multiplied by <code class="language-plaintext highlighter-rouge">a1</code></li>
+  <li>in <code class="language-plaintext highlighter-rouge">N3</code>, multiplied by <code class="language-plaintext highlighter-rouge">a3</code></li>
+</ul>
+
+<p>Two appearances, two paths to the loss, so the chain rule adds them:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dW11 = dN1·a1 + dN3·a3
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/dw.svg" alt="Backward diagram: gradients dN1 from sample 1 and dN3 from sample 2 both flow into dW11, scaled by a1 and a3 respectively, and are summed." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>The sum runs over samples. A weight is shared by the whole batch, so each sample contributes a term.</p>
+
+<p>The other three work the same way:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dW11 = dN1·a1 + dN3·a3        dW12 = dN2·a1 + dN4·a3
+dW21 = dN1·a2 + dN3·a4        dW22 = dN2·a2 + dN4·a4
+</code></pre></div></div>
+
+<p>Every entry pairs a column of <code class="language-plaintext highlighter-rouge">A</code> with a column of <code class="language-plaintext highlighter-rouge">dN</code>, summed over the sample index. That is a matrix product with <code class="language-plaintext highlighter-rouge">A</code> transposed:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/matrices.svg" alt="Matrix figure showing A transpose times dN equals dW, with each entry of dW written out as a sum over the two samples." style="max-width: 100%; height: auto;" />
+</div>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dW = A.T @ dN
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">A</code> is indexed <code class="language-plaintext highlighter-rouge">[sample, input]</code> and <code class="language-plaintext highlighter-rouge">dN</code> is indexed <code class="language-plaintext highlighter-rouge">[sample, neuron]</code>. Contracting over the shared sample index requires that index on the inside of the product, and transposing <code class="language-plaintext highlighter-rouge">A</code> puts it there. The <code class="language-plaintext highlighter-rouge">.T</code> is what a sum over the batch looks like in matrix form.</p>
+
+<h2 id="da-summing-over-the-neurons">dA: summing over the neurons</h2>
+
+<p>Same procedure, different variable. <code class="language-plaintext highlighter-rouge">a1</code> appears in <code class="language-plaintext highlighter-rouge">N1</code> (scaled by <code class="language-plaintext highlighter-rouge">W11</code>) and in <code class="language-plaintext highlighter-rouge">N2</code> (scaled by <code class="language-plaintext highlighter-rouge">W12</code>). It does not appear in <code class="language-plaintext highlighter-rouge">N3</code> or <code class="language-plaintext highlighter-rouge">N4</code>, which belong to sample 2.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>da1 = dN1·W11 + dN2·W12
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/da.svg" alt="Backward diagram: gradients dN1 from neuron 1 and dN2 from neuron 2 both flow back into da1, scaled by W11 and W12, and are summed." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>This time the sum runs over neurons rather than samples, because the input was sent to every neuron in the layer.</p>
+
+<p>All four:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>da1 = dN1·W11 + dN2·W12        da2 = dN1·W21 + dN2·W22
+da3 = dN3·W11 + dN4·W12        da4 = dN3·W21 + dN4·W22
+</code></pre></div></div>
+
+<p>which packs into:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dA = dN @ W.T
+</code></pre></div></div>
+
+<p>The two forms are symmetric, which is a useful way to keep the transposes straight:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dW = A.T @ dN</code> sums over samples, because a weight is shared across the batch.</li>
+  <li><code class="language-plaintext highlighter-rouge">dA = dN @ W.T</code> sums over neurons, because an input is shared across the layer.</li>
+</ul>
+
+<p>Two kinds of sharing, two axes to sum over. The transpose goes wherever it needs to for the shared index to end up on the inside.</p>
+
+<h2 id="db-the-bias">db: the bias</h2>
+
+<p><code class="language-plaintext highlighter-rouge">b1</code> is added into <code class="language-plaintext highlighter-rouge">N1</code> and into <code class="language-plaintext highlighter-rouge">N3</code>, and it is not scaled by anything, so the local derivative is <code class="language-plaintext highlighter-rouge">1</code> in both cases:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>db1 = dN1·1 + dN3·1 = dN1 + dN3
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/db.svg" alt="Two-panel diagram. Forward: b1 fans out to N1 and N3, one arrow per sample. Backward: dN1 and dN3 both return to db1 and are added together." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>The top panel is the forward pass, where one bias goes out to every sample. The bottom panel is the backward pass, where those arrows reverse and meet at the same node. Two arrows arriving at one node means the values add.</p>
+
+<p>Both biases:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>db1 = dN1 + dN3        db2 = dN2 + dN4
+</code></pre></div></div>
+
+<p>which is a column-wise sum, collapsing the batch dimension:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">db</span> <span class="o">=</span> <span class="n">dN</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>     <span class="c1"># shape (1, 2)
+</span></code></pre></div></div>
+
+<p>This is the same rule as <a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">part 1</a>. Writing <code class="language-plaintext highlighter-rouge">+ b</code> broadcasts a <code class="language-plaintext highlighter-rouge">(1, 2)</code> row down to <code class="language-plaintext highlighter-rouge">(2, 2)</code>, broadcasting is a copy, and copies backprop as sums. The only difference from part 1 is the axis: there the broadcast ran across columns, here it runs down rows.</p>
+
+<p>There is no <code class="language-plaintext highlighter-rouge">.T</code> in <code class="language-plaintext highlighter-rouge">db</code> and no weight either. The bias is added rather than multiplied, so nothing scales its gradient on the way back.</p>
+
+<h2 id="shape-checking">Shape checking</h2>
+
+<p>The shape check from the earlier posts is useful here, because it settles the transposes without doing any calculus.</p>
+
+<p>A gradient has the same shape as the thing it differentiates:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A  is (2, 2)  -&gt;  dA  must be (2, 2)
+W  is (2, 2)  -&gt;  dW  must be (2, 2)
+b  is (1, 2)  -&gt;  db  must be (1, 2)
+dN is (2, 2)
+</code></pre></div></div>
+
+<p>The 2x2 case hides this since everything is square. With a batch of 32 samples, 784 inputs and 100 neurons:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A  (32, 784)      W  (784, 100)      b  (1, 100)      dN  (32, 100)
+</code></pre></div></div>
+
+<p>only one arrangement works for each:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dW</code> must be <code class="language-plaintext highlighter-rouge">(784, 100)</code>. From <code class="language-plaintext highlighter-rouge">A (32, 784)</code> and <code class="language-plaintext highlighter-rouge">dN (32, 100)</code>, the product that fits is <code class="language-plaintext highlighter-rouge">A.T @ dN</code>, which is <code class="language-plaintext highlighter-rouge">(784, 32) @ (32, 100)</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">dA</code> must be <code class="language-plaintext highlighter-rouge">(32, 784)</code>. The fit is <code class="language-plaintext highlighter-rouge">dN @ W.T</code>, which is <code class="language-plaintext highlighter-rouge">(32, 100) @ (100, 784)</code>.</li>
+  <li><code class="language-plaintext highlighter-rouge">db</code> must be <code class="language-plaintext highlighter-rouge">(1, 100)</code>. From <code class="language-plaintext highlighter-rouge">dN (32, 100)</code>, the 32 has to go, so sum over axis 0.</li>
+</ul>
+
+<p>All three can be reconstructed from the shapes alone.</p>
+
+<h2 id="verifying-it">Verifying it</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+
+<span class="n">A</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">b</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">N</span> <span class="o">=</span> <span class="n">A</span> <span class="o">@</span> <span class="n">W</span> <span class="o">+</span> <span class="n">b</span>
+<span class="n">dN</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">N</span><span class="p">.</span><span class="nf">backward</span><span class="p">(</span><span class="n">dN</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">W</span><span class="p">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">A</span><span class="p">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">dN</span><span class="p">))</span>                    <span class="c1"># True
+</span><span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">A</span><span class="p">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">dN</span> <span class="o">@</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">))</span>                    <span class="c1"># True
+</span><span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">b</span><span class="p">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">dN</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)))</span> <span class="c1"># True
+</span></code></pre></div></div>
+
+<h2 id="summary-of-the-series">Summary of the series</h2>
+
+<p>All three posts come down to counting how many times a variable is used in the forward pass:</p>
+
+<ul>
+  <li>Used once: the gradient passes straight through. That was <code class="language-plaintext highlighter-rouge">A</code> in the subtraction from part 1.</li>
+  <li>Used many times: the gradient is a sum, one term per use. That is the bias here, the broadcast vector in part 1, and every weight in a batched layer.</li>
+  <li>Used conditionally: gradient flows only on the paths that were taken. That was the max in part 2, where the losing entries got zero.</li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">dW</code> and <code class="language-plaintext highlighter-rouge">dA</code> are the second case in matrix notation. The transpose is what a sum over a shared index looks like when written as a matrix product.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
