@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 300" width="880" height="300" font-family="Helvetica, Arial, sans-serif">
+  <rect width="880" height="300" fill="#ffffff"/>
+  <text x="440" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">dW = A&#7488; @ dN, and the transpose is what makes the shapes line up</text>
+
+  <!-- A transpose -->
+  <g>
+    <text x="110" y="76" text-anchor="middle" font-size="13" fill="#666">A&#7488; (2x2)</text>
+    <rect x="42" y="90" width="136" height="100" rx="6" fill="#eaf2f8" stroke="#2c5f8a" stroke-width="2"/>
+    <line x1="110" y1="90" x2="110" y2="190" stroke="#cfdce6" stroke-width="1"/>
+    <line x1="42" y1="140" x2="178" y2="140" stroke="#cfdce6" stroke-width="1"/>
+    <text x="76" y="122" text-anchor="middle" font-size="17" fill="#1a1a1a">a1</text>
+    <text x="144" y="122" text-anchor="middle" font-size="17" fill="#1a1a1a">a3</text>
+    <text x="76" y="172" text-anchor="middle" font-size="17" fill="#1a1a1a">a2</text>
+    <text x="144" y="172" text-anchor="middle" font-size="17" fill="#1a1a1a">a4</text>
+    <text x="110" y="212" text-anchor="middle" font-size="11" fill="#888">rows = inputs</text>
+    <text x="110" y="228" text-anchor="middle" font-size="11" fill="#888">cols = samples</text>
+  </g>
+
+  <text x="212" y="148" text-anchor="middle" font-size="24" fill="#555">@</text>
+
+  <!-- dN -->
+  <g>
+    <text x="314" y="76" text-anchor="middle" font-size="13" fill="#666">dN (2x2)</text>
+    <rect x="246" y="90" width="136" height="100" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2"/>
+    <line x1="314" y1="90" x2="314" y2="190" stroke="#f0cfc9" stroke-width="1"/>
+    <line x1="246" y1="140" x2="382" y2="140" stroke="#f0cfc9" stroke-width="1"/>
+    <text x="280" y="122" text-anchor="middle" font-size="17" fill="#c0392b">dN1</text>
+    <text x="348" y="122" text-anchor="middle" font-size="17" fill="#c0392b">dN2</text>
+    <text x="280" y="172" text-anchor="middle" font-size="17" fill="#c0392b">dN3</text>
+    <text x="348" y="172" text-anchor="middle" font-size="17" fill="#c0392b">dN4</text>
+    <text x="314" y="212" text-anchor="middle" font-size="11" fill="#888">rows = samples</text>
+    <text x="314" y="228" text-anchor="middle" font-size="11" fill="#888">cols = neurons</text>
+  </g>
+
+  <text x="416" y="148" text-anchor="middle" font-size="24" fill="#555">=</text>
+
+  <!-- dW -->
+  <g>
+    <text x="576" y="76" text-anchor="middle" font-size="13" fill="#666">dW (2x2), same shape as W</text>
+    <rect x="450" y="90" width="252" height="100" rx="6" fill="#fff9e8" stroke="#b8860b" stroke-width="2"/>
+    <line x1="576" y1="90" x2="576" y2="190" stroke="#e8dcb8" stroke-width="1"/>
+    <line x1="450" y1="140" x2="702" y2="140" stroke="#e8dcb8" stroke-width="1"/>
+    <text x="513" y="122" text-anchor="middle" font-size="14" fill="#1a1a1a">dN1&#183;a1 + dN3&#183;a3</text>
+    <text x="639" y="122" text-anchor="middle" font-size="14" fill="#1a1a1a">dN2&#183;a1 + dN4&#183;a3</text>
+    <text x="513" y="172" text-anchor="middle" font-size="14" fill="#1a1a1a">dN1&#183;a2 + dN3&#183;a4</text>
+    <text x="639" y="172" text-anchor="middle" font-size="14" fill="#1a1a1a">dN2&#183;a2 + dN4&#183;a4</text>
+    <text x="576" y="212" text-anchor="middle" font-size="11" fill="#888">each entry is a sum over the batch</text>
+  </g>
+
+  <!-- shape note -->
+  <rect x="726" y="90" width="126" height="100" rx="8" fill="#f7f9fb" stroke="#ccd6dd" stroke-width="1.5"/>
+  <text x="789" y="118" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">shapes</text>
+  <text x="789" y="140" text-anchor="middle" font-size="12" fill="#555">(2x2) @ (2x2)</text>
+  <text x="789" y="160" text-anchor="middle" font-size="12" fill="#555">= (2x2)</text>
+  <text x="789" y="180" text-anchor="middle" font-size="11" fill="#888">inner dims match</text>
+
+  <text x="440" y="272" text-anchor="middle" font-size="12" fill="#888">The shared index between A&#7488; and dN is the sample index, which is exactly the axis being summed over.</text>
+</svg>
