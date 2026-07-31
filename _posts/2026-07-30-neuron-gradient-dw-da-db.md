@@ -6,7 +6,7 @@ categories: [machine-learning, neural-networks, backpropagation]
 tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, matrix-calculus, linear-layer, transpose, bias, batch, numpy, pytorch, calculus]
 author: Joel Fernandes
 description: "Part 3. A linear layer computes N = A @ W + b. Working out dW, dA and db by hand shows where the transposes come from, and why the bias gradient is a column sum."
-published: false
+published: true
 ---
 
 > **Context:** Like [part 1]({% post_url 2026-07-30-broadcast-subtraction-gradient %}) and
