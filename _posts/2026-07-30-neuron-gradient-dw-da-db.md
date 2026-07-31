@@ -35,7 +35,7 @@ The first two posts took apart single operations. This one does the thing those 
 N = A @ W + b
 ```
 
-Everyone can recite the answers here. `dW = A.T @ dN`, `dA = dN @ W.T`, `db = dN.sum(0)`. The transposes look arbitrary the first time you meet them, and most people end up memorizing which side the `.T` goes on. That is a shame, because if you write out one small example by hand, the transpose stops being a rule to memorize and becomes the only thing that could possibly have happened.
+Everyone can recite the answers here. `dW = A.T @ dN`, `dA = dN @ W.T`, `db = dN.sum(0)`. The transposes look arbitrary the first time you meet them, and most people end up memorizing which side the `.T` goes on. That is a shame, because if you write one small case out by hand, the transpose stops being a rule to memorize and becomes the only thing that could possibly have happened.
 
 ## The setup
 
@@ -61,14 +61,6 @@ W = | W11  W12 |
 b = [ b1  b2 ]
 ```
 
-Here is the layer as a picture, for one sample:
-
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/neuron-grad/fwd.svg" alt="Two input nodes a1 and a2, each connected to two neuron nodes N1 and N2 by four labeled weight edges, with bias nodes b1 and b2 feeding into the neurons." style="max-width: 100%; height: auto;"/>
-</div>
-
-Every input reaches every neuron. That full connectivity is what makes the backward pass interesting, because it means everything is used more than once.
-
 Multiplying out `N = A @ W + b` gives a 2x2, one row per sample:
 
 ```
@@ -76,7 +68,19 @@ N1 = a1·W11 + a2·W21 + b1        N2 = a1·W12 + a2·W22 + b2      <- sample 1
 N3 = a3·W11 + a4·W21 + b1        N4 = a3·W12 + a4·W22 + b2      <- sample 2
 ```
 
-`N1` and `N3` are the same neuron looking at two different samples. Same weights, same bias, different inputs.
+Here is that same computation as a picture, with both samples drawn out:
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/neuron-grad/fwd.svg" alt="Two panels. Sample 1: inputs a1 and a2 connect to neurons N1 and N2 through four labeled weights W11, W12, W21, W22, with biases b1 and b2 added. Sample 2: inputs a3 and a4 connect to N3 and N4 through the same four weights and the same two biases." style="max-width: 100%; height: auto;"/>
+</div>
+
+Two things to notice, and they are the two things the whole post rests on.
+
+First, within a sample, every input reaches every neuron. `a1` is used twice, once per neuron.
+
+Second, and easier to miss: the two panels are not two different layers. They are the *same* layer run on a second sample. `W11` appears in both panels. So does `b1`. `N1` and `N3` are the same neuron looking at different inputs, and `N2` and `N4` are the same neuron too.
+
+So `W` and `b` are shared across samples, while each `a` belongs to exactly one sample. Everything that follows is a consequence of that split.
 
 Backprop hands us the upstream gradient, matching `N` in shape:
 
@@ -206,7 +210,7 @@ b  is (1, 2)  ->  db  must be (1, 2)
 dN is (2, 2)
 ```
 
-The 2x2 example hides this a bit since everything is square, so imagine a batch of 32 samples, 784 inputs and 100 neurons:
+The 2x2 case hides this a bit since everything is square, so imagine a batch of 32 samples, 784 inputs and 100 neurons:
 
 ```
 A  (32, 784)      W  (784, 100)      b  (1, 100)      dN  (32, 100)
