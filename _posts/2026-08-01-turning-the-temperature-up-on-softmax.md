@@ -9,7 +9,7 @@ description: "Softmax barely notices the size of its inputs. What it reacts to i
 published: true
 ---
 
-If you have used an LLM API, you have seen a `temperature` parameter, usually somewhere between 0 and 2, usually with a vague note about creativity. It is one of the few knobs most people turn without ever seeing what it touches.
+If you have used an LLM API, you have seen a `temperature` parameter, usually somewhere between 0 and 2, usually with a vague note about creativity. Let us see how it works under the hood.
 
 It turns out to be a very small piece of arithmetic, and once you see where it sits, the behavior you get at each end stops being mysterious. So let us start with softmax, then look at the one property of softmax that matters here, and then plug temperature into it.
 
