@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 300" width="800" height="300" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowM" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="800" height="300" fill="#ffffff"/>
+  <text x="400" y="32" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">The 2x1 gradient is stretched back out to 2x2</text>
+
+  <!-- G -->
+  <g>
+    <text x="150" y="82" text-anchor="middle" font-size="13" fill="#666">G = dL/dB (2x1)</text>
+    <rect x="112" y="96" width="76" height="104" rx="6" fill="#fdecea" stroke="#c0392b" stroke-width="2"/>
+    <line x1="112" y1="148" x2="188" y2="148" stroke="#f0cfc9" stroke-width="1"/>
+    <text x="150" y="130" text-anchor="middle" font-size="18" fill="#c0392b">G1</text>
+    <text x="150" y="182" text-anchor="middle" font-size="18" fill="#c0392b">G2</text>
+    <text x="150" y="222" text-anchor="middle" font-size="11" fill="#888">one number per row</text>
+  </g>
+
+  <!-- arrow -->
+  <g stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arrowM)">
+    <line x1="212" y1="148" x2="322" y2="148"/>
+  </g>
+  <text x="267" y="136" text-anchor="middle" font-size="12" fill="#c0392b">broadcast</text>
+  <text x="267" y="170" text-anchor="middle" font-size="11" fill="#888">copy across columns</text>
+
+  <!-- dA -->
+  <g>
+    <text x="432" y="82" text-anchor="middle" font-size="13" fill="#666">dA = dL/dA (2x2), same shape as A</text>
+    <rect x="344" y="96" width="176" height="104" rx="6" fill="#fff9e8" stroke="#b8860b" stroke-width="2"/>
+    <line x1="432" y1="96" x2="432" y2="200" stroke="#e8dcb8" stroke-width="1"/>
+    <line x1="344" y1="148" x2="520" y2="148" stroke="#e8dcb8" stroke-width="1"/>
+    <text x="388" y="130" text-anchor="middle" font-size="18" fill="#1a1a1a">G1</text>
+    <text x="476" y="130" text-anchor="middle" font-size="18" fill="#1a1a1a">G1</text>
+    <text x="388" y="182" text-anchor="middle" font-size="18" fill="#1a1a1a">G2</text>
+    <text x="476" y="182" text-anchor="middle" font-size="18" fill="#1a1a1a">G2</text>
+    <text x="432" y="222" text-anchor="middle" font-size="11" fill="#888">every entry of a row gets the same gradient</text>
+  </g>
+
+  <!-- shape note -->
+  <rect x="560" y="96" width="208" height="104" rx="8" fill="#f7f9fb" stroke="#ccd6dd" stroke-width="1.5"/>
+  <text x="664" y="122" text-anchor="middle" font-size="12" font-weight="bold" fill="#333">shape check</text>
+  <text x="664" y="146" text-anchor="middle" font-size="12" fill="#555">A is (2, 2), so dA must be (2, 2)</text>
+  <text x="664" y="166" text-anchor="middle" font-size="12" fill="#555">G is (2, 1)</text>
+  <text x="664" y="188" text-anchor="middle" font-size="11" fill="#888">a column has to be duplicated</text>
+
+  <text x="400" y="272" text-anchor="middle" font-size="12" fill="#888">Row 1 of A contributed to B1 and to nothing else, so every entry in row 1 gets G1 back.</text>
+</svg>

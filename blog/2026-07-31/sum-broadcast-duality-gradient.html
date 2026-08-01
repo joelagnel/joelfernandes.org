@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Backprop: Why the Gradient of a Sum Is a Broadcast - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-02 &raquo;<br><a href="/blog/2026-03-02/open-source-models-march-2026.html">Open Source AI Models in March 2026: The Cheapest and Most Capable</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Backprop: Why the Gradient of a Sum Is a Broadcast</h1>
+<p class="meta">31 Jul 2026</p>
+
+<div class="post">
+<blockquote>
+  <p><strong>Context:</strong> Like the earlier posts in this series, this one comes out of Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=q8SA3rM6ckI">Becoming a Backprop Ninja</a> (Part 4 of the
+spelled-out intro series), where you hand-write every backward pass instead of calling
+<code class="language-plaintext highlighter-rouge">.backward()</code>. These notes are the slower explanation I want on hand the next time I go back
+to the video. If you have not watched it, start there:</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg" alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+<hr />
+
+<p><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Part 1</a> looked at a broadcast in the forward pass and found a sum waiting in the backward pass. This post runs the same setup in the other direction.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>     <span class="c1"># A is (2, 2), B is (2, 1)
+</span></code></pre></div></div>
+
+<p>A 2x2 goes in, a 2x1 comes out. Each row of <code class="language-plaintext highlighter-rouge">A</code> gets collapsed into a single number. Four values in, two values out.</p>
+
+<p>The gradient has to travel the opposite way, from a 2x1 back into a 2x2. Two numbers have to become four. The only thing that can do that is a copy, and copying a column across is exactly what broadcasting is.</p>
+
+<p>This is the pairing that makes both halves easy to remember: <strong>a sum in the forward pass is a broadcast in the backward pass, and a broadcast in the forward pass is a sum in the backward pass</strong>. The two operations are duals of each other. If you can derive one, you already have the other.</p>
+
+<h2 id="writing-the-forward-pass-out-longhand">Writing the forward pass out longhand</h2>
+
+<p>Name every element rather than using numbers. <code class="language-plaintext highlighter-rouge">A</code> is 2x2:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A = | A11  A12 |
+    | A21  A22 |
+</code></pre></div></div>
+
+<p>Summing along <code class="language-plaintext highlighter-rouge">dim=1</code> adds up each row:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>B1 = A11 + A12
+B2 = A21 + A22
+</code></pre></div></div>
+
+<p>so <code class="language-plaintext highlighter-rouge">B</code> is a 2x1 column:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>B = | B1 |
+    | B2 |
+</code></pre></div></div>
+
+<p>The <code class="language-plaintext highlighter-rouge">keepdim=True</code> is what keeps it a <code class="language-plaintext highlighter-rouge">(2, 1)</code> column rather than a flat <code class="language-plaintext highlighter-rouge">(2,)</code> vector. That distinction matters later on and I will come back to it.</p>
+
+<p>Here is the same thing as a picture, both rows drawn out:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/sum-grad/fwd.svg" alt="Forward computational graph: A11 and A12 both feed a plus node producing B1, A21 and A22 both feed a second plus node producing B2, and both B values flow into the loss L." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Two things to notice. Each <code class="language-plaintext highlighter-rouge">A</code> element has exactly one arrow leaving it, so nothing is being reused here. And the plus nodes have two arrows coming in and one going out, which is where the collapsing happens.</p>
+
+<h2 id="what-we-are-given-and-what-we-want">What we are given, and what we want</h2>
+
+<p>Assume <code class="language-plaintext highlighter-rouge">B</code> feeds the rest of the network and eventually a scalar loss <code class="language-plaintext highlighter-rouge">L</code>. Backprop hands us:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>G = dL/dB
+</code></pre></div></div>
+
+<p>which is the same shape as <code class="language-plaintext highlighter-rouge">B</code>, so 2x1, with entries <code class="language-plaintext highlighter-rouge">G1</code> and <code class="language-plaintext highlighter-rouge">G2</code>.</p>
+
+<p>We need <code class="language-plaintext highlighter-rouge">dL/dA</code>, which must be 2x2 because <code class="language-plaintext highlighter-rouge">A</code> is 2x2.</p>
+
+<p>Two numbers have to turn into four. Hold that thought, it will answer the question on its own in a minute.</p>
+
+<h2 id="the-derivation">The derivation</h2>
+
+<p>Take <code class="language-plaintext highlighter-rouge">A11</code>. Where does it appear in the output? In exactly one place, <code class="language-plaintext highlighter-rouge">B1 = A11 + A12</code>. So the chain rule has a single path to walk:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dA11 = dL/dB1 * dB1/dA11
+</code></pre></div></div>
+
+<p>The local derivative <code class="language-plaintext highlighter-rouge">dB1/dA11</code> is <code class="language-plaintext highlighter-rouge">1</code>. Addition does not scale anything: bump <code class="language-plaintext highlighter-rouge">A11</code> by epsilon and <code class="language-plaintext highlighter-rouge">B1</code> goes up by exactly epsilon, no more and no less. Having <code class="language-plaintext highlighter-rouge">A12</code> sitting next to it in the sum changes nothing about how <code class="language-plaintext highlighter-rouge">B1</code> responds to a wiggle in <code class="language-plaintext highlighter-rouge">A11</code>.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dA11 = G1 * 1 = G1
+</code></pre></div></div>
+
+<p>Now do <code class="language-plaintext highlighter-rouge">A12</code>. It also appears in exactly one place, also <code class="language-plaintext highlighter-rouge">B1</code>, and also with a local derivative of <code class="language-plaintext highlighter-rouge">1</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dA12 = G1 * 1 = G1
+</code></pre></div></div>
+
+<p>The same value. Not a coincidence, and not an accident of this example. <code class="language-plaintext highlighter-rouge">A11</code> and <code class="language-plaintext highlighter-rouge">A12</code> both feed the same output through the same kind of edge, so the same gradient comes back to both of them.</p>
+
+<p>Row 2 works identically:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dA21 = G2        dL/dA22 = G2
+</code></pre></div></div>
+
+<p>Putting it together:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dA = | G1  G1 |
+     | G2  G2 |
+</code></pre></div></div>
+
+<p>which is <code class="language-plaintext highlighter-rouge">G</code>, copied across the columns.</p>
+
+<h2 id="the-backward-graph">The backward graph</h2>
+
+<p>Reverse every arrow in the forward diagram and the picture explains itself:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/sum-grad/bwd.svg" alt="Backward computational graph: G1 flows back from the loss to B1, reaches the plus node, and leaves as two arrows both carrying G1, one to A11 and one to A12. The same happens with G2 for the second row." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>One arrow arrives at the plus node carrying <code class="language-plaintext highlighter-rouge">G1</code>. Two arrows leave it, and both carry <code class="language-plaintext highlighter-rouge">G1</code>. The plus node has no multiplier attached to it, so there is nothing to scale the gradient by on the way out.</p>
+
+<p>That fan-out on the backward side is the mirror of what happened in <a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">part 1</a>. There, <code class="language-plaintext highlighter-rouge">B1</code> fanned out in the forward pass and the gradients came back and added together at the node. Here, the plus node fans out in the backward pass and the gradient gets copied. Same picture, read from the other end.</p>
+
+<p>In matrix form:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/sum-grad/matrices.svg" alt="Matrix figure: G is a 2x1 column with entries G1 and G2, and dA is a 2x2 matrix where each row repeats the corresponding G value across both columns." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Any of these will do it in code:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dA</span> <span class="o">=</span> <span class="n">G</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">ones</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>     <span class="c1"># explicit multiply by ones
+</span><span class="n">dA</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">broadcast_to</span><span class="p">(</span><span class="n">G</span><span class="p">,</span> <span class="n">A</span><span class="p">.</span><span class="n">shape</span><span class="p">)</span>
+<span class="n">dA</span> <span class="o">=</span> <span class="n">G</span> <span class="o">+</span> <span class="n">np</span><span class="p">.</span><span class="nf">zeros_like</span><span class="p">(</span><span class="n">A</span><span class="p">)</span>    <span class="c1"># add zero, let broadcasting expand
+</span></code></pre></div></div>
+
+<p>In PyTorch, <code class="language-plaintext highlighter-rouge">G.expand(-1, 2)</code> does the same without allocating anything, which is what autograd actually does internally.</p>
+
+<h2 id="the-duality">The duality</h2>
+
+<p>Lining the two posts up next to each other:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/sum-grad/duality.svg" alt="Two panels comparing the two cases. On the left, a forward broadcast from 2x1 to 2x2 with a backward sum from 2x2 to 2x1. On the right, a forward sum from 2x2 to 2x1 with a backward broadcast from 2x1 to 2x2." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>This is a real duality and it is worth naming, because it turns two things to memorize into one:</p>
+
+<ul>
+  <li><strong>Sum forward, broadcast backward.</strong> Several values feed one output through addition, so that one gradient is handed to every input untouched.</li>
+  <li><strong>Broadcast forward, sum backward.</strong> One value feeds several outputs, so the gradients from all of those places add up when they come home.</li>
+</ul>
+
+<p>Both statements are the same fact about the chain rule, viewed from opposite ends. A copy node run in reverse is an add node, and an add node run in reverse is a copy node.</p>
+
+<p>There is a slightly deeper reason for this, if you want it. Both operations are linear, and the backward pass of a linear map is its transpose. Broadcasting a <code class="language-plaintext highlighter-rouge">(2, 1)</code> into a <code class="language-plaintext highlighter-rouge">(2, 2)</code> and summing a <code class="language-plaintext highlighter-rouge">(2, 2)</code> back into a <code class="language-plaintext highlighter-rouge">(2, 1)</code> are described by the same matrix of ones, just transposed. That is why they keep showing up as a pair.</p>
+
+<h2 id="shape-checking">Shape checking</h2>
+
+<p>The shape check from the earlier posts settles this one before you write down a single derivative.</p>
+
+<p>A gradient always has the same shape as the thing it is the gradient of:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>A is (2, 2)   -&gt;   dA must be (2, 2)
+G is (2, 1)
+</code></pre></div></div>
+
+<p>A <code class="language-plaintext highlighter-rouge">(2, 1)</code> has to become a <code class="language-plaintext highlighter-rouge">(2, 2)</code>. There is no way to invent new information, so the only candidate is duplicating what is already there, which is broadcasting.</p>
+
+<p>Compare that to part 1, where <code class="language-plaintext highlighter-rouge">dB</code> had to be <code class="language-plaintext highlighter-rouge">(3, 1)</code> while <code class="language-plaintext highlighter-rouge">G</code> was <code class="language-plaintext highlighter-rouge">(3, 3)</code>, and columns had to disappear, so a sum was the only option. Whenever a broadcast dimension has to grow, you copy. Whenever it has to shrink, you sum. The shapes pick the operation for you.</p>
+
+<h2 id="a-note-on-keepdim">A note on keepdim</h2>
+
+<p>This is the one place the operation bites in practice:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>                  <span class="c1"># shape (2,)
+</span><span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>    <span class="c1"># shape (2, 1)
+</span></code></pre></div></div>
+
+<p>Without <code class="language-plaintext highlighter-rouge">keepdim</code>, the dimension is gone rather than flattened to size 1, and a <code class="language-plaintext highlighter-rouge">(2,)</code> tensor broadcasts along the <strong>last</strong> axis, not the first. So <code class="language-plaintext highlighter-rouge">A / A.sum(dim=1)</code> silently divides each column by the wrong thing instead of raising an error. It is a bug that runs perfectly happily and gives you nonsense.</p>
+
+<p>Keep the dimension. It makes the broadcast go the direction you intended, and it keeps the gradient shapes lining up without any fiddling.</p>
+
+<h2 id="where-you-actually-hit-this">Where you actually hit this</h2>
+
+<p>The denominator of a softmax:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">counts_sum</span> <span class="o">=</span> <span class="n">counts</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>     <span class="c1"># sum forward
+</span><span class="n">probs</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">/</span> <span class="n">counts_sum</span>                      <span class="c1"># broadcast forward
+</span></code></pre></div></div>
+
+<p>Both halves of the duality inside two lines. The first line sums across a row, so its backward pass broadcasts. The second line broadcasts a column across, so its backward pass sums. When you hand-write the backward pass for a softmax and one of the terms has an unexpected <code class="language-plaintext highlighter-rouge">.sum()</code> or an unexpected copy in it, this is usually why.</p>
+
+<p>The same pair shows up in layer norm, in attention, and anywhere else a per-row statistic is computed and then applied back to the row.</p>
+
+<h2 id="verifying-it">Verifying it</h2>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+
+<span class="n">A</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="n">requires_grad</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="n">B</span> <span class="o">=</span> <span class="n">A</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>     <span class="c1"># B is (2, 1)
+</span><span class="n">G</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">randn</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>              <span class="c1"># pretend upstream gradient
+</span><span class="n">B</span><span class="p">.</span><span class="nf">backward</span><span class="p">(</span><span class="n">G</span><span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">A</span><span class="p">.</span><span class="n">grad</span><span class="p">,</span> <span class="n">G</span><span class="p">.</span><span class="nf">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)))</span>     <span class="c1"># True
+</span><span class="nf">print</span><span class="p">(</span><span class="n">A</span><span class="p">.</span><span class="n">grad</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Which prints something like:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>True
+tensor([[-1.0845, -1.0845],
+        [-1.3986, -1.3986]])
+</code></pre></div></div>
+
+<p>Each row holds the same number twice, which is the copy showing up in the output.</p>
+
+<h2 id="wrapping-up">Wrapping up</h2>
+
+<p>Four posts in, and every one of them has come down to the same question: where does this variable appear in the forward pass, and how many times?</p>
+
+<ul>
+  <li>Used once, and just added: the gradient arrives unchanged. That is every element of <code class="language-plaintext highlighter-rouge">A</code> here.</li>
+  <li>Used many times: the gradients add. That was the broadcast vector in part 1 and the bias in <a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">part 3</a>.</li>
+  <li>Used conditionally: the gradient only flows down the path that was actually taken, which was the max in <a href="/blog/2026-07-30/max-gradient-one-hot.html">part 2</a>.</li>
+</ul>
+
+<p>Sum and broadcast are the cleanest example of the pattern because they are each other’s mirror image. Once you have worked out one of them properly, you never have to work out the other.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
