@@ -85,17 +85,7 @@ That is the entire modification. Temperature does not query the model again, doe
 - **T above 1** shrinks the gaps, so the exponent has less to work with and the distribution flattens toward uniform.
 - **T equal to 1** leaves the logits alone and gives you the model's own distribution.
 
-The clearest way to see this is with two tokens, where the whole distribution is described by a single number: the gap between the two logits. Plotting the winner's probability against that gap, once per temperature, gives this:
-
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/temp-softmax/temperature-curves.svg" alt="Softmax probability of the leading token plotted against the logit gap, with one colored curve per temperature. Low temperatures form a near vertical step at gap zero, high temperatures form an almost flat line at probability one half." style="max-width: 100%; height: auto;"/>
-</div>
-
-Every curve passes through the same point. When the gap is zero the two tokens are tied, and no temperature can break a tie, so the probability is 0.5 regardless. Away from that point the curves separate completely. At `T = 0.1` the curve is nearly a vertical step: a logit gap of half a point is already enough to hand the winner almost all the mass. At `T = 20` the line is nearly flat, and even a gap of 6 only moves the winner to about 57%.
-
-Same model, same logits, same x axis. Only the shape of the response changed.
-
-With a real vocabulary the same thing shows up as the distribution spreading out. Here are five fixed logits at five temperatures:
+The easiest way to see it is to hold the logits still and only change `T`. Here are five fixed logits at five temperatures:
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/temp-softmax/temperature-bars.svg" alt="Five bar charts of the same five logits at temperatures 0.1, 0.5, 1, 2 and 10, showing the probability mass concentrated on one token at low temperature and spread almost evenly at high temperature." style="max-width: 100%; height: auto;"/>
