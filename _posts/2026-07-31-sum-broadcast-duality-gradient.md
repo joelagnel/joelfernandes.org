@@ -243,4 +243,4 @@ Four posts in, and every one of them has come down to the same question: where d
 - Used many times: the gradients add. That was the broadcast vector in part 1 and the bias in [part 3]({% post_url 2026-07-30-neuron-gradient-dw-da-db %}).
 - Used conditionally: the gradient only flows down the path that was actually taken, which was the max in [part 2]({% post_url 2026-07-30-max-gradient-one-hot %}).
 
-Sum and broadcast are the cleanest example of the pattern because they are each other's mirror image. Once you have worked out one of them properly, you never have to work out the other.
+Sum and broadcast are the cleanest example of the pattern because they are each other's mirror image.
