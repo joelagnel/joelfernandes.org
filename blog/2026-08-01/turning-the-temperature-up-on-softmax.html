@@ -351,9 +351,9 @@
 <p class="meta">01 Aug 2026</p>
 
 <div class="post">
-<p>If you have used an LLM API, you have seen a <code class="language-plaintext highlighter-rouge">temperature</code> parameter, usually somewhere between 0 and 2, usually with a vague note about creativity. It is one of the few knobs most people turn without ever seeing what it touches.</p>
+<p>If you have used an LLM API, you have seen a <code class="language-plaintext highlighter-rouge">temperature</code> parameter, usually somewhere between 0 and 2, usually with a vague note about creativity. Let us see how it works under the hood.</p>
 
-<p>It turns out to be a very small piece of arithmetic, and once you see where it sits, the behavior you get at each end stops being mysterious. So let us start with softmax, then look at the one property of softmax that matters here, and then plug temperature into it.</p>
+<p>It turns out to be a very small piece of arithmetic, and once you see where it sits, the behavior you get at each end stops being mysterious. We will start with softmax, then look at the one property of softmax that matters here, and then plug temperature into it.</p>
 
 <h2 id="what-softmax-does">What softmax does</h2>
 
