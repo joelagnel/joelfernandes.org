@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" width="720" height="440" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowF" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+  </defs>
+
+  <rect width="720" height="440" fill="#ffffff"/>
+
+  <text x="360" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Forward pass: two entries of a row are added into one</text>
+
+  <!-- edges -->
+  <g stroke="#2c5f8a" stroke-width="2" fill="none" marker-end="url(#arrowF)">
+    <!-- row 1 -->
+    <line x1="117.4" y1="90.5" x2="261.6" y2="119.5"/>
+    <line x1="117.4" y1="159.5" x2="261.6" y2="130.5"/>
+    <line x1="316" y1="125" x2="440" y2="125"/>
+    <!-- row 2 -->
+    <line x1="117.4" y1="290.5" x2="261.6" y2="319.5"/>
+    <line x1="117.4" y1="359.5" x2="261.6" y2="330.5"/>
+    <line x1="316" y1="325" x2="440" y2="325"/>
+    <!-- into L -->
+    <line x1="493.7" y1="139.8" x2="603.7" y2="208.6"/>
+    <line x1="493.7" y1="310.2" x2="603.7" y2="241.4"/>
+  </g>
+
+  <!-- nodes -->
+  <g stroke="#2c5f8a" stroke-width="2" fill="#eaf2f8">
+    <circle cx="90" cy="85" r="28"/>
+    <circle cx="90" cy="165" r="28"/>
+    <circle cx="90" cy="285" r="28"/>
+    <circle cx="90" cy="365" r="28"/>
+  </g>
+  <g stroke="#2c5f8a" stroke-width="2" fill="#ffffff">
+    <circle cx="289" cy="125" r="25"/>
+    <circle cx="289" cy="325" r="25"/>
+  </g>
+  <g stroke="#2c5f8a" stroke-width="2" fill="#dff0e4">
+    <circle cx="470" cy="125" r="28"/>
+    <circle cx="470" cy="325" r="28"/>
+  </g>
+  <circle cx="630" cy="225" r="28" stroke="#555" stroke-width="2" fill="#f2f2f2"/>
+
+  <g font-size="15" text-anchor="middle" fill="#1a1a1a">
+    <text x="90" y="90">A11</text>
+    <text x="90" y="170">A12</text>
+    <text x="90" y="290">A21</text>
+    <text x="90" y="370">A22</text>
+    <text x="470" y="130">B1</text>
+    <text x="470" y="330">B2</text>
+    <text x="630" y="231" font-style="italic">L</text>
+  </g>
+  <g font-size="24" text-anchor="middle" fill="#1a1a1a">
+    <text x="289" y="134">+</text>
+    <text x="289" y="334">+</text>
+  </g>
+
+  <g font-size="13" fill="#666">
+    <text x="378" y="112" text-anchor="middle">B1 = A11 + A12</text>
+    <text x="378" y="348" text-anchor="middle">B2 = A21 + A22</text>
+    <text x="185" y="63" text-anchor="middle" fill="#888">row 1 of A</text>
+    <text x="185" y="404" text-anchor="middle" fill="#888">row 2 of A</text>
+  </g>
+
+  <text x="360" y="428" text-anchor="middle" font-size="12" fill="#888">Each row collapses to a single number. Four values in, two values out.</text>
+</svg>
