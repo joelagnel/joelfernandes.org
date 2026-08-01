@@ -109,7 +109,7 @@ The top token goes from 99.8% at `T = 0.1`, to 71% at 0.5, to 51% at 1.0, to 36%
 
 **T approaching infinity.** Now every gap gets crushed toward zero, every exponent tends to `exp(0) = 1`, and each of the N tokens ends up with probability 1/N. The distribution is uniform, and sampling is a uniform random draw over the whole vocabulary. The model still did all its work, and you threw all of it away. The output is noise, because a token the model considered absurd is now just as likely as the one it was confident about.
 
-Neither end is useful on its own, but they bracket the range. Everything you actually use lives in between.
+The two ends are not equally useful. `T = 0` is a perfectly good setting that people run every day, because argmax is exactly what you want when there is a single right answer. The infinite end is not a setting anyone reaches for, it just marks where the scale stops. Everything else lives in between.
 
 ## What this means for creativity
 
