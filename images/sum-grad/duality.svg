@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" width="800" height="320" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrowFwdD" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arrowBwdD" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="800" height="320" fill="#ffffff"/>
+  <text x="400" y="30" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Sum and broadcast are each other's backward pass</text>
+
+  <!-- panel 1 -->
+  <rect x="30" y="52" width="340" height="200" rx="10" fill="#fbfdff" stroke="#ccd6dd" stroke-width="1.5"/>
+  <text x="200" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c5f8a">Forward is a broadcast</text>
+
+  <g stroke="#2c5f8a" stroke-width="2" fill="none" marker-end="url(#arrowFwdD)">
+    <line x1="132" y1="118" x2="252" y2="118"/>
+  </g>
+  <g stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arrowBwdD)" stroke-dasharray="7,4">
+    <line x1="252" y1="188" x2="132" y2="188"/>
+  </g>
+  <g font-size="14" fill="#1a1a1a" text-anchor="middle">
+    <text x="102" y="123">(2, 1)</text>
+    <text x="282" y="123">(2, 2)</text>
+    <text x="102" y="193">(2, 1)</text>
+    <text x="282" y="193">(2, 2)</text>
+  </g>
+  <text x="192" y="106" text-anchor="middle" font-size="12" fill="#2c5f8a">copy across columns</text>
+  <text x="192" y="212" text-anchor="middle" font-size="12" fill="#c0392b">sum across columns</text>
+  <text x="200" y="238" text-anchor="middle" font-size="11" fill="#888">this was part 1</text>
+
+  <!-- panel 2 -->
+  <rect x="430" y="52" width="340" height="200" rx="10" fill="#fbfdff" stroke="#ccd6dd" stroke-width="1.5"/>
+  <text x="600" y="78" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c5f8a">Forward is a sum</text>
+
+  <g stroke="#2c5f8a" stroke-width="2" fill="none" marker-end="url(#arrowFwdD)">
+    <line x1="532" y1="118" x2="652" y2="118"/>
+  </g>
+  <g stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arrowBwdD)" stroke-dasharray="7,4">
+    <line x1="652" y1="188" x2="532" y2="188"/>
+  </g>
+  <g font-size="14" fill="#1a1a1a" text-anchor="middle">
+    <text x="502" y="123">(2, 2)</text>
+    <text x="682" y="123">(2, 1)</text>
+    <text x="502" y="193">(2, 2)</text>
+    <text x="682" y="193">(2, 1)</text>
+  </g>
+  <text x="592" y="106" text-anchor="middle" font-size="12" fill="#2c5f8a">sum across columns</text>
+  <text x="592" y="212" text-anchor="middle" font-size="12" fill="#c0392b">copy across columns</text>
+  <text x="600" y="238" text-anchor="middle" font-size="11" fill="#888">this post</text>
+
+  <text x="400" y="286" text-anchor="middle" font-size="12" fill="#888">Solid blue is the forward pass, dashed red is the backward pass. Swap the direction and the two operations trade places.</text>
+</svg>
