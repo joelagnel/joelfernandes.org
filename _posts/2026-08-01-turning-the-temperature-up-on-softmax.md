@@ -121,7 +121,7 @@ The catch is that the model ranks tokens by likelihood, not by truth, and softma
 
 There is also a practical cost: reproducibility. At `T = 0` the same prompt gives the same output every time, which is what you want when you are debugging, running evaluations, or comparing two prompts. Once you raise the temperature, the same prompt can give different answers on different runs, and a bug that appeared once may not appear again.
 
-Which is why the usual advice holds up. Keep it low for code, extraction, classification, and anything factual, where you want the model's best guess and you want it to be repeatable. Raise it toward 1 or a bit above for writing and idea generation, where variety is worth more than precision, and where a strange word is a much cheaper mistake than a strange fact.
+So the best practice is to keep it low for code, extraction, classification, and anything factual, where you want the model's best guess and you want it to be repeatable. Raise it toward 1 or a bit above for writing and idea generation, where variety is worth more than precision, and where a strange word is a much cheaper mistake than a strange fact.
 
 ## Wrapping up
 
