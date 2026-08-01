@@ -125,7 +125,7 @@ So the best practice is to keep it low for code, extraction, classification, and
 
 ## Wrapping up
 
-Three things worth carrying away:
+Three takeaways from this article:
 
 1. Softmax ignores the absolute size of the logits and responds only to the differences between them.
 2. Because of the exponent, those differences are amplified. A gap of `d` becomes a probability ratio of `exp(d)`.
