@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Turning the Temperature Up on Softmax - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/kernel-dependency-mess.html">Kernel Dependency Mess: BPF and SRCU</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Turning the Temperature Up on Softmax</h1>
+<p class="meta">01 Aug 2026</p>
+
+<div class="post">
+<p>If you have used an LLM API, you have seen a <code class="language-plaintext highlighter-rouge">temperature</code> parameter, usually somewhere between 0 and 2, usually with a vague note about creativity. It is one of the few knobs most people turn without ever seeing what it touches.</p>
+
+<p>It turns out to be a very small piece of arithmetic, and once you see where it sits, the behavior you get at each end stops being mysterious. So let us start with softmax, then look at the one property of softmax that matters here, and then plug temperature into it.</p>
+
+<h2 id="what-softmax-does">What softmax does</h2>
+
+<p>The last layer of a language model produces a vector of raw scores called logits, one number per token in the vocabulary. They can be negative, they can be large, and they do not add up to anything meaningful. If the vocabulary has 50,000 tokens, you get 50,000 loose numbers.</p>
+
+<p>To sample a token you need a probability distribution instead. Softmax is the function that converts one into the other:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>p_i = exp(z_i) / sum_j exp(z_j)
+</code></pre></div></div>
+
+<p>Read it in two steps. First, exponentiate every logit, which makes all of them positive. Then divide each one by the total, which forces them to sum to 1. That is the whole function, and it gives you the two things a probability distribution needs, for free.</p>
+
+<p>A small example with three tokens:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">2.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="n">p</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="p">.</span><span class="nf">exp</span><span class="p">(</span><span class="n">z</span><span class="p">).</span><span class="nf">sum</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>        <span class="c1"># [0.665, 0.245, 0.090]
+</span></code></pre></div></div>
+
+<p>The largest logit gets the largest probability, the ordering is preserved, and the three numbers add to 1.</p>
+
+<h2 id="softmax-barely-cares-about-the-values">Softmax barely cares about the values</h2>
+
+<p>Here is the part worth internalizing, because everything else follows from it.</p>
+
+<p>Add 100 to every logit and run softmax again:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">102.0</span><span class="p">,</span> <span class="mf">101.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">])</span>
+<span class="c1"># [0.665, 0.245, 0.090]     exactly the same as before
+</span></code></pre></div></div>
+
+<p>Nothing moved. Adding a constant <code class="language-plaintext highlighter-rouge">c</code> to every logit multiplies both the numerator and the denominator by <code class="language-plaintext highlighter-rouge">exp(c)</code>, and the two cancel. Softmax is shift invariant, so the absolute size of your logits carries no information at all. (This is also why the numerically stable implementation subtracts the row max before exponentiating. It is free.)</p>
+
+<p>Now scale instead of shifting. Double the logits:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">z</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">2.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">])</span>
+<span class="c1"># [0.867, 0.117, 0.016]
+</span></code></pre></div></div>
+
+<p>Same ordering, but the winner went from 67% to 87%. The gaps went from 1 apart to 2 apart, and the distribution got noticeably sharper.</p>
+
+<p>So softmax ignores where the logits sit and reacts strongly to how far apart they are. And the reaction is not gentle, because of the exponent. A gap of <code class="language-plaintext highlighter-rouge">d</code> between two logits becomes a ratio of <code class="language-plaintext highlighter-rouge">exp(d)</code> between their probabilities:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>logit gap</th>
+      <th>probability ratio</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>2.7x</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>7.4x</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>20x</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>148x</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>22,026x</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Differences do not merely survive the trip through softmax. They get amplified, multiplicatively. A logit lead of 3 is not a small edge, it is a 20 to 1 favorite.</p>
+
+<h2 id="temperature-scales-the-gaps">Temperature scales the gaps</h2>
+
+<p>Now the knob. Sampling temperature divides the logits by <code class="language-plaintext highlighter-rouge">T</code> before softmax runs:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>p_i = exp(z_i / T) / sum_j exp(z_j / T)
+</code></pre></div></div>
+
+<p>That is the entire modification. Temperature does not query the model again, does not know anything about the tokens, and cannot change which token the model ranked first. All it does is rescale the gaps, and we just worked out what rescaling gaps does.</p>
+
+<ul>
+  <li><strong>T below 1</strong> divides by something small, so the gaps grow, the exponent amplifies harder, and the distribution sharpens onto the leading token.</li>
+  <li><strong>T above 1</strong> shrinks the gaps, so the exponent has less to work with and the distribution flattens toward uniform.</li>
+  <li><strong>T equal to 1</strong> leaves the logits alone and gives you the model’s own distribution.</li>
+</ul>
+
+<p>The clearest way to see this is with two tokens, where the whole distribution is described by a single number: the gap between the two logits. Plotting the winner’s probability against that gap, once per temperature, gives this:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/temp-softmax/temperature-curves.svg" alt="Softmax probability of the leading token plotted against the logit gap, with one colored curve per temperature. Low temperatures form a near vertical step at gap zero, high temperatures form an almost flat line at probability one half." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Every curve passes through the same point. When the gap is zero the two tokens are tied, and no temperature can break a tie, so the probability is 0.5 regardless. Away from that point the curves separate completely. At <code class="language-plaintext highlighter-rouge">T = 0.1</code> the curve is nearly a vertical step: a logit gap of half a point is already enough to hand the winner almost all the mass. At <code class="language-plaintext highlighter-rouge">T = 20</code> the line is nearly flat, and even a gap of 6 only moves the winner to about 57%.</p>
+
+<p>Same model, same logits, same x axis. Only the shape of the response changed.</p>
+
+<p>With a real vocabulary the same thing shows up as the distribution spreading out. Here are five fixed logits at five temperatures:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/temp-softmax/temperature-bars.svg" alt="Five bar charts of the same five logits at temperatures 0.1, 0.5, 1, 2 and 10, showing the probability mass concentrated on one token at low temperature and spread almost evenly at high temperature." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>The top token goes from 99.8% at <code class="language-plaintext highlighter-rouge">T = 0.1</code>, to 71% at 0.5, to 51% at 1.0, to 36% at 2.0, to 23% at 10. Meanwhile <code class="language-plaintext highlighter-rouge">the</code>, which the model ranked dead last, climbs from effectively zero to 16%. The model’s opinion never changed. Only how much of it we chose to act on.</p>
+
+<h2 id="the-two-extremes">The two extremes</h2>
+
+<p><strong>T approaching 0.</strong> Dividing by a number heading toward zero blows every nonzero gap up toward infinity. The largest logit ends up with all of the probability mass and everything else is driven to zero. Softmax degenerates into argmax, and sampling becomes “always take the top token”, which is greedy decoding. This is why temperature 0 is described as deterministic. Implementations special case it rather than actually dividing by zero, but the limit is what they are reproducing.</p>
+
+<p><strong>T approaching infinity.</strong> Now every gap gets crushed toward zero, every exponent tends to <code class="language-plaintext highlighter-rouge">exp(0) = 1</code>, and each of the N tokens ends up with probability 1/N. The distribution is uniform, and sampling is a uniform random draw over the whole vocabulary. The model still did all its work, and you threw all of it away. The output is noise, because a token the model considered absurd is now just as likely as the one it was confident about.</p>
+
+<p>Neither end is useful on its own, but they bracket the range. Everything you actually use lives in between.</p>
+
+<h2 id="what-this-means-for-creativity">What this means for creativity</h2>
+
+<p>The usual framing is that higher temperature makes a model more creative, and there is something to that, but it is worth being precise about what you are buying.</p>
+
+<p>What higher temperature really does is give the runner up tokens a real chance of being picked. Sometimes that is exactly what you want. In prose or brainstorming, the second and third choices are often perfectly good, and always taking the top one is what makes greedy output feel flat and repetitive. Letting those alternatives through produces phrasing you would not have got otherwise, and it is genuinely useful.</p>
+
+<p>The catch is that the model ranks tokens by likelihood, not by truth, and softmax has no idea which is which. A low probability token can be a fresh turn of phrase or it can be a wrong digit in a date, an invented function name, or a citation that does not exist. Temperature cannot tell those apart, so raising it increases both at once. And because the effect compounds token by token, one unlikely choice early on becomes the context that the rest of the response is conditioned on, so a small wobble can turn into a confidently wrong paragraph.</p>
+
+<p>There is also a practical cost: reproducibility. At <code class="language-plaintext highlighter-rouge">T = 0</code> the same prompt gives the same output every time, which is what you want when you are debugging, running evaluations, or comparing two prompts. Once you raise the temperature, the same prompt can give different answers on different runs, and a bug that appeared once may not appear again.</p>
+
+<p>Which is why the usual advice holds up. Keep it low for code, extraction, classification, and anything factual, where you want the model’s best guess and you want it to be repeatable. Raise it toward 1 or a bit above for writing and idea generation, where variety is worth more than precision, and where a strange word is a much cheaper mistake than a strange fact.</p>
+
+<h2 id="wrapping-up">Wrapping up</h2>
+
+<p>Three things worth carrying away:</p>
+
+<ol>
+  <li>Softmax ignores the absolute size of the logits and responds only to the differences between them.</li>
+  <li>Because of the exponent, those differences are amplified. A gap of <code class="language-plaintext highlighter-rouge">d</code> becomes a probability ratio of <code class="language-plaintext highlighter-rouge">exp(d)</code>.</li>
+  <li>Temperature scales the gaps before softmax sees them, which is why one small division can slide the same model all the way from argmax to a uniform random choice.</li>
+</ol>
+
+<p>Nothing about the model changes when you turn the knob. The ranking was fixed the moment the logits came out, and no temperature can reorder it. What you are choosing is how much of the model’s own uncertainty you let through into the output.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
