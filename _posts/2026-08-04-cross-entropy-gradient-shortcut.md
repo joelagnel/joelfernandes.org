@@ -11,9 +11,12 @@ published: false
 
 > **Context:** This is part 5 in a series that comes out of Andrej Karpathy's
 > [Becoming a Backprop Ninja](https://www.youtube.com/watch?v=q8SA3rM6ckI), where you
-> hand-write every backward pass instead of calling `.backward()`. Parts 1 through 4 worked
-> through individual operations. This one is Exercise 2 from the notebook, and it is the
-> exercise where all of that effort gets refunded.
+> hand-write every backward pass instead of calling `.backward()`.
+> [Part 1]({% post_url 2026-07-30-broadcast-subtraction-gradient %}),
+> [part 2]({% post_url 2026-07-30-max-gradient-one-hot %}),
+> [part 3]({% post_url 2026-07-30-neuron-gradient-dw-da-db %}) and
+> [part 4]({% post_url 2026-07-31-sum-broadcast-duality-gradient %}) worked through individual
+> operations. This one is Exercise 2 from the notebook.
 
 <div style="margin: 1.5em 0 2em 0; text-align: center;">
   <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
@@ -65,13 +68,12 @@ dlogits[range(n), Yb] -= 1
 dlogits /= n
 ```
 
-Three lines. If you have not seen the derivation, those lines look like magic, particularly the
-middle one, which appears to subtract 1 from an arbitrary-looking set of positions. By the end
-of this post each line should look inevitable.
+Three lines. The middle one is the odd-looking one: it subtracts 1 from a specific set of
+positions in the matrix. The rest of this post works out where each of the three comes from.
 
 ## The block we are differentiating
 
-Zoom out first. Cross-entropy is a box that eats two things and produces one number.
+Cross-entropy takes two inputs and returns one number.
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/xent-grad/pipeline.svg" alt="The logits matrix and the Yb labels feed into a cross-entropy block which outputs a single loss value L. A dashed return path shows the gradient dL/dlogits flowing back to the logits." style="max-width: 100%; height: auto;"/>
@@ -110,8 +112,8 @@ Which in code is exactly what that last line of the long forward pass said:
 loss = -logprobs[range(n), Yb].mean()
 ```
 
-Step 2 is worth pausing on. Out of 32 x 27 = 864 numbers in the probability matrix, the loss
-looks at exactly **32 of them**, one per row. The other 832 are never read. That fact does not
+Step 2 is worth noting. Out of 32 x 27 = 864 numbers in the probability matrix, the loss looks
+at exactly **32 of them**, one per row. The other 832 are never read. That fact does not
 mean their gradients are zero, as we will see, but it does mean the loss expression itself is a
 lot smaller than the matrix suggests.
 
@@ -125,32 +127,29 @@ the correct character. That choice is doing something specific:
 </div>
 
 If the model gave the right answer a probability near 1, `log(p)` is near 0 and the loss is
-near 0. Nothing to fix. If it gave the right answer a probability near 0, `log(p)` heads for
-minus infinity and the loss becomes enormous. Being confidently wrong is expensive, and it is
-supposed to be.
+near 0. If it gave the right answer a probability near 0, `log(p)` heads for minus infinity and
+the loss becomes large. A confident wrong answer costs a lot more than an uncertain one.
 
 Probabilities live between 0 and 1, so their logs are always negative. The minus sign out front
 just flips that back to a positive loss.
 
 ## Two things to notice before any calculus
 
-Both of these make the derivation smaller, and it is worth naming them explicitly.
+Both of these make the derivation smaller.
 
 **Rows are independent.** Row `i` of the loss depends only on row `i` of the logits. Softmax
 runs along a row, and the plucked probability comes from that same row. Nothing crosses between
 examples. So we can derive the gradient for one row, and then apply the identical formula to
 all 32.
 
-**The 1/n is just a constant.** The batch loss is the mean, so there is a factor of `1/n` out
+**The 1/n is a constant.** The batch loss is the mean, so there is a factor of `1/n` out
 front. Constants pass straight through differentiation, so park it, do the interesting work
 without it, and multiply it back at the very end.
 
-That leaves one clean question: for a single row, what is the derivative of the loss with
-respect to one logit in that row?
+That leaves one question: for a single row, what is the derivative of the loss with respect to
+one logit in that row?
 
 ## The trick: freeze everything except one
-
-Here is the move that makes the rest easy.
 
 Write the softmax for a single row. Call the logit we are differentiating with respect to `a`.
 The softmax denominator is a sum over all 27 exponentials:
@@ -160,9 +159,8 @@ SM = e^a / (e^a + e^b + e^c + e^d + ...)
 ```
 
 We are differentiating with respect to `a` and nothing else. Every other logit in that row is
-being held fixed. So every other exponential in that denominator is a **constant**. Not
-approximately, not for convenience: `e^b`, `e^c`, `e^d` and the rest genuinely do not change when
-`a` changes.
+being held fixed. So every other exponential in that denominator is a **constant**. `e^b`,
+`e^c`, `e^d` and the rest genuinely do not change when `a` changes.
 
 Give the whole pile of them one name, `K`:
 
@@ -174,8 +172,8 @@ Give the whole pile of them one name, `K`:
 SM = e^a / (e^a + K)
 ```
 
-One variable, one constant. A 27-variable problem just became a single-variable calculus
-problem, the kind you can hand to Wolfram Alpha, or do by hand in two lines.
+One variable, one constant. The 27-variable problem is now a single-variable one, which you can
+do by hand or hand to Wolfram Alpha.
 
 One rearrangement will be useful shortly. Since `SM = e^a / (e^a + K)`, we can solve for the
 denominator and then for `K` itself:
@@ -186,16 +184,15 @@ e^a + K = e^a / SM
 K = e^a/SM - e^a
 ```
 
-Keep that in your pocket.
+We will use that in a moment.
 
 ## Two cases, and why there are exactly two
 
-Now, the part that trips people up. We need `dL/da` for **every** logit in the row, all 27 of
-them, not just the correct one. And the loss expression looks different depending on whether
-`a` happens to be the correct character or not.
+We need `dL/da` for **every** logit in the row, all 27 of them, not just the correct one. And
+the loss expression looks different depending on whether `a` happens to be the correct
+character or not.
 
-Here is the crucial bit of intuition. The loss only ever looks at the probability of the
-**correct** character:
+The loss only ever looks at the probability of the **correct** character:
 
 ```
 L = -log( e^(correct logit) / (sum of all 27 exponentials) )
@@ -208,13 +205,13 @@ Now ask where a given logit `a` appears in that expression.
 - If `a` is **not** the correct character, then `e^a` appears exactly **once**, and only in the
   **denominator**.
 
-That second case is the one worth sitting with. A wrong character's logit still affects the
-loss, even though the loss never looks at its probability. It affects the loss because it is
+The second case is the less obvious one. A wrong character's logit still affects the loss, even
+though the loss never looks at its probability. It affects the loss because it is
 part of the normalizing sum. Raise a wrong logit and you inflate the denominator, which shrinks
 the correct character's probability, which raises the loss. The influence is entirely indirect,
 routed through the denominator.
 
-So in the wrong-character case the numerator is a constant, and we can just call it `C`:
+So in the wrong-character case the numerator is a constant, which we can call `C`:
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/xent-grad/two-cases.svg" alt="Two panels side by side. Case A, a is the correct character, gives SM minus 1. Case B, a is a wrong character, gives SM. The only difference is the minus 1." style="max-width: 100%; height: auto;"/>
@@ -239,7 +236,7 @@ Differentiating with respect to `a`. This is exactly the query I put into Wolfra
 dL/da = -K / (K + e^a)
 ```
 
-Now substitute `K = e^a/SM - e^a` from earlier, and watch it fall apart:
+Substitute `K = e^a/SM - e^a` from earlier:
 
 ```
 dL/da = -( e^a/SM - e^a ) / ( e^a/SM )
@@ -253,8 +250,7 @@ Multiply top and bottom by `SM/e^a`:
       = SM - 1
 ```
 
-That is it. The gradient on the correct character's logit is just its own softmax probability,
-minus one.
+The gradient on the correct character's logit is its own softmax probability, minus one.
 
 ### Case B: `a` is a wrong character
 
@@ -313,15 +309,14 @@ dlogits[range(n), Yb] -= 1         # the -1, only at the correct positions
 dlogits /= n                       # the 1/n from the mean
 ```
 
-Three lines, three terms, nothing left over. `F.softmax(logits, 1)` runs the softmax along
+Three lines, three terms. `F.softmax(logits, 1)` runs the softmax along
 dimension 1, meaning along each row. `[range(n), Yb]` is the same fancy indexing that plucked
 out the probabilities in the forward pass, now used to subtract 1 at those same positions. And
 the division by `n` is the gradient flowing back through the mean.
 
 ## Reading the answer as forces
 
-There is a genuinely nice way to look at the result, and it is the best part of Karpathy's
-explanation.
+There is a useful way to read the result, and it is the best part of Karpathy's explanation.
 
 Take one row of `dlogits`, multiply it by `n` to undo the batch scaling, and read each cell not
 as a number but as a force acting on that logit.
@@ -344,8 +339,8 @@ Every row of `dlogits` sums to exactly zero. The upward pull on the correct char
 total downward push on the other 26 are always perfectly balanced. The gradient never lifts or
 lowers a row as a whole, it only moves probability mass around within the row.
 
-The magnitudes are just as readable. The size of each force is exactly the probability the
-model put in the wrong place:
+The magnitudes are readable too. The size of each force is the probability the model put in the
+wrong place:
 
 - A **confidently wrong** prediction, where some wrong character got probability 0.9, gets a
   hard shove downward, and the correct character gets an equally hard pull upward.
@@ -353,15 +348,14 @@ model put in the wrong place:
   `1 - 1 = 0` at the correct position and `0` everywhere else. The entire row is zeros. No
   force, nothing to fix.
 
-So the amount by which you mispredict is exactly the strength of the correction. Karpathy's
-image for this is a pulley system: you are up at the logits pulling on the correct answer and
-pushing down the wrong ones, and that tension translates back through the network until it
-finally tugs on the weights and biases. Each update, the parameters give in to the tug a little.
-That is training.
+The amount by which you mispredict is the strength of the correction. Karpathy's image for this
+is a pulley system: you are up at the logits pulling on the correct answer and pushing down the
+wrong ones, and that tension translates back through the network until it reaches the weights
+and biases. Each update, the parameters give in to the tug a little.
 
 ## Verifying it
 
-Never trust a hand-derived gradient you have not checked:
+Checking the result against autograd:
 
 ```python
 loss_fast = F.cross_entropy(logits, Yb)
@@ -385,10 +379,12 @@ accumulating at each step. The three-line version does none of that intermediate
 
 ## Wrapping up
 
-This is the payoff for parts 1 through 4. All that careful hand-differentiation of individual
-operations was the training; this is the thing it trained you to spot.
+Parts [1]({% post_url 2026-07-30-broadcast-subtraction-gradient %}) through
+[4]({% post_url 2026-07-31-sum-broadcast-duality-gradient %}) each took one operation and
+asked where its inputs showed up in the forward pass. Same question here, applied to the loss
+itself rather than to a single op.
 
-The shortcut exists for two reasons, and both are worth carrying forward:
+The shortcut exists for two reasons:
 
 - **The loss only touches one column per row.** Out of 864 numbers, the loss expression reads
   32. That keeps the expression you have to differentiate small.
@@ -397,5 +393,6 @@ The shortcut exists for two reasons, and both are worth carrying forward:
   to the one you are differentiating, and naming them collectively is what reduces the problem
   to something you can do on paper.
 
-The next time a backward pass in your framework looks suspiciously short, it is probably because
-somebody did this on paper first.
+It is also why frameworks ship cross-entropy as a single fused operation rather than composing
+it out of a softmax, an index and a log. The fused version has a much shorter backward pass,
+and this derivation is where that shortness comes from.
