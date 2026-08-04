@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 740 372" width="740" height="372" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+  </defs>
+  <rect width="740" height="372" fill="#ffffff"/>
+  <text x="370" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">One row of 27: only one exponential is a variable, the rest are frozen</text>
+  <g stroke="#2c5f8a" stroke-width="1.4">
+    <rect x="73.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="95.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="117.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="139.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="161.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="183.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="205.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="227.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="249.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="271.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="293.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="315.0" y="78" width="22" height="46" fill="#ffe3d6"/>
+    <rect x="337.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="359.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="381.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="403.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="425.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="447.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="469.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="491.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="513.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="535.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="557.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="579.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="601.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="623.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+    <rect x="645.0" y="78" width="22" height="46" fill="#f2f2f2"/>
+  </g>
+  <rect x="315.0" y="78" width="22" height="46" fill="none" stroke="#c0392b" stroke-width="3"/>
+
+  <text x="326.0" y="64" text-anchor="middle" font-size="15" fill="#c0392b">e^a</text>
+  <text x="326.0" y="146" text-anchor="middle" font-size="12" fill="#c0392b">the one we differentiate</text>
+
+  <path d="M 73.0 168 v 10 h 234.0 v 10" fill="none" stroke="#888" stroke-width="1.6"/>
+  <path d="M 345.0 168 v 10 h 322.0 v 10" fill="none" stroke="#888" stroke-width="1.6"/>
+  <text x="370" y="222" text-anchor="middle" font-size="14" fill="#1a1a1a">the other 26 exponentials never change when a changes</text>
+  <text x="370" y="244" text-anchor="middle" font-size="15" fill="#1a1a1a">call the whole pile K</text>
+
+  <rect x="180" y="256" width="380" height="62" rx="8" fill="#eaf2f8" stroke="#2c5f8a" stroke-width="2"/>
+  <text x="370" y="294" text-anchor="middle" font-size="20" fill="#1a1a1a">SM  =  e^a / ( e^a + K )</text>
+  <text x="370" y="350" text-anchor="middle" font-size="14" fill="#666">one variable, one constant, and now it is ordinary single variable calculus</text>
+</svg>
