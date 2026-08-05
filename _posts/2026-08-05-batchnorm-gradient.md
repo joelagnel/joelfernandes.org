@@ -53,7 +53,7 @@ back through that unit. It has saturated. A layer whose pre-activations drift in
 learns very slowly, and a deep stack of such layers can stop learning altogether.
 
 <div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
-  <img src="/images/bn-grad/saturation.svg" alt="Two panels. On the left, tanh flattens out beyond about plus or minus two and a half, with the values at z equals 8 and 9 almost identical. On the right, the derivative of tanh, which is near one in the middle and collapses to almost zero in the same outer regions." style="max-width: 100%; height: auto;"/>
+  <img src="/images/bn-grad/saturation.svg" alt="Two panels. On the left, tanh flattens out beyond about plus or minus two and a half, with the values at z equals 8 and 9 almost identical. On the right, the derivative of tanh, which is near one in the middle and collapses to almost zero in the same outer regions." style="width: 100%; height: auto; display: block;"/>
 </div>
 
 The right-hand panel is the one that matters for training. Backpropagation multiplies the
@@ -139,7 +139,7 @@ Here is the whole forward pass as a graph, with a batch of four. Four is small e
 every edge and large enough to show the pattern.
 
 <div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
-  <img src="/images/bn-grad/forward.svg" alt="Computational graph of batch normalization with a batch of four. Every input feeds both the mean and the variance, and both statistics feed back into every normalized value." style="max-width: 100%; height: auto;"/>
+  <img src="/images/bn-grad/forward.svg" alt="Computational graph of batch normalization with a batch of four. Every input feeds both the mean and the variance, and both statistics feed back into every normalized value." style="width: 100%; height: auto; display: block;"/>
 </div>
 
 The shape of this graph is the whole story. Reading it left to right:
@@ -162,7 +162,7 @@ $\sigma^2$, and those two numbers appear in every other example's normalization.
 Pulling out just the edges that leave $x_2$ makes the point concrete:
 
 <div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
-  <img src="/images/bn-grad/fanout.svg" alt="The same graph with only the edges reachable from x2 highlighted: the direct edge, the edge through the mean, and the edge through the variance." style="max-width: 100%; height: auto;"/>
+  <img src="/images/bn-grad/fanout.svg" alt="The same graph with only the edges reachable from x2 highlighted: the direct edge, the edge through the mean, and the edge through the variance." style="width: 100%; height: auto; display: block;"/>
 </div>
 
 There are three ways for a change in $x_2$ to reach the loss:
@@ -180,7 +180,7 @@ the total is the sum. Three routes means three terms.
 Looking in the other direction is just as useful:
 
 <div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
-  <img src="/images/bn-grad/fanin.svg" alt="The three edges arriving at xhat 2: its own input x2, the mean, and the variance." style="max-width: 100%; height: auto;"/>
+  <img src="/images/bn-grad/fanin.svg" alt="The three edges arriving at xhat 2: its own input x2, the mean, and the variance." style="width: 100%; height: auto; display: block;"/>
 </div>
 
 $\hat{x}_2$ depends on three things: its own $x_2$, the mean it is shifted by, and the variance
@@ -282,7 +282,7 @@ $$\frac{\partial L}{\partial x_i}
 Here is the backward graph, which is the forward graph with every edge reversed:
 
 <div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
-  <img src="/images/bn-grad/backward.svg" alt="The backward graph: three arrows arrive at x2, one direct, one through the mean, one through the variance." style="max-width: 100%; height: auto;"/>
+  <img src="/images/bn-grad/backward.svg" alt="The backward graph: three arrows arrive at x2, one direct, one through the mean, one through the variance." style="width: 100%; height: auto; display: block;"/>
 </div>
 
 The three local derivatives are each a short calculation:
