@@ -52,6 +52,16 @@ outputs are nearly identical, so the derivative is nearly zero, and almost no gr
 back through that unit. It has saturated. A layer whose pre-activations drift into that region
 learns very slowly, and a deep stack of such layers can stop learning altogether.
 
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/bn-grad/saturation.svg" alt="Two panels. On the left, tanh flattens out beyond about plus or minus two and a half, with the values at z equals 8 and 9 almost identical. On the right, the derivative of tanh, which is near one in the middle and collapses to almost zero in the same outer regions." style="max-width: 100%; height: auto;"/>
+</div>
+
+The right-hand panel is the one that matters for training. Backpropagation multiplies the
+incoming gradient by $1 - \tanh^2(z)$ as it passes back through the unit, and that factor is
+$1$ at $z = 0$ but only $0.00000045$ at $z = 8$. A unit sitting out in either shaded band is
+not broken, and its output is perfectly reasonable, but almost nothing gets past it on the way
+backwards, so the weights feeding it barely move.
+
 You can address this by initializing the weights carefully so that the pre-activations start
 out at a reasonable scale. That works at the beginning of training. The difficulty is that the
 weights change as training proceeds, and the distribution of the pre-activations drifts with
