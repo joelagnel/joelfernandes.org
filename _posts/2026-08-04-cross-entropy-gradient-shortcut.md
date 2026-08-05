@@ -344,6 +344,51 @@ Without it, both cases would be positive and training would push *every* logit d
 the one that should have won. The indicator is the piece that tells the row which single element
 is being pulled the other way.
 
+### The gradient and the nudge are two different numbers
+
+It is easy to conflate two quantities here, so it is worth separating them explicitly.
+
+The **gradient** on the correct character is $p - 1$. Since $p$ is a probability in $[0, 1]$,
+this is a number in $[-1, 0]$. It is negative, or zero when the model is already perfect.
+
+The **nudge** actually applied to the logit is what descent does with that gradient:
+
+$$a \leftarrow a - \eta (p - 1) = a + \eta (1 - p)$$
+
+The two minus signs cancel, so the logit moves **up** by $\eta(1 - p)$. Both of the numbers you
+might reach for are real, they are just different objects: $p - 1$ is the slope of the loss, and
+$1 - p$ is the size of the step. The formula in the code is the gradient, $p - 1$.
+
+Here is one row, with $\eta = 0.5$, correct character at index 2:
+
+```
+idx    role       p          gradient     update to logit
+0      wrong      0.23882     0.23882        -0.11941
+1      wrong      0.05329     0.05329        -0.02664
+2      CORRECT    0.39376    -0.60624        +0.30312
+3      wrong      0.19553     0.19553        -0.09777
+4      wrong      0.11860     0.11860        -0.05930
+```
+
+Only the correct character has a negative gradient, and it is the only one whose logit goes up.
+
+One thing worth ruling out: the expression is $p - 1$, not $-p - 1$. The latter would live in
+$[-2, -1]$, so it could never reach zero, and a model that already assigns $p = 1$ to the right
+answer would still get a full-strength shove. That would be wrong. With $p - 1$, a perfect
+prediction gives a gradient of exactly $0$ and the row is left alone:
+
+```
+p      gradient (p - 1)     step added to logit (1 - p)
+0.01        -0.990                    0.990
+0.50        -0.500                    0.500
+0.90        -0.100                    0.100
+0.99        -0.010                    0.010
+1.00         0.000                    0.000
+```
+
+The gradient tapering to zero as $p$ approaches 1 is the property that makes this loss behave,
+and it is only there because the subtracted term is exactly $1$.
+
 The magnitudes are just as deliberate. The size of the push on the correct character is
 $\lvert p - 1 \rvert = 1 - p$, which is the amount of probability the model failed to put on the
 right answer:
