@@ -1,0 +1,83 @@
+// Rendered with neato -n so every position below is used exactly as written (points).
+digraph batchnorm_forward {
+  layout=neato;
+  bgcolor="white";
+  splines=true;
+  overlap=true;
+  margin=0.3;
+  fontname="Helvetica";
+
+  node [fontname="Helvetica", fontsize=15, shape=circle, width=0.58,
+        fixedsize=true, penwidth=1.9, color="#2c5f8a", pin=true];
+
+  labelloc="t";
+  label=<<font point-size="19"><b>Forward pass, batch of 4</b></font><br/><font point-size="13" color="#555555">normalize each x by the batch mean and standard deviation, then scale by &#947; and shift by &#946;</font><br/><font point-size="11" color="#777777">&#949; is a small constant inside the square root that keeps it away from zero</font>>;
+
+  // ---- column headers
+  node [shape=none, fixedsize=false, fontsize=13, penwidth=0];
+  cA [pos="70,430!",   label=<<font color="#555555"><b>inputs</b></font>>];
+  cB [pos="330,430!",  label=<<font color="#555555"><b>batch statistics</b></font>>];
+  cC [pos="590,430!",  label=<<font color="#555555"><b>normalized</b></font>>];
+  cD [pos="820,430!",  label=<<font color="#555555"><b>parameters</b></font>>];
+  cE [pos="1050,430!", label=<<font color="#555555"><b>outputs</b></font>>];
+
+  // ---- nodes, four rows on one pitch
+  node [shape=circle, fixedsize=true, fontsize=15, width=0.58, penwidth=1.9];
+  x1 [label=<x&#8321;>, pos="70,346!", style=filled, fillcolor="#cfe2f0"];
+  x2 [label=<x&#8322;>, pos="70,231!", style=filled, fillcolor="#cfe2f0"];
+  x3 [label=<x&#8323;>, pos="70,116!", style=filled, fillcolor="#cfe2f0"];
+  x4 [label=<x&#8324;>, pos="70,1!",   style=filled, fillcolor="#cfe2f0"];
+
+  mu  [label=<&mu;>,          pos="330,260!", style=filled, fillcolor="#e3e3e3", width=0.68];
+  sig [label=<&sigma;&sup2;>, pos="330,87!",  style=filled, fillcolor="#e3e3e3", width=0.68];
+
+  h1 [label=<x&#770;&#8321;>, pos="590,346!", style=filled, fillcolor="#fbf6e4"];
+  h2 [label=<x&#770;&#8322;>, pos="590,231!", style=filled, fillcolor="#fbf6e4"];
+  h3 [label=<x&#770;&#8323;>, pos="590,116!", style=filled, fillcolor="#fbf6e4"];
+  h4 [label=<x&#770;&#8324;>, pos="590,1!",   style=filled, fillcolor="#fbf6e4"];
+
+  // gamma/beta share the mu/sigma baselines
+  gam [label=<&gamma;>, pos="820,300!", style=filled, fillcolor="#fbe3cc", color="#c8752e", width=0.52];
+  bet [label=<&beta;>,  pos="820,47!",  style=filled, fillcolor="#fbe3cc", color="#c8752e", width=0.52];
+
+  y1 [label=<y&#8321;>, pos="1050,346!", style=filled, fillcolor="#dff0e4"];
+  y2 [label=<y&#8322;>, pos="1050,231!", style=filled, fillcolor="#dff0e4"];
+  y3 [label=<y&#8323;>, pos="1050,116!", style=filled, fillcolor="#dff0e4"];
+  y4 [label=<y&#8324;>, pos="1050,1!",   style=filled, fillcolor="#dff0e4"];
+
+  // caption for the dashed edge, in the clear pocket between mu and sigma
+  note [shape=none, pos="330,173!", fixedsize=false, penwidth=0,
+        label=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="11">&#963;&#178; is measured about &#956;</font></td></tr></table>>];
+
+  // ---- legend, bottom left
+  lg1 [shape=none, pos="120,-95!", fixedsize=false, penwidth=0,
+       label=<<font color="#2c5f8a" point-size="11.5">&#9473;&#9473; through a batch statistic</font>>];
+  lg2 [shape=none, pos="430,-95!", fixedsize=false, penwidth=0,
+       label=<<font color="#5e8fb2" point-size="11.5">&#9473;&#9473; direct, elementwise</font>>];
+  lg3 [shape=none, pos="720,-95!", fixedsize=false, penwidth=0,
+       label=<<font color="#c8752e" point-size="11.5">&#9473;&#9473; learned parameter</font>>];
+  lg4 [shape=none, pos="990,-95!", fixedsize=false, penwidth=0,
+       label=<<font color="#2c5f8a" point-size="11.5">&#9548;&#9548; dependency, no gradient</font>>];
+
+  // ============ fan-in: every input into both statistics ============
+  edge [color="#2c5f8a", penwidth=1.5, arrowsize=0.7, style=solid];
+  x1 -> mu; x2 -> mu; x3 -> mu; x4 -> mu;
+  x1 -> sig; x2 -> sig; x3 -> sig; x4 -> sig;
+
+  // ============ fan-out: both statistics into every normalized value ============
+  mu -> h1; mu -> h2; mu -> h3; mu -> h4;
+  sig -> h1; sig -> h2; sig -> h3; sig -> h4;
+
+  // the variance is measured about the mean
+  mu -> sig [style=dashed, penwidth=1.5, arrowsize=0.75];
+
+  // ============ the direct elementwise path ============
+  edge [color="#7fa8c4", penwidth=2.0, arrowsize=0.75];
+  x1 -> h1; x2 -> h2; x3 -> h3; x4 -> h4;
+  h1 -> y1; h2 -> y2; h3 -> y3; h4 -> y4;
+
+  // ============ learned parameters ============
+  edge [color="#c8752e", penwidth=1.2, arrowsize=0.6];
+  gam -> y1; gam -> y2; gam -> y3; gam -> y4;
+  bet -> y1; bet -> y2; bet -> y3; bet -> y4;
+}

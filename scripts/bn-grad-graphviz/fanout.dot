@@ -1,0 +1,74 @@
+digraph fanout {
+  rankdir=LR;
+  bgcolor="white";
+  splines=true;
+  nodesep=0.32;
+  ranksep=1.10;
+  fontname="Helvetica";
+  margin="0.5,0.35";
+
+  node [fontname="Helvetica", fontsize=13, shape=circle, width=0.52,
+        fixedsize=true, penwidth=1.7, color="#bfbfbf", fontcolor="#aaaaaa"];
+  edge [fontname="Helvetica", fontsize=10, color="#e2e2e2",
+        arrowsize=0.6, penwidth=0.9];
+
+  label=<<font point-size="16"><b>The three routes out of a single input</b></font><br/><font point-size="11" color="#666666">everything x&#8322; touches is highlighted; the rest of the graph is greyed out</font>>;
+  labelloc="t";
+
+  { rank=same;
+    x1 [label=<x&#8321;>];
+    x2 [label=<x&#8322;>, color="#c0392b", fontcolor="#1a1a1a",
+        style=filled, fillcolor="#ffd9d0", penwidth=2.6];
+    x3 [label=<x&#8323;>];
+    x4 [label=<x&#8324;>];
+  }
+  { rank=same;
+    mu  [label=<&mu;>,           width=0.62, color="#c0392b", fontcolor="#1a1a1a",
+         style=filled, fillcolor="#ffe9e4", penwidth=2.2];
+    sig [label=<&sigma;&sup2;>,  width=0.62, color="#c0392b", fontcolor="#1a1a1a",
+         style=filled, fillcolor="#ffe9e4", penwidth=2.2];
+  }
+  { rank=same;
+    h1 [label=<x&#770;&#8321;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    h2 [label=<x&#770;&#8322;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    h3 [label=<x&#770;&#8323;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    h4 [label=<x&#770;&#8324;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+  }
+  { rank=same;
+    y1 [label=<y&#8321;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    y2 [label=<y&#8322;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    y3 [label=<y&#8323;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+    y4 [label=<y&#8324;>, color="#c0392b", fontcolor="#1a1a1a", penwidth=2.0];
+  }
+
+  // greyed-out background structure
+  x1 -> mu; x3 -> mu; x4 -> mu;
+  x1 -> sig; x3 -> sig; x4 -> sig;
+  x1 -> h1; x3 -> h3; x4 -> h4;
+
+  // ---- route 1: direct
+  x2 -> h2 [color="#c0392b", penwidth=2.6, arrowsize=0.85,
+            xlabel=<1. direct>, fontcolor="#c0392b"];
+
+  // ---- route 2: through the mean
+  x2 -> mu [color="#c0392b", penwidth=2.4, arrowsize=0.8,
+            xlabel=<2. via &mu;>, fontcolor="#c0392b"];
+  mu -> h1 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  mu -> h2 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  mu -> h3 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  mu -> h4 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+
+  // ---- route 3: through the variance
+  x2 -> sig [color="#c0392b", penwidth=2.4, arrowsize=0.8,
+             xlabel=<3. via &sigma;&sup2;>, fontcolor="#c0392b"];
+  sig -> h1 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  sig -> h2 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  sig -> h3 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  sig -> h4 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+
+  // every normalized value reaches the loss
+  h1 -> y1 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  h2 -> y2 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  h3 -> y3 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+  h4 -> y4 [color="#c0392b", penwidth=1.8, arrowsize=0.7];
+}
