@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Backprop: Easy Gradient Shortcut Through Cross-Entropy - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+mjx-container[jax="CHTML"] { color: inherit; }
+mjx-container[jax="CHTML"][display="true"] { margin: 1.1em 0; overflow-x: auto; overflow-y: hidden; }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-06-29 &raquo;<br><a href="/blog/2026-06-29/makemore-positional-bigram.html">Teaching a Bigram Model Where It Is: Positional Encoding in makemore</a></li>
+
+
+
+
+
+
+<li class="recent">2026-04-19 &raquo;<br><a href="/blog/2026-04-19/amlc-2026-notes.html">Notes from the Applied Machine Learning Conference 2026</a></li>
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-19 &raquo;<br><a href="/blog/2026-03-19/rust-unsafe-macros-clippy-lint.html">Rust Macros That Are Unsafe Are Not Lint Friendly</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Backprop: Easy Gradient Shortcut Through Cross-Entropy</h1>
+<p class="meta">04 Aug 2026</p>
+
+<div class="post">
+<blockquote>
+  <p><strong>Context:</strong> This is part 5 in a series that comes out of Andrej Karpathy’s
+<a href="https://www.youtube.com/watch?v=q8SA3rM6ckI">Becoming a Backprop Ninja</a>, where you
+hand-write every backward pass instead of calling <code class="language-plaintext highlighter-rouge">.backward()</code>.
+<a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Part 1</a>,
+<a href="/blog/2026-07-30/max-gradient-one-hot.html">part 2</a>,
+<a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">part 3</a> and
+<a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">part 4</a> worked through individual
+operations. This one is Exercise 2 from the notebook.</p>
+</blockquote>
+
+<div style="margin: 1.5em 0 2em 0; text-align: center;">
+  <a href="https://www.youtube.com/watch?v=q8SA3rM6ckI" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
+    <img src="https://img.youtube.com/vi/q8SA3rM6ckI/maxresdefault.jpg" alt="Building makemore Part 4: Becoming a Backprop Ninja, by Andrej Karpathy" style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);" />
+    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
+      &#9654; <strong>Building makemore Part 4: Becoming a Backprop Ninja</strong>, Andrej Karpathy
+    </div>
+  </a>
+</div>
+
+<hr />
+
+<p>Cross-entropy is how a classifier turns its raw output into a single number saying how wrong it
+was. The network’s last layer produces one score, a logit, for every character it could predict
+next. Softmax turns those scores into probabilities that sum to 1. Cross-entropy then picks out
+the probability the model gave to the character that actually came next, and takes the negative
+log of it. Confident and right gives a loss near zero, and the less probability the model left
+for the right answer, the larger the loss. Averaging that over the batch gives the final loss to
+be minimized.</p>
+
+<p>In this post, we will look at the cross-entropy layer which is used to calculate the loss.</p>
+
+<p>Here is that calculation written out the long way, broken into its smallest atomic pieces, which
+is how the earlier posts worked through it. Eight lines, eight intermediate tensors, every one
+of which needed its own backward pass:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">logit_maxes</span> <span class="o">=</span> <span class="n">logits</span><span class="p">.</span><span class="nf">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="bp">True</span><span class="p">).</span><span class="n">values</span>
+<span class="n">norm_logits</span> <span class="o">=</span> <span class="n">logits</span> <span class="o">-</span> <span class="n">logit_maxes</span>    <span class="c1"># subtract max for numerical stability
+</span><span class="n">counts</span> <span class="o">=</span> <span class="n">norm_logits</span><span class="p">.</span><span class="nf">exp</span><span class="p">()</span>
+<span class="n">counts_sum</span> <span class="o">=</span> <span class="n">counts</span><span class="p">.</span><span class="nf">sum</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">counts_sum_inv</span> <span class="o">=</span> <span class="n">counts_sum</span><span class="o">**-</span><span class="mi">1</span>
+<span class="n">probs</span> <span class="o">=</span> <span class="n">counts</span> <span class="o">*</span> <span class="n">counts_sum_inv</span>
+<span class="n">logprobs</span> <span class="o">=</span> <span class="n">probs</span><span class="p">.</span><span class="nf">log</span><span class="p">()</span>
+<span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">logprobs</span><span class="p">[</span><span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Yb</span><span class="p">].</span><span class="nf">mean</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>And here is the whole thing in PyTorch:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss_fast</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">Yb</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The interesting part is not that the forward pass collapses. It is that the <em>backward</em> pass
+collapses too, from five separate gradient computations down to this:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dlogits</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">dlogits</span><span class="p">[</span><span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Yb</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="n">dlogits</span> <span class="o">/=</span> <span class="n">n</span>
+</code></pre></div></div>
+
+<p>Three lines. The middle one is the odd-looking one: it subtracts 1 from a specific set of
+positions in the matrix. The rest of this post works out where each of the three comes from.</p>
+
+<h2 id="the-block-we-are-differentiating">The block we are differentiating</h2>
+
+<p>Cross-entropy takes two inputs and returns one number.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/pipeline.svg" alt="The logits matrix and the Yb labels feed into a cross-entropy block which outputs a single loss value L. A dashed return path shows the gradient dL/dlogits flowing back to the logits." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>It takes <code class="language-plaintext highlighter-rouge">logits</code>, the raw scores the network produced, and <code class="language-plaintext highlighter-rouge">Yb</code>, the characters that should
+actually have come next. It returns $L$, one number measuring how likely the model was to
+predict <code class="language-plaintext highlighter-rouge">Yb</code>. Low probability on the right answer gives a high loss.</p>
+
+<p>What we want back out is $\partial L / \partial\, \texttt{logits}$, which has to be the same
+shape as <code class="language-plaintext highlighter-rouge">logits</code>, because a gradient always has the same shape as the thing it is the gradient
+of.</p>
+
+<h2 id="shapes">Shapes</h2>
+
+<p>The logits matrix is 32 rows by 27 columns.</p>
+
+<p>The 32 is the batch size, one row per example. The 27 is the number of output neurons, one per
+character in the vocabulary: 26 letters plus the <code class="language-plaintext highlighter-rouge">.</code> token that marks the start and end of a
+name.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/shapes.svg" alt="A 32 by 27 grid of logits, softmaxed row by row into probabilities, with one marked cell per row plucked out into a 32 by 1 column, which is then negative-logged and averaged into a single loss." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Four things happen, in order:</p>
+
+<ol>
+  <li><strong>Softmax along each row.</strong> Each row of 27 raw scores becomes 27 probabilities that sum to 1.</li>
+  <li><strong>Pluck one probability per row.</strong> <code class="language-plaintext highlighter-rouge">Yb[i]</code> says which column is the correct character for row
+$i$, so we take <code class="language-plaintext highlighter-rouge">probs[i, Yb[i]]</code>. That gives a column of 32 numbers.</li>
+  <li><strong>Take the negative log of each.</strong></li>
+  <li><strong>Average over the batch.</strong></li>
+</ol>
+
+<p>Written as one expression, with $p_i$ the probability the model gave to the correct character
+for example $i$:</p>
+
+\[L = -\frac{1}{n} \sum_{i=1}^{n} \log p_i\]
+
+<p>Which in code is exactly what that last line of the long forward pass said:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss</span> <span class="o">=</span> <span class="o">-</span><span class="n">logprobs</span><span class="p">[</span><span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Yb</span><span class="p">].</span><span class="nf">mean</span><span class="p">()</span>
+</code></pre></div></div>
+
+<p>Step 2 is worth noting. Out of $32 \times 27 = 864$ numbers in the probability matrix, the loss
+looks at exactly <strong>32 of them</strong>, one per row. The other 832 are never read. That fact does not
+mean their gradients are zero, as we will see, but it does mean the loss expression itself is a
+lot smaller than the matrix suggests.</p>
+
+<h2 id="why-the-negative-log">Why the negative log</h2>
+
+<p>The loss for a single example is $-\log p$, where $p$ is the probability the model assigned to
+the correct character. That choice is doing something specific:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/neglog.svg" alt="A plot of negative log p against p. As p approaches 1 the loss approaches 0. As p approaches 0 the loss grows without bound." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>If the model gave the right answer a probability near 1, $\log p$ is near 0 and the loss is
+near 0. If it gave the right answer a probability near 0, $\log p$ heads for minus infinity and
+the loss becomes large.</p>
+
+<p>Probabilities live between 0 and 1, so their logs are always negative. The minus sign out front
+just flips that back to a positive loss.</p>
+
+<h2 id="two-things-to-notice-before-any-calculus">Two things to notice before any calculus</h2>
+
+<p>Both of these make the derivation smaller.</p>
+
+<p><strong>Rows are independent.</strong> Row $i$ of the loss depends only on row $i$ of the logits. Softmax
+runs along a row, and the plucked probability comes from that same row. Nothing crosses between
+examples. So we can derive the gradient for one row, and then apply the identical formula to
+all 32.</p>
+
+<p><strong>The $1/n$ is a constant.</strong> The batch loss is the mean, so there is a factor of $1/n$ out
+front. Constants pass straight through differentiation, so park it, do the interesting work
+without it, and multiply it back at the very end.</p>
+
+<p>That leaves one question: for a single row, what is the derivative of the loss with respect to
+one logit in that row?</p>
+
+<h2 id="the-trick-freeze-everything-except-one">The trick: freeze everything except one</h2>
+
+<p>Write the softmax for a single row. Call the logit we are differentiating with respect to $a$.
+The softmax denominator is a sum over all 27 exponentials:</p>
+
+\[SM = \frac{e^a}{e^a + e^b + e^c + e^d + \cdots}\]
+
+<p>We are differentiating with respect to $a$ and nothing else. Every other logit in that row is
+being held fixed. So every other exponential in that denominator is a <strong>constant</strong>. $e^b$,
+$e^c$, $e^d$ and the rest genuinely do not change when $a$ changes.</p>
+
+<p>Give the whole pile of them one name, $k$:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/k-trick.svg" alt="A row of 27 cells with one highlighted as the live variable e to the a. The remaining 26 are greyed out and braced together, labelled as the constant k." style="max-width: 100%; height: auto;" />
+</div>
+
+\[SM = \frac{e^a}{e^a + k}\]
+
+<p>One variable, one constant. The 27-variable problem is now a single-variable one, which you can
+do by hand or hand to Wolfram Alpha.</p>
+
+<p>One rearrangement will be useful shortly. Since $SM = e^a / (e^a + k)$, we can solve for the
+denominator and then for $k$ itself:</p>
+
+\[e^a + k = \frac{e^a}{SM} \qquad \Longrightarrow \qquad k = \frac{e^a}{SM} - e^a\]
+
+<p>We will use that in a moment.</p>
+
+<h2 id="two-cases-and-why-there-are-exactly-two">Two cases, and why there are exactly two</h2>
+
+<p>We need $\partial L / \partial a$ for <strong>every</strong> logit in the row, all 27 of them, not just the
+correct one. And the loss expression looks different depending on whether $a$ happens to be the
+correct character or not.</p>
+
+<p>The loss only ever looks at the probability of the <strong>correct</strong> character:</p>
+
+\[L = -\log\left( \frac{e^{\,\text{correct logit}}}{\text{sum of all 27 exponentials}} \right)\]
+
+<p>Now ask where a given logit $a$ appears in that expression.</p>
+
+<ul>
+  <li>If $a$ <strong>is</strong> the correct character, then $e^a$ appears <strong>twice</strong>: once in the numerator, and
+once inside the denominator sum.</li>
+  <li>If $a$ is <strong>not</strong> the correct character, then $e^a$ appears exactly <strong>once</strong>, and only in the
+<strong>denominator</strong>.</li>
+</ul>
+
+<p>The second case is the less obvious one. A wrong character’s logit still affects the loss, even
+though the loss never looks at its probability. It affects the loss because it is part of the
+normalizing sum. Raise a wrong logit and you inflate the denominator, which shrinks the correct
+character’s probability, which raises the loss. The influence is entirely indirect, routed
+through the denominator.</p>
+
+<p>That is why the numerator is a constant in the second case. The numerator is the correct
+character’s exponential, which does not contain $a$ at all, so we can fold it into $k$ as well
+and write both cases with the same two symbols:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/two-cases.svg" alt="Two panels side by side. Case A, a is the correct character, gives SM minus 1. Case B, a is a wrong character, gives SM. The only difference is the minus 1." style="max-width: 100%; height: auto;" />
+</div>
+
+<h3 id="case-a-a-is-the-correct-character">Case A: $a$ is the correct character</h3>
+
+<p>The loss for this row, in terms of $a$ and $k$:</p>
+
+\[L = -\log\left( \frac{e^a}{e^a + k} \right)\]
+
+<p>Differentiating with respect to $a$ (this is the expression I put through Wolfram Alpha):</p>
+
+\[\frac{\partial L}{\partial a} = \frac{-k}{k + e^a}\]
+
+<p>Now substitute $k = e^a / SM - e^a$ from earlier:</p>
+
+\[\frac{\partial L}{\partial a}
+  = -\frac{\dfrac{e^a}{SM} - e^a}{\dfrac{e^a}{SM}}\]
+
+<p>Multiply top and bottom by $SM / e^a$:</p>
+
+\[\frac{\partial L}{\partial a} = -(1 - SM) = SM - 1\]
+
+<p>The gradient on the correct character’s logit is its own softmax probability, minus one.</p>
+
+<h3 id="case-b-a-is-a-wrong-character">Case B: $a$ is a wrong character</h3>
+
+<p>Now $e^a$ only appears in the denominator, and the numerator is the constant $k$:</p>
+
+\[L = -\log\left( \frac{k}{e^a + k} \right)\]
+
+<p>Again through Wolfram Alpha:</p>
+
+\[\frac{\partial L}{\partial a} = \frac{e^a}{k + e^a} = SM\]
+
+<p>Which is the softmax probability of $a$, with nothing subtracted. Wolfram also gives the
+equivalent form $1 - k/(k + e^a)$, which is a nice mirror of Case A.</p>
+
+<h2 id="merging-the-two-cases">Merging the two cases</h2>
+
+<p>Put them side by side:</p>
+
+\[\frac{\partial L}{\partial a} =
+\begin{cases}
+SM - 1 &amp; \text{if } a \text{ is the correct character} \\[4pt]
+SM &amp; \text{otherwise}
+\end{cases}\]
+
+<p>The $SM$ term is common to both. The only difference is a $-1$ that shows up exactly on the
+correct character’s position. So write it as one expression, using an indicator that is 1 when
+$a$ is the correct character and 0 otherwise:</p>
+
+\[\frac{\partial L}{\partial a} = SM - \mathbb{1}[a \text{ is correct}]\]
+
+<p>And now bring back the $1/n$ we parked earlier, since the batch loss is a mean over $n$
+examples:</p>
+
+\[\boxed{\ \frac{\partial L}{\partial a} = \frac{SM - \mathbb{1}[a \text{ is correct}]}{n}\ }\]
+
+<p>Which is exactly the three lines of code, in the same order:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">dlogits</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>     <span class="c1"># the SM term, for all 32 x 27 entries at once
+</span><span class="n">dlogits</span><span class="p">[</span><span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Yb</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>         <span class="c1"># the -1, only at the correct positions
+</span><span class="n">dlogits</span> <span class="o">/=</span> <span class="n">n</span>                       <span class="c1"># the 1/n from the mean
+</span></code></pre></div></div>
+
+<p>Three lines, three terms. <code class="language-plaintext highlighter-rouge">F.softmax(logits, 1)</code> runs the softmax along dimension 1, meaning
+along each row. <code class="language-plaintext highlighter-rouge">[range(n), Yb]</code> is the same fancy indexing that plucked out the probabilities
+in the forward pass, now used to subtract 1 at those same positions. And the division by $n$ is
+the gradient flowing back through the mean.</p>
+
+<h2 id="reading-the-answer-as-forces">Reading the answer as forces</h2>
+
+<p>There is a useful way to read the result, and it is the best part of Karpathy’s explanation.</p>
+
+<p>Take one row of <code class="language-plaintext highlighter-rouge">dlogits</code>, multiply it by $n$ to undo the batch scaling, and read each cell not
+as a number but as a force acting on that logit.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/forces.svg" alt="A bar chart of one row of the gradient. One long red bar below the axis at the correct character, 26 short blue bars above the axis at the wrong characters. The row sums to zero." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>The correct character gets $SM - 1$, which is always negative, since $SM$ is a probability
+below $1$. Negative gradient means gradient descent will push that logit <strong>up</strong>. Every wrong
+character gets $SM$, always positive, so those logits get pushed <strong>down</strong>.</p>
+
+<p>Now add up the whole row. The probabilities sum to 1, and we subtracted exactly one 1, so:</p>
+
+\[\sum_{j=1}^{27} \frac{\partial L}{\partial a_j} = 1 - 1 = 0\]
+
+<p>Every row of <code class="language-plaintext highlighter-rouge">dlogits</code> sums to exactly zero. The upward pull on the correct character and the
+total downward push on the other 26 are always perfectly balanced. The gradient never lifts or
+lowers a row as a whole, it only moves probability mass around within the row.</p>
+
+<h2 id="why-the-signs-come-out-that-way">Why the signs come out that way</h2>
+
+<p>The two formulas, $p - 1$ and $p$, are not arbitrary. Both signs are exactly what you would
+pick by hand if you were told to reduce the loss and had to choose a direction.</p>
+
+<p>Start from what we actually want. The loss falls when the correct character’s probability goes
+up. So the correct character’s logit should be <strong>increased</strong>, and every wrong character’s logit
+should be <strong>decreased</strong>, since they compete for the same probability mass through the softmax
+denominator.</p>
+
+<p>Now recall that gradient descent moves <em>against</em> the gradient:</p>
+
+\[a \leftarrow a - \eta \frac{\partial L}{\partial a}\]
+
+<p>So a <strong>negative</strong> gradient increases the parameter, and a <strong>positive</strong> gradient decreases it.
+The sign of the gradient is already the instruction for which way to move.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/why-signs.svg" alt="Two plots of the loss as a function of one logit. On the left, the correct character's logit, where the loss falls as the logit rises and the tangent has negative slope p minus 1. On the right, a wrong character's logit, where the loss rises and the tangent has positive slope p." style="max-width: 100%; height: auto;" />
+</div>
+
+<p>Read the two panels as plots of the loss against a single logit, holding the rest of the row
+fixed:</p>
+
+<ul>
+  <li><strong>The correct character</strong> (left). Raising this logit raises $p$, which lowers the loss, so the
+curve slopes downward and the tangent has negative slope. That slope is $p - 1$, and since
+$p &lt; 1$ it is always negative. Descent therefore pushes this logit up, which is what we
+wanted.</li>
+  <li><strong>A wrong character</strong> (right). Raising this logit inflates the denominator, which lowers the
+correct character’s $p$ and raises the loss, so the curve slopes upward. That slope is $p$,
+always positive. Descent pushes this logit down.</li>
+</ul>
+
+<p>The $-1$ in $p - 1$ is what flips the sign, and it is only present on the correct character.
+Without it, both cases would be positive and training would push <em>every</em> logit down, including
+the one that should have won. The indicator is the piece that tells the row which single element
+is being pulled the other way.</p>
+
+<h3 id="the-gradient-and-the-nudge-are-two-different-numbers">The gradient and the nudge are two different numbers</h3>
+
+<p>It is easy to conflate two quantities here, so it is worth separating them explicitly.</p>
+
+<p>The <strong>gradient</strong> on the correct character is $p - 1$. Since $p$ is a probability in $[0, 1]$,
+this is a number in $[-1, 0]$. It is negative, or zero when the model is already perfect.</p>
+
+<p>The <strong>nudge</strong> actually applied to the logit is what descent does with that gradient:</p>
+
+\[a \leftarrow a - \eta (p - 1) = a + \eta (1 - p)\]
+
+<p>The two minus signs cancel, so the logit moves <strong>up</strong> by $\eta(1 - p)$. Both of the numbers you
+might reach for are real, they are just different objects: $p - 1$ is the slope of the loss, and
+$1 - p$ is the size of the step. The formula in the code is the gradient, $p - 1$.</p>
+
+<p>Here is one row, with $\eta = 0.5$, correct character at index 2:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>idx    role       p          gradient     update to logit
+0      wrong      0.23882     0.23882        -0.11941
+1      wrong      0.05329     0.05329        -0.02664
+2      CORRECT    0.39376    -0.60624        +0.30312
+3      wrong      0.19553     0.19553        -0.09777
+4      wrong      0.11860     0.11860        -0.05930
+</code></pre></div></div>
+
+<p>Only the correct character has a negative gradient, and it is the only one whose logit goes up.</p>
+
+<p>One thing worth ruling out: the expression is $p - 1$, not $-p - 1$. The latter would live in
+$[-2, -1]$, so it could never reach zero, and a model that already assigns $p = 1$ to the right
+answer would still get a full-strength shove. That would be wrong. With $p - 1$, a perfect
+prediction gives a gradient of exactly $0$ and the row is left alone:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>p      gradient (p - 1)     step added to logit (1 - p)
+0.01        -0.990                    0.990
+0.50        -0.500                    0.500
+0.90        -0.100                    0.100
+0.99        -0.010                    0.010
+1.00         0.000                    0.000
+</code></pre></div></div>
+
+<p>The gradient tapering to zero as $p$ approaches 1 is the property that makes this loss behave,
+and it is only there because the subtracted term is exactly $1$.</p>
+
+<p>The magnitudes are just as deliberate. The size of the push on the correct character is
+$\lvert p - 1 \rvert = 1 - p$, which is the amount of probability the model failed to put on the
+right answer:</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/magnitude.svg" alt="A plot of 1 minus p against p, showing that the size of the push shrinks linearly to zero as the probability given to the correct character approaches 1." style="max-width: 100%; height: auto;" />
+</div>
+
+<ul>
+  <li>A <strong>confidently wrong</strong> prediction, $p$ near 0, gets a push of nearly the full size 1.</li>
+  <li>An <strong>uncertain</strong> prediction, $p$ around 0.5, gets about half that.</li>
+  <li>An <strong>already correct</strong> prediction, $p$ near 1, gets a push near zero. And if $p$ is exactly 1,
+the gradient at the correct position is $1 - 1 = 0$ and every wrong position holds probability
+0, so the entire row is zeros. There is nothing to correct and the update leaves it alone.</li>
+</ul>
+
+<p>So the gradient is self-scaling: the more wrong the model was, the harder the correction, and it
+tapers to nothing exactly as the model gets it right.</p>
+
+<p>Karpathy’s image for this is a pulley system: you are up at the logits pulling on the correct
+answer and pushing down the wrong ones, and that tension translates back through the network
+until it reaches the weights and biases. Each update, the parameters give in to the tug a
+little.</p>
+
+<h2 id="verifying-it">Verifying it</h2>
+
+<p>Checking the result against autograd:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss_fast</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="n">Yb</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">loss_fast</span><span class="p">.</span><span class="nf">item</span><span class="p">(),</span> <span class="sh">'</span><span class="s">diff:</span><span class="sh">'</span><span class="p">,</span> <span class="p">(</span><span class="n">loss_fast</span> <span class="o">-</span> <span class="n">loss</span><span class="p">).</span><span class="nf">item</span><span class="p">())</span>
+
+<span class="n">dlogits</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">dlogits</span><span class="p">[</span><span class="nf">range</span><span class="p">(</span><span class="n">n</span><span class="p">),</span> <span class="n">Yb</span><span class="p">]</span> <span class="o">-=</span> <span class="mi">1</span>
+<span class="n">dlogits</span> <span class="o">/=</span> <span class="n">n</span>
+
+<span class="nf">cmp</span><span class="p">(</span><span class="sh">'</span><span class="s">logits</span><span class="sh">'</span><span class="p">,</span> <span class="n">dlogits</span><span class="p">,</span> <span class="n">logits</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>The comparison comes back approximate rather than exactly equal, with a maximum difference
+around $5 \times 10^{-9}$. That is floating point noise, not a mistake in the derivation. The
+long chain and the short expression are mathematically identical but execute a different
+sequence of operations, so they round differently in the last bits.</p>
+
+<p>If anything, the short form is the better-behaved one. The eight-line version computes
+exponentials, sums them, inverts the sum, multiplies, and takes a log, with rounding error
+accumulating at each step. The three-line version does none of that intermediate work.</p>
+
+<h2 id="wrapping-up">Wrapping up</h2>
+
+<p>Parts <a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">1</a> through
+<a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">4</a> each took one operation and asked
+where its inputs showed up in the forward pass. Same question here, applied to the loss itself
+rather than to a single op.</p>
+
+<p>The shortcut exists for two reasons:</p>
+
+<ul>
+  <li><strong>The loss only touches one column per row.</strong> Out of 864 numbers, the loss expression reads
+only 32 of them. That keeps the expression you have to differentiate small.</li>
+  <li><strong>Freezing 26 of the 27 logits turns matrix calculus into ordinary calculus.</strong> The $k$
+substitution is not an approximation. Those other logits genuinely are constants with respect
+to the one you are differentiating, and naming them collectively is what reduces the problem
+to something you can do on paper.</li>
+</ul>
+
+<p>And the result reads the way it does because $p - 1$ is negative and $p$ is positive. Descent
+moves against the gradient, so those two signs are the instruction “raise the correct one, lower
+the rest,” with a magnitude that is exactly how much probability ended up in the wrong place.</p>
+
+<p>It is also why frameworks ship cross-entropy as a single fused operation rather than composing
+it out of a softmax, an index and a log. The fused version has a much shorter backward pass, and
+this derivation is where that shortness comes from.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
