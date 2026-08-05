@@ -36,11 +36,21 @@ published: false
 In this post we will look at the batch normalization layer, and work out the gradient of the
 loss with respect to its input.
 
-Every backward pass in this series so far has had a convenient property: each value was used
-once, in one place, and the gradient came back along a single path. Batch normalization breaks
-that. It computes statistics over the whole batch, which means one input affects every output
-in the batch, and the gradient has to account for all of those connections. The computational
-graph is the clearest way to see why, so we will draw it first and derive from it second.
+Fan-out is not new here. [Part 1]({% post_url 2026-07-30-broadcast-subtraction-gradient %})
+broadcast a column vector across a matrix and had to sum a whole row on the way back, and
+[part 4]({% post_url 2026-07-31-sum-broadcast-duality-gradient %}) was the same idea read in
+reverse. The rule that a value used in several places collects a gradient from each of them is
+already familiar.
+
+What is different in batch normalization is where the fan-out comes from. In the earlier posts
+the thing being reused was an input or a parameter, sitting outside the computation that
+consumed it. Here the layer first computes two statistics *from* the batch, then feeds them
+back *into* every element of that same batch. So each input reaches its own output by three
+different routes, and two of those routes travel through values that every other example in the
+batch also helped produce. The examples stop being independent.
+
+That is worth drawing before it is worth differentiating, so we will build the computational
+graph first and read the gradient off it second.
 
 ## Why batch normalization is used
 
