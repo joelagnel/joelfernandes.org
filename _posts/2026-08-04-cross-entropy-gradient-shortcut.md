@@ -135,10 +135,35 @@ the correct character. That choice is doing something specific:
 
 If the model gave the right answer a probability near 1, $\log p$ is near 0 and the loss is
 near 0. If it gave the right answer a probability near 0, $\log p$ heads for minus infinity and
-the loss becomes large. A confident wrong answer costs a lot more than an uncertain one.
+the loss becomes large.
 
 Probabilities live between 0 and 1, so their logs are always negative. The minus sign out front
 just flips that back to a positive loss.
+
+Worth being precise about what the loss can and cannot see. It reads exactly one number, $p$,
+the probability assigned to the correct character. It never looks at where the remaining
+probability went, so "the model confidently picked the wrong letter" is not a thing this
+formula measures directly. What it measures is how little was left for the right letter, and
+being confident about some other character is simply the way $p$ ends up small.
+
+With 27 characters, using the loss $-\log p$:
+
+| what the model did | $p$ on the correct character | loss |
+|---|---|---|
+| confident and right | 0.99 | 0.01 |
+| no idea, spread evenly | 1/27 = 0.037 | 3.30 |
+| confident, and the mass went elsewhere | 0.01 | 4.61 |
+| very confident, mass went elsewhere | 0.001 | 6.91 |
+
+The gap between rows 2 and 3 is the interesting one. Both are wrong, but shrugging costs 3.30
+while committing to the wrong answer costs 4.61. The curve is what does this: it is steep near
+zero, so the last bit of probability you take away from the correct character is punished far
+harder than the first.
+
+The asymmetry is worth noticing too. The loss is bounded below by 0 but unbounded above. Going
+from a coin flip to perfect only ever saves you $0.69$, while going from a coin flip toward zero
+can cost arbitrarily much. The function is far more interested in stopping you from being badly
+wrong than in making you slightly more right.
 
 ## Two things to notice before any calculus
 
