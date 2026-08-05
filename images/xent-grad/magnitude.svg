@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 440" width="720" height="440" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+  </defs>
+  <rect width="720" height="440" fill="#ffffff"/>
+  <text x="360" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">How hard the push is depends on how wrong the model was</text>
+
+  <line x1="90" y1="280" x2="560" y2="280" stroke="#999" stroke-width="1.5"/>
+  <line x1="90" y1="280" x2="90" y2="80" stroke="#999" stroke-width="1.5"/>
+  <text x="48" y="180.0" text-anchor="middle" font-size="13" fill="#666" transform="rotate(-90 48 180.0)">size of the push</text>
+  <text x="90" y="300" text-anchor="middle" font-size="12" fill="#666">0</text>
+  <text x="560" y="300" text-anchor="middle" font-size="12" fill="#666">1</text>
+  <text x="78" y="85" text-anchor="end" font-size="12" fill="#666">1</text>
+  <text x="78" y="284" text-anchor="end" font-size="12" fill="#666">0</text>
+  <text x="325.0" y="66" text-anchor="middle" font-size="13" fill="#666">p, the probability given to the correct character</text>
+  <line x1="90" y1="80" x2="560" y2="280" stroke="#2c5f8a" stroke-width="2.5"/>
+  <text x="372.0" y="250.0" font-size="14" fill="#2c5f8a">1 − p</text>
+
+  <line x1="118.2" y1="92.0" x2="118.2" y2="326" stroke="#bbb" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <circle cx="118.2" cy="92.0" r="5" fill="#c0392b"/>
+  <text x="118.2" y="346" text-anchor="middle" font-size="12.5" fill="#1a1a1a">badly wrong</text>
+  <text x="118.2" y="363" text-anchor="middle" font-size="12" fill="#666">nearly the whole push</text>
+
+  <line x1="325.0" y1="180.0" x2="325.0" y2="326" stroke="#bbb" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <circle cx="325.0" cy="180.0" r="5" fill="#c0392b"/>
+  <text x="325.0" y="346" text-anchor="middle" font-size="12.5" fill="#1a1a1a">unsure</text>
+  <text x="325.0" y="363" text-anchor="middle" font-size="12" fill="#666">half the push</text>
+
+  <line x1="536.5" y1="270.0" x2="536.5" y2="326" stroke="#bbb" stroke-width="1.2" stroke-dasharray="4 3"/>
+  <circle cx="536.5" cy="270.0" r="5" fill="#c0392b"/>
+  <text x="536.5" y="346" text-anchor="middle" font-size="12.5" fill="#1a1a1a">already right</text>
+  <text x="536.5" y="363" text-anchor="middle" font-size="12" fill="#666">almost no push</text>
+
+  <text x="360" y="402" text-anchor="middle" font-size="14" fill="#1a1a1a">a model that is already correct gets left alone, which is what you want</text>
+</svg>
