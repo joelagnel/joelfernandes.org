@@ -24,7 +24,7 @@
   <circle cx="112.5" cy="127.74539427064553" r="5" fill="#c0392b"/>
   <text x="126.5" y="121.74539427064553" font-size="12" fill="#c0392b">p = 0.05, loss = 3.0</text>
   <circle cx="517.5" cy="297.05063557271586" r="5" fill="#2c5f8a"/>
-  <text x="507.5" y="285.05063557271586" text-anchor="end" font-size="12" fill="#2c5f8a">p = 0.95, loss = 0.05</text>
+  <text x="501.5" y="267.05063557271586" text-anchor="end" font-size="12" fill="#2c5f8a">p = 0.95, loss = 0.05</text>
   <text x="345.0" y="78" font-size="13" fill="#666">confident and wrong is expensive</text>
   <text x="345.0" y="98" font-size="13" fill="#666">confident and right costs almost nothing</text>
 </svg>

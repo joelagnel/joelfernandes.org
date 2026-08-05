@@ -27,7 +27,7 @@
     <text x="645" y="138">loss L</text>
   </g>
   <g font-size="12" text-anchor="middle" fill="#666">
-    <text x="175" y="111">32 x 27</text>
+    <text x="175" y="111">32 × 27</text>
     <text x="175" y="195">32 correct characters</text>
     <text x="645" y="156">one number</text>
   </g>
@@ -43,5 +43,5 @@
   <g stroke="#c0392b" stroke-width="2" fill="none" marker-end="url(#arRed)" stroke-dasharray="6 4">
     <path d="M 645 172 L 645 288 Q 645 300, 631 300 L 54 300 Q 40 300, 40 286 L 40 109 Q 40 95, 54 95 L 84 95"/>
   </g>
-  <text x="420" y="330" text-anchor="middle" font-size="15" fill="#c0392b">what we want: dL / dlogits, also 32 x 27</text>
+  <text x="420" y="330" text-anchor="middle" font-size="15" fill="#c0392b">what we want: dL / dlogits, also 32 × 27</text>
 </svg>

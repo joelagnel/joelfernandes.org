@@ -11,28 +11,28 @@
     </marker>
   </defs>
   <rect width="760" height="430" fill="#ffffff"/>
-  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Two cases, and the only difference between them is a single -1</text>
+  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Two cases, and the only difference between them is a single −1</text>
 
   <rect x="30" y="56" width="330" height="300" rx="10" fill="#ffffff" stroke="#2c5f8a" stroke-width="2"/>
   <rect x="30" y="56" width="330" height="40" rx="10" fill="#eaf2f8" stroke="#2c5f8a" stroke-width="2"/>
   <text x="195" y="82" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a1a1a">Case A: a is the correct character</text>
   <text x="195" y="118" text-anchor="middle" font-size="13" fill="#666">e^a sits on top and underneath</text>
-  <text x="195" y="152" text-anchor="middle" font-size="15" fill="#1a1a1a">L = -log( e^a / ( e^a + K ) )</text>
+  <text x="195" y="152" text-anchor="middle" font-size="15" fill="#1a1a1a">L = -log( e^a / ( e^a + k ) )</text>
   <text x="195" y="182" text-anchor="middle" font-size="13" fill="#666">a appears twice</text>
-  <text x="195" y="212" text-anchor="middle" font-size="15" fill="#1a1a1a">dL/da = -K / ( K + e^a )</text>
+  <text x="195" y="212" text-anchor="middle" font-size="15" fill="#1a1a1a">dL/da = -k / ( k + e^a )</text>
   <text x="195" y="242" text-anchor="middle" font-size="15" fill="#1a1a1a">= -( 1 - SM )</text>
 
   <line x1="70" y1="274" x2="320" y2="274" stroke="#ddd" stroke-width="1.5"/>
-  <text x="195" y="312" text-anchor="middle" font-size="22" fill="#c0392b">SM - 1</text>
+  <text x="195" y="312" text-anchor="middle" font-size="22" fill="#c0392b">SM − 1</text>
   <text x="195" y="342" text-anchor="middle" font-size="12" fill="#666">always negative, so this logit gets pushed up</text>
 
   <rect x="400" y="56" width="330" height="300" rx="10" fill="#ffffff" stroke="#2c5f8a" stroke-width="2"/>
   <rect x="400" y="56" width="330" height="40" rx="10" fill="#eaf2f8" stroke="#2c5f8a" stroke-width="2"/>
   <text x="565" y="82" text-anchor="middle" font-size="15" font-weight="bold" fill="#1a1a1a">Case B: a is a wrong character</text>
   <text x="565" y="118" text-anchor="middle" font-size="13" fill="#666">e^a sits underneath only</text>
-  <text x="565" y="152" text-anchor="middle" font-size="15" fill="#1a1a1a">L = -log( C / ( e^a + K ) )</text>
-  <text x="565" y="182" text-anchor="middle" font-size="13" fill="#666">C is constant, it drops out</text>
-  <text x="565" y="212" text-anchor="middle" font-size="15" fill="#1a1a1a">dL/da = e^a / ( e^a + K )</text>
+  <text x="565" y="152" text-anchor="middle" font-size="15" fill="#1a1a1a">L = -log( k / ( e^a + k ) )</text>
+  <text x="565" y="182" text-anchor="middle" font-size="13" fill="#666">k is constant, it drops out</text>
+  <text x="565" y="212" text-anchor="middle" font-size="15" fill="#1a1a1a">dL/da = e^a / ( e^a + k )</text>
   <text x="565" y="242" text-anchor="middle" font-size="13" fill="#666">nothing to subtract</text>
 
   <line x1="440" y1="274" x2="690" y2="274" stroke="#ddd" stroke-width="1.5"/>

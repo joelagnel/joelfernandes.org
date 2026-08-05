@@ -8,6 +8,25 @@
 <link rel="stylesheet" href="/page.css">
 <link rel="stylesheet" href="/css/syntax.css">
 <link rel="stylesheet" href="/css/main.css">
+{% if page.math %}
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+mjx-container[jax="CHTML"] { color: inherit; }
+mjx-container[jax="CHTML"][display="true"] { margin: 1.1em 0; overflow-x: auto; overflow-y: hidden; }
+</style>
+{% endif %}
 </head>
 <body>
 

@@ -6,6 +6,7 @@ categories: [machine-learning, neural-networks, backpropagation]
 tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpropagation, backprop, autograd, chain-rule, gradients, gradient-descent, cross-entropy, softmax, logits, loss-function, classification, numpy, pytorch, calculus]
 author: Joel Fernandes
 description: "Part 5. The long way to the logit gradient needs eight intermediate tensors and five backward passes. Freeze everything except the one logit you care about, and it collapses to three lines."
+math: true
 published: false
 ---
 
@@ -80,11 +81,12 @@ Cross-entropy takes two inputs and returns one number.
 </div>
 
 It takes `logits`, the raw scores the network produced, and `Yb`, the characters that should
-actually have come next. It returns `L`, one number measuring how likely the model was to
+actually have come next. It returns $L$, one number measuring how likely the model was to
 predict `Yb`. Low probability on the right answer gives a high loss.
 
-What we want back out is `dL/dlogits`, which has to be the same shape as `logits`, because a
-gradient always has the same shape as the thing it is the gradient of.
+What we want back out is $\partial L / \partial\, \texttt{logits}$, which has to be the same
+shape as `logits`, because a gradient always has the same shape as the thing it is the gradient
+of.
 
 ## Shapes
 
@@ -102,9 +104,14 @@ Four things happen, in order:
 
 1. **Softmax along each row.** Each row of 27 raw scores becomes 27 probabilities that sum to 1.
 2. **Pluck one probability per row.** `Yb[i]` says which column is the correct character for row
-   `i`, so we take `probs[i, Yb[i]]`. That gives a column of 32 numbers.
+   $i$, so we take `probs[i, Yb[i]]`. That gives a column of 32 numbers.
 3. **Take the negative log of each.**
 4. **Average over the batch.**
+
+Written as one expression, with $p_i$ the probability the model gave to the correct character
+for example $i$:
+
+$$L = -\frac{1}{n} \sum_{i=1}^{n} \log p_i$$
 
 Which in code is exactly what that last line of the long forward pass said:
 
@@ -112,22 +119,22 @@ Which in code is exactly what that last line of the long forward pass said:
 loss = -logprobs[range(n), Yb].mean()
 ```
 
-Step 2 is worth noting. Out of 32 x 27 = 864 numbers in the probability matrix, the loss looks
-at exactly **32 of them**, one per row. The other 832 are never read. That fact does not
+Step 2 is worth noting. Out of $32 \times 27 = 864$ numbers in the probability matrix, the loss
+looks at exactly **32 of them**, one per row. The other 832 are never read. That fact does not
 mean their gradients are zero, as we will see, but it does mean the loss expression itself is a
 lot smaller than the matrix suggests.
 
 ## Why the negative log
 
-The loss for a single example is `-log(p)`, where `p` is the probability the model assigned to
+The loss for a single example is $-\log p$, where $p$ is the probability the model assigned to
 the correct character. That choice is doing something specific:
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/xent-grad/neglog.svg" alt="A plot of negative log p against p. As p approaches 1 the loss approaches 0. As p approaches 0 the loss grows without bound." style="max-width: 100%; height: auto;"/>
 </div>
 
-If the model gave the right answer a probability near 1, `log(p)` is near 0 and the loss is
-near 0. If it gave the right answer a probability near 0, `log(p)` heads for minus infinity and
+If the model gave the right answer a probability near 1, $\log p$ is near 0 and the loss is
+near 0. If it gave the right answer a probability near 0, $\log p$ heads for minus infinity and
 the loss becomes large. A confident wrong answer costs a lot more than an uncertain one.
 
 Probabilities live between 0 and 1, so their logs are always negative. The minus sign out front
@@ -137,12 +144,12 @@ just flips that back to a positive loss.
 
 Both of these make the derivation smaller.
 
-**Rows are independent.** Row `i` of the loss depends only on row `i` of the logits. Softmax
+**Rows are independent.** Row $i$ of the loss depends only on row $i$ of the logits. Softmax
 runs along a row, and the plucked probability comes from that same row. Nothing crosses between
 examples. So we can derive the gradient for one row, and then apply the identical formula to
 all 32.
 
-**The 1/n is a constant.** The batch loss is the mean, so there is a factor of `1/n` out
+**The $1/n$ is a constant.** The batch loss is the mean, so there is a factor of $1/n$ out
 front. Constants pass straight through differentiation, so park it, do the interesting work
 without it, and multiply it back at the very end.
 
@@ -151,155 +158,118 @@ one logit in that row?
 
 ## The trick: freeze everything except one
 
-Write the softmax for a single row. Call the logit we are differentiating with respect to `a`.
+Write the softmax for a single row. Call the logit we are differentiating with respect to $a$.
 The softmax denominator is a sum over all 27 exponentials:
 
-```
-SM = e^a / (e^a + e^b + e^c + e^d + ...)
-```
+$$SM = \frac{e^a}{e^a + e^b + e^c + e^d + \cdots}$$
 
-We are differentiating with respect to `a` and nothing else. Every other logit in that row is
-being held fixed. So every other exponential in that denominator is a **constant**. `e^b`,
-`e^c`, `e^d` and the rest genuinely do not change when `a` changes.
+We are differentiating with respect to $a$ and nothing else. Every other logit in that row is
+being held fixed. So every other exponential in that denominator is a **constant**. $e^b$,
+$e^c$, $e^d$ and the rest genuinely do not change when $a$ changes.
 
-Give the whole pile of them one name, `K`:
+Give the whole pile of them one name, $k$:
 
 <div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/xent-grad/k-trick.svg" alt="A row of 27 cells with one highlighted as the live variable e to the a. The remaining 26 are greyed out and braced together, labelled as the constant K." style="max-width: 100%; height: auto;"/>
+  <img src="/images/xent-grad/k-trick.svg" alt="A row of 27 cells with one highlighted as the live variable e to the a. The remaining 26 are greyed out and braced together, labelled as the constant k." style="max-width: 100%; height: auto;"/>
 </div>
 
-```
-SM = e^a / (e^a + K)
-```
+$$SM = \frac{e^a}{e^a + k}$$
 
 One variable, one constant. The 27-variable problem is now a single-variable one, which you can
 do by hand or hand to Wolfram Alpha.
 
-One rearrangement will be useful shortly. Since `SM = e^a / (e^a + K)`, we can solve for the
-denominator and then for `K` itself:
+One rearrangement will be useful shortly. Since $SM = e^a / (e^a + k)$, we can solve for the
+denominator and then for $k$ itself:
 
-```
-e^a + K = e^a / SM
-
-K = e^a/SM - e^a
-```
+$$e^a + k = \frac{e^a}{SM} \qquad \Longrightarrow \qquad k = \frac{e^a}{SM} - e^a$$
 
 We will use that in a moment.
 
 ## Two cases, and why there are exactly two
 
-We need `dL/da` for **every** logit in the row, all 27 of them, not just the correct one. And
-the loss expression looks different depending on whether `a` happens to be the correct
-character or not.
+We need $\partial L / \partial a$ for **every** logit in the row, all 27 of them, not just the
+correct one. And the loss expression looks different depending on whether $a$ happens to be the
+correct character or not.
 
 The loss only ever looks at the probability of the **correct** character:
 
-```
-L = -log( e^(correct logit) / (sum of all 27 exponentials) )
-```
+$$L = -\log\left( \frac{e^{\,\text{correct logit}}}{\text{sum of all 27 exponentials}} \right)$$
 
-Now ask where a given logit `a` appears in that expression.
+Now ask where a given logit $a$ appears in that expression.
 
-- If `a` **is** the correct character, then `e^a` appears **twice**: once in the numerator, and
+- If $a$ **is** the correct character, then $e^a$ appears **twice**: once in the numerator, and
   once inside the denominator sum.
-- If `a` is **not** the correct character, then `e^a` appears exactly **once**, and only in the
+- If $a$ is **not** the correct character, then $e^a$ appears exactly **once**, and only in the
   **denominator**.
 
 The second case is the less obvious one. A wrong character's logit still affects the loss, even
-though the loss never looks at its probability. It affects the loss because it is
-part of the normalizing sum. Raise a wrong logit and you inflate the denominator, which shrinks
-the correct character's probability, which raises the loss. The influence is entirely indirect,
-routed through the denominator.
+though the loss never looks at its probability. It affects the loss because it is part of the
+normalizing sum. Raise a wrong logit and you inflate the denominator, which shrinks the correct
+character's probability, which raises the loss. The influence is entirely indirect, routed
+through the denominator.
 
-So in the wrong-character case the numerator is a constant, which we can call `C`:
+That is why the numerator is a constant in the second case. The numerator is the correct
+character's exponential, which does not contain $a$ at all, so we can fold it into $k$ as well
+and write both cases with the same two symbols:
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/xent-grad/two-cases.svg" alt="Two panels side by side. Case A, a is the correct character, gives SM minus 1. Case B, a is a wrong character, gives SM. The only difference is the minus 1." style="max-width: 100%; height: auto;"/>
 </div>
 
-### Case A: `a` is the correct character
+### Case A: $a$ is the correct character
 
-The loss for this row, in terms of `a` and `K`:
+The loss for this row, in terms of $a$ and $k$:
 
-```
-L = -log( e^a / (e^a + K) )
-```
+$$L = -\log\left( \frac{e^a}{e^a + k} \right)$$
 
-Differentiating with respect to `a`. This is exactly the query I put into Wolfram Alpha:
+Differentiating with respect to $a$ (this is the expression I put through Wolfram Alpha):
 
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/xent-grad/wolfram-correct.jpg" alt="Wolfram Alpha computing the derivative of minus log of e to the x over e to the x plus k, giving minus k over k plus e to the x." style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px;"/>
-  <div style="margin-top: 0.5em; font-size: 0.9em; color: #666;">Wolfram uses <code>x</code> for the variable and <code>k</code> for the constant. Read them as <code>a</code> and <code>K</code>.</div>
-</div>
+$$\frac{\partial L}{\partial a} = \frac{-k}{k + e^a}$$
 
-```
-dL/da = -K / (K + e^a)
-```
+Now substitute $k = e^a / SM - e^a$ from earlier:
 
-Substitute `K = e^a/SM - e^a` from earlier:
+$$\frac{\partial L}{\partial a}
+  = -\frac{\dfrac{e^a}{SM} - e^a}{\dfrac{e^a}{SM}}$$
 
-```
-dL/da = -( e^a/SM - e^a ) / ( e^a/SM )
-```
+Multiply top and bottom by $SM / e^a$:
 
-Multiply top and bottom by `SM/e^a`:
-
-```
-      = -( 1 - SM )
-
-      = SM - 1
-```
+$$\frac{\partial L}{\partial a} = -(1 - SM) = SM - 1$$
 
 The gradient on the correct character's logit is its own softmax probability, minus one.
 
-### Case B: `a` is a wrong character
+### Case B: $a$ is a wrong character
 
-Now `e^a` only appears in the denominator. The numerator is the correct character's
-exponential, which does not depend on `a` at all, so it is a constant `C`:
+Now $e^a$ only appears in the denominator, and the numerator is the constant $k$:
 
-```
-L = -log( C / (e^a + K) )
-```
+$$L = -\log\left( \frac{k}{e^a + k} \right)$$
 
-Straight to Wolfram again:
+Again through Wolfram Alpha:
 
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/xent-grad/wolfram-incorrect.jpg" alt="Wolfram Alpha computing the derivative of minus log of k over e to the x plus k, giving e to the x over k plus e to the x." style="max-width: 100%; height: auto; border: 1px solid #ddd; border-radius: 6px;"/>
-</div>
+$$\frac{\partial L}{\partial a} = \frac{e^a}{k + e^a} = SM$$
 
-```
-dL/da = e^a / (e^a + K)
-
-      = SM
-```
-
-Which is the softmax probability of `a`, with nothing subtracted.
-
-Notice that Wolfram also offers the alternate form `1 - k/(k + e^x)`, which is a nice mirror of
-Case A. Same expression, opposite framing.
+Which is the softmax probability of $a$, with nothing subtracted. Wolfram also gives the
+equivalent form $1 - k/(k + e^a)$, which is a nice mirror of Case A.
 
 ## Merging the two cases
 
 Put them side by side:
 
-```
-a is the correct character:   dL/da = SM - 1
-a is a wrong character:       dL/da = SM
-```
+$$\frac{\partial L}{\partial a} =
+\begin{cases}
+SM - 1 & \text{if } a \text{ is the correct character} \\[4pt]
+SM & \text{otherwise}
+\end{cases}$$
 
-The `SM` term is common to both. The only difference is a `-1` that shows up exactly on the
-correct character's position. So write it as one expression:
+The $SM$ term is common to both. The only difference is a $-1$ that shows up exactly on the
+correct character's position. So write it as one expression, using an indicator that is 1 when
+$a$ is the correct character and 0 otherwise:
 
-```
-dL/da = SM - 1[a is the correct character]
-```
+$$\frac{\partial L}{\partial a} = SM - \mathbb{1}[a \text{ is correct}]$$
 
-where the bracket is 1 when true and 0 otherwise. And now bring back the `1/n` we parked
-earlier, since the batch loss is a mean over `n` examples:
+And now bring back the $1/n$ we parked earlier, since the batch loss is a mean over $n$
+examples:
 
-```
-dL/da = ( SM - 1[a is the correct character] ) / n
-```
+$$\boxed{\ \frac{\partial L}{\partial a} = \frac{SM - \mathbb{1}[a \text{ is correct}]}{n}\ }$$
 
 Which is exactly the three lines of code, in the same order:
 
@@ -309,49 +279,92 @@ dlogits[range(n), Yb] -= 1         # the -1, only at the correct positions
 dlogits /= n                       # the 1/n from the mean
 ```
 
-Three lines, three terms. `F.softmax(logits, 1)` runs the softmax along
-dimension 1, meaning along each row. `[range(n), Yb]` is the same fancy indexing that plucked
-out the probabilities in the forward pass, now used to subtract 1 at those same positions. And
-the division by `n` is the gradient flowing back through the mean.
+Three lines, three terms. `F.softmax(logits, 1)` runs the softmax along dimension 1, meaning
+along each row. `[range(n), Yb]` is the same fancy indexing that plucked out the probabilities
+in the forward pass, now used to subtract 1 at those same positions. And the division by $n$ is
+the gradient flowing back through the mean.
 
 ## Reading the answer as forces
 
 There is a useful way to read the result, and it is the best part of Karpathy's explanation.
 
-Take one row of `dlogits`, multiply it by `n` to undo the batch scaling, and read each cell not
+Take one row of `dlogits`, multiply it by $n$ to undo the batch scaling, and read each cell not
 as a number but as a force acting on that logit.
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/xent-grad/forces.svg" alt="A bar chart of one row of the gradient. One long red bar below the axis at the correct character, 26 short blue bars above the axis at the wrong characters. The row sums to zero." style="max-width: 100%; height: auto;"/>
 </div>
 
-The correct character gets `SM - 1`, which is always negative, since `SM` is a probability below
-1. Negative gradient means gradient descent will push that logit **up**. Every wrong character
-gets `SM`, always positive, so those logits get pushed **down**.
+The correct character gets $SM - 1$, which is always negative, since $SM$ is a probability
+below $1$. Negative gradient means gradient descent will push that logit **up**. Every wrong
+character gets $SM$, always positive, so those logits get pushed **down**.
 
 Now add up the whole row. The probabilities sum to 1, and we subtracted exactly one 1, so:
 
-```
-sum of the row = 1 - 1 = 0
-```
+$$\sum_{j=1}^{27} \frac{\partial L}{\partial a_j} = 1 - 1 = 0$$
 
 Every row of `dlogits` sums to exactly zero. The upward pull on the correct character and the
 total downward push on the other 26 are always perfectly balanced. The gradient never lifts or
 lowers a row as a whole, it only moves probability mass around within the row.
 
-The magnitudes are readable too. The size of each force is the probability the model put in the
-wrong place:
+## Why the signs come out that way
 
-- A **confidently wrong** prediction, where some wrong character got probability 0.9, gets a
-  hard shove downward, and the correct character gets an equally hard pull upward.
-- A **perfect** prediction, probability 1 on the correct character and 0 everywhere else, gives
-  `1 - 1 = 0` at the correct position and `0` everywhere else. The entire row is zeros. No
-  force, nothing to fix.
+The two formulas, $p - 1$ and $p$, are not arbitrary. Both signs are exactly what you would
+pick by hand if you were told to reduce the loss and had to choose a direction.
 
-The amount by which you mispredict is the strength of the correction. Karpathy's image for this
-is a pulley system: you are up at the logits pulling on the correct answer and pushing down the
-wrong ones, and that tension translates back through the network until it reaches the weights
-and biases. Each update, the parameters give in to the tug a little.
+Start from what we actually want. The loss falls when the correct character's probability goes
+up. So the correct character's logit should be **increased**, and every wrong character's logit
+should be **decreased**, since they compete for the same probability mass through the softmax
+denominator.
+
+Now recall that gradient descent moves *against* the gradient:
+
+$$a \leftarrow a - \eta \frac{\partial L}{\partial a}$$
+
+So a **negative** gradient increases the parameter, and a **positive** gradient decreases it.
+The sign of the gradient is already the instruction for which way to move.
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/why-signs.svg" alt="Two plots of the loss as a function of one logit. On the left, the correct character's logit, where the loss falls as the logit rises and the tangent has negative slope p minus 1. On the right, a wrong character's logit, where the loss rises and the tangent has positive slope p." style="max-width: 100%; height: auto;"/>
+</div>
+
+Read the two panels as plots of the loss against a single logit, holding the rest of the row
+fixed:
+
+- **The correct character** (left). Raising this logit raises $p$, which lowers the loss, so the
+  curve slopes downward and the tangent has negative slope. That slope is $p - 1$, and since
+  $p < 1$ it is always negative. Descent therefore pushes this logit up, which is what we
+  wanted.
+- **A wrong character** (right). Raising this logit inflates the denominator, which lowers the
+  correct character's $p$ and raises the loss, so the curve slopes upward. That slope is $p$,
+  always positive. Descent pushes this logit down.
+
+The $-1$ in $p - 1$ is what flips the sign, and it is only present on the correct character.
+Without it, both cases would be positive and training would push *every* logit down, including
+the one that should have won. The indicator is the piece that tells the row which single element
+is being pulled the other way.
+
+The magnitudes are just as deliberate. The size of the push on the correct character is
+$\lvert p - 1 \rvert = 1 - p$, which is the amount of probability the model failed to put on the
+right answer:
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/xent-grad/magnitude.svg" alt="A plot of 1 minus p against p, showing that the size of the push shrinks linearly to zero as the probability given to the correct character approaches 1." style="max-width: 100%; height: auto;"/>
+</div>
+
+- A **confidently wrong** prediction, $p$ near 0, gets a push of nearly the full size 1.
+- An **uncertain** prediction, $p$ around 0.5, gets about half that.
+- An **already correct** prediction, $p$ near 1, gets a push near zero. And if $p$ is exactly 1,
+  the gradient at the correct position is $1 - 1 = 0$ and every wrong position holds probability
+  0, so the entire row is zeros. There is nothing to correct and the update leaves it alone.
+
+So the gradient is self-scaling: the more wrong the model was, the harder the correction, and it
+tapers to nothing exactly as the model gets it right.
+
+Karpathy's image for this is a pulley system: you are up at the logits pulling on the correct
+answer and pushing down the wrong ones, and that tension translates back through the network
+until it reaches the weights and biases. Each update, the parameters give in to the tug a
+little.
 
 ## Verifying it
 
@@ -369,9 +382,9 @@ cmp('logits', dlogits, logits)
 ```
 
 The comparison comes back approximate rather than exactly equal, with a maximum difference
-around **5e-9**. That is floating point noise, not a mistake in the derivation. The long chain
-and the short expression are mathematically identical but execute a different sequence of
-operations, so they round differently in the last bits.
+around $5 \times 10^{-9}$. That is floating point noise, not a mistake in the derivation. The
+long chain and the short expression are mathematically identical but execute a different
+sequence of operations, so they round differently in the last bits.
 
 If anything, the short form is the better-behaved one. The eight-line version computes
 exponentials, sums them, inverts the sum, multiplies, and takes a log, with rounding error
@@ -380,19 +393,23 @@ accumulating at each step. The three-line version does none of that intermediate
 ## Wrapping up
 
 Parts [1]({% post_url 2026-07-30-broadcast-subtraction-gradient %}) through
-[4]({% post_url 2026-07-31-sum-broadcast-duality-gradient %}) each took one operation and
-asked where its inputs showed up in the forward pass. Same question here, applied to the loss
-itself rather than to a single op.
+[4]({% post_url 2026-07-31-sum-broadcast-duality-gradient %}) each took one operation and asked
+where its inputs showed up in the forward pass. Same question here, applied to the loss itself
+rather than to a single op.
 
 The shortcut exists for two reasons:
 
 - **The loss only touches one column per row.** Out of 864 numbers, the loss expression reads
-  32. That keeps the expression you have to differentiate small.
-- **Freezing 26 of the 27 logits turns matrix calculus into ordinary calculus.** The `K`
+  only 32 of them. That keeps the expression you have to differentiate small.
+- **Freezing 26 of the 27 logits turns matrix calculus into ordinary calculus.** The $k$
   substitution is not an approximation. Those other logits genuinely are constants with respect
   to the one you are differentiating, and naming them collectively is what reduces the problem
   to something you can do on paper.
 
+And the result reads the way it does because $p - 1$ is negative and $p$ is positive. Descent
+moves against the gradient, so those two signs are the instruction "raise the correct one, lower
+the rest," with a magnitude that is exactly how much probability ended up in the wrong place.
+
 It is also why frameworks ship cross-entropy as a single fused operation rather than composing
-it out of a softmax, an index and a log. The fused version has a much shorter backward pass,
-and this derivation is where that shortness comes from.
+it out of a softmax, an index and a log. The fused version has a much shorter backward pass, and
+this derivation is where that shortness comes from.

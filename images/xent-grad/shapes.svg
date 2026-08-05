@@ -11,7 +11,7 @@
     </marker>
   </defs>
   <rect width="760" height="580" fill="#ffffff"/>
-  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">From a 32 x 27 grid of logits down to a single number</text>
+  <text x="380" y="28" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">From a 32 × 27 grid of logits down to a single number</text>
   <rect x="90" y="72" width="330" height="150" fill="#ffffff" stroke="none"/>
   <g stroke="#c8d8e4" stroke-width="0.7">
     <line x1="102.2" y1="72" x2="102.2" y2="222"/>
@@ -155,7 +155,7 @@
 
   <line x1="562" y1="353.0" x2="644" y2="353.0" stroke="#c0392b" stroke-width="2" marker-end="url(#arRed)"/>
   <text x="609" y="339.0" text-anchor="middle" font-size="12" fill="#c0392b">pluck</text>
-  <text x="668.2222222222222" y="264" text-anchor="middle" font-size="12" fill="#666">32 x 1</text>
+  <text x="668.2222222222222" y="264" text-anchor="middle" font-size="12" fill="#666">32 × 1</text>
 
   <line x1="668.2222222222222" y1="436" x2="668.2222222222222" y2="496" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
   <text x="634" y="510" text-anchor="end" font-size="13" fill="#666">take -log of each,</text>
