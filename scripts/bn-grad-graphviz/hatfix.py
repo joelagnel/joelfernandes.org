@@ -50,9 +50,9 @@ def fix(path):
             cx = x - sub_w - x_glyph / 2.0
         else:
             cx = x - sub_w / 2.0
-        half = fs * 0.20
-        top = y - fs * 0.78
-        bot = y - fs * 0.56
+        half = fs * 0.22
+        top = y - fs * 0.98
+        bot = y - fs * 0.74
 
         caret = (
             f'<path d="M {cx-half:.2f} {bot:.2f} L {cx:.2f} {top:.2f} '

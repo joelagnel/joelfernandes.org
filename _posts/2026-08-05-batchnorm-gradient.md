@@ -7,7 +7,7 @@ tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpr
 author: Joel Fernandes
 description: "Part 6. Batch normalization ties every example in a batch to every other one. This post draws the computational graph, then derives the gradient it implies, one equation at a time."
 math: true
-published: false
+published: true
 ---
 
 > **Context:** This is part 6 in a series that comes out of Andrej Karpathy's
@@ -52,7 +52,7 @@ outputs are nearly identical, so the derivative is nearly zero, and almost no gr
 back through that unit. It has saturated. A layer whose pre-activations drift into that region
 learns very slowly, and a deep stack of such layers can stop learning altogether.
 
-<div style="margin: 1.5em 0; text-align: center;">
+<div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
   <img src="/images/bn-grad/saturation.svg" alt="Two panels. On the left, tanh flattens out beyond about plus or minus two and a half, with the values at z equals 8 and 9 almost identical. On the right, the derivative of tanh, which is near one in the middle and collapses to almost zero in the same outer regions." style="max-width: 100%; height: auto;"/>
 </div>
 
@@ -138,7 +138,7 @@ the mathematical names from here on.
 Here is the whole forward pass as a graph, with a batch of four. Four is small enough to draw
 every edge and large enough to show the pattern.
 
-<div style="margin: 1.5em 0; text-align: center;">
+<div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
   <img src="/images/bn-grad/forward.svg" alt="Computational graph of batch normalization with a batch of four. Every input feeds both the mean and the variance, and both statistics feed back into every normalized value." style="max-width: 100%; height: auto;"/>
 </div>
 
@@ -161,7 +161,7 @@ $\sigma^2$, and those two numbers appear in every other example's normalization.
 
 Pulling out just the edges that leave $x_2$ makes the point concrete:
 
-<div style="margin: 1.5em 0; text-align: center;">
+<div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
   <img src="/images/bn-grad/fanout.svg" alt="The same graph with only the edges reachable from x2 highlighted: the direct edge, the edge through the mean, and the edge through the variance." style="max-width: 100%; height: auto;"/>
 </div>
 
@@ -179,7 +179,7 @@ the total is the sum. Three routes means three terms.
 
 Looking in the other direction is just as useful:
 
-<div style="margin: 1.5em 0; text-align: center;">
+<div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
   <img src="/images/bn-grad/fanin.svg" alt="The three edges arriving at xhat 2: its own input x2, the mean, and the variance." style="max-width: 100%; height: auto;"/>
 </div>
 
@@ -281,7 +281,7 @@ $$\frac{\partial L}{\partial x_i}
 
 Here is the backward graph, which is the forward graph with every edge reversed:
 
-<div style="margin: 1.5em 0; text-align: center;">
+<div style="width: min(1100px, 96vw); margin: 1.8em auto; margin-left: 50%; transform: translateX(-50%); text-align: center;">
   <img src="/images/bn-grad/backward.svg" alt="The backward graph: three arrows arrive at x2, one direct, one through the mean, one through the variance." style="max-width: 100%; height: auto;"/>
 </div>
 

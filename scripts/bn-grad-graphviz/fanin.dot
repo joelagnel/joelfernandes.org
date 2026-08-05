@@ -2,54 +2,54 @@ digraph fanin {
   rankdir=LR;
   bgcolor="white";
   splines=true;
-  nodesep=0.32;
-  ranksep=1.10;
+  nodesep=0.6;
+  ranksep=2.7;
   fontname="Helvetica";
   margin="0.45,0.3";
 
-  node [fontname="Helvetica", fontsize=13, shape=circle, width=0.52,
-        fixedsize=true, penwidth=1.7, color="#bfbfbf", fontcolor="#aaaaaa"];
-  edge [fontname="Helvetica", fontsize=10, color="#e2e2e2",
-        arrowsize=0.6, penwidth=0.9];
+  node [fontname="Helvetica", fontsize=24, shape=circle, width=0.92,
+        fixedsize=true, penwidth=2.97, color="#bfbfbf", fontcolor="#aaaaaa"];
+  edge [fontname="Helvetica", fontsize=17, color="#e2e2e2",
+        arrowsize=0.90, penwidth=1.22];
 
-  label=<<font point-size="16"><b>The three edges arriving at a single normalized value</b></font><br/><font point-size="11" color="#666666">x&#770;&#8322; depends on its own input, on the mean, and on the variance</font>>;
+  label=<<font point-size="27"><b>The three edges arriving at a single normalized value</b></font><br/><font point-size="18" color="#666666">x&#770;&#8322; depends on its own input, on the mean, and on the variance</font>>;
   labelloc="t";
 
   { rank=same;
     x1 [label=<x&#8321;>];
     x2 [label=<x&#8322;>, color="#2c5f8a", fontcolor="#1a1a1a",
-        style=filled, fillcolor="#cfe2f0", penwidth=2.4];
+        style=filled, fillcolor="#cfe2f0", penwidth=3.24];
     x3 [label=<x&#8323;>];
     x4 [label=<x&#8324;>];
   }
   { rank=same;
-    mu  [label=<&mu;>,          width=0.62, color="#2c5f8a", fontcolor="#1a1a1a",
-         style=filled, fillcolor="#ececec", penwidth=2.2];
-    sig [label=<&sigma;&sup2;>, width=0.62, color="#2c5f8a", fontcolor="#1a1a1a",
-         style=filled, fillcolor="#ececec", penwidth=2.2];
+    mu  [label=<&mu;>,          width=1.06, color="#2c5f8a", fontcolor="#1a1a1a",
+         style=filled, fillcolor="#ececec", penwidth=2.97];
+    sig [label=<&sigma;&sup2;>, width=1.06, color="#2c5f8a", fontcolor="#1a1a1a",
+         style=filled, fillcolor="#ececec", penwidth=2.97];
   }
   { rank=same;
     h1 [label=<x&#770;&#8321;>];
     h2 [label=<x&#770;&#8322;>, color="#2c5f8a", fontcolor="#1a1a1a",
-        style=filled, fillcolor="#eaf2f8", penwidth=2.6];
+        style=filled, fillcolor="#eaf2f8", penwidth=3.51];
     h3 [label=<x&#770;&#8323;>];
     h4 [label=<x&#770;&#8324;>];
   }
 
   // every input still feeds the statistics, drawn faint
-  x1 -> mu;  x2 -> mu [color="#9fbdd4", penwidth=1.4];
+  x1 -> mu;  x2 -> mu [color="#9fbdd4", penwidth=1.89];
   x3 -> mu;  x4 -> mu;
-  x1 -> sig; x2 -> sig [color="#9fbdd4", penwidth=1.4];
+  x1 -> sig; x2 -> sig [color="#9fbdd4", penwidth=1.89];
   x3 -> sig; x4 -> sig;
   mu -> h1; mu -> h3; mu -> h4;
   sig -> h1; sig -> h3; sig -> h4;
   x1 -> h1; x3 -> h3; x4 -> h4;
 
   // the three arrivals at xhat_2
-  x2  -> h2 [color="#2c5f8a", penwidth=2.6, arrowsize=0.85,
-             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="10">its own x&#8322;</font></td></tr></table>>, fontcolor="#2c5f8a"];
-  mu  -> h2 [color="#2c5f8a", penwidth=2.2, arrowsize=0.8,
-             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="10">shift by &#956;</font></td></tr></table>>, fontcolor="#2c5f8a"];
-  sig -> h2 [color="#2c5f8a", penwidth=2.2, arrowsize=0.8,
-             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="10">scale by 1/&#8730;(&#963;&#178;+&#949;)</font></td></tr></table>>, fontcolor="#2c5f8a"];
+  x2  -> h2 [color="#2c5f8a", penwidth=3.51, arrowsize=1.27,
+             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="17">its own x&#8322;</font></td></tr></table>>, fontcolor="#2c5f8a"];
+  mu  -> h2 [color="#2c5f8a", penwidth=2.97, arrowsize=1.20,
+             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="17">shift by &#956;</font></td></tr></table>>, fontcolor="#2c5f8a"];
+  sig -> h2 [color="#2c5f8a", penwidth=2.97, arrowsize=1.20,
+             xlabel=<<table border="0" cellborder="0" cellpadding="2" bgcolor="white"><tr><td><font color="#2c5f8a" point-size="17">scale by 1/&#8730;(&#963;&#178;+&#949;)</font></td></tr></table>>, fontcolor="#2c5f8a"];
 }

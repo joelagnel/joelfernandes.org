@@ -2,16 +2,16 @@ digraph backward {
   rankdir=RL;
   bgcolor="white";
   splines=true;
-  nodesep=0.32;
-  ranksep=1.15;
+  nodesep=0.42;
+  ranksep=1.65;
   fontname="Helvetica";
 
-  node [fontname="Helvetica", fontsize=13, shape=circle, width=0.52,
-        fixedsize=true, penwidth=1.7, color="#2c5f8a"];
-  edge [fontname="Helvetica", fontsize=10, color="#c0392b",
-        arrowsize=0.7, penwidth=1.6, style=dashed];
+  node [fontname="Helvetica", fontsize=24, shape=circle, width=0.92,
+        fixedsize=true, penwidth=2.97, color="#2c5f8a"];
+  edge [fontname="Helvetica", fontsize=17, color="#c0392b",
+        arrowsize=1.05, penwidth=2.16, style=dashed];
 
-  label=<<font point-size="16"><b>Backward pass: the same edges, reversed</b></font><br/><font point-size="11" color="#666666">three arrows arrive at x&#8322;, so its gradient is the sum of three terms</font>>;
+  label=<<font point-size="27"><b>Backward pass: the same edges, reversed</b></font><br/><font point-size="18" color="#666666">three arrows arrive at x&#8322;, so its gradient is the sum of three terms</font>>;
   labelloc="t";
 
   { rank=same;
@@ -27,12 +27,12 @@ digraph backward {
     h4 [label=<x&#770;&#8324;>];
   }
   { rank=same;
-    mu  [label=<&mu;>,          width=0.62, style=filled, fillcolor="#ececec"];
-    sig [label=<&sigma;&sup2;>, width=0.62, style=filled, fillcolor="#ececec"];
+    mu  [label=<&mu;>,          width=1.06, style=filled, fillcolor="#ececec"];
+    sig [label=<&sigma;&sup2;>, width=1.06, style=filled, fillcolor="#ececec"];
   }
   { rank=same;
     x2 [label=<x&#8322;>, style=filled, fillcolor="#ffd9d0",
-        color="#c0392b", penwidth=2.6];
+        color="#c0392b", penwidth=3.51];
   }
 
   y1 -> h1; y2 -> h2; y3 -> h3; y4 -> h4;
@@ -42,11 +42,11 @@ digraph backward {
   h1 -> sig; h2 -> sig; h3 -> sig; h4 -> sig;
 
   // the three arrivals at x2
-  h2  -> x2 [penwidth=2.4, label=<  direct  >, fontcolor="#c0392b"];
-  mu  -> x2 [penwidth=2.4, label=<  through &mu;  >, fontcolor="#c0392b"];
-  sig -> x2 [penwidth=2.4, label=<  through &sigma;&sup2;  >, fontcolor="#c0392b"];
+  h2  -> x2 [penwidth=3.24, label=<  direct  >, fontcolor="#c0392b"];
+  mu  -> x2 [penwidth=3.24, label=<  through &mu;  >, fontcolor="#c0392b"];
+  sig -> x2 [penwidth=3.24, label=<  through &sigma;&sup2;  >, fontcolor="#c0392b"];
 
   // the edge that carries nothing
-  sig -> mu [color="#999999", penwidth=1.4, style=dotted,
+  sig -> mu [color="#999999", penwidth=1.89, style=dotted,
              label=<  contributes 0  >, fontcolor="#999999"];
 }
