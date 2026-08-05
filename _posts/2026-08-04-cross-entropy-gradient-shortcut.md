@@ -32,16 +32,19 @@ published: false
 
 ---
 
-In the earlier posts we broke the loss calculation into its smallest atomic pieces and
-backpropagated through every one of them. Karpathy's own verdict on that approach is worth
-quoting, because it is the setup for this entire post:
+Cross-entropy is how a classifier turns its raw output into a single number saying how wrong it
+was. The network's last layer produces one score, a logit, for every character it could predict
+next. Softmax turns those scores into probabilities that sum to 1. Cross-entropy then picks out
+the probability the model gave to the character that actually came next, and takes the negative
+log of it. Confident and right gives a loss near zero, and the less probability the model left
+for the right answer, the larger the loss. Averaging that over the batch is the number training
+minimizes.
 
-> it basically turns out that in this first exercise we were doing way too much work, we were
-> back propagating way too much, and it was all good practice and so on, but it's not what you
-> would do in practice.
+In this post, we will look at the cross-entropy layer which is used to calculate the loss.
 
-Here is the forward pass we had been carrying around. Eight lines, eight intermediate tensors,
-every one of which needed its own backward pass:
+Here is that calculation written out the long way, broken into its smallest atomic pieces, which
+is how the earlier posts worked through it. Eight lines, eight intermediate tensors, every one
+of which needed its own backward pass:
 
 ```python
 logit_maxes = logits.max(1, keepdim=True).values
@@ -139,31 +142,6 @@ the loss becomes large.
 
 Probabilities live between 0 and 1, so their logs are always negative. The minus sign out front
 just flips that back to a positive loss.
-
-Worth being precise about what the loss can and cannot see. It reads exactly one number, $p$,
-the probability assigned to the correct character. It never looks at where the remaining
-probability went, so "the model confidently picked the wrong letter" is not a thing this
-formula measures directly. What it measures is how little was left for the right letter, and
-being confident about some other character is simply the way $p$ ends up small.
-
-With 27 characters, using the loss $-\log p$:
-
-| what the model did | $p$ on the correct character | loss |
-|---|---|---|
-| confident and right | 0.99 | 0.01 |
-| no idea, spread evenly | 1/27 = 0.037 | 3.30 |
-| confident, and the mass went elsewhere | 0.01 | 4.61 |
-| very confident, mass went elsewhere | 0.001 | 6.91 |
-
-The gap between rows 2 and 3 is the interesting one. Both are wrong, but shrugging costs 3.30
-while committing to the wrong answer costs 4.61. The curve is what does this: it is steep near
-zero, so the last bit of probability you take away from the correct character is punished far
-harder than the first.
-
-The asymmetry is worth noticing too. The loss is bounded below by 0 but unbounded above. Going
-from a coin flip to perfect only ever saves you $0.69$, while going from a coin flip toward zero
-can cost arbitrarily much. The function is far more interested in stopping you from being badly
-wrong than in making you slightly more right.
 
 ## Two things to notice before any calculus
 
