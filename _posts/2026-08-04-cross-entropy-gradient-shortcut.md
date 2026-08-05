@@ -7,7 +7,7 @@ tags: [machine-learning, ml, deep-learning, neural-networks, neural-nets, backpr
 author: Joel Fernandes
 description: "Part 5. The long way to the logit gradient needs eight intermediate tensors and five backward passes. Freeze everything except the one logit you care about, and it collapses to three lines."
 math: true
-published: false
+published: true
 ---
 
 > **Context:** This is part 5 in a series that comes out of Andrej Karpathy's
@@ -37,8 +37,8 @@ was. The network's last layer produces one score, a logit, for every character i
 next. Softmax turns those scores into probabilities that sum to 1. Cross-entropy then picks out
 the probability the model gave to the character that actually came next, and takes the negative
 log of it. Confident and right gives a loss near zero, and the less probability the model left
-for the right answer, the larger the loss. Averaging that over the batch is the number training
-minimizes.
+for the right answer, the larger the loss. Averaging that over the batch gives the final loss to
+be minimized.
 
 In this post, we will look at the cross-entropy layer which is used to calculate the loss.
 
