@@ -19,17 +19,6 @@ from his
 [Let's build GPT: from scratch, in code, spelled out](https://www.youtube.com/watch?v=kCc8FmEb1nY)
 lecture.
 
-<div style="margin: 1.5em 0 2em 0; text-align: center;">
-  <a href="https://www.youtube.com/watch?v=kCc8FmEb1nY" target="_blank" rel="noopener" style="display:inline-block; text-decoration:none;">
-    <img src="https://img.youtube.com/vi/kCc8FmEb1nY/maxresdefault.jpg"
-         alt="Let's build GPT: from scratch, in code, spelled out, by Andrej Karpathy"
-         style="width:100%; max-width:600px; border-radius:8px; box-shadow: 0 4px 16px rgba(0,0,0,0.18);">
-    <div style="margin-top:0.5em; font-size:0.95em; color:#555;">
-      &#9654; <strong>Let's build GPT: from scratch, in code, spelled out</strong>, Andrej Karpathy
-    </div>
-  </a>
-</div>
-
 Training loss measures how well a model fits data it has already seen.
 Validation loss measures how it does on text it has not. While a model is
 picking up structure that seems to generalize, both tend to fall together.
