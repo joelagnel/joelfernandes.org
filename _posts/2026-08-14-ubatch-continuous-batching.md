@@ -1,22 +1,25 @@
 ---
 layout: post
-title: "What llama.cpp means by batch"
+title: "llama.cpp and the ubatch"
 date: 2026-08-14
 categories: [machine-learning, inference]
 tags: [machine-learning, ml, llama-cpp, inference, transformers, attention, continuous-batching, kv-cache, vram, ubatch]
 author: Joel Fernandes
-description: "Notes from working out why -ub changes VRAM when only one session is active, and what continuous batching actually does inside a transformer layer."
+description: "Notes from working out why -ub changes VRAM when only one session is active, why the ubatch is not the batch, and what continuous batching actually does inside a transformer layer."
 published: true
 ---
 
 I spent some time recently trying to fit a model into a fixed amount of VRAM,
 and ran into something that did not add up. The suggestion was to lower
 `--ubatch-size`. But I only ever had one session talking to the server, and
-during generation a single session produces one token at a time. So the batch
-was already one. Lowering a batch parameter that was already effectively one
+during generation a single session produces one token at a time. Whatever that
+knob controlled was surely already one, and lowering one to something smaller
 should do nothing. So why `--ubatch-size`?
 
-## Two things called batch
+The answer turned out to be that I did not know what the u stood for, and that
+the word batch means three different things depending on who is saying it.
+
+## Three things called batch
 
 Most of my intuition about the word batch comes from training. There the
 activations flowing through the model have shape `[B, T, D]`. `B` is the batch
@@ -31,25 +34,25 @@ they ride along together only because the GPU is happier with one large matmul
 than four small ones. Each of the four samples holds 128 positions, and at each
 position sits one 4096-dimensional vector.
 
-The part I had internalised without noticing is that `B` counts *independent*
-things. Row 0 and row 3 have nothing to say to each other.
+That is meaning one, and the part I had internalised without noticing is that
+`B` counts *independent* things. Row 0 and row 3 have nothing to say to each
+other.
 
-llama.cpp uses the word for something different. Its batch is a list of token
-slots handed to one `llama_decode()` call. Each slot carries a token, a
-position, and the sequence it belongs to. Six slots means six token positions,
-which might be six positions from one conversation, or one position each from
-six conversations, or any mixture.
+Meaning two is llama.cpp's batch, which is a list of token slots handed to one
+`llama_decode()` call. Each slot carries a token, a position, and the sequence
+it belongs to. Six slots means six token positions, which might be six positions
+from one conversation, or one position each from six conversations, or any
+mixture. It is a work order, not a stack of examples.
 
 <div style="margin: 1.5em 0;">
   <img src="/images/ubatch/batch-two-meanings.svg"
-       alt="Left: a training batch of four rows, each row a separate example, annotated as the batch dimension. Right: a llama.cpp batch of four rows, each row a single token slot tagged with a sequence id and a position, with rows belonging to three different conversations."
+       alt="Left: a training batch of four rows, each row a separate example, annotated as the batch dimension, shape [4, 128, 4096]. Right: a llama.cpp ubatch of four rows, each row a single token slot tagged with a sequence id and a position, with rows belonging to three different conversations."
        style="width: 100%; height: auto; display: block;"/>
 </div>
 
-I am not going to keep hammering this point, because it is really just a naming
-collision. But it is worth having the picture in mind, since almost everything
-below follows from the fact that llama.cpp's rows are token slots rather than
-independent examples.
+The naming collision between those first two is not worth dwelling on, but the
+picture is, since almost everything below follows from the fact that
+llama.cpp's rows are token slots rather than independent examples.
 
 The actual struct in `include/llama.h` is a little more general than I drew it.
 Each slot has an `n_seq_id` count and a *list* of sequence ids, not a single one,
@@ -57,18 +60,19 @@ because a token can belong to more than one sequence at a time. That is how
 prefix sharing works: a common prompt prefix lives in the cache once and several
 sequences point at it.
 
-The four knobs that come up in this area are worth separating:
+Meaning three is the ubatch, and it is the one this post is really about. The
+four knobs in this area are worth separating first:
 
 - `-np` limits how many conversations can be alive at once. This is the one
   closest to the training meaning of batch.
 - `-c` sets how many token positions the KV cache can hold.
 - `-b` sets the largest list of token slots you are allowed to hand to a single
-  `llama_decode()` call.
-- `-ub` sets how many token positions go through the network in one physical
-  forward pass.
+  `llama_decode()` call. This is meaning two.
+- `-ub` sets how many token positions go through the network in one forward
+  pass. This is meaning three.
 
-The last two are the pair that confused me. The header comments in
-`include/llama.h` distinguish them like this:
+The last two are the pair that confused me. The u is for micro, and the header
+comments in `include/llama.h` distinguish them like this:
 
 ```c
 uint32_t n_batch;   // logical maximum batch size that can be submitted to llama_decode
@@ -82,18 +86,18 @@ Logical means at the API boundary. `n_batch` is a limit on the caller. If I hand
 GGML_ASSERT(n_tokens_all <= cparams.n_batch);
 ```
 
-Physical means inside the engine. `n_ubatch` is what llama.cpp does with
-the list it was given: it chops it into pieces of at most `n_ubatch` slots and
-runs the network once per piece. So with the defaults of `n_batch = 2048` and
-`n_ubatch = 512`, a 5000-token prompt becomes three `llama_decode()` calls from
-the caller's side (2048, 2048, 904), and each of those is split again inside
-llama.cpp into chunks of at most 512 that are what the GPU actually sees. Ten
-forward passes in total: four, four, then two.
+Physical means inside the engine. `n_ubatch` is what llama.cpp does with the
+list it was given: it chops it into pieces of at most `n_ubatch` slots, and each
+piece is a ubatch, one trip through the network. So with the defaults of
+`n_batch = 2048` and `n_ubatch = 512`, a 5000-token prompt becomes three
+`llama_decode()` calls from the caller's side (2048, 2048, 904), and each of
+those is split again into ubatches of at most 512, which are what the GPU
+actually sees. Ten forward passes in total: four, four, then two.
 
 A couple of consequences fall out of that. `n_ubatch` is clamped to `n_batch` at
-context creation, so the physical chunk can never be larger than the logical
-limit. And under causal attention `n_batch` is itself clamped to `n_ctx`, since
-you cannot submit more positions than the cache can hold:
+context creation, so a ubatch can never be larger than the batch it came from.
+And under causal attention `n_batch` is itself clamped to `n_ctx`, since you
+cannot submit more positions than the cache can hold:
 
 ```cpp
 cparams.n_batch  = cparams.causal_attn ? std::min(cparams.n_ctx, params.n_batch) : params.n_batch;
@@ -103,6 +107,14 @@ cparams.n_ubatch = std::min(cparams.n_batch, params.n_ubatch == 0 ? params.n_bat
 Raising `-b` on its own therefore does not change the shape of the work the GPU
 does. It lets the caller submit longer lists, which saves some per-call
 overhead, but the tensor shapes in each forward pass come from `-ub`.
+
+So the batch is a request and the ubatch is what actually runs. For the rest of
+this post I use them in exactly that sense: batch means the list submitted at
+the API boundary, ubatch means the group of token slots that goes through the
+network together. The training meaning does not come back. Everything
+interesting below, the mixing of conversations, the masking, the row-wise
+argument, happens at the ubatch level, because that is the only one of the three
+that corresponds to a real tensor.
 
 ## Where the memory actually sits
 
@@ -177,11 +189,14 @@ different amounts of parallelism available.
 </div>
 
 During prefill the prompt tokens are already known, so many positions can go
-through together. During generation each token has to be sampled before the next
-one exists, so a single sequence contributes one row per pass. `-ub` is a ceiling
-that prefill actually reaches and that single-stream decode almost never does.
+into one ubatch. During generation each token has to be sampled before the next
+one exists, so a single sequence contributes one row per ubatch. `-ub` is a
+ceiling that prefill actually reaches and that single-stream decode almost never
+does. That is the answer to the question I started with: the knob was never
+about how many conversations you have, so having only one does not make it
+irrelevant.
 
-Worth noting the rows are not padded up to `n_ubatch`. The graph is built for
+Worth noting a ubatch is not padded up to `n_ubatch`. The graph is built for
 the actual token count, so a one-token decode really is a one-row matmul rather
 than one real row and 127 zeros.
 
@@ -219,22 +234,23 @@ simply run faster on that alignment.
 Note this is padding of a reported *count*, not extra allocation. The KV cache
 itself was already allocated at its full `-c` size when the context was created.
 
-## Part 1: putting different conversations in the same batch
+## Part 1: putting different conversations in the same ubatch
 
 Here is the thing I had not appreciated. When several conversations are active,
 llama.cpp does not process them one after another, and it does not run separate
-forward passes for each. It puts their tokens in the same physical batch.
+forward passes for each. It puts their tokens in the same ubatch.
 
 <div style="margin: 1.5em 0;">
   <img src="/images/ubatch/unified-batch.svg"
-       alt="A batch of six rows. Each row shows a token, a sequence id, and a position. Rows belong to three different conversations at unrelated positions, interleaved in arrival order rather than grouped."
+       alt="A ubatch of six rows. Each row shows a token, a sequence id, and a position. Rows belong to three different conversations at unrelated positions, interleaved in arrival order rather than grouped."
        style="width: 100%; height: auto; display: block;"/>
 </div>
 
-This is continuous batching. Requests join and leave the running batch as they
-arrive and finish, rather than waiting for a batch to be assembled and drained.
-In the source this is `split_simple()`, which takes tokens in batch order up to
-`n_ubatch` and does not look at sequence ids at all while doing it.
+This is continuous batching. Requests join and leave the running work as they
+arrive and finish, rather than waiting for a group to be assembled and drained.
+In the source this is `split_simple()`, which fills a ubatch by taking token
+slots in submission order up to `n_ubatch`, and does not look at sequence ids at
+all while doing it.
 
 That is for the default unified KV cache. There is a second path, used when the
 cache is split per sequence, where `split_equal()` builds ubatches from
@@ -331,7 +347,7 @@ and the rows do not interact.
 
 This is also where continuous batching earns its keep. Single-stream decode is
 mostly waiting on memory: you read an entire weight matrix to process one row.
-With a full batch you read the same weights once and amortise them across every
+With a full ubatch you read the same weights once and amortise them across every
 row in it. That is the throughput story, and it is a direct consequence of the
 sharing.
 
@@ -377,7 +393,7 @@ anything else crosses rows.
 
 RMSNorm normalises within a row, over that token's own features. The Q, K and V
 projections are one matmul applied per row. RoPE uses each token's own position,
-which is worth pausing on for a mixed batch: `inp_pos` is a tensor of length
+which is worth pausing on for a mixed ubatch: `inp_pos` is a tensor of length
 `n_tokens` copied straight from `ubatch->pos`, so a row at position 4021 and a
 row at position 17 sitting next to each other each get their own rotation. The
 residual adds are elementwise. The feed-forward block is the shared-weights case
@@ -387,7 +403,7 @@ That leaves one step that reads across rows, and it is the one wearing the mask.
 
 I found this a satisfying place to land, because it turns "is continuous
 batching safe" from a question about the whole architecture into a question
-about one operation. It also explains why the jumbled ordering in the batch
+about one operation. It also explains why the jumbled ordering in the ubatch
 diagram costs nothing. Nothing in the layer cares what order the rows are in,
 because nine of the ten steps never look at their neighbours and the tenth
 consults the mask rather than the layout.
@@ -404,7 +420,7 @@ With the vocabulary sorted out, the practical part is short:
   API boundary, and the workspace is sized from the ubatch split that happens
   after that.
 - It costs prefill throughput and time to first token, not steady-state decode
-  speed, since decode was already one row per pass.
+  speed, since decode was already one row per ubatch.
 - Queueing requests instead of provisioning slots for them is a reasonable
   trade. If you know you will never serve four users at once, `-np 1 -c 8192
   -ub 64` gives one request the full context and processes prompts in small
@@ -422,10 +438,14 @@ measure it than guess where that is.
 
 ## What I took away
 
-The thing I keep coming back to is that the row dimension in these tensors is a
-batch dimension in the ordinary sense, for every operation except one. Attention
-is the exception, and attention has a mask. Continuous batching and weight
-sharing are both consequences of that, rather than two separate tricks.
+The thing I keep coming back to is that the row dimension of a ubatch behaves
+like a batch dimension in the ordinary sense, for every operation except one.
+Attention is the exception, and attention has a mask. Continuous batching and
+weight sharing are both consequences of that, rather than two separate tricks.
+
+The naming is unfortunate. The knob everyone reaches for is spelled with batch
+in it, the thing it controls is not the batch, and the thing that is called the
+batch is mostly an API formality.
 
 I am still not sure how much of the workspace reservation is genuinely
 unavoidable versus conservative, and I would like to look at where the remaining
