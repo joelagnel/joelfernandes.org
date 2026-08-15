@@ -59,7 +59,7 @@ def line(x1, y1, x2, y2, stroke=GREY, sw=1.4, dash=None, marker=None):
 def d1():
     W, H = 800, 400
     s = head(W, H)
-    s += title(W / 2, 26, "The same tensor shape, two different meanings of &#8220;batch&#8221;")
+    s += title(W / 2, 26, "Rows of a training batch vs rows of a llama.cpp batch")
 
     # ---- left panel: training ----
     lx = 40
@@ -90,14 +90,14 @@ def d1():
     s += line(lx + 40, bot + 12, lx + 40 + 4 * (cell + 4) - 4, bot + 12, "#aaa", 1.2, marker="arGrey")
     s += txt(lx + 40 + 2 * (cell + 4), bot + 30, "sequence length", 11, "#777")
 
-    s += txt(lx + 155, bot + 58, "shape [4, T, d]", 12, "#555", "middle", "bold")
+    s += txt(lx + 155, bot + 58, "shape [B, T, D] = [4, 128, 4096]", 12, "#555", "middle", "bold")
 
     # divider
     s += line(W / 2, 55, W / 2, H - 30, "#ddd", 1.2, dash="4 4")
 
     # ---- right panel: llama.cpp ----
     rx = W / 2 + 40
-    s += txt(rx + 150, 60, "llama.cpp inference", 14, DARK, "middle", "bold")
+    s += txt(rx + 150, 60, "llama.cpp", 14, DARK, "middle", "bold")
     s += txt(rx + 150, 78, "rows are token slots, tagged with a sequence", 11.5, "#666")
 
     slots = [("A", "seq 0", "pos 0", BLUE),
@@ -120,7 +120,7 @@ def d1():
           f'n_tokens = 4</text>\n')
 
     s += txt(rx + 150, bot + 30, "four token positions, three different conversations", 11, "#777")
-    s += txt(rx + 150, bot + 58, "shape [4, d]", 12, "#555", "middle", "bold")
+    s += txt(rx + 150, bot + 58, "shape [4, D]", 12, "#555", "middle", "bold")
 
     s += txt(W / 2, H - 12, "Both are 4 rows. Only the left one means &#8220;4 independent examples&#8221;.",
              12, "#555")
