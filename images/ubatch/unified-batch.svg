@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 460" width="800" height="460" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="800" height="460" fill="#ffffff"/>
+  <text x="400.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">One physical batch, drawn from three different conversations</text>
+  <text x="400.0" y="48" text-anchor="middle" font-size="11.5" fill="#777" font-weight="normal">llama.cpp fills the batch in arrival order and does not group by sequence</text>
+  <text x="134" y="105" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 0</text>
+  <rect x="150" y="78" width="130" height="42" rx="4" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.5"/>
+  <text x="215.0" y="104" text-anchor="middle" font-size="12.5" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">"the"</text>
+  <rect x="292" y="78" width="92" height="42" rx="4" fill="#ffffff" stroke="#2c5f8a" stroke-width="1.2"/>
+  <text x="338" y="104" text-anchor="middle" font-size="11.5" fill="#2c5f8a" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 0</text>
+  <rect x="392" y="78" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="104" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 4021</text>
+  <text x="134" y="153" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 1</text>
+  <rect x="150" y="126" width="130" height="42" rx="4" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.5"/>
+  <text x="215.0" y="152" text-anchor="middle" font-size="12.5" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">"import"</text>
+  <rect x="292" y="126" width="92" height="42" rx="4" fill="#ffffff" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="338" y="152" text-anchor="middle" font-size="11.5" fill="#2e7d52" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 1</text>
+  <rect x="392" y="126" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="152" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 17</text>
+  <text x="134" y="201" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 2</text>
+  <rect x="150" y="174" width="130" height="42" rx="4" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.5"/>
+  <text x="215.0" y="200" text-anchor="middle" font-size="12.5" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">"numpy"</text>
+  <rect x="292" y="174" width="92" height="42" rx="4" fill="#ffffff" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="338" y="200" text-anchor="middle" font-size="11.5" fill="#2e7d52" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 1</text>
+  <rect x="392" y="174" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="200" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 18</text>
+  <text x="134" y="249" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 3</text>
+  <rect x="150" y="222" width="130" height="42" rx="4" fill="#fdf3e8" stroke="#b8681c" stroke-width="1.5"/>
+  <text x="215.0" y="248" text-anchor="middle" font-size="12.5" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">"recipe"</text>
+  <rect x="292" y="222" width="92" height="42" rx="4" fill="#ffffff" stroke="#b8681c" stroke-width="1.2"/>
+  <text x="338" y="248" text-anchor="middle" font-size="11.5" fill="#b8681c" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 2</text>
+  <rect x="392" y="222" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="248" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 903</text>
+  <text x="134" y="297" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 4</text>
+  <rect x="150" y="270" width="130" height="42" rx="4" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.5"/>
+  <text x="215.0" y="296" text-anchor="middle" font-size="12.5" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">"cat"</text>
+  <rect x="292" y="270" width="92" height="42" rx="4" fill="#ffffff" stroke="#2c5f8a" stroke-width="1.2"/>
+  <text x="338" y="296" text-anchor="middle" font-size="11.5" fill="#2c5f8a" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 0</text>
+  <rect x="392" y="270" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="296" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 4022</text>
+  <text x="134" y="345" text-anchor="end" font-size="11" fill="#888" font-weight="normal">row 5</text>
+  <rect x="150" y="318" width="130" height="42" rx="4" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.5"/>
+  <text x="215.0" y="344" text-anchor="middle" font-size="12.5" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">"as"</text>
+  <rect x="292" y="318" width="92" height="42" rx="4" fill="#ffffff" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="338" y="344" text-anchor="middle" font-size="11.5" fill="#2e7d52" font-weight="normal" font-family="Menlo, Consolas, monospace">seq 1</text>
+  <rect x="392" y="318" width="108" height="42" rx="4" fill="#ffffff" stroke="#bbb" stroke-width="1.2"/>
+  <text x="446" y="344" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-family="Menlo, Consolas, monospace">pos 19</text>
+  <rect x="150" y="382" width="14" height="14" rx="3" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="172" y="394" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="normal">conversation 0</text>
+  <rect x="325" y="382" width="14" height="14" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="347" y="394" text-anchor="start" font-size="11.5" fill="#2e7d52" font-weight="normal">conversation 1</text>
+  <rect x="500" y="382" width="14" height="14" rx="3" fill="#fdf3e8" stroke="#b8681c" stroke-width="1.3"/>
+  <text x="522" y="394" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="normal">conversation 2</text>
+  <text x="400.0" y="420" text-anchor="middle" font-size="12" fill="#555" font-weight="normal">n_tokens is 6, so the tensors have 6 rows. There are no filler rows,</text>
+  <text x="400.0" y="438" text-anchor="middle" font-size="12" fill="#555" font-weight="normal">and the rows do not have to be sorted or of equal length.</text>
+</svg>
