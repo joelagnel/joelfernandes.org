@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 860 560" width="860" height="560" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="860" height="560" fill="#ffffff"/>
+  <text x="430.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">The attention mask is what keeps the conversations apart</text>
+  <text x="388.0" y="58" text-anchor="middle" font-size="12" fill="#666" font-weight="normal">keys  (what a query is allowed to look at)</text>
+  <text x="273.0" y="80" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">s0</text>
+  <text x="273.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">4021</text>
+  <text x="319.0" y="80" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1</text>
+  <text x="319.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">17</text>
+  <text x="365.0" y="80" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1</text>
+  <text x="365.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">18</text>
+  <text x="411.0" y="80" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">s2</text>
+  <text x="411.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">903</text>
+  <text x="457.0" y="80" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">s0</text>
+  <text x="457.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">4022</text>
+  <text x="503.0" y="80" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1</text>
+  <text x="503.0" y="95" text-anchor="middle" font-size="9.5" fill="#999" font-weight="normal" font-family="Menlo, Consolas, monospace">19</text>
+  <text x="154" y="248.0" text-anchor="middle" font-size="12" fill="#666" transform="rotate(-90 154 248.0)">queries</text>
+  <text x="234" y="137.0" text-anchor="end" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">s0 pos 4021</text>
+  <text x="234" y="183.0" text-anchor="end" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1 pos 17</text>
+  <text x="234" y="229.0" text-anchor="end" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1 pos 18</text>
+  <text x="234" y="275.0" text-anchor="end" font-size="11" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">s2 pos 903</text>
+  <text x="234" y="321.0" text-anchor="end" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">s0 pos 4022</text>
+  <text x="234" y="367.0" text-anchor="end" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">s1 pos 19</text>
+  <rect x="250" y="110" width="46" height="46" rx="3" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.2"/>
+  <text x="273.0" y="139.0" text-anchor="middle" font-size="17" fill="#2c5f8a" font-weight="bold">&#10003;</text>
+  <rect x="296" y="110" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="319.0" y="138.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="342" y="110" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="365.0" y="138.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="388" y="110" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="411.0" y="138.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="434" y="110" width="46" height="46" rx="3" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="457.0" y="138.0" text-anchor="middle" font-size="15" fill="#c0392b" font-weight="bold">&#215;</text>
+  <rect x="480" y="110" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="503.0" y="138.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="250" y="156" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="273.0" y="184.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="296" y="156" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="319.0" y="185.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <rect x="342" y="156" width="46" height="46" rx="3" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="365.0" y="184.0" text-anchor="middle" font-size="15" fill="#c0392b" font-weight="bold">&#215;</text>
+  <rect x="388" y="156" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="411.0" y="184.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="434" y="156" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="457.0" y="184.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="480" y="156" width="46" height="46" rx="3" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="503.0" y="184.0" text-anchor="middle" font-size="15" fill="#c0392b" font-weight="bold">&#215;</text>
+  <rect x="250" y="202" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="273.0" y="230.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="296" y="202" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="319.0" y="231.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <rect x="342" y="202" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="365.0" y="231.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <rect x="388" y="202" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="411.0" y="230.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="434" y="202" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="457.0" y="230.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="480" y="202" width="46" height="46" rx="3" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="503.0" y="230.0" text-anchor="middle" font-size="15" fill="#c0392b" font-weight="bold">&#215;</text>
+  <rect x="250" y="248" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="273.0" y="276.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="296" y="248" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="319.0" y="276.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="342" y="248" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="365.0" y="276.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="388" y="248" width="46" height="46" rx="3" fill="#fdf3e8" stroke="#b8681c" stroke-width="1.2"/>
+  <text x="411.0" y="277.0" text-anchor="middle" font-size="17" fill="#b8681c" font-weight="bold">&#10003;</text>
+  <rect x="434" y="248" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="457.0" y="276.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="480" y="248" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="503.0" y="276.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="250" y="294" width="46" height="46" rx="3" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.2"/>
+  <text x="273.0" y="323.0" text-anchor="middle" font-size="17" fill="#2c5f8a" font-weight="bold">&#10003;</text>
+  <rect x="296" y="294" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="319.0" y="322.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="342" y="294" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="365.0" y="322.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="388" y="294" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="411.0" y="322.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="434" y="294" width="46" height="46" rx="3" fill="#e8eef4" stroke="#2c5f8a" stroke-width="1.2"/>
+  <text x="457.0" y="323.0" text-anchor="middle" font-size="17" fill="#2c5f8a" font-weight="bold">&#10003;</text>
+  <rect x="480" y="294" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="503.0" y="322.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="250" y="340" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="273.0" y="368.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="296" y="340" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="319.0" y="369.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <rect x="342" y="340" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="365.0" y="369.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <rect x="388" y="340" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="411.0" y="368.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="434" y="340" width="46" height="46" rx="3" fill="#f7f7f7" stroke="#ddd" stroke-width="1.0"/>
+  <text x="457.0" y="368.0" text-anchor="middle" font-size="15" fill="#bbb" font-weight="bold">&#215;</text>
+  <rect x="480" y="340" width="46" height="46" rx="3" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="503.0" y="369.0" text-anchor="middle" font-size="17" fill="#2e7d52" font-weight="bold">&#10003;</text>
+  <line x1="529" y1="280.2" x2="646" y2="292" stroke="#bbb" stroke-width="1.2"/>
+  <text x="652" y="288" text-anchor="start" font-size="11" fill="#999" font-weight="normal">a different conversation,</text>
+  <text x="652" y="303" text-anchor="start" font-size="11" fill="#999" font-weight="normal">never visible</text>
+  <line x1="388" y1="166" x2="646" y2="150" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="652" y="146" text-anchor="start" font-size="11" fill="#c0392b" font-weight="normal">same conversation,</text>
+  <text x="652" y="161" text-anchor="start" font-size="11" fill="#c0392b" font-weight="normal">but a future position</text>
+  <rect x="160" y="420" width="540" height="66" rx="6" fill="#fafafa" stroke="#ddd" stroke-width="1.2"/>
+  <text x="430" y="447" text-anchor="middle" font-size="12.5" fill="#333" font-weight="bold" font-family="Menlo, Consolas, monospace">keep  =  same sequence   AND   key position &#8804; query position</text>
+  <text x="430" y="470" text-anchor="middle" font-size="11" fill="#777" font-weight="normal">the first half separates the conversations, the second half keeps things causal</text>
+  <text x="430.0" y="544" text-anchor="middle" font-size="12" fill="#555" font-weight="normal">Every cell outside the coloured triangles is set to -inf before the softmax.</text>
+</svg>
