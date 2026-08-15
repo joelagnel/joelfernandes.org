@@ -10,14 +10,15 @@ published: true
 ---
 
 I spent some time recently trying to fit a model into a fixed amount of VRAM,
-and ran into something that did not add up. The suggestion was to lower
-`--ubatch-size`. But I only ever had one session talking to the server, and
-during generation a single session produces one token at a time. Whatever that
-knob controlled was surely already one, and lowering one to something smaller
-should do nothing. So why `--ubatch-size`?
+and hit an interesting puzzle. The suggestion was to lower `--ubatch-size`. But
+I only ever had one session talking to the server, and during generation a
+single session produces one token at a time. On the face of it, whatever that
+knob controlled was already one, and lowering one to something smaller should do
+nothing. So why `--ubatch-size`?
 
-The answer turned out to be that I did not know what the u stood for, and that
-the word batch means three different things depending on who is saying it.
+Digging into it, I learned that the u stands for micro, and that the word batch
+means three different things depending on who is saying it. Once those three
+came apart, the knob made sense.
 
 ## Three things called batch
 
@@ -34,9 +35,8 @@ they ride along together only because the GPU is happier with one large matmul
 than four small ones. Each of the four samples holds 128 positions, and at each
 position sits one 4096-dimensional vector.
 
-That is meaning one, and the part I had internalised without noticing is that
-`B` counts *independent* things. Row 0 and row 3 have nothing to say to each
-other.
+That is meaning one, and the key property is that `B` counts *independent*
+things. Row 0 and row 3 have nothing to say to each other.
 
 Meaning two is llama.cpp's batch, which is a list of token slots handed to one
 `llama_decode()` call. Each slot carries a token, a position, and the sequence
@@ -71,8 +71,8 @@ four knobs in this area are worth separating first:
 - `-ub` sets how many token positions go through the network in one forward
   pass. This is meaning three.
 
-The last two are the pair that confused me. The u is for micro, and the header
-comments in `include/llama.h` distinguish them like this:
+The last two are the pair worth pinning down, and the header comments in
+`include/llama.h` distinguish them neatly:
 
 ```c
 uint32_t n_batch;   // logical maximum batch size that can be submitted to llama_decode
@@ -236,7 +236,7 @@ itself was already allocated at its full `-c` size when the context was created.
 
 ## Part 1: putting different conversations in the same ubatch
 
-Here is the thing I had not appreciated. When several conversations are active,
+Here is the part I found most interesting. When several conversations are active,
 llama.cpp does not process them one after another, and it does not run separate
 forward passes for each. It puts their tokens in the same ubatch.
 
@@ -256,11 +256,11 @@ That is for the default unified KV cache. There is a second path, used when the
 cache is split per sequence, where `split_equal()` builds ubatches from
 equal-length chunks with ordered sequence ids. So "one ubatch mixes freely" is
 true for the common case but not unconditionally true, which is the kind of
-detail I would have got wrong if I had not looked.
+detail worth checking in the source rather than assuming.
 
-My first reaction to the picture above was that it looks unsafe. Row 0 and row 3
-are strangers. They are about to be multiplied by the same weight matrices in
-the same kernel. What stops one from leaking into the other?
+The picture above raises an obvious question. Row 0 and row 3 are strangers.
+They are about to be multiplied by the same weight matrices in the same kernel.
+What stops one from leaking into the other?
 
 ### The mask is doing the work
 
@@ -323,9 +323,8 @@ piece smaller, not the history.
 
 ## Part 2: why the weights do not care which conversation a row came from
 
-The other half of what I was trying to understand is the feed-forward block, and
-this one turned out to be simpler than I expected once I stopped thinking about
-it as a transformer thing.
+The other half of the story is the feed-forward block, and it turns out to be
+the simpler half once you stop thinking about it as a transformer thing.
 
 In an ordinary neural network, the weights of a layer do not depend on which
 sample a row came from. Ten samples means ten rows in and ten rows out, and the
@@ -351,9 +350,9 @@ With a full ubatch you read the same weights once and amortise them across every
 row in it. That is the throughput story, and it is a direct consequence of the
 sharing.
 
-### The output projection, which is where I got stuck
+### The output projection, the case worth thinking through
 
-The part I could not talk myself through was multi-head attention's output
+The case that most deserves a careful look is multi-head attention's output
 projection. Each head produces its own output, they get concatenated, and `W_O`
 mixes them. Mixing is the point of that layer. So what stops it from mixing
 across tokens too?
@@ -401,9 +400,9 @@ above.
 
 That leaves one step that reads across rows, and it is the one wearing the mask.
 
-I found this a satisfying place to land, because it turns "is continuous
-batching safe" from a question about the whole architecture into a question
-about one operation. It also explains why the jumbled ordering in the ubatch
+This is a satisfying place to land, because it turns "is continuous batching
+safe" from a question about the whole architecture into a question about one
+operation. It also explains why the jumbled ordering in the ubatch
 diagram costs nothing. Nothing in the layer cares what order the rows are in,
 because nine of the ten steps never look at their neighbours and the tenth
 consults the mask rather than the layout.
@@ -447,10 +446,9 @@ The naming is unfortunate. The knob everyone reaches for is spelled with batch
 in it, the thing it controls is not the batch, and the thing that is called the
 batch is mostly an API formality.
 
-I am still not sure how much of the workspace reservation is genuinely
-unavoidable versus conservative, and I would like to look at where the remaining
-prefill time actually goes at small `-ub`. But the terminology, at least, has
-stopped tripping me up.
+Two things I want to measure next: how much of the workspace reservation is
+genuinely unavoidable versus conservative, and where the remaining prefill time
+goes at small `-ub`. The terminology, at least, is now settled.
 
 Source references in this post are against llama.cpp master as of August 2026,
 mainly `include/llama.h`, `src/llama-context.cpp`, `src/llama-kv-cache.cpp` and
