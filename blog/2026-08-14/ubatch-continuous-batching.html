@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>What llama.cpp means by batch - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">What llama.cpp means by batch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/max-gradient-one-hot.html">Backprop: Why the Gradient of a Max Is a One-Hot Mask</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/broadcast-subtraction-gradient.html">Backprop: Why the Gradient of a Broadcast Subtraction Is a Sum</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-23 &raquo;<br><a href="/blog/2026-07-23/toggling-thinking-in-a-model-trained-to-always-think.html">How Do You Turn Off Thinking In a Model That Was Trained to Always Think?</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">What llama.cpp means by batch</h1>
+<p class="meta">14 Aug 2026</p>
+
+<div class="post">
+<p>I spent some time recently trying to fit a model into a fixed amount of VRAM,
+and ran into something that did not add up. The suggestion was to lower
+<code class="language-plaintext highlighter-rouge">--ubatch-size</code>. But I only ever had one session talking to the server, and
+during generation a single session produces one token at a time. So the batch
+was already one. Lowering a batch parameter that was already effectively one
+should do nothing. So why <code class="language-plaintext highlighter-rouge">--ubatch-size</code>?</p>
+
+<h2 id="two-things-called-batch">Two things called batch</h2>
+
+<p>Most of my intuition about the word batch comes from training. There the
+activations flowing through the model have shape <code class="language-plaintext highlighter-rouge">[B, T, D]</code>. <code class="language-plaintext highlighter-rouge">B</code> is the batch
+size, the number of independent training samples being processed together. <code class="language-plaintext highlighter-rouge">T</code>
+is the time dimension, the token positions within a sample. <code class="language-plaintext highlighter-rouge">D</code> is the embedding
+dimension, the vector each individual token is represented by.</p>
+
+<p>So if I train on four sentences at once, each 128 tokens long, with a model whose
+embedding width is 4096, the tensor is <code class="language-plaintext highlighter-rouge">[4, 128, 4096]</code>. Sample 0 might be a
+paragraph about cooking and sample 3 a snippet of Python. They are unrelated;
+they ride along together only because the GPU is happier with one large matmul
+than four small ones. Each of the four samples holds 128 positions, and at each
+position sits one 4096-dimensional vector.</p>
+
+<p>The part I had internalised without noticing is that <code class="language-plaintext highlighter-rouge">B</code> counts <em>independent</em>
+things. Row 0 and row 3 have nothing to say to each other.</p>
+
+<p>llama.cpp uses the word for something different. Its batch is a list of token
+slots handed to one <code class="language-plaintext highlighter-rouge">llama_decode()</code> call. Each slot carries a token, a
+position, and the sequence it belongs to. Six slots means six token positions,
+which might be six positions from one conversation, or one position each from
+six conversations, or any mixture.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/batch-two-meanings.svg" alt="Left: a training batch of four rows, each row a separate example, annotated as the batch dimension. Right: a llama.cpp batch of four rows, each row a single token slot tagged with a sequence id and a position, with rows belonging to three different conversations." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>I am not going to keep hammering this point, because it is really just a naming
+collision. But it is worth having the picture in mind, since almost everything
+below follows from the fact that llama.cpp’s rows are token slots rather than
+independent examples.</p>
+
+<p>The actual struct in <code class="language-plaintext highlighter-rouge">include/llama.h</code> is a little more general than I drew it.
+Each slot has an <code class="language-plaintext highlighter-rouge">n_seq_id</code> count and a <em>list</em> of sequence ids, not a single one,
+because a token can belong to more than one sequence at a time. That is how
+prefix sharing works: a common prompt prefix lives in the cache once and several
+sequences point at it.</p>
+
+<p>The four knobs that come up in this area are worth separating:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">-np</code> limits how many conversations can be alive at once. This is the one
+closest to the training meaning of batch.</li>
+  <li><code class="language-plaintext highlighter-rouge">-c</code> sets how many token positions the KV cache can hold.</li>
+  <li><code class="language-plaintext highlighter-rouge">-b</code> sets the largest list of token slots you are allowed to hand to a single
+<code class="language-plaintext highlighter-rouge">llama_decode()</code> call.</li>
+  <li><code class="language-plaintext highlighter-rouge">-ub</code> sets how many token positions go through the network in one physical
+forward pass.</li>
+</ul>
+
+<p>The last two are the pair that confused me. The header comments in
+<code class="language-plaintext highlighter-rouge">include/llama.h</code> distinguish them like this:</p>
+
+<div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">uint32_t</span> <span class="n">n_batch</span><span class="p">;</span>   <span class="c1">// logical maximum batch size that can be submitted to llama_decode</span>
+<span class="kt">uint32_t</span> <span class="n">n_ubatch</span><span class="p">;</span>  <span class="c1">// physical maximum batch size</span>
+</code></pre></div></div>
+
+<p>Logical means at the API boundary. <code class="language-plaintext highlighter-rouge">n_batch</code> is a limit on the caller. If I hand
+<code class="language-plaintext highlighter-rouge">llama_decode()</code> more slots than that, it refuses:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">GGML_ASSERT</span><span class="p">(</span><span class="n">n_tokens_all</span> <span class="o">&lt;=</span> <span class="n">cparams</span><span class="p">.</span><span class="n">n_batch</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Physical means inside the engine. <code class="language-plaintext highlighter-rouge">n_ubatch</code> is what llama.cpp does with
+the list it was given: it chops it into pieces of at most <code class="language-plaintext highlighter-rouge">n_ubatch</code> slots and
+runs the network once per piece. So with the defaults of <code class="language-plaintext highlighter-rouge">n_batch = 2048</code> and
+<code class="language-plaintext highlighter-rouge">n_ubatch = 512</code>, a 5000-token prompt becomes three <code class="language-plaintext highlighter-rouge">llama_decode()</code> calls from
+the caller’s side (2048, 2048, 904), and each of those is split again inside
+llama.cpp into chunks of at most 512 that are what the GPU actually sees. Ten
+forward passes in total: four, four, then two.</p>
+
+<p>A couple of consequences fall out of that. <code class="language-plaintext highlighter-rouge">n_ubatch</code> is clamped to <code class="language-plaintext highlighter-rouge">n_batch</code> at
+context creation, so the physical chunk can never be larger than the logical
+limit. And under causal attention <code class="language-plaintext highlighter-rouge">n_batch</code> is itself clamped to <code class="language-plaintext highlighter-rouge">n_ctx</code>, since
+you cannot submit more positions than the cache can hold:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">cparams</span><span class="p">.</span><span class="n">n_batch</span>  <span class="o">=</span> <span class="n">cparams</span><span class="p">.</span><span class="n">causal_attn</span> <span class="o">?</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">cparams</span><span class="p">.</span><span class="n">n_ctx</span><span class="p">,</span> <span class="n">params</span><span class="p">.</span><span class="n">n_batch</span><span class="p">)</span> <span class="o">:</span> <span class="n">params</span><span class="p">.</span><span class="n">n_batch</span><span class="p">;</span>
+<span class="n">cparams</span><span class="p">.</span><span class="n">n_ubatch</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">cparams</span><span class="p">.</span><span class="n">n_batch</span><span class="p">,</span> <span class="n">params</span><span class="p">.</span><span class="n">n_ubatch</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">?</span> <span class="n">params</span><span class="p">.</span><span class="n">n_batch</span> <span class="o">:</span> <span class="n">params</span><span class="p">.</span><span class="n">n_ubatch</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>Raising <code class="language-plaintext highlighter-rouge">-b</code> on its own therefore does not change the shape of the work the GPU
+does. It lets the caller submit longer lists, which saves some per-call
+overhead, but the tensor shapes in each forward pass come from <code class="language-plaintext highlighter-rouge">-ub</code>.</p>
+
+<h2 id="where-the-memory-actually-sits">Where the memory actually sits</h2>
+
+<p>Two words are about to do a lot of work, so it is worth pinning them down.</p>
+
+<p>The <strong>KV cache</strong> is the memory of the conversation. Attention works by comparing
+the current token’s query against a key for every earlier token, and then mixing
+together those earlier tokens’ values. Keys and values, hence KV. They depend
+only on the token and its position, so once a token has been through a layer its
+key and value never change. Recomputing them for the whole prefix on every new
+token would be quadratic work, so llama.cpp stores them. That store is the KV
+cache, and its size grows with how many positions you allow (<code class="language-plaintext highlighter-rouge">-c</code>) and how many
+bytes each entry takes.</p>
+
+<p>The <strong>graph</strong> is the computation itself, written down. Before running anything,
+llama.cpp builds a ggml compute graph: a list of tensor operations with fixed
+shapes, wired input to output, describing one forward pass. Nothing has run yet;
+it is a plan. Because the shapes are fixed at build time, the allocator can walk
+the graph and work out exactly how much scratch memory the intermediate tensors
+need, and it can reuse the same buffers for tensors whose lifetimes do not
+overlap. That is why sizes have to be known up front, and it is also why a graph
+whose shapes do not change can be built once and reused.</p>
+
+<p>With that, VRAM during inference splits roughly three ways: the weights, the KV
+cache, and a workspace for the graph’s intermediate tensors. Each knob moves a
+different piece.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/vram-slabs.svg" alt="Two stacked bars showing VRAM split into model weights, KV cache, and compute workspace. The right bar has the same weights and KV cache but a much smaller compute workspace, labelled as the effect of lowering ubatch from 512 to 128." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p><code class="language-plaintext highlighter-rouge">-c</code> and the KV cache precision set the middle slab. <code class="language-plaintext highlighter-rouge">-ub</code> sets the top one. The
+weights do not care about either.</p>
+
+<p>The reason <code class="language-plaintext highlighter-rouge">-ub</code> matters even with a single session is that llama.cpp sizes the
+workspace once, up front, for the largest forward pass it might ever be asked to
+run. In <code class="language-plaintext highlighter-rouge">llama_context::sched_reserve()</code>:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">n_seqs</span>   <span class="o">=</span> <span class="n">cparams</span><span class="p">.</span><span class="n">n_seq_max</span><span class="p">;</span>
+<span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">n_tokens</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">cparams</span><span class="p">.</span><span class="n">n_ctx</span><span class="p">,</span> <span class="n">cparams</span><span class="p">.</span><span class="n">n_ubatch</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>It reserves against the prompt-processing graph, then the token-generation
+graph, then the prompt-processing graph again, so that nothing has to be
+reallocated later when switching between the two. That worst case is driven by
+<code class="language-plaintext highlighter-rouge">n_ubatch</code>, which follows from the split: the largest tensor the graph ever holds
+is one ubatch wide, no matter how long a list the caller submitted.</p>
+
+<p><code class="language-plaintext highlighter-rouge">n_batch</code> is not entirely free, but what it sizes is the output side rather than
+the compute workspace. In <code class="language-plaintext highlighter-rouge">output_reserve()</code> the <code class="language-plaintext highlighter-rouge">output_ids</code> map is <code class="language-plaintext highlighter-rouge">n_batch</code>
+entries, and the optional per-layer embedding buffers scale with it. Those are
+small next to a prefill activation workspace, and they are zero-sized unless you
+asked for embeddings.</p>
+
+<p>So the memory is not a dormant prompt graph sitting there doing nothing. It is
+one workspace, sized for the biggest thing that might run in it. During
+single-stream decode most of it is idle, and lowering <code class="language-plaintext highlighter-rouge">-ub</code> is how you tell
+llama.cpp not to reserve that much in the first place.</p>
+
+<h2 id="prefill-and-decode-are-not-the-same-shape">Prefill and decode are not the same shape</h2>
+
+<p>The other half of the puzzle is that the two phases of inference have completely
+different amounts of parallelism available.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/prefill-vs-decode.svg" alt="Prefill drawn as a small number of fat chunks of 128 tokens each. Decode drawn as a long string of thin single-token steps." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>During prefill the prompt tokens are already known, so many positions can go
+through together. During generation each token has to be sampled before the next
+one exists, so a single sequence contributes one row per pass. <code class="language-plaintext highlighter-rouge">-ub</code> is a ceiling
+that prefill actually reaches and that single-stream decode almost never does.</p>
+
+<p>Worth noting the rows are not padded up to <code class="language-plaintext highlighter-rouge">n_ubatch</code>. The graph is built for
+the actual token count, so a one-token decode really is a one-row matmul rather
+than one real row and 127 zeros.</p>
+
+<p>There <em>is</em> padding in the picture, but it is on the other axis. Attention reads
+the whole prefix, so besides the rows going in, every graph has a second
+dimension: <code class="language-plaintext highlighter-rouge">n_kv</code>, how many cached positions the attention step will look at.
+That number naturally grows by one per generated token, and if the graph shapes
+tracked it exactly, every single decode step would produce a differently shaped
+graph that had to be rebuilt and reallocated from scratch.</p>
+
+<p>So llama.cpp rounds it up. <code class="language-plaintext highlighter-rouge">llama_kv_cache::get_n_kv()</code> reports not the true
+number of occupied cells but that number padded up to the next multiple of a
+fixed quantum:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="c1">// pad the n_kv value so that the graph remains constant across batches and can be reused</span>
+<span class="k">const</span> <span class="kt">uint32_t</span> <span class="n">n_pad_cur</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">n_pad</span><span class="p">,</span> <span class="mi">256u</span><span class="p">);</span>
+<span class="p">...</span>
+<span class="n">result</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">min</span><span class="p">(</span><span class="n">cells</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">std</span><span class="o">::</span><span class="n">max</span><span class="p">(</span><span class="n">n_pad_cur</span><span class="p">,</span> <span class="n">GGML_PAD</span><span class="p">(</span><span class="n">cells</span><span class="p">.</span><span class="n">used_max_p1</span><span class="p">(),</span> <span class="n">n_pad_cur</span><span class="p">))),</span> <span class="n">result</span><span class="p">);</span>
+</code></pre></div></div>
+
+<p>With a quantum of 256, a cache holding 700 live positions is reported as 768,
+and it keeps being reported as 768 until position 769 arrives. So 256
+consecutive decode steps all build the identical graph, and only every 256th step
+pays for a rebuild. The cost is that attention does a little arithmetic over
+cells that are not really occupied, which the mask discards anyway.</p>
+
+<p>As for where 256 itself comes from: it is a floor hardcoded in that line. The
+model-specific <code class="language-plaintext highlighter-rouge">n_pad</code> passed in when the cache is constructed is 1 for the
+paths I looked at in <code class="language-plaintext highlighter-rouge">llama-model.cpp</code>, so the <code class="language-plaintext highlighter-rouge">std::max</code> picks 256 and the model
+value never matters. It is a tuning constant, not a property of any model, and
+the comment above it gives two reasons: graph reuse, and that some backends
+simply run faster on that alignment.</p>
+
+<p>Note this is padding of a reported <em>count</em>, not extra allocation. The KV cache
+itself was already allocated at its full <code class="language-plaintext highlighter-rouge">-c</code> size when the context was created.</p>
+
+<h2 id="part-1-putting-different-conversations-in-the-same-batch">Part 1: putting different conversations in the same batch</h2>
+
+<p>Here is the thing I had not appreciated. When several conversations are active,
+llama.cpp does not process them one after another, and it does not run separate
+forward passes for each. It puts their tokens in the same physical batch.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/unified-batch.svg" alt="A batch of six rows. Each row shows a token, a sequence id, and a position. Rows belong to three different conversations at unrelated positions, interleaved in arrival order rather than grouped." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>This is continuous batching. Requests join and leave the running batch as they
+arrive and finish, rather than waiting for a batch to be assembled and drained.
+In the source this is <code class="language-plaintext highlighter-rouge">split_simple()</code>, which takes tokens in batch order up to
+<code class="language-plaintext highlighter-rouge">n_ubatch</code> and does not look at sequence ids at all while doing it.</p>
+
+<p>That is for the default unified KV cache. There is a second path, used when the
+cache is split per sequence, where <code class="language-plaintext highlighter-rouge">split_equal()</code> builds ubatches from
+equal-length chunks with ordered sequence ids. So “one ubatch mixes freely” is
+true for the common case but not unconditionally true, which is the kind of
+detail I would have got wrong if I had not looked.</p>
+
+<p>My first reaction to the picture above was that it looks unsafe. Row 0 and row 3
+are strangers. They are about to be multiplied by the same weight matrices in
+the same kernel. What stops one from leaking into the other?</p>
+
+<h3 id="the-mask-is-doing-the-work">The mask is doing the work</h3>
+
+<p>Attention is the one place in the layer where rows read other rows, and the mask
+is what decides which reads are allowed.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/mask.svg" alt="A six by six grid of queries against keys. Cells are ticked only where the query and key belong to the same sequence and the key position is not in the future. Cells crossing sequences are greyed out, cells within a sequence pointing at future positions are marked in red." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>The rule has two halves. A query can see a key only if they belong to the same
+sequence, and only if the key is not in the future. The first half separates the
+conversations, the second half is ordinary causal masking. Everything else
+becomes negative infinity before the softmax, which means those keys contribute
+nothing at all to the result.</p>
+
+<p>The real thing in <code class="language-plaintext highlighter-rouge">set_input_kq_mask_impl</code> has more conditions than my two:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">if</span> <span class="p">(</span><span class="n">cells</span><span class="p">.</span><span class="n">is_empty</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>            <span class="k">continue</span><span class="p">;</span>   <span class="c1">// unused cache slot</span>
+<span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">cells</span><span class="p">.</span><span class="n">seq_has</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <span class="n">seq_id</span><span class="p">))</span>    <span class="k">continue</span><span class="p">;</span>   <span class="c1">// different sequence</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">causal</span> <span class="o">&amp;&amp;</span> <span class="n">cells</span><span class="p">.</span><span class="n">pos_get</span><span class="p">(</span><span class="n">j</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">p1</span><span class="p">)</span> <span class="k">continue</span><span class="p">;</span>   <span class="c1">// future position</span>
+<span class="k">if</span> <span class="p">(</span><span class="n">swa</span> <span class="o">&amp;&amp;</span> <span class="n">is_masked_swa</span><span class="p">(...))</span>    <span class="k">continue</span><span class="p">;</span>   <span class="c1">// outside the sliding window</span>
+</code></pre></div></div>
+
+<p>There is an empty-slot check, a <code class="language-plaintext highlighter-rouge">causal_attn</code> flag that can turn causality off
+entirely for models that want bidirectional attention, and sliding-window
+masking for the models that use it. The two conditions I care about are in
+there, alongside a few others.</p>
+
+<p>One detail I liked: the sequence id used for masking is
+<code class="language-plaintext highlighter-rouge">ubatch-&gt;seq_id[i][0]</code>, the first entry in the list. So the multi-sequence
+membership I mentioned earlier is asymmetric, a cached cell can belong to
+several sequences and be visible to all of them, but a query masks against one.</p>
+
+<h3 id="chunked-prefill-is-the-same-mechanism">Chunked prefill is the same mechanism</h3>
+
+<p>Once the mask is in view, chunking a long prompt stops looking like a separate
+feature. The chunks are strictly ordered, chunk two cannot run before chunk one,
+because chunk two’s queries need chunk one’s keys. But within a chunk the
+positions go through together, and the mask sorts out their internal ordering.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/chunked-prefill.svg" alt="Left: a full causal triangle shaded as one live computation. Right: the same triangle cut into horizontal strips, with one strip highlighted as live and the strips above it greyed out as already computed and stored in the KV cache." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>A chunk of <code class="language-plaintext highlighter-rouge">U</code> new tokens against <code class="language-plaintext highlighter-rouge">C</code> already cached produces a <code class="language-plaintext highlighter-rouge">[U, C+U]</code> score
+matrix rather than <code class="language-plaintext highlighter-rouge">[C, C]</code>. The area under the triangle is about the same
+either way, so the total arithmetic does not change much. What changes is how
+much of it is in flight at once, which is exactly the workspace the reservation
+was sized for.</p>
+
+<p>This is also why a smaller <code class="language-plaintext highlighter-rouge">-ub</code> cannot rescue you from a KV cache problem.
+Later chunks still read the whole accumulated history. You have made the live
+piece smaller, not the history.</p>
+
+<h2 id="part-2-why-the-weights-do-not-care-which-conversation-a-row-came-from">Part 2: why the weights do not care which conversation a row came from</h2>
+
+<p>The other half of what I was trying to understand is the feed-forward block, and
+this one turned out to be simpler than I expected once I stopped thinking about
+it as a transformer thing.</p>
+
+<p>In an ordinary neural network, the weights of a layer do not depend on which
+sample a row came from. Ten samples means ten rows in and ten rows out, and the
+same weight matrix multiplies all of them. Row three’s output is built from row
+three’s input and nothing else.</p>
+
+<p>The feed-forward block is exactly that, with tokens in the role of samples.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/mlp-rows.svg" alt="Four input rows belonging to three different sequences, a single shared weight matrix W, and four output rows in matching colours. Each input row maps to its own output row, with no cross connections." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p><code class="language-plaintext highlighter-rouge">[T, d] @ [d, f]</code> gives <code class="language-plaintext highlighter-rouge">[T, f]</code>, and output row <code class="language-plaintext highlighter-rouge">i</code> depends only on input row
+<code class="language-plaintext highlighter-rouge">i</code>. It makes no difference whether the rows are consecutive positions from one
+prompt or unrelated tokens from four different users. The weights are the same,
+and the rows do not interact.</p>
+
+<p>This is also where continuous batching earns its keep. Single-stream decode is
+mostly waiting on memory: you read an entire weight matrix to process one row.
+With a full batch you read the same weights once and amortise them across every
+row in it. That is the throughput story, and it is a direct consequence of the
+sharing.</p>
+
+<h3 id="the-output-projection-which-is-where-i-got-stuck">The output projection, which is where I got stuck</h3>
+
+<p>The part I could not talk myself through was multi-head attention’s output
+projection. Each head produces its own output, they get concatenated, and <code class="language-plaintext highlighter-rouge">W_O</code>
+mixes them. Mixing is the point of that layer. So what stops it from mixing
+across tokens too?</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/output-projection.svg" alt="Panel A shows one token's head outputs concatenated along the feature axis and projected by W_O into a single output vector. Panel B shows the full matrix of rows from different sequences, with a crossed-out arrow from one row into a different row's output." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>The answer is that the concatenation happens along the <em>feature</em> axis, not the
+row axis. For a single token, its head outputs sit side by side in one row, and
+<code class="language-plaintext highlighter-rouge">W_O</code> contracts along that direction. Head 3’s contribution to token <code class="language-plaintext highlighter-rouge">i</code> gets
+blended with head 7’s contribution to token <code class="language-plaintext highlighter-rouge">i</code>. There is no arrangement of
+numbers in <code class="language-plaintext highlighter-rouge">W_O</code> that would let it reach a different row, because the matmul
+sums over features and carries the row index straight through.</p>
+
+<p>So <code class="language-plaintext highlighter-rouge">W_O</code> is a row-wise operation in exactly the same sense the feed-forward
+block is. It is a bigger, more interesting row-wise operation, but structurally
+it is the same kind of thing.</p>
+
+<p>And the rows going into it are already clean. Each head’s output for token <code class="language-plaintext highlighter-rouge">i</code>
+is a weighted sum of value vectors, with the weights coming from the masked
+softmax. Anything from another conversation had weight zero. So it is clean rows
+in, a row-wise operation, clean rows out.</p>
+
+<h2 id="walking-the-layer">Walking the layer</h2>
+
+<p>Having convinced myself about <code class="language-plaintext highlighter-rouge">W_O</code>, I went through a whole layer to see whether
+anything else crosses rows.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/ubatch/layer-audit.svg" alt="A transformer layer drawn as ten stacked steps. Nine are marked row-wise in green: input, RMSNorm, QKV projections, RoPE, output projection, residual adds, second RMSNorm, and the feed-forward block. One step, the masked softmax attention, is marked in red as crossing rows, with the mask attached to it." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>RMSNorm normalises within a row, over that token’s own features. The Q, K and V
+projections are one matmul applied per row. RoPE uses each token’s own position,
+which is worth pausing on for a mixed batch: <code class="language-plaintext highlighter-rouge">inp_pos</code> is a tensor of length
+<code class="language-plaintext highlighter-rouge">n_tokens</code> copied straight from <code class="language-plaintext highlighter-rouge">ubatch-&gt;pos</code>, so a row at position 4021 and a
+row at position 17 sitting next to each other each get their own rotation. The
+residual adds are elementwise. The feed-forward block is the shared-weights case
+above.</p>
+
+<p>That leaves one step that reads across rows, and it is the one wearing the mask.</p>
+
+<p>I found this a satisfying place to land, because it turns “is continuous
+batching safe” from a question about the whole architecture into a question
+about one operation. It also explains why the jumbled ordering in the batch
+diagram costs nothing. Nothing in the layer cares what order the rows are in,
+because nine of the ten steps never look at their neighbours and the tenth
+consults the mask rather than the layout.</p>
+
+<h2 id="back-to-the-vram-question">Back to the VRAM question</h2>
+
+<p>With the vocabulary sorted out, the practical part is short:</p>
+
+<ul>
+  <li>Lowering <code class="language-plaintext highlighter-rouge">-ub</code> shrinks the reserved workspace, and that is real, even at
+<code class="language-plaintext highlighter-rouge">-np 1</code>. The reservation is worst-case and driven by <code class="language-plaintext highlighter-rouge">min(n_ctx, n_ubatch)</code>.</li>
+  <li>It does not touch the KV cache. That is <code class="language-plaintext highlighter-rouge">-c</code>, the KV precision, and how many
+contexts you provision.</li>
+  <li>Lowering <code class="language-plaintext highlighter-rouge">-b</code> does not shrink the workspace. It caps the list length at the
+API boundary, and the workspace is sized from the ubatch split that happens
+after that.</li>
+  <li>It costs prefill throughput and time to first token, not steady-state decode
+speed, since decode was already one row per pass.</li>
+  <li>Queueing requests instead of provisioning slots for them is a reasonable
+trade. If you know you will never serve four users at once, <code class="language-plaintext highlighter-rouge">-np 1 -c 8192
+-ub 64</code> gives one request the full context and processes prompts in small
+pieces.</li>
+</ul>
+
+<p>The current defaults, from <code class="language-plaintext highlighter-rouge">common/common.h</code>, are <code class="language-plaintext highlighter-rouge">n_batch = 2048</code>,
+<code class="language-plaintext highlighter-rouge">n_ubatch = 512</code>, <code class="language-plaintext highlighter-rouge">n_parallel = 1</code>.</p>
+
+<p>I have not done a careful sweep on my own hardware yet. When I do, the two
+numbers I plan to watch are the <code class="language-plaintext highlighter-rouge">compute buffer size</code> line in the startup log
+and prompt-processing tokens per second, across <code class="language-plaintext highlighter-rouge">-ub</code> values of 512, 256, 128
+and 64. I would expect the buffer to shrink steadily and the prefill speed to
+fall off somewhere below the point where the GPU stays busy, but I would rather
+measure it than guess where that is.</p>
+
+<h2 id="what-i-took-away">What I took away</h2>
+
+<p>The thing I keep coming back to is that the row dimension in these tensors is a
+batch dimension in the ordinary sense, for every operation except one. Attention
+is the exception, and attention has a mask. Continuous batching and weight
+sharing are both consequences of that, rather than two separate tricks.</p>
+
+<p>I am still not sure how much of the workspace reservation is genuinely
+unavoidable versus conservative, and I would like to look at where the remaining
+prefill time actually goes at small <code class="language-plaintext highlighter-rouge">-ub</code>. But the terminology, at least, has
+stopped tripping me up.</p>
+
+<p>Source references in this post are against llama.cpp master as of August 2026,
+mainly <code class="language-plaintext highlighter-rouge">include/llama.h</code>, <code class="language-plaintext highlighter-rouge">src/llama-context.cpp</code>, <code class="language-plaintext highlighter-rouge">src/llama-kv-cache.cpp</code> and
+<code class="language-plaintext highlighter-rouge">src/llama-graph.cpp</code>. If something here is wrong I would like to know.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>

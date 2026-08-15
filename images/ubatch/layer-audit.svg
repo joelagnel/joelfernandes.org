@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 640" width="780" height="640" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#333"/>
+    </marker>
+    <marker id="arGrey" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+      <polygon points="0 0, 9 3, 0 6" fill="#c0392b"/>
+    </marker>
+  </defs>
+  <rect width="780" height="640" fill="#ffffff"/>
+  <text x="390.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">One transformer layer, with the row-crossing step marked</text>
+  <rect x="130" y="62" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="80" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">input hidden states</text>
+  <text x="144" y="94" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">[rows, d]</text>
+  <text x="538" y="87" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="102" x2="340.0" y2="112" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="112" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="130" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">RMSNorm</text>
+  <text x="144" y="144" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">normalises within each row</text>
+  <text x="538" y="137" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="152" x2="340.0" y2="162" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="162" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="180" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">Q, K, V projections</text>
+  <text x="144" y="194" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">one matmul, applied per row</text>
+  <text x="538" y="187" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="202" x2="340.0" y2="212" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="212" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="230" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">RoPE</text>
+  <text x="144" y="244" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">uses each token's own position</text>
+  <text x="538" y="237" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="252" x2="340.0" y2="262" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="262" width="420" height="40" rx="5" fill="#fbeeea" stroke="#c0392b" stroke-width="2.0"/>
+  <text x="144" y="280" text-anchor="start" font-size="12" fill="#c0392b" font-weight="bold">softmax(QK&#7488;) V</text>
+  <text x="144" y="294" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">rows read other rows, under the mask</text>
+  <text x="538" y="287" text-anchor="end" font-size="10.5" fill="#c0392b" font-weight="bold">crosses rows</text>
+  <line x1="340.0" y1="302" x2="340.0" y2="312" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="312" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="330" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">output projection W_O</text>
+  <text x="144" y="344" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">mixes heads within a row</text>
+  <text x="538" y="337" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="352" x2="340.0" y2="362" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="362" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="380" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">residual add</text>
+  <text x="144" y="394" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">elementwise</text>
+  <text x="538" y="387" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="402" x2="340.0" y2="412" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="412" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="430" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">RMSNorm</text>
+  <text x="144" y="444" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">within each row again</text>
+  <text x="538" y="437" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="452" x2="340.0" y2="462" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="462" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="480" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">feed-forward, up / gate / down</text>
+  <text x="144" y="494" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">shared weights, per row</text>
+  <text x="538" y="487" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="340.0" y1="502" x2="340.0" y2="512" stroke="#ccc" stroke-width="1.2"/>
+  <rect x="130" y="512" width="420" height="40" rx="5" fill="#e9f2ec" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="144" y="530" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold">residual add</text>
+  <text x="144" y="544" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal">elementwise</text>
+  <text x="538" y="537" text-anchor="end" font-size="10.5" fill="#2e7d52" font-weight="bold">row-wise</text>
+  <line x1="558" y1="282.0" x2="612" y2="282.0" stroke="#c0392b" stroke-width="1.4" marker-end="url(#arRed)"/>
+  <rect x="616" y="250" width="118" height="64" rx="5" fill="#fdf0ee" stroke="#c0392b" stroke-width="1.4"/>
+  <text x="675" y="268" text-anchor="middle" font-size="11.5" fill="#c0392b" font-weight="bold">the mask</text>
+  <text x="675" y="284" text-anchor="middle" font-size="11.5" fill="#c0392b" font-weight="normal">sits here</text>
+  <text x="675" y="302" text-anchor="middle" font-size="10.5" fill="#a55" font-weight="normal">and only here</text>
+  <text x="390.0" y="586" text-anchor="middle" font-size="12" fill="#555" font-weight="normal">Nine of the ten steps treat the rows as independent. One does not, and that one</text>
+  <text x="390.0" y="604" text-anchor="middle" font-size="12" fill="#555" font-weight="normal">is the step that carries the mask.</text>
+</svg>
