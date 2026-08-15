@@ -377,14 +377,15 @@
 
 <div class="post">
 <p>I spent some time recently trying to fit a model into a fixed amount of VRAM,
-and ran into something that did not add up. The suggestion was to lower
-<code class="language-plaintext highlighter-rouge">--ubatch-size</code>. But I only ever had one session talking to the server, and
-during generation a single session produces one token at a time. Whatever that
-knob controlled was surely already one, and lowering one to something smaller
-should do nothing. So why <code class="language-plaintext highlighter-rouge">--ubatch-size</code>?</p>
+and hit an interesting puzzle. The suggestion was to lower <code class="language-plaintext highlighter-rouge">--ubatch-size</code>. But
+I only ever had one session talking to the server, and during generation a
+single session produces one token at a time. On the face of it, whatever that
+knob controlled was already one, and lowering one to something smaller should do
+nothing. So why <code class="language-plaintext highlighter-rouge">--ubatch-size</code>?</p>
 
-<p>The answer turned out to be that I did not know what the u stood for, and that
-the word batch means three different things depending on who is saying it.</p>
+<p>Digging into it, I learned that the u stands for micro, and that the word batch
+means three different things depending on who is saying it. Once those three
+came apart, the knob made sense.</p>
 
 <h2 id="three-things-called-batch">Three things called batch</h2>
 
@@ -401,9 +402,8 @@ they ride along together only because the GPU is happier with one large matmul
 than four small ones. Each of the four samples holds 128 positions, and at each
 position sits one 4096-dimensional vector.</p>
 
-<p>That is meaning one, and the part I had internalised without noticing is that
-<code class="language-plaintext highlighter-rouge">B</code> counts <em>independent</em> things. Row 0 and row 3 have nothing to say to each
-other.</p>
+<p>That is meaning one, and the key property is that <code class="language-plaintext highlighter-rouge">B</code> counts <em>independent</em>
+things. Row 0 and row 3 have nothing to say to each other.</p>
 
 <p>Meaning two is llama.cpp’s batch, which is a list of token slots handed to one
 <code class="language-plaintext highlighter-rouge">llama_decode()</code> call. Each slot carries a token, a position, and the sequence
@@ -438,8 +438,8 @@ closest to the training meaning of batch.</li>
 pass. This is meaning three.</li>
 </ul>
 
-<p>The last two are the pair that confused me. The u is for micro, and the header
-comments in <code class="language-plaintext highlighter-rouge">include/llama.h</code> distinguish them like this:</p>
+<p>The last two are the pair worth pinning down, and the header comments in
+<code class="language-plaintext highlighter-rouge">include/llama.h</code> distinguish them neatly:</p>
 
 <div class="language-c highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kt">uint32_t</span> <span class="n">n_batch</span><span class="p">;</span>   <span class="c1">// logical maximum batch size that can be submitted to llama_decode</span>
 <span class="kt">uint32_t</span> <span class="n">n_ubatch</span><span class="p">;</span>  <span class="c1">// physical maximum batch size</span>
@@ -594,7 +594,7 @@ itself was already allocated at its full <code class="language-plaintext highlig
 
 <h2 id="part-1-putting-different-conversations-in-the-same-ubatch">Part 1: putting different conversations in the same ubatch</h2>
 
-<p>Here is the thing I had not appreciated. When several conversations are active,
+<p>Here is the part I found most interesting. When several conversations are active,
 llama.cpp does not process them one after another, and it does not run separate
 forward passes for each. It puts their tokens in the same ubatch.</p>
 
@@ -612,11 +612,11 @@ all while doing it.</p>
 cache is split per sequence, where <code class="language-plaintext highlighter-rouge">split_equal()</code> builds ubatches from
 equal-length chunks with ordered sequence ids. So “one ubatch mixes freely” is
 true for the common case but not unconditionally true, which is the kind of
-detail I would have got wrong if I had not looked.</p>
+detail worth checking in the source rather than assuming.</p>
 
-<p>My first reaction to the picture above was that it looks unsafe. Row 0 and row 3
-are strangers. They are about to be multiplied by the same weight matrices in
-the same kernel. What stops one from leaking into the other?</p>
+<p>The picture above raises an obvious question. Row 0 and row 3 are strangers.
+They are about to be multiplied by the same weight matrices in the same kernel.
+What stops one from leaking into the other?</p>
 
 <h3 id="the-mask-is-doing-the-work">The mask is doing the work</h3>
 
@@ -674,9 +674,8 @@ piece smaller, not the history.</p>
 
 <h2 id="part-2-why-the-weights-do-not-care-which-conversation-a-row-came-from">Part 2: why the weights do not care which conversation a row came from</h2>
 
-<p>The other half of what I was trying to understand is the feed-forward block, and
-this one turned out to be simpler than I expected once I stopped thinking about
-it as a transformer thing.</p>
+<p>The other half of the story is the feed-forward block, and it turns out to be
+the simpler half once you stop thinking about it as a transformer thing.</p>
 
 <p>In an ordinary neural network, the weights of a layer do not depend on which
 sample a row came from. Ten samples means ten rows in and ten rows out, and the
@@ -700,9 +699,9 @@ With a full ubatch you read the same weights once and amortise them across every
 row in it. That is the throughput story, and it is a direct consequence of the
 sharing.</p>
 
-<h3 id="the-output-projection-which-is-where-i-got-stuck">The output projection, which is where I got stuck</h3>
+<h3 id="the-output-projection-the-case-worth-thinking-through">The output projection, the case worth thinking through</h3>
 
-<p>The part I could not talk myself through was multi-head attention’s output
+<p>The case that most deserves a careful look is multi-head attention’s output
 projection. Each head produces its own output, they get concatenated, and <code class="language-plaintext highlighter-rouge">W_O</code>
 mixes them. Mixing is the point of that layer. So what stops it from mixing
 across tokens too?</p>
@@ -746,9 +745,9 @@ above.</p>
 
 <p>That leaves one step that reads across rows, and it is the one wearing the mask.</p>
 
-<p>I found this a satisfying place to land, because it turns “is continuous
-batching safe” from a question about the whole architecture into a question
-about one operation. It also explains why the jumbled ordering in the ubatch
+<p>This is a satisfying place to land, because it turns “is continuous batching
+safe” from a question about the whole architecture into a question about one
+operation. It also explains why the jumbled ordering in the ubatch
 diagram costs nothing. Nothing in the layer cares what order the rows are in,
 because nine of the ten steps never look at their neighbours and the tenth
 consults the mask rather than the layout.</p>
@@ -794,10 +793,9 @@ weight sharing are both consequences of that, rather than two separate tricks.</
 in it, the thing it controls is not the batch, and the thing that is called the
 batch is mostly an API formality.</p>
 
-<p>I am still not sure how much of the workspace reservation is genuinely
-unavoidable versus conservative, and I would like to look at where the remaining
-prefill time actually goes at small <code class="language-plaintext highlighter-rouge">-ub</code>. But the terminology, at least, has
-stopped tripping me up.</p>
+<p>Two things I want to measure next: how much of the workspace reservation is
+genuinely unavoidable versus conservative, and where the remaining prefill time
+goes at small <code class="language-plaintext highlighter-rouge">-ub</code>. The terminology, at least, is now settled.</p>
 
 <p>Source references in this post are against llama.cpp master as of August 2026,
 mainly <code class="language-plaintext highlighter-rouge">include/llama.h</code>, <code class="language-plaintext highlighter-rouge">src/llama-context.cpp</code>, <code class="language-plaintext highlighter-rouge">src/llama-kv-cache.cpp</code> and
