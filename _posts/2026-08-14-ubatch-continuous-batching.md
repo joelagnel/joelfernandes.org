@@ -108,6 +108,13 @@ Raising `-b` on its own therefore does not change the shape of the work the GPU
 does. It lets the caller submit longer lists, which saves some per-call
 overhead, but the tensor shapes in each forward pass come from `-ub`.
 
+Lowering it is not symmetric, though, because of that clamp. As long as
+`n_batch` stays at or above the `-ub` you asked for, `-ub` is what survives and
+`-b` does not touch the forward pass. Push `-b` below it and the `std::min`
+bites: the effective `n_ubatch` becomes `n_batch`, and the reservation shrinks
+along with it. So `-b 64 -ub 512` does not give you 512-wide passes, it gives
+you 64-wide ones.
+
 So the batch is a request and the ubatch is what actually runs. For the rest of
 this post I use them in exactly that sense: batch means the list submitted at
 the API boundary, ubatch means the group of token slots that goes through the
@@ -122,12 +129,15 @@ Two words are about to do a lot of work, so it is worth pinning them down.
 
 The **KV cache** is the memory of the conversation. Attention works by comparing
 the current token's query against a key for every earlier token, and then mixing
-together those earlier tokens' values. Keys and values, hence KV. They depend
-only on the token and its position, so once a token has been through a layer its
-key and value never change. Recomputing them for the whole prefix on every new
-token would be quadratic work, so llama.cpp stores them. That store is the KV
-cache, and its size grows with how many positions you allow (`-c`) and how many
-bytes each entry takes.
+together those earlier tokens' values. Keys and values, hence KV. A token's key
+and value at a given layer are projections of that layer's input for that
+position, which already carries the influence of everything before it. What
+makes caching them sound is causality: attention only looks backwards, so
+nothing computed later can change a key or value that has already been written.
+Once a position has been through a layer, its entry is final. Recomputing the
+whole prefix on every new token would be quadratic work, so llama.cpp stores
+them instead. That store is the KV cache, and its size grows with how many
+positions you allow (`-c`) and how many bytes each entry takes.
 
 The **graph** is the computation itself, written down. Before running anything,
 llama.cpp builds a ggml compute graph: a list of tensor operations with fixed
@@ -209,11 +219,16 @@ different amounts of parallelism available.
 
 During prefill the prompt tokens are already known, so many positions can go
 into one ubatch. During generation each token has to be sampled before the next
-one exists, so a single sequence contributes one row per ubatch. `-ub` is a
-ceiling that prefill actually reaches and that single-stream decode almost never
-does. That is the answer to the question I started with: the knob was never
-about how many conversations you have, so having only one does not make it
+one exists, so a single ordinary sequence contributes one row per ubatch. `-ub`
+is a ceiling that prefill actually reaches and that single-stream decode almost
+never does. That is the answer to the question I started with: the knob was
+never about how many conversations you have, so having only one does not make it
 irrelevant.
+
+Decode is not always one row, though. Several active slots each contribute one,
+and speculative decoding submits a draft of several tokens to be verified in a
+single pass. Both give decode a row count worth the name, and a `-ub` set below
+it will split that pass in two.
 
 Worth noting a ubatch is not padded up to `n_ubatch`. The graph is built for
 the actual token count, so a one-token decode really is a one-row matmul rather
@@ -265,11 +280,18 @@ forward passes for each. It puts their tokens in the same ubatch.
        style="width: 100%; height: auto; display: block;"/>
 </div>
 
-This is continuous batching. Requests join and leave the running work as they
-arrive and finish, rather than waiting for a group to be assembled and drained.
-In the source this is `split_simple()`, which fills a ubatch by taking token
-slots in submission order up to `n_ubatch`, and does not look at sequence ids at
-all while doing it.
+This is what continuous batching produces. The batching decision itself happens
+above this layer, in the server's scheduler: it tracks which requests are alive,
+and each iteration it gathers a token from every slot that needs one into a
+single logical batch, so requests join and leave the running work as they arrive
+and finish rather than waiting for a group to be assembled and drained.
+
+`split_simple()` is what happens next, once that batch reaches `llama_decode()`.
+It fills a ubatch by taking token slots in submission order up to `n_ubatch`,
+and does not look at sequence ids at all while doing it. So the scheduler
+decides which conversations travel together; `split_simple()` just carves the
+result into executable pieces. The mixing in the diagram above is the
+scheduler's doing, and the reason it is safe is the same either way.
 
 That is for the default unified KV cache. There is a second path, used when the
 cache is split per sequence, where `split_equal()` builds ubatches from
@@ -434,11 +456,15 @@ With the vocabulary sorted out, the practical part is short:
   `-np 1`. The reservation is worst-case and driven by `min(n_ctx, n_ubatch)`.
 - It does not touch the KV cache. That is `-c`, the KV precision, and how many
   contexts you provision.
-- Lowering `-b` does not shrink the workspace. It caps the list length at the
-  API boundary, and the workspace is sized from the ubatch split that happens
-  after that.
-- It costs prefill throughput and time to first token, not steady-state decode
-  speed, since decode was already one row per ubatch.
+- Lowering `-b` does not shrink the workspace, as long as it stays at or above
+  `-ub`. Below that the clamp takes over, the effective `n_ubatch` becomes
+  `n_batch`, and the reservation follows it down.
+- It costs prefill throughput and time to first token. For one ordinary
+  sequence it leaves steady-state decode alone, since decode was already one row
+  per ubatch. That stops holding once a decode step has more than one row to
+  carry: several active slots, or speculative decoding verifying a draft of
+  several tokens at once. Then a small enough `-ub` splits what would have been
+  one pass into several, and decode pays too.
 - Queueing requests instead of provisioning slots for them is a reasonable
   trade. If you know you will never serve four users at once, `-np 1 -c 8192
   -ub 64` gives one request the full context and processes prompts in small
