@@ -472,6 +472,13 @@ cannot submit more positions than the cache can hold:</p>
 does. It lets the caller submit longer lists, which saves some per-call
 overhead, but the tensor shapes in each forward pass come from <code class="language-plaintext highlighter-rouge">-ub</code>.</p>
 
+<p>Lowering it is not symmetric, though, because of that clamp. As long as
+<code class="language-plaintext highlighter-rouge">n_batch</code> stays at or above the <code class="language-plaintext highlighter-rouge">-ub</code> you asked for, <code class="language-plaintext highlighter-rouge">-ub</code> is what survives and
+<code class="language-plaintext highlighter-rouge">-b</code> does not touch the forward pass. Push <code class="language-plaintext highlighter-rouge">-b</code> below it and the <code class="language-plaintext highlighter-rouge">std::min</code>
+bites: the effective <code class="language-plaintext highlighter-rouge">n_ubatch</code> becomes <code class="language-plaintext highlighter-rouge">n_batch</code>, and the reservation shrinks
+along with it. So <code class="language-plaintext highlighter-rouge">-b 64 -ub 512</code> does not give you 512-wide passes, it gives
+you 64-wide ones.</p>
+
 <p>So the batch is a request and the ubatch is what actually runs. For the rest of
 this post I use them in exactly that sense: batch means the list submitted at
 the API boundary, ubatch means the group of token slots that goes through the
@@ -486,12 +493,15 @@ that corresponds to a real tensor.</p>
 
 <p>The <strong>KV cache</strong> is the memory of the conversation. Attention works by comparing
 the current token’s query against a key for every earlier token, and then mixing
-together those earlier tokens’ values. Keys and values, hence KV. They depend
-only on the token and its position, so once a token has been through a layer its
-key and value never change. Recomputing them for the whole prefix on every new
-token would be quadratic work, so llama.cpp stores them. That store is the KV
-cache, and its size grows with how many positions you allow (<code class="language-plaintext highlighter-rouge">-c</code>) and how many
-bytes each entry takes.</p>
+together those earlier tokens’ values. Keys and values, hence KV. A token’s key
+and value at a given layer are projections of that layer’s input for that
+position, which already carries the influence of everything before it. What
+makes caching them sound is causality: attention only looks backwards, so
+nothing computed later can change a key or value that has already been written.
+Once a position has been through a layer, its entry is final. Recomputing the
+whole prefix on every new token would be quadratic work, so llama.cpp stores
+them instead. That store is the KV cache, and its size grows with how many
+positions you allow (<code class="language-plaintext highlighter-rouge">-c</code>) and how many bytes each entry takes.</p>
 
 <p>The <strong>graph</strong> is the computation itself, written down. Before running anything,
 llama.cpp builds a ggml compute graph: a list of tensor operations with fixed
@@ -567,11 +577,16 @@ different amounts of parallelism available.</p>
 
 <p>During prefill the prompt tokens are already known, so many positions can go
 into one ubatch. During generation each token has to be sampled before the next
-one exists, so a single sequence contributes one row per ubatch. <code class="language-plaintext highlighter-rouge">-ub</code> is a
-ceiling that prefill actually reaches and that single-stream decode almost never
-does. That is the answer to the question I started with: the knob was never
-about how many conversations you have, so having only one does not make it
+one exists, so a single ordinary sequence contributes one row per ubatch. <code class="language-plaintext highlighter-rouge">-ub</code>
+is a ceiling that prefill actually reaches and that single-stream decode almost
+never does. That is the answer to the question I started with: the knob was
+never about how many conversations you have, so having only one does not make it
 irrelevant.</p>
+
+<p>Decode is not always one row, though. Several active slots each contribute one,
+and speculative decoding submits a draft of several tokens to be verified in a
+single pass. Both give decode a row count worth the name, and a <code class="language-plaintext highlighter-rouge">-ub</code> set below
+it will split that pass in two.</p>
 
 <p>Worth noting a ubatch is not padded up to <code class="language-plaintext highlighter-rouge">n_ubatch</code>. The graph is built for
 the actual token count, so a one-token decode really is a one-row matmul rather
@@ -620,11 +635,18 @@ forward passes for each. It puts their tokens in the same ubatch.</p>
   <img src="/images/ubatch/unified-batch.svg" alt="A ubatch of six rows. Each row shows a token, a sequence id, and a position. Rows belong to three different conversations at unrelated positions, interleaved in arrival order rather than grouped." style="width: 100%; height: auto; display: block;" />
 </div>
 
-<p>This is continuous batching. Requests join and leave the running work as they
-arrive and finish, rather than waiting for a group to be assembled and drained.
-In the source this is <code class="language-plaintext highlighter-rouge">split_simple()</code>, which fills a ubatch by taking token
-slots in submission order up to <code class="language-plaintext highlighter-rouge">n_ubatch</code>, and does not look at sequence ids at
-all while doing it.</p>
+<p>This is what continuous batching produces. The batching decision itself happens
+above this layer, in the server’s scheduler: it tracks which requests are alive,
+and each iteration it gathers a token from every slot that needs one into a
+single logical batch, so requests join and leave the running work as they arrive
+and finish rather than waiting for a group to be assembled and drained.</p>
+
+<p><code class="language-plaintext highlighter-rouge">split_simple()</code> is what happens next, once that batch reaches <code class="language-plaintext highlighter-rouge">llama_decode()</code>.
+It fills a ubatch by taking token slots in submission order up to <code class="language-plaintext highlighter-rouge">n_ubatch</code>,
+and does not look at sequence ids at all while doing it. So the scheduler
+decides which conversations travel together; <code class="language-plaintext highlighter-rouge">split_simple()</code> just carves the
+result into executable pieces. The mixing in the diagram above is the
+scheduler’s doing, and the reason it is safe is the same either way.</p>
 
 <p>That is for the default unified KV cache. There is a second path, used when the
 cache is split per sequence, where <code class="language-plaintext highlighter-rouge">split_equal()</code> builds ubatches from
@@ -779,11 +801,15 @@ consults the mask rather than the layout.</p>
 <code class="language-plaintext highlighter-rouge">-np 1</code>. The reservation is worst-case and driven by <code class="language-plaintext highlighter-rouge">min(n_ctx, n_ubatch)</code>.</li>
   <li>It does not touch the KV cache. That is <code class="language-plaintext highlighter-rouge">-c</code>, the KV precision, and how many
 contexts you provision.</li>
-  <li>Lowering <code class="language-plaintext highlighter-rouge">-b</code> does not shrink the workspace. It caps the list length at the
-API boundary, and the workspace is sized from the ubatch split that happens
-after that.</li>
-  <li>It costs prefill throughput and time to first token, not steady-state decode
-speed, since decode was already one row per ubatch.</li>
+  <li>Lowering <code class="language-plaintext highlighter-rouge">-b</code> does not shrink the workspace, as long as it stays at or above
+<code class="language-plaintext highlighter-rouge">-ub</code>. Below that the clamp takes over, the effective <code class="language-plaintext highlighter-rouge">n_ubatch</code> becomes
+<code class="language-plaintext highlighter-rouge">n_batch</code>, and the reservation follows it down.</li>
+  <li>It costs prefill throughput and time to first token. For one ordinary
+sequence it leaves steady-state decode alone, since decode was already one row
+per ubatch. That stops holding once a decode step has more than one row to
+carry: several active slots, or speculative decoding verifying a draft of
+several tokens at once. Then a small enough <code class="language-plaintext highlighter-rouge">-ub</code> splits what would have been
+one pass into several, and decode pays too.</li>
   <li>Queueing requests instead of provisioning slots for them is a reasonable
 trade. If you know you will never serve four users at once, <code class="language-plaintext highlighter-rouge">-np 1 -c 8192
 -ub 64</code> gives one request the full context and processes prompts in small
