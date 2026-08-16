@@ -476,9 +476,15 @@ Continuous batching needs both. Weight sharing is what makes it worth doing,
 since the weights get read once and amortised across the whole ubatch. The mask
 is what makes it correct.
 
-The naming is unfortunate. The knob everyone reaches for is spelled with batch
-in it, the thing it controls is not the batch, and the thing that is called the
-batch is mostly an API formality.
+The naming is unfortunate too. `-b` and `-ub` read like a knob and its
+fine-tuning companion, but they act on different things. `-ub` sets how many
+token slots go through the network at once, which is what fixes the shape of
+every intermediate tensor and therefore the size of the workspace reservation.
+`-b` sets how many slots the caller may pass to `llama_decode()` in one go,
+which changes how often that call is made and sizes `output_ids` and the
+optional embedding buffers, but not the tensors inside the pass. So when a VRAM
+problem sends you looking for a batch size to lower, the one spelled `-ub` is
+the one that moves the workspace.
 
 Two things I want to measure next: how much of the workspace reservation is
 genuinely unavoidable versus conservative, and where the remaining prefill time
