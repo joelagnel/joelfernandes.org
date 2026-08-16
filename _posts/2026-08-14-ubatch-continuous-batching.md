@@ -219,16 +219,37 @@ different amounts of parallelism available.
 
 During prefill the prompt tokens are already known, so many positions can go
 into one ubatch. During generation each token has to be sampled before the next
-one exists, so a single ordinary sequence contributes one row per ubatch. `-ub`
-is a ceiling that prefill actually reaches and that single-stream decode almost
-never does. That is the answer to the question I started with: the knob was
+one exists, so a single non-speculative sequence contributes one row per ubatch.
+`-ub` is a ceiling that prefill actually reaches and that single-stream decode
+almost never does. That is the answer to the question I started with: the knob was
 never about how many conversations you have, so having only one does not make it
 irrelevant.
 
-Decode is not always one row, though. Several active slots each contribute one,
-and speculative decoding submits a draft of several tokens to be verified in a
-single pass. Both give decode a row count worth the name, and a `-ub` set below
-it will split that pass in two.
+That framing holds for a single non-speculative sequence, which contributes only
+one new token per step, so lowering `-ub` has nothing to cut. Two things break
+the assumption.
+
+The first is continuous batching itself. Every active slot contributes its own
+row to the same decode step, so eight live conversations make a decode ubatch
+eight rows wide.
+
+The second is speculative decoding, where a single slot can contribute several
+rows on its own. A small draft model proposes the next few tokens, and the big
+model checks them all in one pass instead of one at a time. In
+`server-context.cpp` the slot adds its sampled token and then each drafted token
+to the same batch:
+
+```cpp
+add_ok &= batch.add(id, sampled, pos0++, true, false);
+for (auto token : spec_draft) {
+    add_ok &= batch.add(this->id, token, pos0++, true, false);
+}
+```
+
+Either way, decode gets a row count worth the name, and a `-ub` set below it
+splits what would have been one pass into several. Verifying a five-token draft
+under `-ub 4` costs two passes rather than one, which is exactly the throughput
+the technique was meant to buy back.
 
 Worth noting a ubatch is not padded up to `n_ubatch`. The graph is built for
 the actual token count, so a one-token decode really is a one-row matmul rather
@@ -459,12 +480,11 @@ With the vocabulary sorted out, the practical part is short:
 - Lowering `-b` does not shrink the workspace, as long as it stays at or above
   `-ub`. Below that the clamp takes over, the effective `n_ubatch` becomes
   `n_batch`, and the reservation follows it down.
-- It costs prefill throughput and time to first token. For one ordinary
-  sequence it leaves steady-state decode alone, since decode was already one row
-  per ubatch. That stops holding once a decode step has more than one row to
-  carry: several active slots, or speculative decoding verifying a draft of
-  several tokens at once. Then a small enough `-ub` splits what would have been
-  one pass into several, and decode pays too.
+- It costs prefill throughput and time to first token. For a single
+  non-speculative sequence it leaves steady-state decode alone, since that
+  sequence contributes only one new token per step. With multiple active slots
+  or speculative decoding, decode carries several rows, and a small enough `-ub`
+  splits that into extra passes and costs decode throughput and latency too.
 - Queueing requests instead of provisioning slots for them is a reasonable
   trade. If you know you will never serve four users at once, `-np 1 -c 8192
   -ub 64` gives one request the full context and processes prompts in small
@@ -518,5 +538,6 @@ goes at small `-ub`. The terminology, at least, is now settled.
 
 Source references in this post are against llama.cpp master as of August 2026,
 mainly `include/llama.h`, `src/llama-context.cpp`, `src/llama-kv-cache.cpp`,
-`src/llama-graph.cpp` and `ggml/src/ggml-alloc.c`. If something here is wrong I
-would like to know.
+`src/llama-graph.cpp`, `ggml/src/ggml-alloc.c` and
+`tools/server/server-context.cpp`. If something here is wrong I would like to
+know.
