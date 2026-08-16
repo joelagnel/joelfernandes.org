@@ -458,8 +458,23 @@ measure it than guess where that is.
 
 The thing I keep coming back to is that the row dimension of a ubatch behaves
 like a batch dimension in the ordinary sense, for every operation except one.
-Attention is the exception, and attention has a mask. Continuous batching and
-weight sharing are both consequences of that, rather than two separate tricks.
+Attention is the exception, and attention has a mask.
+
+Those two halves do different jobs, and it is worth not blurring them. Weight
+sharing comes from the row-wise structure alone. A matmul applies the same
+weight matrix to every row and carries the row index straight through, so one
+copy of the weights serves every token in the ubatch. That holds whether the
+rows come from one conversation or six, and the mask has nothing to do with it.
+It is the same reason weights are shared across a training batch: it is just
+what a matmul does.
+
+The mask does the other job. It is what allows the rows to be strangers.
+Attention is the only step that reads across rows, so it is the only place where
+mixing conversations could go wrong, and the mask is what stops it.
+
+Continuous batching needs both. Weight sharing is what makes it worth doing,
+since the weights get read once and amortised across the whole ubatch. The mask
+is what makes it correct.
 
 The naming is unfortunate. The knob everyone reaches for is spelled with batch
 in it, the thing it controls is not the batch, and the thing that is called the
