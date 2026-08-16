@@ -133,10 +133,29 @@ The **graph** is the computation itself, written down. Before running anything,
 llama.cpp builds a ggml compute graph: a list of tensor operations with fixed
 shapes, wired input to output, describing one forward pass. Nothing has run yet;
 it is a plan. Because the shapes are fixed at build time, the allocator can walk
-the graph and work out exactly how much scratch memory the intermediate tensors
-need, and it can reuse the same buffers for tensors whose lifetimes do not
-overlap. That is why sizes have to be known up front, and it is also why a graph
-whose shapes do not change can be built once and reused.
+the graph and work out exactly how much scratch memory is needed, and it can
+reuse the same buffers for tensors whose lifetimes do not overlap. That is why
+sizes have to be known up front, and it is also why a graph whose shapes do not
+change can be built once and reused.
+
+Worth being precise about what the graph holds, because it is not everything it
+refers to. The weight tensors appear in it, as leaves feeding the matmuls, but
+they were already allocated when the model was loaded, into their own backend
+buffer or straight out of an mmap region. The graph allocator checks for that
+and skips them:
+
+```c
+static bool ggml_gallocr_is_allocated(ggml_gallocr_t galloc, struct ggml_tensor * t) {
+    return t->data != NULL // tensor data already set externally
+        || t->buffer       // tensor on external buffer (but not yet allocated)
+        || ggml_gallocr_is_own(galloc, t);
+}
+```
+
+So the graph reads the weights, it does not store them. The only thing it needs
+memory for is the intermediates, the tensors produced as the pass runs. One copy
+of each weight serves every forward pass and every ubatch, which is the whole
+basis of the amortisation argument later on.
 
 With that, VRAM during inference splits roughly three ways: the weights, the KV
 cache, and a workspace for the graph's intermediate tensors. Each knob moves a
@@ -451,5 +470,6 @@ genuinely unavoidable versus conservative, and where the remaining prefill time
 goes at small `-ub`. The terminology, at least, is now settled.
 
 Source references in this post are against llama.cpp master as of August 2026,
-mainly `include/llama.h`, `src/llama-context.cpp`, `src/llama-kv-cache.cpp` and
-`src/llama-graph.cpp`. If something here is wrong I would like to know.
+mainly `include/llama.h`, `src/llama-context.cpp`, `src/llama-kv-cache.cpp`,
+`src/llama-graph.cpp` and `ggml/src/ggml-alloc.c`. If something here is wrong I
+would like to know.
