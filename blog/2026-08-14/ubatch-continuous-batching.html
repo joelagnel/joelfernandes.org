@@ -822,9 +822,15 @@ mixing conversations could go wrong, and the mask is what stops it.</p>
 since the weights get read once and amortised across the whole ubatch. The mask
 is what makes it correct.</p>
 
-<p>The naming is unfortunate. The knob everyone reaches for is spelled with batch
-in it, the thing it controls is not the batch, and the thing that is called the
-batch is mostly an API formality.</p>
+<p>The naming is unfortunate too. <code class="language-plaintext highlighter-rouge">-b</code> and <code class="language-plaintext highlighter-rouge">-ub</code> read like a knob and its
+fine-tuning companion, but they act on different things. <code class="language-plaintext highlighter-rouge">-ub</code> sets how many
+token slots go through the network at once, which is what fixes the shape of
+every intermediate tensor and therefore the size of the workspace reservation.
+<code class="language-plaintext highlighter-rouge">-b</code> sets how many slots the caller may pass to <code class="language-plaintext highlighter-rouge">llama_decode()</code> in one go,
+which changes how often that call is made and sizes <code class="language-plaintext highlighter-rouge">output_ids</code> and the
+optional embedding buffers, but not the tensors inside the pass. So when a VRAM
+problem sends you looking for a batch size to lower, the one spelled <code class="language-plaintext highlighter-rouge">-ub</code> is
+the one that moves the workspace.</p>
 
 <p>Two things I want to measure next: how much of the workspace reservation is
 genuinely unavoidable versus conservative, and where the remaining prefill time
