@@ -577,16 +577,36 @@ different amounts of parallelism available.</p>
 
 <p>During prefill the prompt tokens are already known, so many positions can go
 into one ubatch. During generation each token has to be sampled before the next
-one exists, so a single ordinary sequence contributes one row per ubatch. <code class="language-plaintext highlighter-rouge">-ub</code>
-is a ceiling that prefill actually reaches and that single-stream decode almost
-never does. That is the answer to the question I started with: the knob was
+one exists, so a single non-speculative sequence contributes one row per ubatch.
+<code class="language-plaintext highlighter-rouge">-ub</code> is a ceiling that prefill actually reaches and that single-stream decode
+almost never does. That is the answer to the question I started with: the knob was
 never about how many conversations you have, so having only one does not make it
 irrelevant.</p>
 
-<p>Decode is not always one row, though. Several active slots each contribute one,
-and speculative decoding submits a draft of several tokens to be verified in a
-single pass. Both give decode a row count worth the name, and a <code class="language-plaintext highlighter-rouge">-ub</code> set below
-it will split that pass in two.</p>
+<p>That framing holds for a single non-speculative sequence, which contributes only
+one new token per step, so lowering <code class="language-plaintext highlighter-rouge">-ub</code> has nothing to cut. Two things break
+the assumption.</p>
+
+<p>The first is continuous batching itself. Every active slot contributes its own
+row to the same decode step, so eight live conversations make a decode ubatch
+eight rows wide.</p>
+
+<p>The second is speculative decoding, where a single slot can contribute several
+rows on its own. A small draft model proposes the next few tokens, and the big
+model checks them all in one pass instead of one at a time. In
+<code class="language-plaintext highlighter-rouge">server-context.cpp</code> the slot adds its sampled token and then each drafted token
+to the same batch:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">add_ok</span> <span class="o">&amp;=</span> <span class="n">batch</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="n">sampled</span><span class="p">,</span> <span class="n">pos0</span><span class="o">++</span><span class="p">,</span> <span class="nb">true</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="k">for</span> <span class="p">(</span><span class="k">auto</span> <span class="n">token</span> <span class="o">:</span> <span class="n">spec_draft</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">add_ok</span> <span class="o">&amp;=</span> <span class="n">batch</span><span class="p">.</span><span class="n">add</span><span class="p">(</span><span class="k">this</span><span class="o">-&gt;</span><span class="n">id</span><span class="p">,</span> <span class="n">token</span><span class="p">,</span> <span class="n">pos0</span><span class="o">++</span><span class="p">,</span> <span class="nb">true</span><span class="p">,</span> <span class="nb">false</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div></div>
+
+<p>Either way, decode gets a row count worth the name, and a <code class="language-plaintext highlighter-rouge">-ub</code> set below it
+splits what would have been one pass into several. Verifying a five-token draft
+under <code class="language-plaintext highlighter-rouge">-ub 4</code> costs two passes rather than one, which is exactly the throughput
+the technique was meant to buy back.</p>
 
 <p>Worth noting a ubatch is not padded up to <code class="language-plaintext highlighter-rouge">n_ubatch</code>. The graph is built for
 the actual token count, so a one-token decode really is a one-row matmul rather
@@ -804,12 +824,11 @@ contexts you provision.</li>
   <li>Lowering <code class="language-plaintext highlighter-rouge">-b</code> does not shrink the workspace, as long as it stays at or above
 <code class="language-plaintext highlighter-rouge">-ub</code>. Below that the clamp takes over, the effective <code class="language-plaintext highlighter-rouge">n_ubatch</code> becomes
 <code class="language-plaintext highlighter-rouge">n_batch</code>, and the reservation follows it down.</li>
-  <li>It costs prefill throughput and time to first token. For one ordinary
-sequence it leaves steady-state decode alone, since decode was already one row
-per ubatch. That stops holding once a decode step has more than one row to
-carry: several active slots, or speculative decoding verifying a draft of
-several tokens at once. Then a small enough <code class="language-plaintext highlighter-rouge">-ub</code> splits what would have been
-one pass into several, and decode pays too.</li>
+  <li>It costs prefill throughput and time to first token. For a single
+non-speculative sequence it leaves steady-state decode alone, since that
+sequence contributes only one new token per step. With multiple active slots
+or speculative decoding, decode carries several rows, and a small enough <code class="language-plaintext highlighter-rouge">-ub</code>
+splits that into extra passes and costs decode throughput and latency too.</li>
   <li>Queueing requests instead of provisioning slots for them is a reasonable
 trade. If you know you will never serve four users at once, <code class="language-plaintext highlighter-rouge">-np 1 -c 8192
 -ub 64</code> gives one request the full context and processes prompts in small
@@ -864,8 +883,9 @@ goes at small <code class="language-plaintext highlighter-rouge">-ub</code>. The
 
 <p>Source references in this post are against llama.cpp master as of August 2026,
 mainly <code class="language-plaintext highlighter-rouge">include/llama.h</code>, <code class="language-plaintext highlighter-rouge">src/llama-context.cpp</code>, <code class="language-plaintext highlighter-rouge">src/llama-kv-cache.cpp</code>,
-<code class="language-plaintext highlighter-rouge">src/llama-graph.cpp</code> and <code class="language-plaintext highlighter-rouge">ggml/src/ggml-alloc.c</code>. If something here is wrong I
-would like to know.</p>
+<code class="language-plaintext highlighter-rouge">src/llama-graph.cpp</code>, <code class="language-plaintext highlighter-rouge">ggml/src/ggml-alloc.c</code> and
+<code class="language-plaintext highlighter-rouge">tools/server/server-context.cpp</code>. If something here is wrong I would like to
+know.</p>
 
 </div>
 
