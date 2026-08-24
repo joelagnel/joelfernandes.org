@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Weight tying, part 2: how one matrix means two different things - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Weight tying, part 2: how one matrix means two different things</h1>
+<p class="meta">23 Aug 2026</p>
+
+<div class="post">
+<p>This is part 2 of three on weight tying.
+<a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Part 1</a> worked through what <code class="language-plaintext highlighter-rouge">wte</code> and <code class="language-plaintext highlighter-rouge">lm_head</code> each do and showed that
+their shapes agree, so this line in llm.c’s <code class="language-plaintext highlighter-rouge">train_gpt2.py</code> is legal:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="n">wte</span><span class="p">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span>
+</code></pre></div></div>
+
+<p>Legal, but strange. <code class="language-plaintext highlighter-rouge">wte</code> maps a token to a vector. <code class="language-plaintext highlighter-rouge">lm_head</code> maps a vector to
+the <em>next</em> token. Those are not the same mapping, and one matrix is doing both.
+This post is about why that works.</p>
+
+<p>As before, every number is printed from the real GPT-2 124M weights.</p>
+
+<h2 id="how-one-matrix-does-two-different-jobs">How one matrix does two different jobs</h2>
+
+<p>The shapes agreeing explains why the assignment is legal. It does not explain
+how the same numbers serve a lookup at one end and a comparison at the other,
+which is the part that still felt like a coincidence to me.</p>
+
+<p>What resolved it was to stop thinking of <code class="language-plaintext highlighter-rouge">wte.weight</code> as an operation. It is not
+a lookup and it is not a projection. It is a set of 50257 vectors, one per
+token, each 768 numbers long. Reading one of them out and scoring a query
+against all of them are two different things you can do with a set of vectors,
+and neither is more natural than the other.</p>
+
+<p>The difference between the two is which axis you move along:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>lookup      W[i]       index the 50257 axis   -&gt;  (768,)      one row
+unembed     x @ W.T    sum over the 768 axis  -&gt;  (50257,)    one score per row
+</code></pre></div></div>
+
+<p>Going in you have an index and no vector, so you travel down the vocabulary axis
+and pull one row out whole. Coming out you have a vector and no index, so you
+travel along the 768 axis instead, collapsing each row to a single number, its
+dot product with <code class="language-plaintext highlighter-rouge">x</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">shape</span>                                  <span class="c1"># index the 50257 axis
+</span><span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">768</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="p">(</span><span class="n">x</span> <span class="o">@</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">).</span><span class="n">shape</span>                             <span class="c1"># sum over the 768 axis
+</span><span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">50257</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">((</span><span class="n">x</span> <span class="o">@</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">)[</span><span class="n">i</span><span class="p">],</span> <span class="n">torch</span><span class="p">.</span><span class="nf">dot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">W</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+<span class="bp">True</span>
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/two-contractions.svg" alt="Two panels sharing the same purple W of shape (50257, 768). Left, labelled lookup: the 50257 axis is marked as indexed, one row is highlighted and pulled out, giving W[i] of shape (768,), one row of the table, and the other 50256 rows are untouched. Right, labelled unembedding: x of shape (1, 768) multiplies W.T of shape (768, 50257), a view and not a copy, the 768 axis is marked as summed, giving shape (1, 50257), one score per row, every row read." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>The two are not symmetric in what they throw away. The lookup keeps one row
+intact and ignores the other 50256, so it is exact and reversible. The
+unembedding reads every row but crushes each one to a scalar, so 768 numbers
+become a single number and everything about the direction within that row is
+gone. That asymmetry is why the output side needs a softmax and a loss before it
+means anything, while the input side is just a table read.</p>
+<h2 id="why-x-ends-up-predicting-the-next-token-not-the-current-one">Why x ends up predicting the next token, not the current one</h2>
+
+<p>This is the part that looks impossible. <code class="language-plaintext highlighter-rouge">wte</code> maps a token to a vector.
+<code class="language-plaintext highlighter-rouge">lm_head</code> maps a vector to the <em>next</em> token. Same matrix, and those are not the
+same mapping.</p>
+
+<p>The resolution is the drift measured in
+<a href="/blog/2026-08-23/weight-tying-1-two-ends.html">part 1</a>: by the last block, <code class="language-plaintext highlighter-rouge">x</code>
+is no longer a representation of the token at that position. It is a description of
+what fits next. So the dot product is not comparing one token to another. It is
+asking how well the token at row <code class="language-plaintext highlighter-rouge">i</code> answers what this position is looking for.</p>
+
+<p>Training is what makes it so, and the mechanism is worth walking through slowly,
+because it is the reason one matrix can hold both meanings at once.</p>
+
+<p>Picture one training step on <code class="language-plaintext highlighter-rouge">"The sky is"</code>, where the correct next token is
+<code class="language-plaintext highlighter-rouge">" blue"</code>. The model produced <code class="language-plaintext highlighter-rouge">x</code>, scored every row against it, and got a
+probability for each token. <code class="language-plaintext highlighter-rouge">" blue"</code> came out at 0.086, so the model was
+mostly wrong and there is a correction to apply.</p>
+
+<p>Cross entropy applies that correction in two places at once. It nudges the
+<strong>rows</strong> and it nudges <strong><code class="language-plaintext highlighter-rouge">x</code></strong>, and the two nudges point at each other:</p>
+
+<ul>
+  <li>the row for <code class="language-plaintext highlighter-rouge">" blue"</code> moves <strong>toward <code class="language-plaintext highlighter-rouge">x</code></strong>, because that would have raised its
+score</li>
+  <li>every other row moves <strong>away from <code class="language-plaintext highlighter-rouge">x</code></strong>, because that would have lowered theirs</li>
+  <li><code class="language-plaintext highlighter-rouge">x</code> moves <strong>toward the row for <code class="language-plaintext highlighter-rouge">" blue"</code></strong>, for the same reason</li>
+</ul>
+
+<p>That is the entire mechanism. The target row and the vector that failed to
+predict it are dragged together from both ends, a little on every step where
+that token is the answer. Do it across a corpus and the row for <code class="language-plaintext highlighter-rouge">" blue"</code> ends
+up sitting where the <code class="language-plaintext highlighter-rouge">x</code> vectors that should predict <code class="language-plaintext highlighter-rouge">" blue"</code> tend to point.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/the-pull.svg" alt="A sketch of embedding space with an orange point labelled wte[4171], the row for the token blue, and a green point labelled h, the final state after The sky is. A green arrow runs from h toward the orange point labelled minus dL by dh points at the target row, and an orange arrow runs from the row back toward h labelled minus dL by dW[4171] points at h. A grey point labelled cat has a dashed arrow pointing away, labelled every other row is pushed the other way." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>The pushes are not equal, and the sizes are the interesting part. How hard a row
+gets pushed away is proportional to the probability the model gave it, so the
+only rows that feel anything are the ones that were plausible. On this example
+<code class="language-plaintext highlighter-rouge">" the"</code> had probability 0.152 and gets shoved hard, while <code class="language-plaintext highlighter-rouge">" cat"</code> had 0.0000064
+and is left essentially untouched:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>" the"   p = 0.15240622    pushed with 17% of the force pulling " blue" in
+" cat"   p = 0.00000641    pushed with 0.0007% of it
+</code></pre></div></div>
+
+<p>88% of the vocabulary has probability under one in a million at this position, so
+almost the whole table is ignored on this step. The correction is spent on the
+handful of tokens that were genuinely in contention, which is what you would want
+and also why training does not simply blow the table apart.</p>
+
+<p>If you want the calculus, it is three lines. With <code class="language-plaintext highlighter-rouge">p</code> the predicted probabilities
+and <code class="language-plaintext highlighter-rouge">t</code> the correct token:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dL/dW[t]  =  (p_t - 1) * x        the target row
+dL/dW[i]  =   p_i * x             every other row
+dL/dx     =  sum_i p_i * W[i]  -  W[t]
+</code></pre></div></div>
+
+<p>The signs are the whole story. <code class="language-plaintext highlighter-rouge">p_t</code> is a probability so <code class="language-plaintext highlighter-rouge">(p_t - 1)</code> is negative,
+which makes the step <code class="language-plaintext highlighter-rouge">-dL/dW[t]</code> a positive multiple of <code class="language-plaintext highlighter-rouge">x</code>: the target row moves
+toward <code class="language-plaintext highlighter-rouge">x</code>. Every other <code class="language-plaintext highlighter-rouge">p_i</code> is positive, so those rows move the opposite way.
+And <code class="language-plaintext highlighter-rouge">-dL/dx</code> contains <code class="language-plaintext highlighter-rouge">+W[t]</code>, so <code class="language-plaintext highlighter-rouge">x</code> moves toward the target row.</p>
+
+<p>Measured on the real model, with <code class="language-plaintext highlighter-rouge">" blue"</code> as the target:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cos(step for " blue" row,  x)          =  1.000    exactly toward x
+cos(step for " cat" row,   x)          = -1.000    exactly away from x
+cos(step for x,  " blue" row)          =  0.845    mostly toward that row
+</code></pre></div></div>
+
+<p>The first two are exact because those steps are literally a scalar times <code class="language-plaintext highlighter-rouge">x</code>. The
+third is 0.845 rather than 1.0 because <code class="language-plaintext highlighter-rouge">x</code>’s step is <code class="language-plaintext highlighter-rouge">W[t]</code> minus a
+probability-weighted average of all the rows, and that average is not small on a
+trained model. So <code class="language-plaintext highlighter-rouge">x</code> moves mostly toward <code class="language-plaintext highlighter-rouge">" blue"</code>, tilted away from wherever
+the rest of its probability mass was sitting.</p>
+
+<p>That is the answer to the section title. Cross entropy drives the vector that
+<em>predicts</em> a token and the vector that <em>represents</em> that token to the same place.
+The two uses are not conflicting jobs fighting over one matrix, they are one
+constraint applied from both ends. This is why sharing the matrix works at all,
+and it is the argument Press and Wolf made when they proposed the technique in
+<a href="https://arxiv.org/abs/1608.05859">Using the Output Embedding to Improve Language Models</a>.</p>
+<h2 id="watching--dog-stop-being-an-animal-block-by-block">Watching “ dog” stop being an animal, block by block</h2>
+
+<p>The cleanest demonstration I found is <code class="language-plaintext highlighter-rouge">"The dog"</code>, because it separates two
+things that sound the same. <code class="language-plaintext highlighter-rouge">" cat"</code> is one of the closest tokens to <code class="language-plaintext highlighter-rouge">" dog"</code> in
+the table. It is also a terrible prediction for what comes after <code class="language-plaintext highlighter-rouge">"The dog"</code>.
+Since both facts come out of the same matrix, they show the two uses pulling
+apart on a single row.</p>
+
+<p>Ask the table who <code class="language-plaintext highlighter-rouge">" dog"</code>’s neighbours are, by cosine between rows:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>" dogs"    0.796
+" Dog"     0.734
+" canine"  0.652
+" puppy"   0.621
+" pet"     0.551
+" cat"     0.550      rank 9 of 50257
+</code></pre></div></div>
+
+<p>That is a meaning neighbourhood, and <code class="language-plaintext highlighter-rouge">" cat"</code> sits right in it. Now ask the same
+matrix what follows <code class="language-plaintext highlighter-rouge">"The dog"</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>" was"   0.143
+"'s"     0.104
+","      0.085
+" is"    0.073
+" had"   0.048
+
+" cat"   0.00015     rank 423
+" dog"   0.00040     rank 199
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/dog-slot.svg" alt="Two panels. Left, in the table: nearest rows to wte for the token dog, listing dogs 0.796, Dog 0.734, canine 0.652, puppy 0.621, pet 0.551, and cat 0.550 highlighted in green, annotated cat is a close neighbour, rank 9 of 50257. Right, at the output: what follows The dog, as a bar chart listing was 0.143, apostrophe s 0.104, comma 0.085, is 0.073, had 0.048, and cat 0.00015 highlighted in red with a nearly invisible bar, annotated cat is a bad answer, rank 423 of 50257. Caption reads right meaning, wrong slot." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>Every one of the top answers is a verb, a possessive or a punctuation mark.
+Nothing that could be an animal is anywhere near the top, and <code class="language-plaintext highlighter-rouge">" cat"</code> has
+dropped from rank 9 to rank 423. <code class="language-plaintext highlighter-rouge">" dog"</code> itself is at rank 199, so the model is
+also not predicting the token that is literally sitting there.</p>
+
+<p>This is the drift made concrete. <code class="language-plaintext highlighter-rouge">" cat"</code> is the right <em>meaning</em> and the wrong
+<em>slot</em>. English has just committed to a noun phrase, so what is needed next is
+whatever continues a subject, and that is grammatical, not semantic. A second
+animal in that position would be nonsense.</p>
+
+<p>You can watch the switch happen block by block by unembedding the intermediate
+<code class="language-plaintext highlighter-rouge">x</code> at the <code class="language-plaintext highlighter-rouge">" dog"</code> position, which is the logit lens trick from
+<a href="https://www.lesswrong.com/posts/AcKRB8wDpdaN6v6ru/interpreting-gpt-the-logit-lens">nostalgebraist</a>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>embedding   " dog" 0.997,  " dogs" 0.003,  " canine" 0.000
+block  2    " dog" 0.937,  " dogs" 0.034,  "Dog"     0.009
+block  4    " dog" 0.908,  " dogs" 0.017,  " catcher" 0.010
+block  6    " dog" 0.631,  "fight" 0.067,  "'s"      0.063
+block  8    "'s"   0.366,  " dog"  0.140,  " catcher" 0.087
+block 10    "'s"   0.314,  " dog"  0.099,  " was"    0.065
+block 11    "'s"   0.248,  " was"  0.120,  " is"     0.064
+block 12    " was" 0.143,  "'s"    0.103,  ","       0.085
+</code></pre></div></div>
+
+<p>At the embedding the vector is the token, and unembedding it just returns
+<code class="language-plaintext highlighter-rouge">" dog"</code> with probability 0.997, which it has to, since the vector <em>is</em> row
+<code class="language-plaintext highlighter-rouge">" dog"</code> and no row is closer to itself. Through the early blocks it stays there,
+and what changes is the runner-up: <code class="language-plaintext highlighter-rouge">" dogs"</code>, then <code class="language-plaintext highlighter-rouge">" catcher"</code>, then <code class="language-plaintext highlighter-rouge">"fight"</code>,
+the model filling in what kind of dog context this might be. Somewhere around
+block 8 the identity gives way, <code class="language-plaintext highlighter-rouge">"'s"</code> takes the top slot, and from there it is
+grammar the rest of the way.</p>
+
+<p>The same thing in one number, the rank of <code class="language-plaintext highlighter-rouge">" dog"</code>’s own row by cosine to <code class="language-plaintext highlighter-rouge">x</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>embedding   rank    1
+block  4    rank   12
+block  8    rank   70
+block 11    rank  268
+</code></pre></div></div>
+
+<p>It starts as the single nearest row out of 50257 and walks away. Nothing deletes
+the token’s identity; the residual stream just accumulates enough else that
+identity stops being what the vector mostly is.</p>
+
+<p>Which is the answer to how one matrix serves both ends. It is not being asked
+the same question twice. Going in, the question is which row is this token.
+Coming out, the question is which row answers this position. <code class="language-plaintext highlighter-rouge">" cat"</code> scores
+well on the first and badly on the second, and both scores are read off the same
+50257 vectors.</p>
+
+<h2 id="where-this-leaves-us">Where this leaves us</h2>
+
+<p>The matrix is best thought of as a set of 50257 vectors rather than as an
+operation. The lookup indexes the 50257 axis and pulls one vector out whole. The
+unembedding sums over the 768 axis and crushes every vector to a single score.
+Same numbers, different axis.</p>
+
+<p>The reason the second one predicts the <em>next</em> token is that <code class="language-plaintext highlighter-rouge">x</code> is no longer the
+current one. Cross entropy drags the target row and the vector that failed to
+predict it toward each other, over and over, until the row for a token sits where
+the vectors that should predict it tend to point. Measured on <code class="language-plaintext highlighter-rouge">"The dog"</code>,
+<code class="language-plaintext highlighter-rouge">" cat"</code> is the 9th nearest row in the table and the 423rd best prediction. Right
+meaning, wrong slot.</p>
+
+<p>That is why one matrix can do both jobs. What it costs to make it do both, and
+why models above about 8B stop asking, is
+<a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">part 3</a>.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>

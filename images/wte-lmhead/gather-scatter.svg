@@ -1,0 +1,72 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 380" width="800" height="380" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="800" height="380" fill="#ffffff"/>
+  <text x="400.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Forward is a gather. Backward is a scatter-add.</text>
+  <text x="200" y="56" text-anchor="middle" font-size="13" fill="#2e7d52" font-weight="bold" font-style="normal" >forward</text>
+  <rect x="60" y="90" width="130" height="210" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#333" stroke-width="1.5"/>
+  <line x1="60" y1="90" x2="190" y2="90" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="120" x2="190" y2="120" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="150" x2="190" y2="150" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="180" x2="190" y2="180" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="210" x2="190" y2="210" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="240" x2="190" y2="240" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="60" y1="270" x2="190" y2="270" stroke="#ccc" stroke-width="0.8"/>
+  <text x="125" y="80" text-anchor="middle" font-size="11.5" fill="#333" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte.weight</text>
+  <rect x="60" y="150" width="130" height="30" rx="0" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+  <text x="125" y="170" text-anchor="middle" font-size="9.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">row 262  " the"</text>
+  <path d="M 190 165 C 240 165, 250 135, 290 135" stroke="#2e7d52" stroke-width="1.5" fill="none" marker-end="url(#arGreen)"/>
+  <rect x="290" y="120" width="74" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="327" y="140" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">pos 3</text>
+  <path d="M 190 165 C 240 165, 250 205, 290 205" stroke="#2e7d52" stroke-width="1.5" fill="none" marker-end="url(#arGreen)"/>
+  <rect x="290" y="190" width="74" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="327" y="210" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">pos 17</text>
+  <path d="M 190 165 C 240 165, 250 275, 290 275" stroke="#2e7d52" stroke-width="1.5" fill="none" marker-end="url(#arGreen)"/>
+  <rect x="290" y="260" width="74" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.2"/>
+  <text x="327" y="280" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">pos 91</text>
+  <text x="327" y="300" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >three positions in the batch</text>
+  <text x="327" y="316" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >hold token id 262</text>
+  <text x="200" y="344" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="normal" font-style="normal" >one row read, copied three times</text>
+  <text x="620" y="56" text-anchor="middle" font-size="13" fill="#c0392b" font-weight="bold" font-style="normal" >backward</text>
+  <rect x="670" y="90" width="130" height="210" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#333" stroke-width="1.5"/>
+  <line x1="670" y1="90" x2="800" y2="90" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="120" x2="800" y2="120" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="150" x2="800" y2="150" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="180" x2="800" y2="180" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="210" x2="800" y2="210" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="240" x2="800" y2="240" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="670" y1="270" x2="800" y2="270" stroke="#ccc" stroke-width="0.8"/>
+  <text x="735" y="80" text-anchor="middle" font-size="11.5" fill="#333" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte.weight.grad</text>
+  <rect x="670" y="150" width="130" height="30" rx="0" fill="#fdecea" fill-opacity="1.0" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="735" y="170" text-anchor="middle" font-size="9.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">row 262</text>
+  <path d="M 570 135 C 610 135, 620 165, 668 165" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#arRed)"/>
+  <rect x="496" y="120" width="74" height="30" rx="3" fill="#fdecea" fill-opacity="1.0" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="533" y="140" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">grad</text>
+  <path d="M 570 205 C 610 205, 620 165, 668 165" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#arRed)"/>
+  <rect x="496" y="190" width="74" height="30" rx="3" fill="#fdecea" fill-opacity="1.0" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="533" y="210" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">grad</text>
+  <path d="M 570 275 C 610 275, 620 165, 668 165" stroke="#c0392b" stroke-width="1.5" fill="none" marker-end="url(#arRed)"/>
+  <rect x="496" y="260" width="74" height="30" rx="3" fill="#fdecea" fill-opacity="1.0" stroke="#c0392b" stroke-width="1.2"/>
+  <text x="533" y="280" text-anchor="middle" font-size="10" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">grad</text>
+  <text x="533" y="300" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >three separate gradients</text>
+  <text x="533" y="316" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >land on the same row</text>
+  <text x="620" y="344" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="normal" font-style="normal" >three writes added, so it needs atomics</text>
+</svg>

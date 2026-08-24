@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 430" width="800" height="430" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="800" height="430" fill="#ffffff"/>
+  <text x="400.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Cross entropy pulls the hidden state and the target row together</text>
+  <rect x="50" y="50" width="700" height="300" rx="4" fill="#fcfcfc" fill-opacity="1.0" stroke="#ccc" stroke-width="1.4"/>
+  <circle cx="470" cy="150" r="7" fill="#b8681c" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="484" y="144" text-anchor="start" font-size="12" fill="#b8681c" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte[4171]</text>
+  <text x="484" y="160" text-anchor="start" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >the row for " blue"</text>
+  <circle cx="220" cy="260" r="7" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="206" y="266" text-anchor="end" font-size="13" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">h</text>
+  <text x="206" y="282" text-anchor="end" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >final state after "The sky is"</text>
+  <path d="M 232 254 C 300 220, 360 190, 410 184" stroke="#2e7d52" stroke-width="2.2" fill="none" marker-end="url(#arGreen)"/>
+  <text x="320" y="200" text-anchor="middle" font-size="10.5" fill="#2e7d52" font-weight="normal" font-style="normal" >-dL/dh points at the target row</text>
+  <path d="M 458 160 C 420 200, 360 230, 280 238" stroke="#b8681c" stroke-width="2.2" fill="none" marker-end="url(#arOrange)"/>
+  <text x="400" y="262" text-anchor="middle" font-size="10.5" fill="#b8681c" font-weight="normal" font-style="normal" >-dL/dW[4171] points at h</text>
+  <circle cx="620" cy="290" r="5.5" fill="#888" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="632" y="294" text-anchor="start" font-size="10.5" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte[3797]  " cat"</text>
+  <path d="M 612 296 C 660 320, 690 330, 700 336" stroke="#888" stroke-width="1.4" fill="none" stroke-dasharray="4,3" marker-end="url(#arGrey)"/>
+  <text x="660" y="356" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" font-style="normal" >every other row is pushed the other way</text>
+  <text x="400.0" y="384" text-anchor="middle" font-size="11.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">Verified numerically: cos(-dL/dW[4171], h) = 1.000000  and  cos(-dL/dh, wte[4171]) = 0.844641</text>
+  <text x="400.0" y="408" text-anchor="middle" font-size="11.5" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">For a non-target row, cos(-dL/dW[3797], h) = -1.000000</text>
+</svg>

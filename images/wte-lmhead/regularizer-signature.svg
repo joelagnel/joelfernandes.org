@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 372" width="700" height="372" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="700" height="372" fill="#ffffff"/>
+  <text x="350.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">What tying does to a large model: train worse, test better</text>
+  <line x1="196" y1="84" x2="196" y2="304" stroke="#ccc" stroke-width="1.0"/>
+  <line x1="470" y1="84" x2="470" y2="304" stroke="#ccc" stroke-width="1.0"/>
+  <text x="196" y="74" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" font-style="normal" >untied</text>
+  <text x="196" y="88" text-anchor="middle" font-size="9.5" fill="#888" font-weight="normal" font-style="normal" >66M params</text>
+  <text x="470" y="74" text-anchor="middle" font-size="13" fill="#6b4d8f" font-weight="bold" font-style="normal" >tied</text>
+  <text x="470" y="88" text-anchor="middle" font-size="9.5" fill="#6b4d8f" font-weight="normal" font-style="normal" >51M params</text>
+  <line x1="196" y1="261.5407407407408" x2="470" y2="247.26666666666665" stroke="#2e7d52" stroke-width="2.4"/>
+  <circle cx="196" cy="261.5407407407408" r="5.0" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <circle cx="470" cy="247.26666666666665" r="5.0" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="182" y="265.5407407407408" text-anchor="end" font-size="12" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">78.4</text>
+  <text x="484" y="251.26666666666665" text-anchor="start" font-size="12" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">74.3</text>
+  <text x="182" y="247.54074074074077" text-anchor="end" font-size="10" fill="#2e7d52" font-weight="normal" font-style="normal" >test perplexity</text>
+  <text x="484" y="232.26666666666665" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="italic" >generalizes better</text>
+  <line x1="196" y1="120.19259259259258" x2="470" y2="157.44444444444446" stroke="#c0392b" stroke-width="2.4"/>
+  <circle cx="196" cy="120.19259259259258" r="5.0" fill="#c0392b" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <circle cx="470" cy="157.44444444444446" r="5.0" fill="#c0392b" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="182" y="124.19259259259258" text-anchor="end" font-size="12" fill="#c0392b" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">37.8</text>
+  <text x="484" y="161.44444444444446" text-anchor="start" font-size="12" fill="#c0392b" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">48.5</text>
+  <text x="182" y="106.19259259259258" text-anchor="end" font-size="10" fill="#c0392b" font-weight="normal" font-style="normal" >train perplexity</text>
+  <text x="484" y="142.44444444444446" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="italic" >fits the training set worse</text>
+  <text x="350.0" y="336" text-anchor="middle" font-size="11" fill="#333" font-weight="bold" font-style="normal" >the two moved in opposite directions, which is what a regularizer does</text>
+  <text x="350.0" y="354" text-anchor="middle" font-size="9" fill="#888" font-weight="normal" font-style="italic" >Press and Wolf 2017, table 5: PTB, large LSTM with Bayesian dropout, perplexity lower is better</text>
+</svg>

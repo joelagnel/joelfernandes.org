@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 820 340" width="820" height="340" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="820" height="340" fill="#ffffff"/>
+  <text x="410.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">The two ends of the model</text>
+  <rect x="40" y="50" width="340" height="250" rx="4" fill="#f7fafc" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+  <text x="210" y="76" text-anchor="middle" font-size="17" fill="#2c5f8a" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte</text>
+  <text x="210" y="96" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">nn.Embedding(50257, 768)</text>
+  <rect x="135" y="116" width="150" height="34" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#888" stroke-width="1.4"/>
+  <text x="210" y="138" text-anchor="middle" font-size="12.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">token id: 6766</text>
+  <text x="210" y="166" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="italic" >one integer</text>
+  <line x1="210" y1="176" x2="210" y2="208" stroke="#2c5f8a" stroke-width="1.8" marker-end="url(#ar)"/>
+  <text x="290" y="196" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="normal" font-style="normal" >row lookup</text>
+  <rect x="100" y="216" width="220" height="34" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.4"/>
+  <text x="210" y="238" text-anchor="middle" font-size="12.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">768 numbers</text>
+  <text x="210" y="268" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="italic" >a vector in embedding space</text>
+  <text x="210" y="288" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">shape (768,)</text>
+  <rect x="440" y="50" width="340" height="250" rx="4" fill="#fffaf5" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.6"/>
+  <text x="610" y="76" text-anchor="middle" font-size="17" fill="#b8681c" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">lm_head</text>
+  <text x="610" y="96" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">nn.Linear(768, 50257, bias=False)</text>
+  <rect x="500" y="116" width="220" height="34" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.4"/>
+  <text x="610" y="138" text-anchor="middle" font-size="12.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">768 numbers</text>
+  <text x="610" y="166" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="italic" >a vector in embedding space</text>
+  <line x1="610" y1="176" x2="610" y2="208" stroke="#b8681c" stroke-width="1.8" marker-end="url(#arOrange)"/>
+  <text x="693" y="196" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="normal" font-style="normal" >score every row</text>
+  <rect x="500" y="216" width="220" height="34" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#888" stroke-width="1.4"/>
+  <text x="610" y="238" text-anchor="middle" font-size="12.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">50257 numbers</text>
+  <text x="610" y="268" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="italic" >one logit per vocabulary entry</text>
+  <text x="610" y="288" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">shape (50257,)</text>
+  <text x="410.0" y="322" text-anchor="middle" font-size="12" fill="#666" font-weight="normal" font-style="normal" >Same matrix behind both panels. Opposite directions.</text>
+</svg>

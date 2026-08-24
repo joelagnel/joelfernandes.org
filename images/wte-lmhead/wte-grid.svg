@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 400" width="780" height="400" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="780" height="400" fill="#ffffff"/>
+  <text x="390.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">wte is one table: 50257 rows, 768 columns</text>
+  <rect x="70" y="60" width="300" height="280" rx="4" fill="#ffffff" fill-opacity="1.0" stroke="#333" stroke-width="1.8"/>
+  <line x1="70" y1="80.0" x2="370" y2="80.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="100.0" x2="370" y2="100.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="120.0" x2="370" y2="120.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="140.0" x2="370" y2="140.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="160.0" x2="370" y2="160.0" stroke="#ccc" stroke-width="0.8"/>
+  <rect x="70" y="180.0" width="300" height="20.0" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.8"/>
+  <line x1="70" y1="200.0" x2="370" y2="200.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="220.0" x2="370" y2="220.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="240.0" x2="370" y2="240.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="260.0" x2="370" y2="260.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="280.0" x2="370" y2="280.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="300.0" x2="370" y2="300.0" stroke="#ccc" stroke-width="0.8"/>
+  <line x1="70" y1="180.0" x2="370" y2="180.0" stroke="#2c5f8a" stroke-width="1.6"/>
+  <line x1="70" y1="200.0" x2="370" y2="200.0" stroke="#2c5f8a" stroke-width="1.6"/>
+  <text x="60" y="74" text-anchor="end" font-size="11" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">row 0</text>
+  <text x="60" y="194.0" text-anchor="end" font-size="11" fill="#2c5f8a" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">row 4171</text>
+  <text x="60" y="336" text-anchor="end" font-size="11" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">row 50256</text>
+  <text x="220.0" y="362" text-anchor="middle" font-size="12" fill="#666" font-weight="normal" font-style="normal" >768 columns</text>
+  <text x="220.0" y="378" text-anchor="middle" font-size="10.5" fill="#888" font-weight="normal" font-style="italic" >one learned coordinate each</text>
+  <path d="M 370 190.0 C 420 180.0, 400 167.0, 450 167.0" stroke="#2c5f8a" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+  <rect x="450.0" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="466.875" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">0.021</text>
+  <rect x="483.75" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="500.625" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">-0.114</text>
+  <rect x="517.5" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="534.375" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">0.008</text>
+  <rect x="551.25" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="568.125" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">0.076</text>
+  <rect x="585.0" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="601.875" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">...</text>
+  <rect x="618.75" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="635.625" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">-0.033</text>
+  <rect x="652.5" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="669.375" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">0.052</text>
+  <rect x="686.25" y="150" width="33.75" height="34" rx="0" fill="#e8f0f7" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.0"/>
+  <text x="703.125" y="172" text-anchor="middle" font-size="8.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">0.019</text>
+  <text x="585.0" y="138" text-anchor="middle" font-size="12" fill="#2c5f8a" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte.weight[4171]   the row for " blue"</text>
+  <text x="585.0" y="204" text-anchor="middle" font-size="11" fill="#666" font-weight="normal" font-style="normal" >768 floats. This is what the lookup returns,</text>
+  <text x="585.0" y="220" text-anchor="middle" font-size="11" fill="#666" font-weight="normal" font-style="normal" >and what the matmul scores against.</text>
+  <text x="585.0" y="254" text-anchor="middle" font-size="12" fill="#333" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">50257 x 768 = 38,597,376 parameters</text>
+  <text x="585.0" y="272" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="normal" >154.4 MB in fp32</text>
+</svg>
