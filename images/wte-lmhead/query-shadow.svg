@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 760 442" width="760" height="442" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="760" height="442" fill="#ffffff"/>
+  <text x="380.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">The unembedding asks: which vocabulary vector points this way?</text>
+  <line x1="120" y1="318" x2="512" y2="318" stroke="#b8681c" stroke-width="2.2" marker-end="url(#arOrange)"/>
+  <text x="316.0" y="380" text-anchor="middle" font-size="12" fill="#b8681c" font-weight="bold" font-style="normal" >x, the description of what fits next</text>
+  <text x="316.0" y="396" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" font-style="italic" >after 12 blocks, at the last position of "The sky is"</text>
+  <circle cx="120" cy="318" r="4.0" fill="#333" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <line x1="120" y1="318" x2="345.1086084960312" y2="261.8741202208771" stroke="#2e7d52" stroke-width="1.6" marker-end="url(#arGreen)"/>
+  <line x1="345.1086084960312" y1="261.8741202208771" x2="345.1086084960312" y2="318" stroke="#2e7d52" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <line x1="120" y1="313" x2="345.1086084960312" y2="313" stroke="#2e7d52" stroke-width="3.2" stroke-opacity="0.5"/>
+  <circle cx="345.1086084960312" cy="318" r="3.0" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="359.1086084960312" y="258.8741202208771" text-anchor="start" font-size="11" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">" the"</text>
+  <text x="359.1086084960312" y="272.8741202208771" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">p 0.152</text>
+  <line x1="120" y1="318" x2="328.5202187414068" y2="216.29789394493406" stroke="#2e7d52" stroke-width="1.6" marker-end="url(#arGreen)"/>
+  <line x1="328.5202187414068" y1="216.29789394493406" x2="328.5202187414068" y2="318" stroke="#2e7d52" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <line x1="120" y1="313" x2="328.5202187414068" y2="313" stroke="#2e7d52" stroke-width="3.2" stroke-opacity="0.5"/>
+  <circle cx="328.5202187414068" cy="318" r="3.0" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="342.5202187414068" y="213.29789394493406" text-anchor="start" font-size="11" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">" blue"</text>
+  <text x="342.5202187414068" y="227.29789394493406" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">p 0.086</text>
+  <line x1="120" y1="318" x2="302.81849483675944" y2="175.16653772444727" stroke="#2e7d52" stroke-width="1.6" marker-end="url(#arGreen)"/>
+  <line x1="302.81849483675944" y1="175.16653772444727" x2="302.81849483675944" y2="318" stroke="#2e7d52" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <line x1="120" y1="313" x2="302.81849483675944" y2="313" stroke="#2e7d52" stroke-width="3.2" stroke-opacity="0.5"/>
+  <circle cx="302.81849483675944" cy="318" r="3.0" fill="#2e7d52" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="316.81849483675944" y="172.16653772444727" text-anchor="start" font-size="11" fill="#2e7d52" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">" falling"</text>
+  <text x="316.81849483675944" y="186.16653772444727" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">p 0.073</text>
+  <line x1="120" y1="318" x2="242.94126930210354" y2="121.25284169170916" stroke="#c0392b" stroke-width="1.6" marker-end="url(#arRed)"/>
+  <line x1="242.94126930210354" y1="121.25284169170916" x2="242.94126930210354" y2="318" stroke="#c0392b" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <line x1="120" y1="313" x2="242.94126930210354" y2="313" stroke="#c0392b" stroke-width="3.2" stroke-opacity="0.5"/>
+  <circle cx="242.94126930210354" cy="318" r="3.0" fill="#c0392b" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="256.94126930210354" y="118.25284169170916" text-anchor="start" font-size="11" fill="#c0392b" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">" is"</text>
+  <text x="256.94126930210354" y="132.25284169170916" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">p 0.000</text>
+  <line x1="120" y1="318" x2="168.2355122697202" y2="91.06975662975711" stroke="#c0392b" stroke-width="1.6" marker-end="url(#arRed)"/>
+  <line x1="168.2355122697202" y1="91.06975662975711" x2="168.2355122697202" y2="318" stroke="#c0392b" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <line x1="120" y1="313" x2="168.2355122697202" y2="313" stroke="#c0392b" stroke-width="3.2" stroke-opacity="0.5"/>
+  <circle cx="168.2355122697202" cy="318" r="3.0" fill="#c0392b" fill-opacity="1.0" stroke="none" stroke-width="1.0"/>
+  <text x="182.2355122697202" y="88.06975662975711" text-anchor="start" font-size="11" fill="#c0392b" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">" cat"</text>
+  <text x="182.2355122697202" y="102.06975662975711" text-anchor="start" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">p 0.000</text>
+  <text x="512" y="340" text-anchor="end" font-size="10" fill="#333" font-weight="bold" font-style="normal" >the shadow on x is the score,</text>
+  <text x="512" y="353" text-anchor="end" font-size="10" fill="#888" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">dot(x, W[i])</text>
+  <rect x="544" y="236" width="196" height="92" rx="5" fill="#2c5f8a" fill-opacity="0.06" stroke="#ccc" stroke-width="1.4"/>
+  <text x="642" y="258" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-style="normal" >same direction</text>
+  <text x="642" y="274" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" font-style="normal" >long shadow, high score</text>
+  <text x="642" y="298" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="bold" font-style="normal" >wide angle</text>
+  <text x="642" y="314" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" font-style="normal" >short shadow, low score</text>
+  <text x="380.0" y="428" text-anchor="middle" font-size="9.5" fill="#888" font-weight="normal" font-style="italic" >2D sketch of a 768D geometry, angles exaggerated; in 768D every pair is near right angles</text>
+</svg>
