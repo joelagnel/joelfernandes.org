@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Weight tying, part 1: the two ends of a transformer - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-30 &raquo;<br><a href="/blog/2026-07-30/neuron-gradient-dw-da-db.html">Backprop: Propagating Gradient Through a Neuron</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Weight tying, part 1: the two ends of a transformer</h1>
+<p class="meta">23 Aug 2026</p>
+
+<div class="post">
+<p>I was reading <code class="language-plaintext highlighter-rouge">train_gpt2.py</code> in Andrej Karpathy’s
+<a href="https://github.com/karpathy/llm.c/blob/master/train_gpt2.py">llm.c</a> and stopped
+at this line:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="n">wte</span><span class="p">.</span><span class="n">weight</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span>
+</code></pre></div></div>
+
+<p>The table the model reads at the input is set to the same object as the matrix
+it multiplies by at the output. No transpose, no copy.</p>
+
+<p>This is called weight tying, and it is a choice rather than a rule. GPT-2 ties.
+Llama 3.2 1B and 3B tie, Llama 3.1 8B does not. Qwen3 ties up to 4B and stops at
+8B. Two different labs, the same cutoff, which is a hint that something
+size-dependent is going on.</p>
+
+<p>That raises three separate questions, and they take three posts to answer:</p>
+
+<ol>
+  <li><strong>This post.</strong> What the two matrices actually do, and why they have the same
+shape, which is what makes the assignment legal in the first place.</li>
+  <li><strong><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">How one matrix means two different things</a>.</strong> Why the same numbers
+can serve a lookup at the input and a prediction at the output, when those
+are not the same job.</li>
+  <li><strong><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">What weight tying costs</a>.</strong> What sharing does to the gradients, and
+why large models stop doing it.</li>
+</ol>
+
+<p>Every tensor below is printed from the real GPT-2 124M weights, not made up.</p>
+
+<h2 id="text-becomes-idx-a-tensor-of-integers">Text becomes idx, a tensor of integers</h2>
+
+<p>Text does not reach the model as text. A tokenizer splits it into pieces and
+looks each piece up in a fixed vocabulary of 50257 entries, so what arrives is
+a list of integers.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="kn">import</span> <span class="n">tiktoken</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">enc</span> <span class="o">=</span> <span class="n">tiktoken</span><span class="p">.</span><span class="nf">get_encoding</span><span class="p">(</span><span class="sh">"</span><span class="s">gpt2</span><span class="sh">"</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">enc</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">"</span><span class="s">The sky is</span><span class="sh">"</span><span class="p">)</span>
+<span class="p">[</span><span class="mi">464</span><span class="p">,</span> <span class="mi">6766</span><span class="p">,</span> <span class="mi">318</span><span class="p">]</span>
+</code></pre></div></div>
+
+<p>Two sequences stacked together make <code class="language-plaintext highlighter-rouge">idx</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">idx</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([</span><span class="n">enc</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">"</span><span class="s">The sky is</span><span class="sh">"</span><span class="p">),</span>
+<span class="p">...</span>                     <span class="n">enc</span><span class="p">.</span><span class="nf">encode</span><span class="p">(</span><span class="sh">"</span><span class="s">I ate an</span><span class="sh">"</span><span class="p">)])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">idx</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">idx</span>
+<span class="nf">tensor</span><span class="p">([[</span>  <span class="mi">464</span><span class="p">,</span>  <span class="mi">6766</span><span class="p">,</span>   <span class="mi">318</span><span class="p">],</span>
+        <span class="p">[</span>   <span class="mi">40</span><span class="p">,</span> <span class="mi">15063</span><span class="p">,</span>   <span class="mi">281</span><span class="p">]])</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">idx</code> has shape <code class="language-plaintext highlighter-rouge">(b, t)</code>. <code class="language-plaintext highlighter-rouge">b</code> is the batch size, here 2, the number of
+independent sequences going through together. <code class="language-plaintext highlighter-rouge">t</code> is the time dimension, here 3,
+the token positions within one sequence. So <code class="language-plaintext highlighter-rouge">idx[0]</code> is the first sequence and
+<code class="language-plaintext highlighter-rouge">idx[0][0]</code> is the single integer 464, which decodes back to <code class="language-plaintext highlighter-rouge">"The"</code>.</p>
+
+<p>Everything in <code class="language-plaintext highlighter-rouge">idx</code> is one integer. Nothing is a vector yet. The number 464
+carries no meaning on its own; it is a row number.</p>
+<h2 id="wte-the-table-that-turns-an-index-into-a-vector">wte, the table that turns an index into a vector</h2>
+
+<p><code class="language-plaintext highlighter-rouge">wte</code> stands for word token embedding. It is the first thing the forward pass
+touches:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">wte</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Embedding</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">n_embd</span><span class="p">)</span>   <span class="c1"># 50257 x 768
+</span></code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">50257</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p>One row per vocabulary entry, 768 numbers per row. Row <code class="language-plaintext highlighter-rouge">i</code> is the model’s
+representation of token <code class="language-plaintext highlighter-rouge">i</code>, and those numbers are learned like any other
+weight.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/wte-grid.svg" alt="A grid representing wte.weight with 50257 rows and 768 columns, row 4171 highlighted. An arrow pulls that row out to the right, shown as cells of floating point values labelled wte.weight[4171], the row for the token blue, 768 floats. Annotation reads 50257 x 768 = 38,597,376 parameters, 154.4 MB in fp32." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>Calling <code class="language-plaintext highlighter-rouge">wte(idx)</code> replaces each integer with its row:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">tok_emb</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="nf">wte</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">tok_emb</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">(2, 3)</code> went in and <code class="language-plaintext highlighter-rouge">(2, 3, 768)</code> came out. The batch and time dimensions are
+untouched; each integer just grew 768 numbers underneath it.</p>
+
+<p>And the result really is the row, copied:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">tok_emb</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+<span class="nf">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">0.0686</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0203</span><span class="p">,</span>  <span class="mf">0.0645</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0621</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1135</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0623</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">[</span><span class="mi">464</span><span class="p">][:</span><span class="mi">6</span><span class="p">]</span>
+<span class="nf">tensor</span><span class="p">([</span><span class="o">-</span><span class="mf">0.0686</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0203</span><span class="p">,</span>  <span class="mf">0.0645</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0621</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.1135</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0623</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="nf">equal</span><span class="p">(</span><span class="n">tok_emb</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">[</span><span class="mi">464</span><span class="p">])</span>
+<span class="bp">True</span>
+</code></pre></div></div>
+
+<p>That is the whole operation. <code class="language-plaintext highlighter-rouge">idx[0][0]</code> is 464, so <code class="language-plaintext highlighter-rouge">tok_emb[0][0]</code> is row 464.</p>
+
+<p>It is often described with a one-hot vector: a row of 50257 numbers, all zero
+except a single 1 at index 464. Multiply that by <code class="language-plaintext highlighter-rouge">wte</code> and every row is
+multiplied by zero except row 464, which survives unchanged. The arithmetic
+gives the same answer, and it is a useful way to see that a lookup is a matrix
+multiply in disguise. No implementation builds that vector, because it would be
+50257 numbers to express one index.</p>
+<h2 id="x-the-vector-flowing-through-the-blocks">x, the vector flowing through the blocks</h2>
+
+<p>After the embedding, position information is added and 12 blocks run:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">tok_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="nf">wte</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>   <span class="c1"># (2, 3, 768)
+</span><span class="n">pos_emb</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="nf">wpe</span><span class="p">(</span><span class="n">pos</span><span class="p">)</span>   <span class="c1"># (3, 768), one row per position
+</span><span class="n">x</span> <span class="o">=</span> <span class="n">tok_emb</span> <span class="o">+</span> <span class="n">pos_emb</span>
+
+<span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="n">h</span><span class="p">:</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="nf">block</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="n">x</span> <span class="o">=</span> <span class="n">self</span><span class="p">.</span><span class="n">transformer</span><span class="p">.</span><span class="nf">ln_f</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">x</code> keeps the shape <code class="language-plaintext highlighter-rouge">(2, 3, 768)</code> the entire way. One 768-vector per position,
+updated repeatedly.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/forward-pass.svg" alt="Vertical flow of the forward pass with shapes on every arrow. idx (2, 3) int64, two sequences of three token ids, into wte(idx) which looks up one row per id, giving tok_emb (2, 3, 768). Then plus wpe(pos), position rows (3, 768), giving x (2, 3, 768). Then twelve blocks which do not change the shape. Then lm_head(x), which scores x against all 50257 rows, giving logits (2, 3, 50257), then softmax. A dashed purple line on the left connects wte and lm_head, labelled the same 50257 x 768 tensor." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>The important part is what happens to the <em>content</em> of that vector. Take the
+last position of sequence 0, the one holding <code class="language-plaintext highlighter-rouge">" is"</code>, and measure how similar it
+stays to <code class="language-plaintext highlighter-rouge">wte[318]</code>, the embedding row for <code class="language-plaintext highlighter-rouge">" is"</code> itself:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>                       cosine to wte[318]    vocab mean    rank of " is"
+after the embedding           +0.4810          +0.0656          1
+after block 4                 +0.0256          -0.1005        132
+after block 8                 +0.0434          -0.1289         61
+after block 12, pre ln_f      +0.1550          -0.2283         22
+after ln_f                    -0.1722          -0.1243      50151
+</code></pre></div></div>
+
+<p>The raw cosine is easy to misread, which is why the other two columns are there.
+<code class="language-plaintext highlighter-rouge">ln_f</code> shifts every row’s cosine at once, so <em>all</em> 50257 come out negative after
+it, and the vocabulary mean is <code class="language-plaintext highlighter-rouge">-0.1243</code>. The <code class="language-plaintext highlighter-rouge">-0.1722</code> only means something
+relative to that mean. The honest measure is the last column: the rank of
+<code class="language-plaintext highlighter-rouge">" is"</code> among all 50257 rows, which no global shift can change.</p>
+
+<p>Read that way the story is clear. At the embedding, <code class="language-plaintext highlighter-rouge">" is"</code> is the single
+nearest row out of 50257, because the vector <em>is</em> that row. By the time the
+vector reaches <code class="language-plaintext highlighter-rouge">lm_head</code> it has fallen to rank 50151, the bottom 0.2% of the
+vocabulary. It has stopped describing the token at that position and become
+something else: a description of what should come next.</p>
+<h2 id="how-an-output-projection-works">How an output projection works</h2>
+
+<p>At the output the model has 768 continuous numbers and no index. It has to work
+out which of 50257 tokens comes next, so it compares <code class="language-plaintext highlighter-rouge">x</code> against every row:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">self</span><span class="p">.</span><span class="n">lm_head</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="n">config</span><span class="p">.</span><span class="n">n_embd</span><span class="p">,</span> <span class="n">config</span><span class="p">.</span><span class="n">vocab_size</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+</code></pre></div></div>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">logits</span> <span class="o">=</span> <span class="n">model</span><span class="p">.</span><span class="nf">lm_head</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">logits</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">50257</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p>One score per vocabulary entry, at every position. Those scores are called
+logits.</p>
+
+<p>Each one is a dot product between <code class="language-plaintext highlighter-rouge">x</code> and one row of <code class="language-plaintext highlighter-rouge">wte</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">x_last</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span>           <span class="c1"># the 768-vector after "The sky is"
+</span><span class="o">&gt;&gt;&gt;</span> <span class="n">x_last</span> <span class="o">@</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">[</span><span class="mi">4171</span><span class="p">]</span>   <span class="c1"># 4171 is " blue"
+</span><span class="nf">tensor</span><span class="p">(</span><span class="o">-</span><span class="mf">94.34</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4171</span><span class="p">]</span>
+<span class="nf">tensor</span><span class="p">(</span><span class="o">-</span><span class="mf">94.34</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Same number. Doing all 50257 of those dot products at once is exactly a matrix
+multiply, which is what the layer performs:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">logits</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">x_last</span> <span class="o">@</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">T</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">)</span>
+<span class="bp">True</span>
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/scoring.svg" alt="A vector x of shape (768,), the final x at the last position of The sky is, on the left, with arrows to rows of wte on the right: row 262 the scoring -93.77, row 4171 blue scoring -94.34, row 318 is scoring -102.04, row 3797 cat scoring -103.84, and 50253 more rows. Text reads logit for row i equals dot(x, wte[i]), and doing all 50257 at once is one matrix multiply, logits = x @ wte.T." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<h3 id="what-the-dot-product-is-actually-asking">What the dot product is actually asking</h3>
+
+<p>Mechanically that is all it is, 50257 dot products. The interesting question is
+what a dot product <em>means</em> here, and the answer depends entirely on what <code class="language-plaintext highlighter-rouge">x</code> has
+become by this point.</p>
+
+<p><code class="language-plaintext highlighter-rouge">x</code> started as row <code class="language-plaintext highlighter-rouge">wte[318]</code>, the embedding of <code class="language-plaintext highlighter-rouge">" is"</code>, because that is the
+token at this position. Twelve blocks later it is not that any more. Attention
+has pulled in <code class="language-plaintext highlighter-rouge">"The"</code> and <code class="language-plaintext highlighter-rouge">" sky"</code>, the MLPs have rewritten it repeatedly, and
+what remains is not a description of <code class="language-plaintext highlighter-rouge">" is"</code>. It is a description of whatever
+should come after <code class="language-plaintext highlighter-rouge">" is"</code>. The position no longer holds a token, it holds a
+request.</p>
+
+<p>The dot product is how that request gets matched against the vocabulary. Each of
+the 50257 rows is a vector for one token, sitting in the same 768-dimensional
+space as <code class="language-plaintext highlighter-rouge">x</code>, so asking <code class="language-plaintext highlighter-rouge">dot(x, W[i])</code> is asking how much of row <code class="language-plaintext highlighter-rouge">i</code> points the
+same way as <code class="language-plaintext highlighter-rouge">x</code>. Geometrically that is a projection: the score is the length of
+row <code class="language-plaintext highlighter-rouge">i</code>’s shadow when it is cast onto the direction <code class="language-plaintext highlighter-rouge">x</code> is facing.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/query-shadow.svg" alt="A geometric sketch. A thick orange horizontal arrow labelled x, the description of what fits next, after 12 blocks at the last position of The sky is. Five vocabulary vectors leave the same origin at increasing angles above it: the at p 0.152, blue at p 0.086 and falling at p 0.073 in green at shallow angles, then is at p 0.000 and cat at p 0.000 in red at wide angles. Each drops a dashed perpendicular onto the x axis and casts a thick shadow segment along it, long for the shallow green vectors and short for the wide red ones. A caption reads the shadow on x is the score, dot(x, W[i]). A legend reads same direction, long shadow, high score; wide angle, short shadow, low score. A footnote notes this is a 2D sketch of a 768D geometry with angles exaggerated." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>So the output projection is a similarity test between one query and the whole
+vocabulary. Rows aligned with <code class="language-plaintext highlighter-rouge">x</code> get long shadows and high logits, rows pointing
+elsewhere get short ones. Whatever the model wants next, it expresses by pointing
+<code class="language-plaintext highlighter-rouge">x</code> in the direction of the tokens that would satisfy it.</p>
+
+<p>At this position, the rows that score well are:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dot(x, wte[  262]) " the"   =  -93.77
+dot(x, wte[ 4171]) " blue"  =  -94.34
+dot(x, wte[  318]) " is"    = -102.04
+dot(x, wte[ 3797]) " cat"   = -103.84
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">" is"</code> is the token sitting at that position, and it scores badly. <code class="language-plaintext highlighter-rouge">" blue"</code>
+is not there at all, and it scores near the top. That is the clearest sign that
+<code class="language-plaintext highlighter-rouge">x</code> has stopped describing its own token: the vector is furthest from the thing
+it started as. After a softmax:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>"The sky is"  -&gt;  " the" 0.152, " blue" 0.086, " falling" 0.073
+"I ate an"    -&gt;  " apple" 0.105, " entire" 0.083, " egg" 0.082
+</code></pre></div></div>
+
+<p>One caveat worth stating, because “similarity” invites it. This is not cosine
+similarity. A dot product is <code class="language-plaintext highlighter-rouge">|x| |w| cos(angle)</code>, so row length counts too, and
+the rows differ a lot, from 2.45 to 6.32. Sorting the vocabulary by raw cosine
+against this same <code class="language-plaintext highlighter-rouge">x</code> gives:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>by logit    " the", " blue", " falling", " a", " full", " dark"
+by cosine   "SPONSORED", "theless", "soDeliveryDate", "Reviewer", ...
+</code></pre></div></div>
+
+<p>Not one token in common in the top 100. The projection is a similarity test in
+the loose sense of pointing the same way, but the length of each row is part of
+the score, and the model uses it.</p>
+
+<p>So the same table is being used two different ways. Going in, an index selects a
+row. Coming out, a vector is compared against every row.</p>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/two-ends.svg" alt="Two panels. Left: wte, nn.Embedding(50257, 768), takes a token id, one integer, does a row lookup, returns 768 numbers. Right: lm_head, nn.Linear(768, 50257, bias=False), takes 768 numbers, scores every row, returns 50257 numbers, one logit per vocabulary entry." style="width: 100%; height: auto; display: block;" />
+</div>
+<h2 id="why-there-is-no-transpose-for-the-unembedding">Why there is no transpose for the unembedding</h2>
+
+<p>The assignment <code class="language-plaintext highlighter-rouge">wte.weight = lm_head.weight</code> only works if the two shapes
+already agree. It is worth being slow about why they do, because the natural
+guess is that they should not.</p>
+
+<p>Start with what each side needs. <code class="language-plaintext highlighter-rouge">wte</code> is a table of 50257 rows, one per
+vocabulary entry, each row 768 numbers long. So <code class="language-plaintext highlighter-rouge">wte.weight</code> is
+<code class="language-plaintext highlighter-rouge">(50257, 768)</code>, and <code class="language-plaintext highlighter-rouge">wte(idx)</code> reads row <code class="language-plaintext highlighter-rouge">idx</code> out of it.</p>
+
+<p><code class="language-plaintext highlighter-rouge">lm_head</code> is <code class="language-plaintext highlighter-rouge">nn.Linear(768, 50257, bias=False)</code>. It takes 768 numbers in and
+produces 50257 numbers out. Written as plain matrix multiplication, that is a
+row vector of length 768 times a matrix of shape <code class="language-plaintext highlighter-rouge">(768, 50257)</code>:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  (1, 768)  @  (768, 50257)  -&gt;  (1, 50257)
+     x            matrix           logits
+</code></pre></div></div>
+
+<p>The inner dimensions have to match, 768 against 768, and the outer ones survive.
+So the matrix that the multiplication wants is <code class="language-plaintext highlighter-rouge">(768, 50257)</code>, which is the
+transpose of what <code class="language-plaintext highlighter-rouge">wte</code> wants. That is the mismatch you would expect, and it is
+why the missing transpose looks suspicious.</p>
+
+<p>It is not there because PyTorch does not store the matrix in that orientation.
+<code class="language-plaintext highlighter-rouge">nn.Linear</code> stores its weight as <code class="language-plaintext highlighter-rouge">(out_features, in_features)</code>, not
+<code class="language-plaintext highlighter-rouge">(in_features, out_features)</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">lm_head</span> <span class="o">=</span> <span class="n">nn</span><span class="p">.</span><span class="nc">Linear</span><span class="p">(</span><span class="mi">768</span><span class="p">,</span> <span class="mi">50257</span><span class="p">,</span> <span class="n">bias</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">50257</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">50257</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+</code></pre></div></div>
+
+<p>Identical. Row <code class="language-plaintext highlighter-rouge">i</code> of <code class="language-plaintext highlighter-rouge">lm_head.weight</code> is the 768-long vector that produces
+output number <code class="language-plaintext highlighter-rouge">i</code>, which is the same thing row <code class="language-plaintext highlighter-rouge">i</code> of <code class="language-plaintext highlighter-rouge">wte.weight</code> is: the
+vector belonging to token <code class="language-plaintext highlighter-rouge">i</code>. Both are “one row per vocabulary entry”, so both
+are <code class="language-plaintext highlighter-rouge">(50257, 768)</code>.</p>
+
+<p>The transpose still has to happen for the multiply to be legal. It happens when
+the layer runs, not in storage. <code class="language-plaintext highlighter-rouge">nn.Linear.forward</code> calls <code class="language-plaintext highlighter-rouge">F.linear(x, W)</code>,
+which computes <code class="language-plaintext highlighter-rouge">x @ W.T</code>:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">x</span><span class="p">.</span><span class="n">shape</span>                       <span class="c1"># (b, t, n_embd)
+</span><span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">W</span> <span class="o">=</span> <span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">W</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">50257</span><span class="p">,</span> <span class="mi">768</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">.</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">768</span><span class="p">,</span> <span class="mi">50257</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="nf">lm_head</span><span class="p">(</span><span class="n">x</span><span class="p">).</span><span class="n">shape</span>
+<span class="n">torch</span><span class="p">.</span><span class="nc">Size</span><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">50257</span><span class="p">])</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="nf">lm_head</span><span class="p">(</span><span class="n">x</span><span class="p">),</span> <span class="n">x</span> <span class="o">@</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">)</span>
+<span class="bp">True</span>
+</code></pre></div></div>
+
+<p>So the shapes line up like this, with the last axis of <code class="language-plaintext highlighter-rouge">x</code> contracting against
+the 768 axis and the 50257 axis becoming the new last axis:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  x         (2, 3,  768)
+  W.T             (768, 50257)
+                   ^^^^  contracted
+  logits    (2, 3,       50257)
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">b</code> and <code class="language-plaintext highlighter-rouge">t</code> are carried through untouched, exactly as they were in the lookup.
+The lookup turned each integer into 768 numbers; the unembedding turns each 768
+numbers back into 50257 scores. Same two leading axes, different trailing one.</p>
+
+<p>And <code class="language-plaintext highlighter-rouge">W.T</code> is not a second copy of the matrix. Transposing in PyTorch returns a
+view with the strides swapped, over the same memory:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">W</span><span class="p">.</span><span class="nf">stride</span><span class="p">(),</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">.</span><span class="nf">stride</span><span class="p">()</span>
+<span class="p">((</span><span class="mi">768</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">768</span><span class="p">))</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">W</span><span class="p">.</span><span class="nf">is_contiguous</span><span class="p">(),</span> <span class="n">W</span><span class="p">.</span><span class="n">T</span><span class="p">.</span><span class="nf">is_contiguous</span><span class="p">()</span>
+<span class="p">(</span><span class="bp">True</span><span class="p">,</span> <span class="bp">False</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>So there are three separate things that are easy to run together, and only one
+of them is real storage. The stored matrix is <code class="language-plaintext highlighter-rouge">(50257, 768)</code>. The transposed
+view <code class="language-plaintext highlighter-rouge">(768, 50257)</code> costs nothing and exists only for the duration of the
+multiply. And <code class="language-plaintext highlighter-rouge">wte</code> never transposes at all, since a row lookup does not care
+about the second axis.</p>
+
+<p>That is the whole answer. There is no mismatch for the assignment to fix,
+because the orientation the two uses need is the same one, and after the
+assignment there is a single tensor:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span> <span class="ow">is</span> <span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span>
+<span class="bp">True</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="nf">data_ptr</span><span class="p">()</span> <span class="o">==</span> <span class="n">lm_head</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="nf">data_ptr</span><span class="p">()</span>
+<span class="bp">True</span>
+<span class="o">&gt;&gt;&gt;</span> <span class="n">wte</span><span class="p">.</span><span class="n">weight</span><span class="p">.</span><span class="nf">numel</span><span class="p">()</span>
+<span class="mi">38597376</span>
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0;">
+  <img src="/images/wte-lmhead/one-buffer.svg" alt="A central purple box labelled one tensor, (50257, 768), 38,597,376 floats, one data_ptr(). On the left a blue box labelled wte reads row i, no transpose. On the right an orange box labelled lm_head computes x @ W.T, transpose at call time. Both arrows point into the same central box." style="width: 100%; height: auto; display: block;" />
+</div>
+
+<p>Sharing it saves 38,597,376 parameters, which is 154.4 MB in fp32. It is also
+where the “124M” in GPT-2 124M comes from: tied the model is 124,439,808
+parameters, untied it would be 163,037,184.</p>
+
+<h2 id="where-this-leaves-us">Where this leaves us</h2>
+
+<p>So far this is all mechanics. <code class="language-plaintext highlighter-rouge">idx</code> is <code class="language-plaintext highlighter-rouge">(b, t)</code> integers, <code class="language-plaintext highlighter-rouge">wte</code> turns each into a
+row giving <code class="language-plaintext highlighter-rouge">(b, t, 768)</code>, twelve blocks rewrite the contents without changing the
+shape, and <code class="language-plaintext highlighter-rouge">lm_head</code> compares each vector against all 50257 rows giving
+<code class="language-plaintext highlighter-rouge">(b, t, 50257)</code> logits.</p>
+
+<p>The shapes agree. <code class="language-plaintext highlighter-rouge">nn.Linear</code> stores its weight as <code class="language-plaintext highlighter-rouge">(out_features, in_features)</code>,
+which for <code class="language-plaintext highlighter-rouge">lm_head</code> is <code class="language-plaintext highlighter-rouge">(50257, 768)</code>, the same as <code class="language-plaintext highlighter-rouge">wte</code>. Both are one row per
+vocabulary entry. The transpose happens at call time, inside <code class="language-plaintext highlighter-rouge">F.linear</code>, and it
+is a view rather than a copy. Nothing has to be rearranged for the assignment to
+work.</p>
+
+<p>But legal is not the same as sensible. A row lookup and a similarity comparison
+are not obviously the same job, and the vector arriving at <code class="language-plaintext highlighter-rouge">lm_head</code> is supposed
+to describe the <em>next</em> token while the row it looks up describes the <em>current</em>
+one. That is the subject of
+<a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">part 2</a>.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>

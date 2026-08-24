@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 360" width="780" height="360" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arOrange" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4d8f"/>
+    </marker>
+  </defs>
+  <rect width="780" height="360" fill="#ffffff"/>
+  <text x="390.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">One buffer in memory, read two different ways</text>
+  <rect x="290" y="130" width="200" height="110" rx="4" fill="#f3eef8" fill-opacity="1.0" stroke="#6b4d8f" stroke-width="2.0"/>
+  <text x="390.0" y="164" text-anchor="middle" font-size="13" fill="#6b4d8f" font-weight="bold" font-style="normal" >one tensor</text>
+  <text x="390.0" y="186" text-anchor="middle" font-size="12" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">(50257, 768)</text>
+  <text x="390.0" y="208" text-anchor="middle" font-size="11" fill="#777" font-weight="normal" font-style="normal" >38,597,376 floats</text>
+  <text x="390.0" y="226" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">one data_ptr()</text>
+  <rect x="40" y="100" width="200" height="80" rx="4" fill="#f7fafc" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+  <text x="140" y="126" text-anchor="middle" font-size="14" fill="#2c5f8a" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">wte</text>
+  <text x="140" y="146" text-anchor="middle" font-size="11.5" fill="#333" font-weight="normal" font-style="normal" >reads row i</text>
+  <text x="140" y="164" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >no transpose</text>
+  <path d="M 240 140 C 265 140, 265 170, 288 170" stroke="#2c5f8a" stroke-width="1.8" fill="none" marker-end="url(#ar)"/>
+  <rect x="540" y="100" width="200" height="80" rx="4" fill="#fffaf5" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.6"/>
+  <text x="640" y="126" text-anchor="middle" font-size="14" fill="#b8681c" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">lm_head</text>
+  <text x="640" y="146" text-anchor="middle" font-size="11.5" fill="#333" font-weight="normal" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">computes x @ W.T</text>
+  <text x="640" y="164" text-anchor="middle" font-size="10.5" fill="#777" font-weight="normal" font-style="normal" >transpose at call time</text>
+  <path d="M 492 170 C 515 170, 515 140, 538 140" stroke="#b8681c" stroke-width="1.8" fill="none" marker-end="url(#arOrange)"/>
+  <text x="390.0" y="286" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" font-style="normal" font-family="SFMono-Regular, Consolas, Menlo, monospace">self.transformer.wte.weight = self.lm_head.weight</text>
+  <text x="390.0" y="312" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-style="normal" >nn.Linear stores .weight as (out_features, in_features) = (50257, 768),</text>
+  <text x="390.0" y="330" text-anchor="middle" font-size="11.5" fill="#666" font-weight="normal" font-style="normal" >which already matches wte, so the assignment needs no transpose.</text>
+</svg>
