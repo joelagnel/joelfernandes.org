@@ -46,11 +46,6 @@ def arrow(parts, x1, y1, x2, y2, label=None, label_y=None):
              label, 20, 600, "middle", C["muted"])
 
 
-def polyarrow(parts, points):
-    path = " L".join(f"{x},{y}" for x, y in points)
-    parts.append(f'<path d="M{path}" stroke="{C["line"]}" stroke-width="4" fill="none" marker-end="url(#arrow)"/>')
-
-
 def tag(parts, x, y, value, fill, stroke):
     width = max(110, len(value) * 15 + 34)
     parts.append(f'<rect x="{x}" y="{y}" width="{width}" height="38" rx="19" fill="{fill}" stroke="{stroke}" stroke-width="2"/>')
@@ -122,27 +117,6 @@ def tiled_flow():
     save("flash-tiled-flow.svg", parts)
 
 
-def correction():
-    parts = open_svg(
-        820, 1040, "Online softmax corrects earlier state when a new maximum arrives",
-        "A first score tile contains scores one and two and establishes maximum two. A later score of four changes the maximum, so the current denominator and value numerator state are rescaled by exp of minus two before the new contribution is added.",
-    )
-    text(parts, 48, 58, "When a later tile finds a larger", 32, 700)
-    text(parts, 48, 98, "score, rescale the current state", 32, 700)
-    text(parts, 48, 143, "Online normalizer recurrence, applied to the value numerator too.", 18, color=C["muted"])
-    box(parts, 60, 210, 230, 130, "tile 1 scores\n[1, 2]", C["k"], C["ks"], 26)
-    box(parts, 400, 190, 350, 170, "after tile 1\nm = 2\nl = exp(-1)+1\no = exp(-1)*V0 + V1", C["state"], C["ss"], 22)
-    arrow(parts, 290, 275, 400, 275)
-    box(parts, 100, 455, 620, 155, "r = exp(m - m') = exp(-2)\n\nm was 2.  r puts l and o on m'=4's scale.", "#fff7ed", "#c2410c", 22)
-    arrow(parts, 575, 360, 410, 455)
-    box(parts, 60, 720, 230, 125, "tile 2 score\n[4]", C["k"], C["ks"], 26)
-    box(parts, 400, 695, 350, 170, "after tile 2\nm' = 4\nl = r*l + 1\no = r*o + V2", C["state"], C["ss"], 22)
-    arrow(parts, 290, 782, 400, 782)
-    polyarrow(parts, [(720, 532), (775, 532), (775, 780), (750, 780)])
-    save("online-maximum-correction.svg", parts)
-
-
 if __name__ == "__main__":
     tile_redraw()
     tiled_flow()
-    correction()

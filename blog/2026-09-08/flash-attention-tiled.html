@@ -423,7 +423,6 @@
   <li><a href="#from-the-example-to-tiled-gpu-work">From the example to tiled GPU work</a></li>
   <li><a href="#more-arithmetic-can-still-be-faster">More arithmetic can still be faster</a></li>
   <li><a href="#flashattention-2-and-the-pytorch-call">FlashAttention-2 and the PyTorch call</a></li>
-  <li><a href="#what-flash-attention-changes-and-what-it-does-not">What Flash Attention changes, and what it does not</a></li>
   <li><a href="#validation-code">Validation code</a></li>
   <li><a href="#references">References</a></li>
 </ol>
@@ -655,12 +654,6 @@ o = r*o + exp(4 - 4)*V2
 m = m'
 </code></pre></div></div>
 
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/flash-attention/online-maximum-correction.png" alt="Online maximum correction. A first score tile of one and two has maximum two. A later score of four changes the maximum, so the old denominator and value numerator state are multiplied by exp of minus two before the new score's contribution is added." style="max-width: 100%; height: auto;" />
-</div>
-
-<p><em>Figure 5. The correction puts old and new terms on the same numerical scale. The running-normalizer idea comes from Milakov and Gimelshein, not from FlashAttention.</em></p>
-
 <p>For a current score tile <code class="language-plaintext highlighter-rouge">s</code> and its value tile <code class="language-plaintext highlighter-rouge">Vtile</code>, the row-local update can be written as:</p>
 
 <div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m' = max(m, max(s))
@@ -684,7 +677,7 @@ m = m'
   <img src="/images/flash-attention/flash-tiled-flow.png" alt="Flash Attention tiled dataflow. HBM contains a Q tile, successive K and V tiles, and the completed output tile. On-chip SRAM holds the Q tile, current K and V tile, temporary score tile, and separate m l o state for each query row. Only the completed output tile is written back." style="max-width: 100%; height: auto;" />
 </div>
 
-<p><em>Figure 6. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.</em></p>
+<p><em>Figure 5. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.</em></p>
 
 <p>For one pair of tiles, the kernel performs these operations before moving on:</p>
 
@@ -705,7 +698,7 @@ m = m'
   <img src="/images/flash-attention/karpathy-2-01-13-flashattention-figure.png" alt="Andrej Karpathy's video at 2 minutes 1 second and 13 seconds shows Figure 1 of the FlashAttention paper, contrasting HBM and SRAM and showing tiled attention computation." style="max-width: 100%; height: auto;" />
 </div>
 
-<p><em>Figure 7. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7273s">Karpathy, 2:01:13</a>, with Figure 1 of the FlashAttention paper onscreen. The figure connects the memory hierarchy, tiled schedule, and reduced HBM traffic discussed here.</em></p>
+<p><em>Figure 6. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7273s">Karpathy, 2:01:13</a>, with Figure 1 of the FlashAttention paper onscreen. The figure connects the memory hierarchy, tiled schedule, and reduced HBM traffic discussed here.</em></p>
 
 <h2 id="more-arithmetic-can-still-be-faster">More arithmetic can still be faster</h2>
 
@@ -730,42 +723,7 @@ m = m'
   <img src="/images/flash-attention/karpathy-2-05-20-sdpa-replacement.png" alt="Andrej Karpathy's video at 2 minutes 5 seconds and 20 seconds shows the original attention lines commented out and replaced by y equals F dot scaled_dot_product_attention of q k v with is_causal true." style="max-width: 100%; height: auto;" />
 </div>
 
-<p><em>Figure 8. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7520s">Karpathy, 2:05:20</a>, immediately after the one-line <code class="language-plaintext highlighter-rouge">scaled_dot_product_attention</code> replacement is visible in the code.</em></p>
-
-<h2 id="what-flash-attention-changes-and-what-it-does-not">What Flash Attention changes, and what it does not</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>It changes</th>
-      <th>It does not change</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Where temporary score and probability tiles live</td>
-      <td>The dense query-to-key relationship</td>
-    </tr>
-    <tr>
-      <td>HBM reads and writes for attention intermediates</td>
-      <td>The <code class="language-plaintext highlighter-rouge">T x T</code> set of interactions evaluated by exact dense attention</td>
-    </tr>
-    <tr>
-      <td>The order in which softmax is accumulated</td>
-      <td>The exact softmax result, apart from ordinary floating-point differences</td>
-    </tr>
-    <tr>
-      <td>The implementation’s memory footprint for intermediates</td>
-      <td>Causal semantics: row <code class="language-plaintext highlighter-rouge">i</code> still attends only to positions <code class="language-plaintext highlighter-rouge">&lt;= i</code></td>
-    </tr>
-    <tr>
-      <td>The opportunity to trade recomputation for less HBM traffic</td>
-      <td>Attention into an approximation</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>The precise claim is not that Flash Attention stores no intermediates. It stores temporary score tiles and online-softmax state on chip. The important property is that it avoids materializing the complete <code class="language-plaintext highlighter-rouge">T x T</code> score and probability tensors in HBM.</p>
+<p><em>Figure 7. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7520s">Karpathy, 2:05:20</a>, immediately after the one-line <code class="language-plaintext highlighter-rouge">scaled_dot_product_attention</code> replacement is visible in the code.</em></p>
 
 <h2 id="validation-code">Validation code</h2>
 
