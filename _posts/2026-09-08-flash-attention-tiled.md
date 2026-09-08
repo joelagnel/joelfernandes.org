@@ -284,14 +284,6 @@ o = r*o + exp(4 - 4)*V2
 m = m'
 ```
 
-<div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/flash-attention/online-maximum-correction.png"
-       alt="Online maximum correction. A first score tile of one and two has maximum two. A later score of four changes the maximum, so the old denominator and value numerator state are multiplied by exp of minus two before the new score's contribution is added."
-       style="max-width: 100%; height: auto;"/>
-</div>
-
-*Figure 5. The correction puts old and new terms on the same numerical scale. The running-normalizer idea comes from Milakov and Gimelshein, not from FlashAttention.*
-
 For a current score tile `s` and its value tile `Vtile`, the row-local update can be written as:
 
 ```text
@@ -318,7 +310,7 @@ The FlashAttention paper uses tiles of `Q`, `K`, and `V` that fit in on-chip mem
        style="max-width: 100%; height: auto;"/>
 </div>
 
-*Figure 6. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.*
+*Figure 5. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.*
 
 For one pair of tiles, the kernel performs these operations before moving on:
 
@@ -339,7 +331,7 @@ For one pair of tiles, the kernel performs these operations before moving on:
        style="max-width: 100%; height: auto;"/>
 </div>
 
-*Figure 7. [Karpathy, 2:01:13](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7273s), with Figure 1 of the FlashAttention paper onscreen. The figure connects the memory hierarchy, tiled schedule, and reduced HBM traffic discussed here.*
+*Figure 6. [Karpathy, 2:01:13](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7273s), with Figure 1 of the FlashAttention paper onscreen. The figure connects the memory hierarchy, tiled schedule, and reduced HBM traffic discussed here.*
 
 ## More arithmetic can still be faster
 
@@ -367,7 +359,7 @@ This is not a promise that every call on every machine runs one identical Flash 
        style="max-width: 100%; height: auto;"/>
 </div>
 
-*Figure 8. [Karpathy, 2:05:20](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7520s), immediately after the one-line `scaled_dot_product_attention` replacement is visible in the code.*
+*Figure 7. [Karpathy, 2:05:20](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7520s), immediately after the one-line `scaled_dot_product_attention` replacement is visible in the code.*
 
 ## What Flash Attention changes, and what it does not
 
