@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Flash Attention, tiled: exact attention without the T x T HBM matrix - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+<li class="recent">2026-07-31 &raquo;<br><a href="/blog/2026-07-31/sum-broadcast-duality-gradient.html">Backprop: Why the Gradient of a Sum Is a Broadcast</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Flash Attention, tiled: exact attention without the T x T HBM matrix</h1>
+<p class="meta">08 Sep 2026</p>
+
+<div class="post">
+<p>Ordinary causal attention has a storage problem before it has a math problem. For a sequence of length <code class="language-plaintext highlighter-rouge">T</code>, it forms a <code class="language-plaintext highlighter-rouge">T x T</code> score matrix, transforms it into another <code class="language-plaintext highlighter-rouge">T x T</code> probability matrix, and then multiplies that by <code class="language-plaintext highlighter-rouge">V</code>. Those large intermediates live in GPU high-bandwidth memory, or HBM, which is large but costly to read and write repeatedly.</p>
+
+<p><a href="https://arxiv.org/abs/2205.14135v2">FlashAttention</a> keeps the same dense-attention result while changing the schedule. It computes small score tiles in fast on-chip memory, updates a little softmax state for each query row, immediately uses the tile’s probabilities to scale value vectors, and avoids materializing the complete <code class="language-plaintext highlighter-rouge">T x T</code> score or probability matrix in HBM.</p>
+
+<p>That distinction is the point of this post:</p>
+
+<ul>
+  <li><strong>Ordinary attention:</strong> materializes large <code class="language-plaintext highlighter-rouge">T x T</code> intermediates in HBM.</li>
+  <li><strong>Flash Attention:</strong> evaluates the equivalent interactions tile by tile without storing those complete intermediates in HBM.</li>
+</ul>
+
+<p>Exact dense attention still compares <code class="language-plaintext highlighter-rouge">T</code> queries with <code class="language-plaintext highlighter-rouge">T</code> keys, so its arithmetic remains quadratic in sequence length. Flash Attention is not an approximation and does not make exact dense attention linear-time. It is an <strong>IO-aware</strong> algorithm: it accounts for data movement between HBM and the much smaller on-chip SRAM and registers.</p>
+
+<h2 id="contents">Contents</h2>
+
+<ol>
+  <li><a href="#ordinary-causal-attention">Ordinary causal attention</a></li>
+  <li><a href="#a-three-token-example">A three-token example</a></li>
+  <li><a href="#online-softmax-one-row-at-a-time">Online softmax, one row at a time</a></li>
+  <li><a href="#what-happens-when-the-maximum-changes">What happens when the maximum changes</a></li>
+  <li><a href="#from-the-example-to-tiled-gpu-work">From the example to tiled GPU work</a></li>
+  <li><a href="#more-arithmetic-can-still-be-faster">More arithmetic can still be faster</a></li>
+  <li><a href="#flashattention-2-and-the-pytorch-call">FlashAttention-2 and the PyTorch call</a></li>
+  <li><a href="#what-flash-attention-changes-and-what-it-does-not">What Flash Attention changes, and what it does not</a></li>
+  <li><a href="#validation-code">Validation code</a></li>
+  <li><a href="#references">References</a></li>
+</ol>
+
+<h2 id="ordinary-causal-attention">Ordinary causal attention</h2>
+
+<p>For one attention head, use these names consistently:</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">B</code> is the batch size: the number of independent sequences evaluated together.</li>
+  <li><code class="language-plaintext highlighter-rouge">H</code> is the number of attention heads: separate attention calculations running in parallel.</li>
+  <li><code class="language-plaintext highlighter-rouge">T</code> is the sequence length: the number of token positions in each sequence.</li>
+  <li><code class="language-plaintext highlighter-rouge">d</code> is <code class="language-plaintext highlighter-rouge">head_size</code>: the number of components in every query, key, and value vector for one head.</li>
+  <li><code class="language-plaintext highlighter-rouge">Q</code>, <code class="language-plaintext highlighter-rouge">K</code>, and <code class="language-plaintext highlighter-rouge">V</code> are the query, key, and value tensors. Each has shape <code class="language-plaintext highlighter-rouge">(B, H, T, d)</code>.</li>
+</ul>
+
+<p>For each query row, <code class="language-plaintext highlighter-rouge">S</code> names its raw score matrix, <code class="language-plaintext highlighter-rouge">P</code> the softmax probability matrix, and <code class="language-plaintext highlighter-rouge">O</code> the output after probabilities mix the value vectors.</p>
+
+<p>The score matrix for one head is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S = (Q K^T) / sqrt(d)          shape: T x T
+</code></pre></div></div>
+
+<p>Row <code class="language-plaintext highlighter-rouge">i</code> contains one score for every key as seen by query <code class="language-plaintext highlighter-rouge">i</code>. In causal attention, query <code class="language-plaintext highlighter-rouge">i</code> may use only keys at positions <code class="language-plaintext highlighter-rouge">&lt;= i</code>. Scores for future positions are set to negative infinity before softmax, which makes their probabilities zero.</p>
+
+<p>The ordinary PyTorch spelling is:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">att</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">@</span> <span class="n">k</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">/</span> <span class="n">math</span><span class="p">.</span><span class="nf">sqrt</span><span class="p">(</span><span class="n">k</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+<span class="n">att</span> <span class="o">=</span> <span class="n">att</span><span class="p">.</span><span class="nf">masked_fill</span><span class="p">(</span><span class="n">mask</span> <span class="o">==</span> <span class="mi">0</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
+<span class="n">att</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">att</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">att</span> <span class="o">@</span> <span class="n">v</span>
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">att</code> is first the score matrix and then the probability matrix. Both have shape <code class="language-plaintext highlighter-rouge">(B, H, T, T)</code>. The final <code class="language-plaintext highlighter-rouge">y</code> has shape <code class="language-plaintext highlighter-rouge">(B, H, T, d)</code>.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/ordinary-attention-hbm.png" alt="Ordinary attention dataflow. Q, K, and V begin in HBM. Q and K form a T by T score matrix written to HBM, then scaling and causal masking lead to a T by T probability matrix written to HBM, which is multiplied by V to create a T by d output." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 1. Ordinary attention stores both the score matrix <code class="language-plaintext highlighter-rouge">S</code> and probability matrix <code class="language-plaintext highlighter-rouge">P</code> in HBM.</em></p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/karpathy-2-00-26-original-code.png" alt="Andrej Karpathy's video at 2 minutes 0 seconds shows the ordinary four-line causal-attention calculation in train_gpt2.py: query-key product, mask, softmax, and multiply by V." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 2. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7226s">Andrej Karpathy, 2:00:26</a>, with the ordinary multi-operation attention code visible. The screen capture is included for commentary under the video source; the mathematical claims in this post are cited to the primary papers below.</em></p>
+
+<h2 id="a-three-token-example">A three-token example</h2>
+
+<p>Here is a deliberately small case where the attention arithmetic is visible:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>B = 1
+H = 1
+T = 3
+head_size = 2
+Q, K, V shape = (1, 1, 3, 2)
+</code></pre></div></div>
+
+<p>The two components in each value vector come from <code class="language-plaintext highlighter-rouge">head_size = 2</code>. A probability remains a scalar, but it scales the entire value vector. The small head size is only for readable arithmetic. The GPT-2 124M configuration in <a href="https://github.com/karpathy/build-nanogpt/blob/master/train_gpt2.py">Karpathy’s walkthrough code</a> uses 12 heads of size 64, for 768 embedding components.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">q</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">k</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+<span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[[</span>
+    <span class="p">[</span><span class="mf">10.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">],</span>  <span class="c1"># V0
+</span>    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">],</span>  <span class="c1"># V1
+</span>    <span class="p">[</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">],</span>  <span class="c1"># V2
+</span><span class="p">]]])</span>
+</code></pre></div></div>
+
+<p>Because every query and key is zero, every raw dot product is zero:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>q @ k.transpose(-2, -1)
+
+[[0, 0, 0],
+ [0, 0, 0],
+ [0, 0, 0]]
+</code></pre></div></div>
+
+<p>Real query rows do not normally have identical all-zero scores. Here the zeros isolate the causal mask, the softmax denominator, and the value-vector arithmetic.</p>
+
+<p>The causal mask produces:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[[0,   -inf, -inf],
+ [0,    0,   -inf],
+ [0,    0,    0  ]]
+</code></pre></div></div>
+
+<p>Row-wise softmax produces:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[[1,   0,   0  ],
+ [1/2, 1/2, 0  ],
+ [1/3, 1/3, 1/3]]
+</code></pre></div></div>
+
+<p>So the ordinary output is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Y0 = V0                         = [10, 0]
+Y1 = (V0 + V1) / 2              = [5, 10]
+Y2 = (V0 + V1 + V2) / 3         = [13.333, 16.667]
+</code></pre></div></div>
+
+<h2 id="online-softmax-one-row-at-a-time">Online softmax, one row at a time</h2>
+
+<p>The original online-normalizer work is <a href="https://arxiv.org/abs/1805.02867v2">Milakov and Gimelshein’s 2018 NVIDIA paper</a>. It maintains a running row maximum and softmax denominator in one pass, with fewer memory accesses than separate maximum and normalization passes.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/karpathy-2-03-50-online-normalizer.png" alt="Andrej Karpathy's video at 2 minutes 3 seconds and 50 seconds shows the title page of the NVIDIA paper Online normalizer calculation for softmax by Maxim Milakov and Natalia Gimelshein." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 3. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7430s">Karpathy, 2:03:50</a>, opening the NVIDIA online-normalizer paper. The recurrence originated there, before FlashAttention used the same kind of running state for tiled attention.</em></p>
+
+<p>For one query row, maintain three values:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m = largest score seen so far                      scalar
+l = sum of exp(score - m) seen so far              scalar, also known as the softmax denominator
+o = sum of exp(score - m) * value seen so far      vector of length head_size
+
+output = o / l
+</code></pre></div></div>
+
+<p>Each query row has its own separate <code class="language-plaintext highlighter-rouge">m</code>, <code class="language-plaintext highlighter-rouge">l</code>, and <code class="language-plaintext highlighter-rouge">o</code>. When the explanation moves from row 0 to row 1, it starts a new state. A real kernel updates many rows in a query tile at once, but no row inherits another row’s partial numerator or denominator.</p>
+
+<p>Every permitted score in this teaching example is zero, so every active exponential is simply <code class="language-plaintext highlighter-rouge">exp(0) = 1</code>. The three rows below therefore use the direct <code class="language-plaintext highlighter-rouge">1</code> weights first. The later nonzero example shows why the running maximum <code class="language-plaintext highlighter-rouge">m</code> and its correction factor are necessary.</p>
+
+<h3 id="row-0-starts-fresh">Row 0 starts fresh</h3>
+
+<p>Row 0 can see only <code class="language-plaintext highlighter-rouge">K0,V0</code>:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m = -inf, l = 0, o = [0, 0]
+
+process score 0:
+m = 0
+l = 1
+o = V0 = [10, 0]
+
+Y0 = o / l = [10, 0]
+</code></pre></div></div>
+
+<h3 id="row-1-starts-fresh">Row 1 starts fresh</h3>
+
+<p>Discard row 0’s state. Row 1 sees <code class="language-plaintext highlighter-rouge">K0,V0</code> and <code class="language-plaintext highlighter-rouge">K1,V1</code>:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m = -inf, l = 0, o = [0, 0]
+
+m = 0
+l = 1 + 1 = 2
+o = 1*V0 + 1*V1 = [10, 20]
+
+Y1 = o / l = [5, 10]
+</code></pre></div></div>
+
+<h3 id="row-2-starts-fresh-then-uses-two-tiles">Row 2 starts fresh, then uses two tiles</h3>
+
+<p>Discard every other row’s state. Row 2 begins with a fresh state:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m = -inf
+l = 0
+o = [0, 0]
+</code></pre></div></div>
+
+<p>The first tile has keys and values 0 and 1:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tile 1 scores = [0, 0]
+
+m = 0
+l = 1 + 1 = 2
+o = 1*V0 + 1*V1 = [10, 20]
+</code></pre></div></div>
+
+<p>The score values and exponential weights for this tile are consumed immediately. They do not need to become row 2 of a full <code class="language-plaintext highlighter-rouge">T x T</code> HBM tensor.</p>
+
+<p>The second tile has key and value 2:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tile 2 score = [0]
+
+l = l + 1
+  = 2 + 1
+   = 3
+
+o = o + V2
+   = [10, 20] + [30, 30]
+   = [40, 50]
+
+Y2 = o / l = [13.333, 16.667]
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/whiteboard-tile-redraw.png" alt="A redraw of the supplied whiteboard. HBM supplies a two-row K and V tile, then a one-row tile. On-chip, the score weights for query row two are immediately multiplied by full value vectors and accumulated into m, l, and o before final division by l." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 4. Original redraw informed by the supplied whiteboard. The K and V data arrive as tiles. Each tile’s local softmax weights are multiplied by complete value vectors before the state is updated.</em></p>
+
+<h2 id="what-happens-when-the-maximum-changes">What happens when the maximum changes</h2>
+
+<p>The all-zero example has a convenience: the running maximum never changes, so every correction factor is one. The maximum matters when a later tile contains a higher score.</p>
+
+<p>Subtracting a row maximum is safe because the same factor appears in every softmax numerator and denominator:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>softmax(si) = exp(si - m) / sum_j exp(sj - m)
+</code></pre></div></div>
+
+<p>The largest exponent becomes <code class="language-plaintext highlighter-rouge">exp(0) = 1</code>, avoiding overflow. In online processing, a later tile can change <code class="language-plaintext highlighter-rouge">m</code>, so the old partial state must be translated to the new maximum first.</p>
+
+<p>Suppose one query row receives:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tile 1 scores: [1, 2]
+tile 2 score:  [4]
+</code></pre></div></div>
+
+<p>After the first tile:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m = 2
+l = exp(1 - 2) + exp(2 - 2)
+  = exp(-1) + 1
+
+o = exp(-1)*V0 + 1*V1
+</code></pre></div></div>
+
+<p>When score 4 arrives:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m' = 4
+r = exp(m - m')
+  = exp(2 - 4)
+  = exp(-2)
+
+l = r*l + exp(4 - 4)
+o = r*o + exp(4 - 4)*V2
+m = m'
+</code></pre></div></div>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/online-maximum-correction.png" alt="Online maximum correction. A first score tile of one and two has maximum two. A later score of four changes the maximum, so the old denominator and value numerator state are multiplied by exp of minus two before the new score's contribution is added." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 5. The correction puts old and new terms on the same numerical scale. The running-normalizer idea comes from Milakov and Gimelshein, not from FlashAttention.</em></p>
+
+<p>For a current score tile <code class="language-plaintext highlighter-rouge">s</code> and its value tile <code class="language-plaintext highlighter-rouge">Vtile</code>, the row-local update can be written as:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>m' = max(m, max(s))
+r  = exp(m - m')
+p  = exp(s - m')
+
+l = r*l + sum(p)
+o = r*o + p^T @ Vtile
+m = m'
+</code></pre></div></div>
+
+<p>Here <code class="language-plaintext highlighter-rouge">p</code> is a vector of scalar weights for the current tile, while <code class="language-plaintext highlighter-rouge">Vtile</code> contains full <code class="language-plaintext highlighter-rouge">head_size</code>-component value vectors. Therefore <code class="language-plaintext highlighter-rouge">p^T @ Vtile</code> is another <code class="language-plaintext highlighter-rouge">head_size</code>-component vector, ready to add to <code class="language-plaintext highlighter-rouge">o</code>.</p>
+
+<h2 id="from-the-example-to-tiled-gpu-work">From the example to tiled GPU work</h2>
+
+<p>A GPU has a memory hierarchy. HBM or VRAM holds large model tensors, but reading and writing it costs more time and energy than operating on data already in the small SRAM and registers close to the compute units.</p>
+
+<p>The FlashAttention paper uses tiles of <code class="language-plaintext highlighter-rouge">Q</code>, <code class="language-plaintext highlighter-rouge">K</code>, and <code class="language-plaintext highlighter-rouge">V</code> that fit in on-chip memory. The pedagogical schedule below holds a query tile and its row-local state on chip while successive K/V tiles are visited. Production kernels can choose a different loop order to fit a particular GPU’s SRAM and work partitioning, but the state update is the same.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/flash-tiled-flow.png" alt="Flash Attention tiled dataflow. HBM contains a Q tile, successive K and V tiles, and the completed output tile. On-chip SRAM holds the Q tile, current K and V tile, temporary score tile, and separate m l o state for each query row. Only the completed output tile is written back." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 6. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.</em></p>
+
+<p>For one pair of tiles, the kernel performs these operations before moving on:</p>
+
+<ol>
+  <li>Load relevant <code class="language-plaintext highlighter-rouge">Q_i</code>, <code class="language-plaintext highlighter-rouge">K_j</code>, and <code class="language-plaintext highlighter-rouge">V_j</code> blocks into on-chip memory.</li>
+  <li>Compute local scores <code class="language-plaintext highlighter-rouge">S_ij = Q_i @ K_j.T</code>.</li>
+  <li>Apply the causal mask to positions where a query would see a future key.</li>
+  <li>Compute tile exponentials and the per-row maximum and sum.</li>
+  <li>Update every row’s separate <code class="language-plaintext highlighter-rouge">(m, l, o)</code> state.</li>
+  <li>Multiply the tile’s probability weights by <code class="language-plaintext highlighter-rouge">V_j</code> immediately, adding the resulting value vectors into <code class="language-plaintext highlighter-rouge">o</code>.</li>
+  <li>Discard the temporary score and probability tile after its contribution is incorporated.</li>
+  <li>Write the completed output block when all relevant K/V tiles have been processed.</li>
+</ol>
+
+<p><a href="https://arxiv.org/pdf/2205.14135v2">Dao et al.’s FlashAttention paper</a> describes this as an IO-aware exact-attention algorithm. Its forward algorithm computes score tiles, row maxima, exponentials, and value products on chip; it writes the output and limited softmax state rather than the full score and probability matrices.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/karpathy-2-01-13-flashattention-figure.png" alt="Andrej Karpathy's video at 2 minutes 1 second and 13 seconds shows Figure 1 of the FlashAttention paper, contrasting HBM and SRAM and showing tiled attention computation." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 7. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7273s">Karpathy, 2:01:13</a>, with Figure 1 of the FlashAttention paper onscreen. The figure connects the memory hierarchy, tiled schedule, and reduced HBM traffic discussed here.</em></p>
+
+<h2 id="more-arithmetic-can-still-be-faster">More arithmetic can still be faster</h2>
+
+<p>The apparent contradiction is useful: Flash Attention can recompute some quantities and execute more floating-point operations, yet finish sooner.</p>
+
+<p>A matrix multiply is very fast once its operands are near the GPU compute units. Repeated HBM transfers are comparatively expensive. The FlashAttention paper reports that recomputation in the backward pass can raise FLOP count while lowering HBM traffic enough to reduce elapsed time. The implementation trades some arithmetic for much less movement of <code class="language-plaintext highlighter-rouge">T x T</code> intermediates.</p>
+
+<p>This is more than ordinary operator fusion. A compiler can fuse adjacent operations when their existing computation graph permits it. The FlashAttention rewrite changes the storage schedule and introduces online state so the full attention matrix is never materialized in HBM. It may also recompute blocks in the backward pass. In Karpathy’s <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7273s">walkthrough around 2:01:13</a>, the contrast is between familiar kernel fusion and this algorithmic change. <code class="language-plaintext highlighter-rouge">torch.compile</code> did not infer that new tiled online-softmax algorithm from the straightforward sequence of PyTorch operations in that example.</p>
+
+<h2 id="flashattention-2-and-the-pytorch-call">FlashAttention-2 and the PyTorch call</h2>
+
+<p><a href="https://arxiv.org/abs/2307.08691v1">FlashAttention-2</a> is a follow-on implementation and algorithm paper, not a renamed contribution of FlashAttention-1. It improves parallelism and work partitioning: it reduces non-matmul work, partitions a single head across thread blocks to increase occupancy, and reduces shared-memory communication between warps. Karpathy transitions to this lineage at <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7406s">about 2:03:26</a>.</p>
+
+<p>At the Python level, the ordinary attention block can be replaced with:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">y</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">scaled_dot_product_attention</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">is_causal</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>This is not a promise that every call on every machine runs one identical Flash Attention kernel. According to the <a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html">PyTorch documentation</a>, the operator chooses among supported implementations according to the backend and input constraints. On CUDA it may dispatch an optimized fused kernel, including FlashAttention-2; on other backends or unsupported shapes and data types, it can select another implementation.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/flash-attention/karpathy-2-05-20-sdpa-replacement.png" alt="Andrej Karpathy's video at 2 minutes 5 seconds and 20 seconds shows the original attention lines commented out and replaced by y equals F dot scaled_dot_product_attention of q k v with is_causal true." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 8. <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7520s">Karpathy, 2:05:20</a>, immediately after the one-line <code class="language-plaintext highlighter-rouge">scaled_dot_product_attention</code> replacement is visible in the code.</em></p>
+
+<h2 id="what-flash-attention-changes-and-what-it-does-not">What Flash Attention changes, and what it does not</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>It changes</th>
+      <th>It does not change</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Where temporary score and probability tiles live</td>
+      <td>The dense query-to-key relationship</td>
+    </tr>
+    <tr>
+      <td>HBM reads and writes for attention intermediates</td>
+      <td>The <code class="language-plaintext highlighter-rouge">T x T</code> set of interactions evaluated by exact dense attention</td>
+    </tr>
+    <tr>
+      <td>The order in which softmax is accumulated</td>
+      <td>The exact softmax result, apart from ordinary floating-point differences</td>
+    </tr>
+    <tr>
+      <td>The implementation’s memory footprint for intermediates</td>
+      <td>Causal semantics: row <code class="language-plaintext highlighter-rouge">i</code> still attends only to positions <code class="language-plaintext highlighter-rouge">&lt;= i</code></td>
+    </tr>
+    <tr>
+      <td>The opportunity to trade recomputation for less HBM traffic</td>
+      <td>Attention into an approximation</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The precise claim is not that Flash Attention stores no intermediates. It stores temporary score tiles and online-softmax state on chip. The important property is that it avoids materializing the complete <code class="language-plaintext highlighter-rouge">T x T</code> score and probability tensors in HBM.</p>
+
+<h2 id="validation-code">Validation code</h2>
+
+<p>This runnable PyTorch program computes the example two ways: explicitly, and through <code class="language-plaintext highlighter-rouge">scaled_dot_product_attention</code>. On a CPU the second call will normally use a math implementation. On a supported CUDA configuration it may choose a fused backend. Either way, both paths implement the same causal attention result.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">torch</span>
+<span class="kn">import</span> <span class="n">torch.nn.functional</span> <span class="k">as</span> <span class="n">F</span>
+
+<span class="n">q</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">k</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tensor</span><span class="p">([[[</span>
+    <span class="p">[</span><span class="mf">10.0</span><span class="p">,</span>  <span class="mf">0.0</span><span class="p">],</span>
+    <span class="p">[</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">20.0</span><span class="p">],</span>
+    <span class="p">[</span><span class="mf">30.0</span><span class="p">,</span> <span class="mf">30.0</span><span class="p">],</span>
+<span class="p">]]])</span>
+
+<span class="n">scale</span> <span class="o">=</span> <span class="n">q</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="o">-</span><span class="mf">0.5</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="p">(</span><span class="n">q</span> <span class="o">@</span> <span class="n">k</span><span class="p">.</span><span class="nf">transpose</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">scale</span>
+<span class="n">causal_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">tril</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">ones</span><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="p">.</span><span class="nb">bool</span><span class="p">))</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">scores</span><span class="p">.</span><span class="nf">masked_fill</span><span class="p">(</span><span class="o">~</span><span class="n">causal_mask</span><span class="p">,</span> <span class="nf">float</span><span class="p">(</span><span class="sh">'</span><span class="s">-inf</span><span class="sh">'</span><span class="p">))</span>
+<span class="n">probabilities</span> <span class="o">=</span> <span class="n">torch</span><span class="p">.</span><span class="nf">softmax</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">manual_output</span> <span class="o">=</span> <span class="n">probabilities</span> <span class="o">@</span> <span class="n">v</span>
+
+<span class="n">fused_output</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">scaled_dot_product_attention</span><span class="p">(</span>
+    <span class="n">q</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">is_causal</span><span class="o">=</span><span class="bp">True</span>
+<span class="p">)</span>
+
+<span class="nf">print</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">manual_output</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">fused_output</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">torch</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">manual_output</span><span class="p">,</span> <span class="n">fused_output</span><span class="p">))</span>
+</code></pre></div></div>
+
+<p>The probabilities are the lower-triangular rows shown above, and the final check is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>True
+</code></pre></div></div>
+
+<h2 id="the-core-insight">The core insight</h2>
+
+<p>Flash Attention does not remove dense attention’s quadratic arithmetic. It removes a costly habit of the ordinary implementation: writing the full score and probability matrices to HBM and reading them back for the next operation.</p>
+
+<p>Tiling plus online softmax lets each score tile contribute directly to the final value-vector output. The result is exact attention, rearranged around the GPU memory hierarchy.</p>
+
+<h2 id="references">References</h2>
+
+<ol>
+  <li>Maxim Milakov and Natalia Gimelshein, <a href="https://arxiv.org/abs/1805.02867v2"><em>Online normalizer calculation for softmax</em></a>, NVIDIA, 2018. <a href="https://arxiv.org/pdf/1805.02867v2">PDF</a>.</li>
+  <li>Tri Dao, Daniel Y. Fu, Stefano Ermon, Atri Rudra, and Christopher Re, <a href="https://arxiv.org/abs/2205.14135v2"><em>FlashAttention: Fast and Memory-Efficient Exact Attention with IO-Awareness</em></a>, 2022. <a href="https://arxiv.org/pdf/2205.14135v2">PDF</a>.</li>
+  <li>Tri Dao, <a href="https://arxiv.org/abs/2307.08691v1"><em>FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning</em></a>, 2023. <a href="https://arxiv.org/pdf/2307.08691v1">PDF</a>.</li>
+  <li>Andrej Karpathy, <a href="https://www.youtube.com/watch?v=l8pRSuU81PU"><em>Let’s reproduce GPT-2 (124M)</em></a>, video walkthrough. Relevant Flash Attention discussion: <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7226s">2:00:26</a> through <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=7520s">2:05:20</a>.</li>
+  <li>PyTorch, <a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html"><code class="language-plaintext highlighter-rouge">torch.nn.functional.scaled_dot_product_attention</code></a>.</li>
+</ol>
+
+<h3 id="diagram-provenance">Diagram provenance</h3>
+
+<p>Figure 4 is an original explanatory redraw informed by the supplied whiteboard, especially its two-key K/V tile and immediate softmax-times-<code class="language-plaintext highlighter-rouge">V</code> calculation. Figures 1, 4, 5, and 6 are original diagrams; Figures 2, 3, 7, and 8 are limited, timestamped video screengrabs used for commentary. Figure 1 has editable <a href="/images/flash-attention/ordinary-attention-hbm.d2">D2 source</a>.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
