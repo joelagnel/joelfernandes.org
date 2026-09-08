@@ -29,9 +29,8 @@ Exact dense attention still compares `T` queries with `T` keys, so its arithmeti
 5. [From the example to tiled GPU work](#from-the-example-to-tiled-gpu-work)
 6. [More arithmetic can still be faster](#more-arithmetic-can-still-be-faster)
 7. [FlashAttention-2 and the PyTorch call](#flashattention-2-and-the-pytorch-call)
-8. [What Flash Attention changes, and what it does not](#what-flash-attention-changes-and-what-it-does-not)
-9. [Validation code](#validation-code)
-10. [References](#references)
+8. [Validation code](#validation-code)
+9. [References](#references)
 
 ## Ordinary causal attention
 
@@ -360,18 +359,6 @@ This is not a promise that every call on every machine runs one identical Flash 
 </div>
 
 *Figure 7. [Karpathy, 2:05:20](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7520s), immediately after the one-line `scaled_dot_product_attention` replacement is visible in the code.*
-
-## What Flash Attention changes, and what it does not
-
-| It changes | It does not change |
-|---|---|
-| Where temporary score and probability tiles live | The dense query-to-key relationship |
-| HBM reads and writes for attention intermediates | The `T x T` set of interactions evaluated by exact dense attention |
-| The order in which softmax is accumulated | The exact softmax result, apart from ordinary floating-point differences |
-| The implementation's memory footprint for intermediates | Causal semantics: row `i` still attends only to positions `<= i` |
-| The opportunity to trade recomputation for less HBM traffic | Attention into an approximation |
-
-The precise claim is not that Flash Attention stores no intermediates. It stores temporary score tiles and online-softmax state on chip. The important property is that it avoids materializing the complete `T x T` score and probability tensors in HBM.
 
 ## Validation code
 
