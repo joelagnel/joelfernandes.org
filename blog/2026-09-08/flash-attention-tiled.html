@@ -439,7 +439,7 @@
   <li><code class="language-plaintext highlighter-rouge">Q</code>, <code class="language-plaintext highlighter-rouge">K</code>, and <code class="language-plaintext highlighter-rouge">V</code> are the query, key, and value tensors. Each has shape <code class="language-plaintext highlighter-rouge">(B, H, T, d)</code>.</li>
 </ul>
 
-<p>For each query row, <code class="language-plaintext highlighter-rouge">S</code> names its raw score matrix, <code class="language-plaintext highlighter-rouge">P</code> the softmax probability matrix, and <code class="language-plaintext highlighter-rouge">O</code> the output after probabilities mix the value vectors.</p>
+<p>For each query row, <code class="language-plaintext highlighter-rouge">S</code> names its raw score matrix, <code class="language-plaintext highlighter-rouge">P</code> the softmax probability matrix, and <code class="language-plaintext highlighter-rouge">Y</code> the final output: a weighted sum of value vectors.</p>
 
 <p>The score matrix for one head is:</p>
 
@@ -674,10 +674,14 @@ m = m'
 <p>The FlashAttention paper uses tiles of <code class="language-plaintext highlighter-rouge">Q</code>, <code class="language-plaintext highlighter-rouge">K</code>, and <code class="language-plaintext highlighter-rouge">V</code> that fit in on-chip memory. The pedagogical schedule below holds a query tile and its row-local state on chip while successive K/V tiles are visited. Production kernels can choose a different loop order to fit a particular GPU’s SRAM and work partitioning, but the state update is the same.</p>
 
 <div style="margin: 1.5em 0; text-align: center;">
-  <img src="/images/flash-attention/flash-tiled-flow.png" alt="Flash Attention tiled dataflow. HBM contains a Q tile, successive K and V tiles, and the completed output tile. On-chip SRAM holds the Q tile, current K and V tile, temporary score tile, and separate m l o state for each query row. Only the completed output tile is written back." style="max-width: 100%; height: auto;" />
+  <img src="/images/flash-attention/flash-tiled-flow.png" alt="Flash Attention tiled dataflow. A score tile S i j becomes tile weights p, which are immediately multiplied by the current value tile V j. The result p transpose times V j updates vector o for each row. That row's m l o state carries to the next K V tile. After the final tile, Y equals o divided by l is written as the weighted-value output tile in HBM." style="max-width: 100%; height: auto;" />
 </div>
 
-<p><em>Figure 5. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.</em></p>
+<p><em>Figure 5. <code class="language-plaintext highlighter-rouge">S_ij</code> becomes tile weights <code class="language-plaintext highlighter-rouge">p</code>; the kernel immediately forms <code class="language-plaintext highlighter-rouge">p^T @ V_j</code> and adds that weighted value vector to <code class="language-plaintext highlighter-rouge">o</code>. The row’s <code class="language-plaintext highlighter-rouge">m</code>, <code class="language-plaintext highlighter-rouge">l</code>, and <code class="language-plaintext highlighter-rouge">o</code> carry into the next K/V tile. If the tile finds a larger maximum, <code class="language-plaintext highlighter-rouge">r</code> rescales the carried <code class="language-plaintext highlighter-rouge">l</code> and <code class="language-plaintext highlighter-rouge">o</code> first. After the last tile, <code class="language-plaintext highlighter-rouge">Y = o / l</code> is the final weighted-value output written to HBM.</em></p>
+
+<p><code class="language-plaintext highlighter-rouge">m</code>, <code class="language-plaintext highlighter-rouge">l</code>, and <code class="language-plaintext highlighter-rouge">o</code> are not reset between K/V tiles. They carry the partial result from one tile to the next. Only after the final K/V tile does the kernel divide <code class="language-plaintext highlighter-rouge">o</code> by <code class="language-plaintext highlighter-rouge">l</code> to form <code class="language-plaintext highlighter-rouge">Y</code>.</p>
+
+<p>Lower-case <code class="language-plaintext highlighter-rouge">o</code> is the running, unnormalized weighted-value numerator. Upper-case <code class="language-plaintext highlighter-rouge">Y</code> is the final weighted-value output after the division by <code class="language-plaintext highlighter-rouge">l</code>.</p>
 
 <p>For one pair of tiles, the kernel performs these operations before moving on:</p>
 
