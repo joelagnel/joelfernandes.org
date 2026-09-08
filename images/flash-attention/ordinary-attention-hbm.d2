@@ -25,7 +25,7 @@ score: "S = Q K^T\nT x T score matrix\nwritten to HBM" { class: hbm }
 scale: "scale by 1 / sqrt(d)" { class: op }
 mask: "causal mask\nfuture positions = -inf" { class: op }
 prob: "P = softmax(masked S)\nT x T probabilities\nwritten to HBM" { class: hbm }
-out: "O = P V\nT x d output" { class: out }
+out: "Y = P V\nT x d weighted-V output" { class: out }
 
 inputs.q -> score
 inputs.k -> score
