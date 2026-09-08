@@ -42,7 +42,7 @@ For one attention head, use these names consistently:
 - `d` is `head_size`: the number of components in every query, key, and value vector for one head.
 - `Q`, `K`, and `V` are the query, key, and value tensors. Each has shape `(B, H, T, d)`.
 
-For each query row, `S` names its raw score matrix, `P` the softmax probability matrix, and `O` the output after probabilities mix the value vectors.
+For each query row, `S` names its raw score matrix, `P` the softmax probability matrix, and `Y` the final output: a weighted sum of value vectors.
 
 The score matrix for one head is:
 
@@ -305,11 +305,15 @@ The FlashAttention paper uses tiles of `Q`, `K`, and `V` that fit in on-chip mem
 
 <div style="margin: 1.5em 0; text-align: center;">
   <img src="/images/flash-attention/flash-tiled-flow.png"
-       alt="Flash Attention tiled dataflow. HBM contains a Q tile, successive K and V tiles, and the completed output tile. On-chip SRAM holds the Q tile, current K and V tile, temporary score tile, and separate m l o state for each query row. Only the completed output tile is written back."
+       alt="Flash Attention tiled dataflow. A score tile S i j becomes tile weights p, which are immediately multiplied by the current value tile V j. The result p transpose times V j updates vector o for each row. That row's m l o state carries to the next K V tile. After the final tile, Y equals o divided by l is written as the weighted-value output tile in HBM."
        style="max-width: 100%; height: auto;"/>
 </div>
 
-*Figure 5. HBM is the large storage layer. SRAM and registers are the small, fast workspace. The temporary score tile lives only in that workspace.*
+*Figure 5. `S_ij` becomes tile weights `p`; the kernel immediately forms `p^T @ V_j` and adds that weighted value vector to `o`. The row's `m`, `l`, and `o` carry into the next K/V tile. If the tile finds a larger maximum, `r` rescales the carried `l` and `o` first. After the last tile, `Y = o / l` is the final weighted-value output written to HBM.*
+
+`m`, `l`, and `o` are not reset between K/V tiles. They carry the partial result from one tile to the next. Only after the final K/V tile does the kernel divide `o` by `l` to form `Y`.
+
+Lower-case `o` is the running, unnormalized weighted-value numerator. Upper-case `Y` is the final weighted-value output after the division by `l`.
 
 For one pair of tiles, the kernel performs these operations before moving on:
 

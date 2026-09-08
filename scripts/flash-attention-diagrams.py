@@ -46,6 +46,11 @@ def arrow(parts, x1, y1, x2, y2, label=None, label_y=None):
              label, 20, 600, "middle", C["muted"])
 
 
+def polyarrow(parts, points):
+    path = " L".join(f"{x},{y}" for x, y in points)
+    parts.append(f'<path d="M{path}" stroke="{C["line"]}" stroke-width="4" fill="none" marker-end="url(#arrow)"/>')
+
+
 def tag(parts, x, y, value, fill, stroke):
     width = max(110, len(value) * 15 + 34)
     parts.append(f'<rect x="{x}" y="{y}" width="{width}" height="38" rx="19" fill="{fill}" stroke="{stroke}" stroke-width="2"/>')
@@ -88,11 +93,11 @@ def tile_redraw():
 
 def tiled_flow():
     parts = open_svg(
-        820, 1150, "Flash Attention keeps tile-local work on chip",
-        "HBM provides a Q tile and a stream of K and V tiles. On-chip SRAM retains the Q tile, forms temporary score tiles, and separately updates m, l, and o for every query row. Only a completed output tile returns to HBM.",
+        820, 1180, "Flash Attention turns score tiles into weighted-value output on chip",
+        "HBM provides a Q tile and a stream of K and V tiles. On-chip SRAM turns each temporary score tile S i j into tile weights p, immediately multiplies p by the current value tile, and accumulates the resulting weighted value vector in o. The m, l, o state stays on chip and carries into each next K and V tile. After the final tile, Y equals o divided by l returns to HBM.",
     )
     text(parts, 48, 58, "Flash Attention: score tiles", 34, 700)
-    text(parts, 48, 100, "stay on chip", 34, 700)
+    text(parts, 48, 100, "become weighted values on chip", 34, 700)
     text(parts, 48, 145, "HBM is large storage. SRAM and registers are the small, fast workspace.", 18, color=C["muted"])
 
     parts.append(f'<rect x="60" y="195" width="700" height="185" rx="16" fill="{C["hbm"]}" stroke="{C["hs"]}" stroke-width="3"/>')
@@ -100,20 +105,24 @@ def tiled_flow():
     box(parts, 110, 280, 220, 72, "Q tile", C["q"], C["qs"], 25)
     box(parts, 485, 268, 225, 96, "K / V tile stream\nnext tile arrives", C["hbm"], C["hs"], 22)
 
-    parts.append(f'<rect x="60" y="455" width="700" height="545" rx="16" fill="{C["sram"]}" stroke="{C["srs"]}" stroke-width="3"/>')
+    parts.append(f'<rect x="60" y="455" width="700" height="590" rx="16" fill="{C["sram"]}" stroke="{C["srs"]}" stroke-width="3"/>')
     text(parts, 410, 505, "on-chip SRAM / registers", 27, 700, "middle")
     box(parts, 112, 545, 245, 92, "Q_i stays resident", C["q"], C["qs"], 23)
-    box(parts, 463, 545, 245, 92, "K_j + V_j\ncurrent tile", C["k"], C["ks"], 23)
-    box(parts, 205, 690, 410, 125, "temporary score tile\nS_ij = Q_i K_j^T\nmask, exponentials", C["sram"], C["srs"], 23)
-    box(parts, 205, 855, 410, 105, "separate m, l, o for each query row\nupdated for every tile", C["state"], C["ss"], 22)
+    box(parts, 463, 545, 245, 92, "K_j + V_j\ncurrent, then next tile", C["k"], C["ks"], 20)
+    box(parts, 205, 675, 410, 100, "temporary score tile\nS_ij = Q_i K_j^T\ncausal mask", C["sram"], C["srs"], 23)
+    box(parts, 205, 805, 410, 105, "tile weights p\np = exp(S_ij - m')\nr = exp(m - m')", C["state"], C["ss"], 20)
+    box(parts, 205, 935, 410, 95, "carry m, l, o to next K/V tile\nl = r*l + sum(p)\no = r*o + p^T @ V_j", C["state"], C["ss"], 19)
 
-    box(parts, 250, 1050, 320, 74, "completed O tile in HBM", "#dcfce7", "#15803d", 22)
+    box(parts, 190, 1080, 440, 74, "completed Y tile in HBM\nY = o / l, weighted-V output", "#dcfce7", "#15803d", 20)
     arrow(parts, 220, 352, 235, 545)
     arrow(parts, 597, 364, 585, 545)
-    arrow(parts, 235, 637, 340, 690)
-    arrow(parts, 585, 637, 480, 690)
-    arrow(parts, 410, 815, 410, 855)
-    arrow(parts, 410, 960, 410, 1050)
+    arrow(parts, 235, 637, 340, 675)
+    arrow(parts, 585, 637, 480, 675)
+    arrow(parts, 410, 775, 410, 805)
+    arrow(parts, 410, 910, 410, 935)
+    arrow(parts, 708, 637, 615, 960)
+    polyarrow(parts, [(615, 1000), (735, 1000), (735, 520), (708, 590)])
+    arrow(parts, 410, 1030, 410, 1080)
     save("flash-tiled-flow.svg", parts)
 
 

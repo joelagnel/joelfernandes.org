@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="820" height="1150" viewBox="0 0 820 1150" role="img" aria-labelledby="title desc">
-<title id="title">Flash Attention keeps tile-local work on chip</title>
-<desc id="desc">HBM provides a Q tile and a stream of K and V tiles. On-chip SRAM retains the Q tile, forms temporary score tiles, and separately updates m, l, and o for every query row. Only a completed output tile returns to HBM.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="1180" viewBox="0 0 820 1180" role="img" aria-labelledby="title desc">
+<title id="title">Flash Attention turns score tiles into weighted-value output on chip</title>
+<desc id="desc">HBM provides a Q tile and a stream of K and V tiles. On-chip SRAM turns each temporary score tile S i j into tile weights p, immediately multiplies p by the current value tile, and accumulates the resulting weighted value vector in o. The m, l, o state stays on chip and carries into each next K and V tile. After the final tile, Y equals o divided by l returns to HBM.</desc>
 <defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#475569"/></marker></defs>
 <rect width="100%" height="100%" fill="#ffffff"/>
 <text x="48" y="58" text-anchor="start" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172a">Flash Attention: score tiles</text>
-<text x="48" y="100" text-anchor="start" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172a">stay on chip</text>
+<text x="48" y="100" text-anchor="start" font-family="Arial, sans-serif" font-size="34" font-weight="700" fill="#0f172a">become weighted values on chip</text>
 <text x="48" y="145" text-anchor="start" font-family="Arial, sans-serif" font-size="18" font-weight="400" fill="#475569">HBM is large storage. SRAM and registers are the small, fast workspace.</text>
 <rect x="60" y="195" width="700" height="185" rx="16" fill="#fce7f3" stroke="#be185d" stroke-width="3"/>
 <text x="410" y="245" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#0f172a">HBM / VRAM</text>
@@ -13,26 +13,35 @@
 <rect x="485" y="268" width="225" height="96" rx="16" fill="#fce7f3" stroke="#be185d" stroke-width="3"/>
 <text x="597.5" y="309.7" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="#0f172a">K / V tile stream</text>
 <text x="597.5" y="339.7" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="#0f172a">next tile arrives</text>
-<rect x="60" y="455" width="700" height="545" rx="16" fill="#ecfccb" stroke="#4d7c0f" stroke-width="3"/>
+<rect x="60" y="455" width="700" height="590" rx="16" fill="#ecfccb" stroke="#4d7c0f" stroke-width="3"/>
 <text x="410" y="505" text-anchor="middle" font-family="Arial, sans-serif" font-size="27" font-weight="700" fill="#0f172a">on-chip SRAM / registers</text>
 <rect x="112" y="545" width="245" height="92" rx="16" fill="#dbeafe" stroke="#2563eb" stroke-width="3"/>
 <text x="234.5" y="599.05" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">Q_i stays resident</text>
 <rect x="463" y="545" width="245" height="92" rx="16" fill="#ede9fe" stroke="#7c3aed" stroke-width="3"/>
-<text x="585.5" y="584.55" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">K_j + V_j</text>
-<text x="585.5" y="615.55" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">current tile</text>
-<rect x="205" y="690" width="410" height="125" rx="16" fill="#ecfccb" stroke="#4d7c0f" stroke-width="3"/>
-<text x="410.0" y="731.55" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">temporary score tile</text>
-<text x="410.0" y="762.55" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">S_ij = Q_i K_j^T</text>
-<text x="410.0" y="793.55" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">mask, exponentials</text>
-<rect x="205" y="855" width="410" height="105" rx="16" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
-<text x="410.0" y="901.2" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="#0f172a">separate m, l, o for each query row</text>
-<text x="410.0" y="931.2" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="#0f172a">updated for every tile</text>
-<rect x="250" y="1050" width="320" height="74" rx="16" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
-<text x="410.0" y="1094.7" text-anchor="middle" font-family="Arial, sans-serif" font-size="22" font-weight="600" fill="#0f172a">completed O tile in HBM</text>
+<text x="585.5" y="585.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">K_j + V_j</text>
+<text x="585.5" y="613.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">current, then next tile</text>
+<rect x="205" y="675" width="410" height="100" rx="16" fill="#ecfccb" stroke="#4d7c0f" stroke-width="3"/>
+<text x="410.0" y="704.05" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">temporary score tile</text>
+<text x="410.0" y="735.05" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">S_ij = Q_i K_j^T</text>
+<text x="410.0" y="766.05" text-anchor="middle" font-family="Arial, sans-serif" font-size="23" font-weight="600" fill="#0f172a">causal mask</text>
+<rect x="205" y="805" width="410" height="105" rx="16" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+<text x="410.0" y="838.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">tile weights p</text>
+<text x="410.0" y="866.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">p = exp(S_ij - m&#x27;)</text>
+<text x="410.0" y="894.5" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">r = exp(m - m&#x27;)</text>
+<rect x="205" y="935" width="410" height="95" rx="16" fill="#ccfbf1" stroke="#0f766e" stroke-width="3"/>
+<text x="410.0" y="964.15" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" font-weight="600" fill="#0f172a">carry m, l, o to next K/V tile</text>
+<text x="410.0" y="991.15" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" font-weight="600" fill="#0f172a">l = r*l + sum(p)</text>
+<text x="410.0" y="1018.15" text-anchor="middle" font-family="Arial, sans-serif" font-size="19" font-weight="600" fill="#0f172a">o = r*o + p^T @ V_j</text>
+<rect x="190" y="1080" width="440" height="74" rx="16" fill="#dcfce7" stroke="#15803d" stroke-width="3"/>
+<text x="410.0" y="1111.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">completed Y tile in HBM</text>
+<text x="410.0" y="1139.0" text-anchor="middle" font-family="Arial, sans-serif" font-size="20" font-weight="600" fill="#0f172a">Y = o / l, weighted-V output</text>
 <path d="M220,352 L235,545" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
 <path d="M597,364 L585,545" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
-<path d="M235,637 L340,690" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
-<path d="M585,637 L480,690" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
-<path d="M410,815 L410,855" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
-<path d="M410,960 L410,1050" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M235,637 L340,675" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M585,637 L480,675" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M410,775 L410,805" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M410,910 L410,935" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M708,637 L615,960" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M615,1000 L735,1000 L735,520 L708,590" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
+<path d="M410,1030 L410,1080" stroke="#475569" stroke-width="4" fill="none" marker-end="url(#arrow)"/>
 </svg>
