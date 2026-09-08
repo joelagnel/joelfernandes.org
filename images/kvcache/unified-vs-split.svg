@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 440" width="880" height="440" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/>
+    </marker>
+  </defs>
+  <rect width="880" height="440" fill="#ffffff"/>
+  <text x="440.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">Same bytes, different partitioning, different attention width</text>
+  <text x="60" y="54" text-anchor="start" font-size="12.5" fill="#333" font-weight="bold" >unified: one array of 40960 cells, shared by all four slots</text>
+  <rect x="60" y="76" width="740" height="34" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <rect x="60" y="76" width="562.06396484375" height="34" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="341.031982421875" y="98" text-anchor="middle" font-size="11.5" fill="#2c5f8a" font-weight="bold" >slot 0, 31111 tokens</text>
+  <rect x="622.06396484375" y="76" width="5.419921875" height="34" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.3"/>
+  <line x1="60" y1="124" x2="624.25" y2="124" stroke="#c0392b" stroke-width="1.6"/>
+  <line x1="60" y1="119" x2="60" y2="129" stroke="#c0392b" stroke-width="1.6"/>
+  <line x1="624.25" y1="119" x2="624.25" y2="129" stroke="#c0392b" stroke-width="1.6"/>
+  <text x="342.125" y="142" text-anchor="middle" font-size="11.5" fill="#c0392b" font-weight="bold" font-family="Menlo, Consolas, monospace">n_kv = 31232 for every slot, including slot 1</text>
+  <text x="648.25" y="92" text-anchor="start" font-size="10.5" fill="#2e7d52" font-weight="bold" >slot 1, 30 tokens</text>
+  <text x="648.25" y="108" text-anchor="start" font-size="10.5" fill="#2e7d52" font-weight="normal" >pays the full width</text>
+  <text x="60" y="208" text-anchor="start" font-size="12.5" fill="#333" font-weight="bold" >non-unified: four arrays of 40960 cells, one per slot</text>
+  <rect x="60" y="230" width="176" height="34" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <rect x="60" y="230" width="133.680078125" height="34" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="126.88" y="252" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" >slot 0</text>
+  <text x="148.0" y="224" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >stream 0</text>
+  <rect x="244" y="230" width="176" height="34" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <rect x="244" y="230" width="4" height="34" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.3"/>
+  <text x="332.0" y="252" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" >slot 1</text>
+  <text x="332.0" y="224" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >stream 1</text>
+  <rect x="428" y="230" width="176" height="34" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <text x="516.0" y="252" text-anchor="middle" font-size="11" fill="#aaa" font-weight="normal" >slot 2</text>
+  <text x="516.0" y="224" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >stream 2</text>
+  <rect x="612" y="230" width="176" height="34" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <text x="700.0" y="252" text-anchor="middle" font-size="11" fill="#aaa" font-weight="normal" >slot 3</text>
+  <text x="700.0" y="224" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >stream 3</text>
+  <line x1="60" y1="276" x2="193.680078125" y2="276" stroke="#c0392b" stroke-width="1.5"/>
+  <text x="126.88" y="292" text-anchor="middle" font-size="10.5" fill="#c0392b" font-weight="bold" font-family="Menlo, Consolas, monospace">n_kv = 31232</text>
+  <line x1="244" y1="276" x2="252" y2="276" stroke="#2e7d52" stroke-width="1.5"/>
+  <text x="264" y="292" text-anchor="start" font-size="10.5" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">n_kv = 256</text>
+  <rect x="60" y="340" width="760" height="78" rx="5" fill="#fbfcfd" fill-opacity="1.0" stroke="#888" stroke-width="1.2"/>
+  <text x="80" y="362" text-anchor="start" font-size="11.5" fill="#333" font-weight="bold" >Measured: RTX 4090, Qwen3-4B Q4_K_M, q4_0 KV, 40960-token slots, idle-slot purge disabled.</text>
+  <text x="80" y="382" text-anchor="start" font-size="11.5" fill="#555" font-weight="normal" >Slot 1 decoding alone, then decoding again with the 31111-token prompt parked on slot 0:</text>
+  <text x="80" y="400" text-anchor="start" font-size="11.5" fill="#c0392b" font-weight="bold" font-family="Menlo, Consolas, monospace">unified  228 -> 202 tok/s (11.5%)        non-unified  235 -> 231 tok/s (1.6%)</text>
+</svg>

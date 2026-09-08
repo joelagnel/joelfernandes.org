@@ -1,0 +1,101 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 400" width="880" height="400" font-family="Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/>
+    </marker>
+    <marker id="arGrey" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#888"/>
+    </marker>
+    <marker id="arRed" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/>
+    </marker>
+    <marker id="arGreen" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/>
+    </marker>
+    <marker id="arPurple" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/>
+    </marker>
+  </defs>
+  <rect width="880" height="400" fill="#ffffff"/>
+  <text x="440.0" y="26" text-anchor="middle" font-size="16" font-weight="bold" fill="#333">find_slot() walks the array from a cursor; it never searches by content</text>
+  <text x="440.0" y="52" text-anchor="middle" font-size="12" fill="#666" font-weight="normal" >before: the cursor sits at cell 5 and three tokens of chat A need homes</text>
+  <rect x="70" y="84" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="93.0" y="104" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="93.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >0</text>
+  <rect x="120" y="84" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="143.0" y="104" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="143.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >1</text>
+  <rect x="170" y="84" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="193.0" y="104" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="193.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >2</text>
+  <rect x="220" y="84" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="243.0" y="104" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="243.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >3</text>
+  <rect x="270" y="84" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="293.0" y="104" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="293.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >4</text>
+  <rect x="320" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="343.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >5</text>
+  <rect x="370" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="393.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >6</text>
+  <rect x="420" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="443.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >7</text>
+  <rect x="470" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="493.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >8</text>
+  <rect x="520" y="84" width="46" height="30" rx="3" fill="#fdf3e8" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.3"/>
+  <text x="543.0" y="104" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="543.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >9</text>
+  <rect x="570" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="593.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >10</text>
+  <rect x="620" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="643.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >11</text>
+  <rect x="670" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="693.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >12</text>
+  <rect x="720" y="84" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="743.0" y="78" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >13</text>
+  <line x1="343.0" y1="140" x2="343.0" y2="120" stroke="#c0392b" stroke-width="1.6" marker-end="url(#arRed)"/>
+  <text x="343.0" y="154" text-anchor="middle" font-size="11" fill="#c0392b" font-weight="bold" font-family="Menlo, Consolas, monospace">head</text>
+  <text x="573.0" y="154" text-anchor="middle" font-size="10" fill="#b8681c" font-weight="normal" >chat B, but outside its sliding window</text>
+  <line x1="543.0" y1="140" x2="543.0" y2="120" stroke="#b8681c" stroke-width="1.4" stroke-dasharray="3,2" marker-end="url(#arGrey)"/>
+  <text x="440.0" y="208" text-anchor="middle" font-size="12" fill="#666" font-weight="normal" >after: they land in 5, 6, 7. Cell 9 was equally eligible; the scan simply reached 5 first.</text>
+  <rect x="70" y="234" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="93.0" y="254" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="93.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >0</text>
+  <rect x="120" y="234" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="143.0" y="254" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="143.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >1</text>
+  <rect x="170" y="234" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="193.0" y="254" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="193.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >2</text>
+  <rect x="220" y="234" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="243.0" y="254" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="243.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >3</text>
+  <rect x="270" y="234" width="46" height="30" rx="3" fill="#eef4fa" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.3"/>
+  <text x="293.0" y="254" text-anchor="middle" font-size="11" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="293.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >4</text>
+  <rect x="320" y="234" width="46" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+  <text x="343.0" y="254" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="343.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >5</text>
+  <rect x="370" y="234" width="46" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+  <text x="393.0" y="254" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="393.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >6</text>
+  <rect x="420" y="234" width="46" height="30" rx="3" fill="#eaf5ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+  <text x="443.0" y="254" text-anchor="middle" font-size="11" fill="#2e7d52" font-weight="bold" font-family="Menlo, Consolas, monospace">A</text>
+  <text x="443.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >7</text>
+  <rect x="470" y="234" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="493.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >8</text>
+  <rect x="520" y="234" width="46" height="30" rx="3" fill="#fdf3e8" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.3"/>
+  <text x="543.0" y="254" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">B</text>
+  <text x="543.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >9</text>
+  <rect x="570" y="234" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="593.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >10</text>
+  <rect x="620" y="234" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="643.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >11</text>
+  <rect x="670" y="234" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="693.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >12</text>
+  <rect x="720" y="234" width="46" height="30" rx="3" fill="#fbfbfb" fill-opacity="1.0" stroke="#888" stroke-width="1.0" stroke-dasharray="3,3"/>
+  <text x="743.0" y="228" text-anchor="middle" font-size="10" fill="#888" font-weight="normal" >13</text>
+  <text x="440.0" y="356" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >A cell is available when it is empty, or when it holds exactly one sequence whose position has fallen</text>
+  <text x="440.0" y="374" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >outside that sequence's sliding window. The three tokens need not be adjacent, which is why writes</text>
+  <text x="440.0" y="392" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >go through an index tensor rather than a memcpy at the cursor.</text>
+</svg>
