@@ -433,7 +433,3 @@ Tiling plus online softmax lets each score tile contribute directly to the final
 3. Tri Dao, [*FlashAttention-2: Faster Attention with Better Parallelism and Work Partitioning*](https://arxiv.org/abs/2307.08691v1), 2023. [PDF](https://arxiv.org/pdf/2307.08691v1).
 4. Andrej Karpathy, [*Let's reproduce GPT-2 (124M)*](https://www.youtube.com/watch?v=l8pRSuU81PU), video walkthrough. Relevant Flash Attention discussion: [2:00:26](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7226s) through [2:05:20](https://www.youtube.com/watch?v=l8pRSuU81PU&t=7520s).
 5. PyTorch, [`torch.nn.functional.scaled_dot_product_attention`](https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.scaled_dot_product_attention.html).
-
-### Diagram provenance
-
-Figure 4 is an original explanatory redraw informed by the supplied whiteboard, especially its two-key K/V tile and immediate softmax-times-`V` calculation. Figures 1, 4, 5, and 6 are original diagrams; Figures 2, 3, 7, and 8 are limited, timestamped video screengrabs used for commentary. Figure 1 has editable [D2 source](/images/flash-attention/ordinary-attention-hbm.d2).
