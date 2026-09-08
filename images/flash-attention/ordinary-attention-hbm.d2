@@ -1,0 +1,36 @@
+# Ordinary causal attention materializes two T x T tensors in HBM.
+vars: {
+  d2-config: { layout-engine: elk }
+}
+
+direction: down
+
+classes: {
+  tensor: { style: { font-size: 34; fill: "#dbeafe"; stroke: "#2563eb"; font-color: "#0f172a"; bold: true } }
+  key:    { style: { font-size: 34; fill: "#ede9fe"; stroke: "#7c3aed"; font-color: "#0f172a"; bold: true } }
+  value:  { style: { font-size: 34; fill: "#ffedd5"; stroke: "#ea580c"; font-color: "#0f172a"; bold: true } }
+  hbm:    { style: { font-size: 34; fill: "#fce7f3"; stroke: "#be185d"; font-color: "#0f172a"; bold: true } }
+  op:     { style: { font-size: 32; fill: "#f8fafc"; stroke: "#475569"; font-color: "#0f172a" } }
+  out:    { style: { font-size: 34; fill: "#ccfbf1"; stroke: "#0f766e"; font-color: "#0f172a"; bold: true } }
+}
+
+inputs: "Inputs in HBM / VRAM" {
+  direction: right
+  q: "Q\nT x d" { class: tensor }
+  k: "K\nT x d" { class: key }
+  v: "V\nT x d" { class: value }
+}
+
+score: "S = Q K^T\nT x T score matrix\nwritten to HBM" { class: hbm }
+scale: "scale by 1 / sqrt(d)" { class: op }
+mask: "causal mask\nfuture positions = -inf" { class: op }
+prob: "P = softmax(masked S)\nT x T probabilities\nwritten to HBM" { class: hbm }
+out: "O = P V\nT x d output" { class: out }
+
+inputs.q -> score
+inputs.k -> score
+score -> scale
+scale -> mask
+mask -> prob
+prob -> out
+inputs.v -> out
