@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Weight decay: gravity for a model with too many answers - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+mjx-container[jax="CHTML"] { color: inherit; }
+mjx-container[jax="CHTML"][display="true"] { margin: 1.1em 0; overflow-x: auto; overflow-y: hidden; }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-01 &raquo;<br><a href="/blog/2026-08-01/turning-the-temperature-up-on-softmax.html">Turning the Temperature Up on Softmax</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Weight decay: gravity for a model with too many answers</h1>
+<p class="meta">08 Sep 2026</p>
+
+<div class="post">
+<p><img src="/images/weight-decay/traffic-stop.png" alt="A red stop sign at a quiet intersection, used here as a toy classification example." /></p>
+
+<p>Suppose we train a tiny model to recognize a stop sign. It can use two features:</p>
+
+<ul>
+  <li><strong>color</strong>, measuring how red the object is;</li>
+  <li><strong>shape</strong>, measuring how much it resembles an octagon.</li>
+</ul>
+
+<p>Give each feature a weight and add the results:</p>
+
+\[\text{stop score} = w_c(\text{redness}) + w_s(\text{octagon-ness}).\]
+
+<p>The weights describe how strongly those detected features affect the answer. In a neural network the routes are not usually this easy to name, but the basic relationship is the same: a weight controls how much one activation contributes to another.</p>
+
+<p>This example makes a specific point about weight decay concrete:</p>
+
+<blockquote>
+  <p>Weight decay does not force equal distribution. It distributes work only when multiple routes are comparably useful.</p>
+</blockquote>
+
+<h2 id="many-answers-can-fit-the-training-data">Many answers can fit the training data</h2>
+
+<p>Start with an intentionally underdetermined training set. Every stop sign in it is perfectly red and perfectly octagonal, so both feature values are 1. The desired score is 2. Training therefore asks only for</p>
+
+\[w_c + w_s = 2.\]
+
+<p>There are infinitely many solutions. Here are five:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th style="text-align: right">Color weight $w_c$</th>
+      <th style="text-align: right">Shape weight $w_s$</th>
+      <th style="text-align: right">Training score</th>
+      <th style="text-align: right">Squared weight size $w_c^2+w_s^2$</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">0.0</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">4.0</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">1.5</td>
+      <td style="text-align: right">0.5</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">2.5</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">1.0</td>
+      <td style="text-align: right">1.0</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">2.0</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">0.5</td>
+      <td style="text-align: right">1.5</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">2.5</td>
+    </tr>
+    <tr>
+      <td style="text-align: right">0.0</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">2.0</td>
+      <td style="text-align: right">4.0</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>The training examples cannot distinguish these outcomes. They all receive the same score and can have the same training loss. Yet they do not behave alike outside that narrow dataset. A color-only solution may mistake a red circular sign for a stop sign. A shape-only solution may be more robust at night or in a grayscale image. Which outcome is good depends on what the features mean and what the model later encounters.</p>
+
+<p>Weight decay adds a preference among otherwise comparable fits: prefer smaller weights. Under the simple constraint above, $(1,1)$ has the smallest squared size. Dividing the work between two equally scaled, interchangeable routes needs less total squared weight than making one route do everything.</p>
+
+<p>That is where distributed work comes from. It is not a command that every feature receive an equal vote. It is the lowest-cost choice in this particular symmetric situation.</p>
+
+<h2 id="the-gravity-analogy">The gravity analogy</h2>
+
+<p>Karpathy describes weight decay as a kind of gravity pulling weights toward zero. With AdamW, a simplified update is</p>
+
+\[w_{t+1} = (1-\eta\lambda)w_t - \eta\,\text{AdamUpdate}_t,\]
+
+<p>where $\eta$ is the learning rate and $\lambda$ is the weight-decay coefficient. The first term is gravity: in the absence of a useful task gradient, the weight becomes a little smaller each step. The second term is the learning signal, which can push a useful weight away from zero.</p>
+
+<p>One way to describe this is that weights must “prove their salt.” There is no separate examination of each weight. A connection remains large only when the training gradients repeatedly provide enough evidence to counter the shrinkage. A route that does not help the prediction receives little opposing pressure and gradually fades.</p>
+
+<p>Take the $(1,1)$ solution and imagine, for clarity, a deliberately large decay step that changes both weights from $1.0$ to $0.99$. For an example whose redness and octagon-ness are both 1, the score falls from 2 to</p>
+
+\[(0.99)(1) + (0.99)(1) = 1.98.\]
+
+<p>The prediction loss sees that 1.98 is below the desired score of 2. Its gradient pushes upward on whichever weights help correct the error. Training settles into a tug of war: decay pulls weights toward zero, while the prediction gradient pushes useful weights away from zero. A useless weight feels the pull of decay but receives no consistent push in the other direction.</p>
+
+<p>The change from $1.0$ to $0.99$ is exaggerated to make the arithmetic visible. In the walkthrough, the shrinkage in a single step is much smaller. With a learning rate of $0.0006$ and <code class="language-plaintext highlighter-rouge">weight_decay=0.1</code>, the decay multiplier for one simplified step is</p>
+
+\[1-(0.0006)(0.1)=0.99994.\]
+
+<p>So <code class="language-plaintext highlighter-rouge">0.1</code> does <strong>not</strong> mean that AdamW removes ten percent of every weight on every step. The per-step effect also depends on the learning rate, and repeated small effects accumulate over training.</p>
+
+<h2 id="when-decay-spreads-the-work">When decay spreads the work</h2>
+
+<p>Suppose the training set contains both stop signs and other objects. Most stop signs are clearly red and octagonal, and either clue is about equally good at separating the stop signs from the other objects. The model also represents both clues with numbers on roughly the same scale. Because either route can reduce the loss, the task gradient can sustain both. Among solutions with similar training performance, decay favors the one that accomplishes the job with less overall weight magnitude. In the symmetric toy problem, that is the balanced $(1,1)$ solution.</p>
+
+<h2 id="why-this-can-improve-generalization">Why this can improve generalization</h2>
+
+<p>This can improve robustness because the prediction is no longer resting on one large coefficient when another genuinely useful route is available. More generally, large networks have vastly more parameters than any one training example can constrain. Many parameter settings can fit the observations, but only some behave well on new data. Regularization supplies an extra preference when the loss alone leaves a choice unresolved.</p>
+
+<p>Without decay, the model can give a large weight to an accidental pattern in the training set. Suppose every photographed stop sign happens to have a tree nearby. A <code class="language-plaintext highlighter-rouge">tree_nearby</code> feature could then help reduce training loss even though trees will not reliably accompany stop signs in new photographs. Weight decay makes maintaining that extra large weight more costly, which can reduce the model’s reliance on the shortcut.</p>
+
+<p>Decay does not reveal that the tree is irrelevant. If <code class="language-plaintext highlighter-rouge">tree_nearby</code> predicts the label perfectly throughout the training data, the prediction gradient may continue supporting it. Weight decay may then be insufficient. Counterexamples, such as stop signs without trees and trees without stop signs, give the model direct evidence that the shortcut does not generalize.</p>
+
+<p>It still does not guarantee the solution that works best on new examples. Weight decay prefers smaller weights. It does not understand what the model’s feature activations represent or whether those features will remain useful on new examples.</p>
+
+<h2 id="when-decay-should-not-spread-the-work-equally">When decay should not spread the work equally</h2>
+
+<p>Now suppose the training set contains objects with many different shapes, while redness reliably predicts the target:</p>
+
+<ul>
+  <li>redness is predictive;</li>
+  <li>shape is mostly noise.</li>
+</ul>
+
+<p>The gradient from prediction errors repeatedly pushes $w_c$, the color weight, upward. It does not consistently push $w_s$, the shape weight, in either direction. Decay pulls both weights downward, but only the color weight receives a repeated push back. A sensible result might look like</p>
+
+\[w_c=1.7, \qquad w_s=0.2,\]
+
+<p>not $(1,1)$. Weight decay has not failed. Equal distribution was never its rule.</p>
+
+<h2 id="when-regularization-hurts">When regularization hurts</h2>
+
+<p>Useful weights also feel gravity. If the decay coefficient is too strong, the task gradient cannot maintain the magnitude required to fit even the real pattern. The model underfits.</p>
+
+<p>Consider night images where color carries almost no information and recognizing the shape requires a strong coefficient. Pulling that coefficient down simply to make the parameter vector small worsens both training and validation performance. Regularization is a tradeoff, not a free improvement.</p>
+
+<p>Feature scaling matters too. If “redness” is numerically 100 times smaller than “octagon-ness,” it needs a larger coefficient to have the same effect. A penalty on coefficient size then treats the two routes differently even if their information content is identical. The balanced solution in parameter space is not necessarily a balanced solution in meaning.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Andrej Karpathy, <a href="https://www.youtube.com/watch?v=l8pRSuU81PU">Let’s reproduce GPT-2 (124M)</a>, weight-decay discussion beginning around 2:28:53.</li>
+  <li>Ilya Loshchilov and Frank Hutter, <a href="https://arxiv.org/abs/1711.05101">Decoupled Weight Decay Regularization</a>, the AdamW paper.</li>
+  <li>Tom B. Brown et al., <a href="https://arxiv.org/abs/2005.14165">Language Models are Few-Shot Learners</a>, whose GPT-3 optimizer settings Karpathy consults during the walkthrough.</li>
+  <li>PyTorch, <a href="https://docs.pytorch.org/docs/stable/generated/torch.optim.AdamW.html"><code class="language-plaintext highlighter-rouge">torch.optim.AdamW</code></a>.</li>
+</ul>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
