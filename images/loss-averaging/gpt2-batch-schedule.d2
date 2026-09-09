@@ -1,0 +1,76 @@
+# The same GPT-2 global batch scheduled on one GPU and eight GPUs
+# Render with ELK, Roboto Mono, and 30px padding.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+classes: {
+  target: { style: { font-size: 40; fill: "#e8f5e9"; stroke: "#2e7d32"; font-color: "#1a1a1a"; bold: true } }
+  serial: { style: { font-size: 36; fill: "#fff9c4"; stroke: "#f57c00"; font-color: "#1a1a1a" } }
+  parallel: { style: { font-size: 36; fill: "#e3f2fd"; stroke: "#1976d2"; font-color: "#0f172a" } }
+  action: { style: { font-size: 36; fill: "#0f172a"; stroke: "#1976d2"; font-color: "#ffffff"; bold: true } }
+  result: { style: { font-size: 40; fill: "#e8f5e9"; stroke: "#2e7d32"; font-color: "#1a1a1a"; bold: true } }
+}
+
+batch: "Global batch\n512 sequences x 1024 tokens\n= 524,288 tokens" {
+  class: target
+}
+
+schedules: {
+  label: ""
+  direction: right
+  style: {
+    font-size: 36
+    fill: "#f7f8fe"
+    stroke: "#0d32b2"
+    font-color: "#0a0f25"
+    bold: true
+  }
+
+  one: {
+    label: "One GPU"
+    direction: down
+    style: {
+      font-size: 36
+      fill: "#fffdf0"
+      stroke: "#f57c00"
+      font-color: "#1a1a1a"
+      bold: true
+    }
+    call: "16 sequences\nper micro-step" { class: serial }
+    repeat: "32 serial\nmicro-steps" { class: serial }
+    grads: "add gradients\nacross 32 steps" { class: action }
+    call -> repeat -> grads
+  }
+
+  eight: {
+    label: "Eight GPUs"
+    direction: down
+    style: {
+      font-size: 36
+      fill: "#f5faff"
+      stroke: "#1976d2"
+      font-color: "#0f172a"
+      bold: true
+    }
+    wave: "8 different chunks\n16 sequences each\n128 at once" { class: parallel }
+    repeat: "4 serial\nwaves" { class: parallel }
+    local: "add local gradients\nacross 4 waves" { class: action }
+    grads: "DDP averages\nacross 8 ranks" { class: action }
+    wave -> repeat -> local -> grads
+  }
+}
+
+update: "Same global batch\none optimizer update" {
+  class: result
+}
+
+batch -> schedules.one
+batch -> schedules.eight
+schedules.one.grads -> update
+schedules.eight.grads -> update

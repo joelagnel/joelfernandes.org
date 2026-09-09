@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Multi-GPU calculation of gradients for accelerated training - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+mjx-container[jax="CHTML"] { color: inherit; }
+mjx-container[jax="CHTML"][display="true"] { margin: 1.1em 0; overflow-x: auto; overflow-y: hidden; }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-09-09 &raquo;<br><a href="/blog/2026-09-09/cross-entropy-gradient-accumulation-ddp.html">Multi-GPU calculation of gradients for accelerated training</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-04 &raquo;<br><a href="/blog/2026-08-04/cross-entropy-gradient-shortcut.html">Backprop: Easy Gradient Shortcut Through Cross-Entropy</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">Multi-GPU calculation of gradients for accelerated training</h1>
+<p class="meta">09 Sep 2026</p>
+
+<div class="post">
+<h2 id="a-half-million-token-optimizer-step">A half-million-token optimizer step</h2>
+
+<p>In <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=9313s">Karpathy’s GPT-2 walkthrough</a>, he takes the roughly half-million-token batch target from the 125M-parameter row of the <a href="https://arxiv.org/abs/2005.14165">GPT-3 training table</a> because that model is close in size to GPT-2 124M. In code he chooses the nearby power-of-two value <code class="language-plaintext highlighter-rouge">total_batch_size = 524288</code>, or <code class="language-plaintext highlighter-rouge">2**19</code>, tokens per optimizer update. This is a chosen optimizer batch size, not a limit imposed by the GPT-2 architecture.</p>
+
+<p>A <strong>micro-batch</strong> is the data handled by one GPU in one forward and backward call. That call is one <strong>micro-step</strong>. The <strong>global batch</strong> is all data that contributes to one optimizer update, across every micro-step and GPU.</p>
+
+<p>Each sequence contains <code class="language-plaintext highlighter-rouge">T = 1024</code> tokens, so 524,288 tokens means 512 sequences. Sending all 512 through one GPU at once would require it to retain the intermediate tensor elements, called activations, for all 512 sequences until backward finishes. That does not fit the GPU used in the walkthrough.</p>
+
+<p>Karpathy instead uses <code class="language-plaintext highlighter-rouge">B = 16</code> sequences per micro-batch:</p>
+
+\[16 \times 1024 = 16{,}384\text{ token predictions}.\]
+
+<p>One GPU therefore needs 32 serial micro-steps to cover the global batch. Each backward pass adds to the parameter gradients, and the optimizer waits until all 32 have finished. Gradient accumulation makes the batch fit by doing the work in smaller pieces. On one GPU, those 32 micro-steps still run sequentially.</p>
+
+<h2 id="eight-gpus-shorten-the-serial-schedule">Eight GPUs shorten the serial schedule</h2>
+
+<p>The walkthrough starts one process per GPU with <code class="language-plaintext highlighter-rouge">torchrun</code>, then wraps each process’s model in PyTorch DistributedDataParallel, or DDP. Each process has a <strong>rank</strong>. Every rank holds a model replica, and <code class="language-plaintext highlighter-rouge">DataLoaderLite</code> gives it a different 16-sequence micro-batch.</p>
+
+<p>During one parallel wave, eight ranks process</p>
+
+\[8 \times 16 \times 1024 = 131{,}072\text{ token predictions}\]
+
+<p>at the same time. A <strong>wave</strong> is one micro-step running concurrently on all eight ranks. Four waves cover the global batch:</p>
+
+\[4 \times 131{,}072 = 524{,}288.\]
+
+<p>The one-GPU schedule has 32 serial micro-steps. The eight-GPU schedule has four serial waves. If the computation scaled perfectly, this part would take one eighth as long. In practice, exchanging gradients and other overhead reduce the speedup.</p>
+
+<p>Each rank accumulates gradients from its four micro-batches. On the final backward pass, DDP averages the gradients across all eight ranks. Every model replica then applies the same optimizer update.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/loss-averaging/gpt2-batch-schedule.png" alt="The same 512-sequence global batch scheduled two ways. One GPU processes 16 sequences in each of 32 serial micro-steps. Eight GPUs process eight different 16-sequence chunks at once and need four serial waves before DDP averages their gradients." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 1. More GPUs reduce the serial work needed for the same global batch. <a href="/images/loss-averaging/gpt2-batch-schedule.d2">D2 source</a> · <a href="/images/loss-averaging/gpt2-batch-schedule.svg">SVG</a></em></p>
+
+<p>In the eight-GPU run, <code class="language-plaintext highlighter-rouge">grad_accum_steps = 4</code>: each rank executes four micro-steps.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">grad_accum_steps</span> <span class="o">=</span> <span class="n">total_batch_size</span> <span class="o">//</span> <span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">T</span> <span class="o">*</span> <span class="n">ddp_world_size</span><span class="p">)</span>
+<span class="c1"># 524288 // (16 * 1024 * 8) = 4
+</span></code></pre></div></div>
+
+<p>Each rank therefore divides its losses by four:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss</span> <span class="o">=</span> <span class="n">loss</span> <span class="o">/</span> <span class="n">grad_accum_steps</span>
+</code></pre></div></div>
+
+<p>The factor of eight is absent because DDP supplies the separate average across ranks.</p>
+
+<h2 id="cross-entropy-averages-within-one-micro-batch">Cross-entropy averages within one micro-batch</h2>
+
+<p>PyTorch receives <code class="language-plaintext highlighter-rouge">B * T</code> next-token predictions:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">loss</span> <span class="o">=</span> <span class="n">F</span><span class="p">.</span><span class="nf">cross_entropy</span><span class="p">(</span>
+    <span class="n">logits</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">logits</span><span class="p">.</span><span class="nf">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)),</span>
+    <span class="n">targets</span><span class="p">.</span><span class="nf">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+<span class="p">)</span>
+</code></pre></div></div>
+
+<p>The code uses every target token and gives them equal weight. With the default <code class="language-plaintext highlighter-rouge">reduction="mean"</code>, PyTorch divides the sum of the token losses by <code class="language-plaintext highlighter-rouge">B * T</code>. Targets from later micro-steps are not arguments to this call, so they are absent from its denominator.</p>
+
+<h2 id="gradient-accumulation-averages-across-micro-steps">Gradient accumulation averages across micro-steps</h2>
+
+<p>In this GPT-2 loop, every micro-step on every GPU has the same <code class="language-plaintext highlighter-rouge">B * T</code> valid target tokens. Under that condition, averaging the micro-batch means gives the same global mean as processing all targets together.</p>
+
+<p>Here is a tiny version with two micro-steps and two token predictions per micro-batch. Suppose the individual losses are <code class="language-plaintext highlighter-rouge">2, 4, 6, 8</code>. Processing all four together would give</p>
+
+\[L_{\text{whole}} = \frac{2+4+6+8}{4}=5.\]
+
+<p>Split them into two micro-batches and cross-entropy returns:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>micro-step 1: mean(2, 4) = 3
+micro-step 2: mean(6, 8) = 7
+</code></pre></div></div>
+
+<p>Calling <code class="language-plaintext highlighter-rouge">.backward()</code> twice adds into each parameter’s <code class="language-plaintext highlighter-rouge">.grad</code>. Without another division, this gives the gradient of $L_1 + L_2$. We instead want the gradient of their mean:</p>
+
+\[\nabla\frac{L_1+L_2}{2}
+=\nabla\left(\frac{L_1}{2}+\frac{L_2}{2}\right).\]
+
+<p>For these values:</p>
+
+\[\frac{3}{2}+\frac{7}{2}=5.\]
+
+<p>The identity holds for the loss functions themselves, so their gradients match.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/loss-averaging/two-microsteps.png" alt="An unsplit four-token global batch has mean loss 5. Two micro-steps have cross-entropy means 3 and 7; dividing each by two produces an equivalent mean objective of 5 for the accumulated gradient." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 2. Cross-entropy supplies the mean inside each micro-batch. Dividing by two supplies the missing mean across two micro-steps. <a href="/images/loss-averaging/two-microsteps.d2">D2 source</a> · <a href="/images/loss-averaging/two-microsteps.svg">SVG</a></em></p>
+
+<h2 id="ddp-averages-gradients-across-processes">DDP averages gradients across processes</h2>
+
+<p>Now use two GPUs, two micro-steps per rank, and two token predictions per micro-batch.</p>
+
+<ul>
+  <li>GPU 0 sees means <code class="language-plaintext highlighter-rouge">3</code> and <code class="language-plaintext highlighter-rouge">7</code>, so its scaled local objective is <code class="language-plaintext highlighter-rouge">3/2 + 7/2 = 5</code>.</li>
+  <li>GPU 1 sees losses <code class="language-plaintext highlighter-rouge">10, 12, 14, 16</code>. Its micro-batch means are <code class="language-plaintext highlighter-rouge">11</code> and <code class="language-plaintext highlighter-rouge">15</code>, so its scaled local objective is <code class="language-plaintext highlighter-rouge">11/2 + 15/2 = 13</code>.</li>
+</ul>
+
+<p>Call the two local parameter gradients $g_0$ and $g_1$. DDP gives every rank their average, $(g_0 + g_1) / 2$. Using the gradient identity above, that is the gradient of</p>
+
+\[\frac{5+13}{2}=9.\]
+
+<p>This is exactly the whole eight-token mean:</p>
+
+\[\frac{2+4+6+8+10+12+14+16}{8}=9.\]
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/loss-averaging/two-ddp-ranks.png" alt="GPU 0 forms local mean objective 5 and GPU 1 forms local mean objective 13. DDP averages the two local parameter gradients, which equals the gradient of the global eight-token mean objective 9." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 3. Each rank averages across its own micro-steps. DDP performs the final gradient average across ranks. <a href="/images/loss-averaging/two-ddp-ranks.d2">D2 source</a> · <a href="/images/loss-averaging/two-ddp-ranks.svg">SVG</a></em></p>
+
+<p>Do not divide the <code class="language-plaintext highlighter-rouge">loss</code> used for <code class="language-plaintext highlighter-rouge">.backward()</code> by the number of GPUs. DDP already divides the synchronized parameter gradients by the number of ranks. Dividing by two again in this example would halve the intended gradient.</p>
+
+<p>DDP can skip the gradient all-reduce for the first <code class="language-plaintext highlighter-rouge">grad_accum_steps - 1</code> micro-steps. The supported <code class="language-plaintext highlighter-rouge">no_sync()</code> context must wrap both forward and backward. The video instead assigned <code class="language-plaintext highlighter-rouge">model.require_backward_grad_sync</code> after forward; <a href="https://github.com/karpathy/build-nanogpt/commit/f6d194b90f63ee6b7159974078ea60221c172617">a later fix</a> moved that assignment before forward because DDP also consults the flag during forward.</p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Andrej Karpathy, <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=9558s">gradient accumulation</a> and <a href="https://www.youtube.com/watch?v=l8pRSuU81PU&amp;t=10839s">DDP gradient averaging</a> in <em>Let’s reproduce GPT-2 (124M)</em>.</li>
+  <li>Tom B. Brown et al., <a href="https://arxiv.org/abs/2005.14165"><em>Language Models are Few-Shot Learners</em></a>, Table 2 (the 125M-parameter model uses a 0.5M-token batch).</li>
+  <li>Karpathy, <a href="https://github.com/karpathy/build-nanogpt/blob/ba2554a/train_gpt2.py#L128-L131">video-era cross-entropy call</a> and <a href="https://github.com/karpathy/build-nanogpt/blob/ba2554a/train_gpt2.py#L324-L343">gradient-accumulation/DDP loop</a>.</li>
+  <li>PyTorch, <a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.functional.cross_entropy"><code class="language-plaintext highlighter-rouge">torch.nn.functional.cross_entropy</code></a>, whose default reduction is <code class="language-plaintext highlighter-rouge">mean</code>.</li>
+  <li>PyTorch, <a href="https://docs.pytorch.org/docs/stable/generated/torch.nn.parallel.DistributedDataParallel.html"><code class="language-plaintext highlighter-rouge">DistributedDataParallel</code></a> and the <a href="https://docs.pytorch.org/tutorials/recipes/recipes/tuning_guide.html#skip-unnecessary-all-reduce-if-training-with-distributeddataparallel-and-gradient-accumulation"><code class="language-plaintext highlighter-rouge">no_sync()</code> gradient-accumulation guidance</a>.</li>
+</ul>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>

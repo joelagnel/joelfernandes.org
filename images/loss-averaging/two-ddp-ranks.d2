@@ -1,0 +1,49 @@
+# Local micro-step averages followed by DDP gradient averaging
+# Render with ELK, Roboto Mono, and 30px padding.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+classes: {
+  rank: { style: { font-size: 36; fill: "#e3f2fd"; stroke: "#1976d2"; font-color: "#0f172a" } }
+  ddp: { style: { font-size: 40; fill: "#0f172a"; stroke: "#1976d2"; font-color: "#ffffff"; bold: true } }
+  result: { style: { font-size: 36; fill: "#e8f5e9"; stroke: "#2e7d32"; font-color: "#1a1a1a"; bold: true } }
+}
+
+ranks: {
+  label: "Two DDP ranks"
+  direction: right
+  style: {
+    font-size: 36
+    fill: "#f7f8fe"
+    stroke: "#0d32b2"
+    font-color: "#0a0f25"
+    bold: true
+  }
+  gpu0: "GPU 0 local objective\n3 / 2 + 7 / 2 = 5" {
+    class: rank
+  }
+  gpu1: "GPU 1 local objective\n11 / 2 + 15 / 2 = 13" {
+    class: rank
+  }
+}
+
+sync: "DDP averages the two\nlocal parameter gradients" {
+  class: ddp
+}
+
+global: "Equivalent global objective\nlocal means: (5 + 13) / 2 = 9\nall token losses: 72 / 8 = 9" {
+  class: result
+}
+
+ranks.gpu0 -> sync
+ranks.gpu1 -> sync
+sync -> global: "equals the gradient of" {
+  style.font-size: 36
+  style.bold: true
+}
