@@ -1,0 +1,61 @@
+# One whole batch compared with two accumulated micro-steps
+# Render with ELK, Roboto Mono, and 30px padding.
+
+vars: {
+  d2-config: {
+    layout-engine: elk
+  }
+}
+
+direction: down
+
+classes: {
+  whole: { style: { font-size: 36; fill: "#e3f2fd"; stroke: "#1976d2"; font-color: "#0f172a"; bold: true } }
+  micro: { style: { font-size: 36; fill: "#fff9c4"; stroke: "#f57c00"; font-color: "#1a1a1a" } }
+  action: { style: { font-size: 36; fill: "#f7f8fe"; stroke: "#0d32b2"; font-color: "#0a0f25"; bold: true } }
+  result: { style: { font-size: 40; fill: "#e8f5e9"; stroke: "#2e7d32"; font-color: "#1a1a1a"; bold: true } }
+}
+
+full: "Unsplit global batch\nlosses: 2, 4, 6, 8\nmean = 20 / 4 = 5" {
+  class: whole
+}
+
+split: {
+  label: "Two micro-steps"
+  direction: down
+  style: {
+    font-size: 36
+    fill: "#f7f8fe"
+    stroke: "#0d32b2"
+    font-color: "#0a0f25"
+    bold: true
+  }
+  step1: "Micro-step 1\nCross-entropy mean = 3\ndivide by 2 steps\n= 3 / 2" {
+    class: micro
+  }
+  step2: "Micro-step 2\nCross-entropy mean = 7\ndivide by 2 steps\n= 7 / 2" {
+    class: micro
+  }
+  step1 -> step2: "" {
+    style.opacity: 0
+  }
+}
+
+backward: "backward accumulates\nboth gradients" {
+  class: action
+}
+
+accum: "Equivalent mean objective\nfor the accumulated gradient\n3 / 2 + 7 / 2 = 5" {
+  class: result
+}
+
+full -> accum: "same mean objective" {
+  style.font-size: 36
+  style.bold: true
+}
+full -> split.step1: "" {
+  style.opacity: 0
+}
+split.step1 -> backward
+split.step2 -> backward
+backward -> accum
