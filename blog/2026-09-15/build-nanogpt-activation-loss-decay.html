@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>My training run of build-nanoGPT: replacing activation functions to see loss decay - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+<style>
+mjx-container[jax="CHTML"] { color: inherit; }
+mjx-container[jax="CHTML"][display="true"] { margin: 1.1em 0; overflow-x: auto; overflow-y: hidden; }
+</style>
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-09-15 &raquo;<br><a href="/blog/2026-09-15/build-nanogpt-activation-loss-decay.html">My training run of build-nanoGPT: replacing activation functions to see loss decay</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-09 &raquo;<br><a href="/blog/2026-09-09/cross-entropy-gradient-accumulation-ddp.html">Multi-GPU calculation of gradients for accelerated training</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">My training run of build-nanoGPT: replacing activation functions to see loss decay</h1>
+<p class="meta">15 Sep 2026</p>
+
+<div class="post">
+<p>I wanted a small answer to a concrete question: if I change the activation inside the feed-forward network of a GPT-2-sized model, what happens to its loss curve? I used <a href="https://github.com/karpathy/build-nanogpt">Karpathy’s build-nanoGPT</a> as the starting point, kept the model and training recipe controlled, and ran GELU, SwiGLU, and ReLU versions on one RTX 4090.</p>
+
+<p>The result is not a general ranking of activations. It is one seed, one model size, one data slice, and thirty minutes of active training for each variant. It does show a useful tradeoff: in this run, parameter-matched SwiGLU processed fewer tokens than GELU but reached lower held-out loss.</p>
+
+<h2 id="where-gelu-sits-in-build-nanogpt">Where GELU sits in build-nanoGPT</h2>
+
+<p>A Transformer block has an attention sublayer and a feed-forward network, often abbreviated <strong>MLP</strong> for multi-layer perceptron. Attention lets a token mix information from earlier tokens. The MLP then transforms that token’s resulting vector independently of the other positions.</p>
+
+<p>In the baseline model, the MLP first expands an input vector $x$, applies the Gaussian Error Linear Unit, or <strong>GELU</strong>, then projects the result back down:</p>
+
+\[\operatorname{MLP}_{\text{GELU}}(x)
+= W_{\text{down}}\operatorname{GELU}(W_{\text{up}}x+b_{\text{up}})+b_{\text{down}}.\]
+
+<p>The local build-nanoGPT source implements that path with <code class="language-plaintext highlighter-rouge">nn.GELU(approximate='tanh')</code>. The figure shows the standard definition, $\operatorname{GELU}(x)=x\Phi(x)$, where $\Phi(x)$ is the cumulative probability of a standard normal variable being at most $x$. PyTorch uses the tanh approximation because it is inexpensive to evaluate while closely tracking that curve.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/nanogpt-activation/gelu-curve.svg" alt="A blue GELU curve over inputs minus four through four, with a dashed gray identity line. Positive inputs pass through smoothly while negative inputs are reduced rather than abruptly removed." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 1. GELU smoothly scales each scalar activation. The code uses PyTorch’s tanh approximation of this standard curve.</em></p>
+
+<p>For a strongly positive input, GELU is close to the identity function: it lets that component through. For a negative input, it reduces the component smoothly rather than applying ReLU’s hard cutoff at zero. That smooth scaling is all the ordinary GELU MLP has between its two learned linear projections.</p>
+
+<h2 id="swiglu-adds-a-learned-gate">SwiGLU adds a learned gate</h2>
+
+<p><strong>SwiGLU</strong> is a gated linear unit variant. It creates two expanded vectors from the same input. One is a candidate value, and the other becomes a gate after the Sigmoid Linear Unit, or <strong>SiLU</strong>, function:</p>
+
+\[u = W_{\text{up}}x+b_{\text{up}}, \qquad
+g = W_{\text{gate}}x+b_{\text{gate}},\]
+
+\[\operatorname{SiLU}(g)=g\,\sigma(g), \qquad
+\operatorname{MLP}_{\text{SwiGLU}}(x)=W_{\text{down}}(\operatorname{SiLU}(g)\odot u)+b_{\text{down}}.\]
+
+<p>Here $\sigma$ is the sigmoid function and $\odot$ means <strong>element-wise multiplication</strong>. If these vectors have 2,048 components, component 731 of <code class="language-plaintext highlighter-rouge">SiLU(g)</code> multiplies component 731 of <code class="language-plaintext highlighter-rouge">u</code>; it does not combine every component with every other component. The output projection then mixes the resulting 2,048 scaled components back into the model’s 768-component embedding space.</p>
+
+<p>The word <em>gate</em> is useful, but it should not suggest a binary on/off switch. Suppose one small slice has $u=[0.5, 3.0, -1.0]$ and $g=[2.0, -2.0, 0.0]$. Then $\operatorname{SiLU}(g)\approx[1.76,-0.24,0.0]$, and the element-wise product is approximately $[0.88,-0.71,0.0]$. The first candidate component is amplified, the second changes sign and is reduced, and the third is removed. The learned output projection decides how to use those resulting values. This is only a three-number illustration, not a claim about what any particular trained component represents.</p>
+
+<p>Think of the representation for the phrase “river bank” as carrying several possible interpretations. The candidate vector $u$ can contain directions useful for terrain, water, money, grammar, and many other learned features. The gate supplies a second input-dependent value for each direction. In this toy picture, features supporting the river sense can keep flowing while features that would support the financial sense can be reduced. The model does not contain a literal <code class="language-plaintext highlighter-rouge">river_feature</code> or <code class="language-plaintext highlighter-rouge">money_feature</code>; the example describes how a learned gate can select among context-dependent directions.</p>
+
+<p>GELU also changes each component according to its input. SwiGLU differs because it learns a separate projection to decide that scaling. That extra projection gives the MLP a richer conditional transformation. To keep the comparison parameter-matched, the SwiGLU projections are narrower; SiLU and the element-wise gate still add operations to the MLP.</p>
+
+<h2 id="making-sure-the-number-of-parameters-is-apples-to-apples">Making sure the number of parameters is apples to apples</h2>
+
+<p>Adding the gate without changing anything else would give SwiGLU substantially more parameters than GELU. I instead reduced the SwiGLU hidden width. The GPT-2-small embedding width is 768. GELU uses a 3,072-wide MLP with two weight matrices, so its MLP matrix count per block is:</p>
+
+\[2\times768\times3072.\]
+
+<p>SwiGLU uses three matrices, <code class="language-plaintext highlighter-rouge">up</code>, <code class="language-plaintext highlighter-rouge">gate</code>, and <code class="language-plaintext highlighter-rouge">down</code>. Choosing width 2,048 gives:</p>
+
+\[3\times768\times2048 = 2\times768\times3072.\]
+
+<p>The matrix counts are exactly equal. Keeping biases leaves SwiGLU with 124,488,192 trainable parameters, versus 124,475,904 for GELU, a difference of 12,288 parameters or 0.00987%. ReLU keeps GELU’s 3,072-wide two-matrix MLP and has exactly the same parameter count as GELU.</p>
+
+<p>The experiment copied GELU’s non-MLP initial tensors into the SwiGLU model. That matters because changing the MLP shape would otherwise shift initialization of later block tensors, including attention tensors in subsequent blocks. The runner copies every non-MLP tensor, including the embeddings, so the shared components start identically. ReLU has the same tensor shapes as GELU, so its initial weights match GELU exactly.</p>
+
+<h2 id="the-training-run">The training run</h2>
+
+<p>Each variant used the GPT-2-small shape: 12 Transformer blocks, 12 attention heads, and an embedding width of 768. The model keeps 1,024 learned position embeddings, while this short single-GPU comparison feeds sequences of $T=256$ tokens. The smaller sequence length is part of the experiment recipe, not a limit of build-nanoGPT. Each optimizer update processes two micro-batches of 16 sequences. A micro-batch is a smaller piece of an optimizer batch: the runner processes two 16-sequence micro-batches separately, averages their gradients, then applies one weight update, reducing peak memory for the effective 32-sequence batch:</p>
+
+\[2\times16\times256=8{,}192\]
+
+<p>next-token predictions per update. All three runs used the same deterministic token order, seed 1337, BF16 autocast with FP32 weights, fused AdamW, the same warmup and constant learning rate, and eager PyTorch without <code class="language-plaintext highlighter-rouge">torch.compile</code>.</p>
+
+<p>I trained each model for 1,800 seconds of synchronized active update time. Every roughly sixty seconds, the runner evaluated the same fixed 65,536-token training prefix and the same fixed 65,536-token held-out validation prefix. With a 16-by-256 micro-batch, each evaluation contains 16 equal batches of 4,096 token predictions. Cross-entropy is measured in <strong>nats per token</strong>, the natural-log unit of next-token surprise. Lower values mean the model assigns more probability to the observed next tokens.</p>
+
+<div style="margin: 1.5em 0; text-align: center;">
+  <img src="/images/nanogpt-activation/training-validation-loss.svg" alt="One shared chart shows GELU, SwiGLU, and ReLU fixed training and validation cross-entropy losses against processed training tokens. Solid colored curves are held-out validation loss and matching dashed curves are fixed training-prefix loss. A vertical marker identifies the 176.2 million-token shared comparison point." style="max-width: 100%; height: auto;" />
+</div>
+
+<p><em>Figure 2. Recorded loss curves from the three runs. Color identifies the activation, solid lines are held-out validation, and dashed lines are the fixed training prefix. The vertical marker is the 176.2-million-token shared comparison; open circles are interpolated and the filled orange circle is SwiGLU’s measured value.</em></p>
+
+<p>The SwiGLU variant completed fewer updates in the same thirty-minute window: 176,218,112 tokens, compared with 186,130,432 for GELU and 187,334,656 for ReLU. To account for this, we draw the X-axis as number of tokens trained, instead of time.</p>
+
+<p>The sharp fall in each dashed fixed-training curve just after 100 million tokens coincides with the first wrap to the beginning of the 100-million-token training array. The evaluated training prefix is then seen again. The validation curve does not receive that direct second exposure.</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Activation</th>
+      <th style="text-align: right">Fixed training loss</th>
+      <th style="text-align: right">Held-out validation loss</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>GELU</td>
+      <td style="text-align: right">4.36397</td>
+      <td style="text-align: right">4.57345</td>
+    </tr>
+    <tr>
+      <td>SwiGLU</td>
+      <td style="text-align: right">4.35385</td>
+      <td style="text-align: right"><strong>4.53739</strong></td>
+    </tr>
+    <tr>
+      <td>ReLU</td>
+      <td style="text-align: right"><strong>4.34065</strong></td>
+      <td style="text-align: right">4.55372</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>At the shared token budget, SwiGLU improved validation loss over GELU by 0.03606 nats per token. ReLU reached the lowest fixed-training loss while SwiGLU reached the lowest held-out loss. That distinction matters: fitting the fixed training prefix more closely is not the same thing as predicting the validation prefix better.</p>
+
+<h2 id="conclusion">Conclusion</h2>
+
+<p>The displayed SwiGLU curve is smoother, and it reaches a slightly lower held-out validation loss than GELU at the shared 176.2-million-token point. The MLP computes a separate gate projection, applies SiLU to it, and multiplies it element by element with the value path. In this eager-PyTorch setup, the parameter-matched SwiGLU run trained more slowly.</p>
+
+<h2 id="references-and-source-notes">References and source notes</h2>
+
+<ul>
+  <li>Dan Hendrycks and Kevin Gimpel, <a href="https://arxiv.org/abs/1606.08415"><em>Gaussian Error Linear Units (GELUs)</em></a>.</li>
+  <li>Noam Shazeer, <a href="https://arxiv.org/abs/2002.05202"><em>GLU Variants Improve Transformer</em></a>, which motivates the parameter-matched SwiGLU width.</li>
+  <li>Andrej Karpathy, <a href="https://github.com/karpathy/build-nanogpt/tree/6104ab1b53920f6e2159749676073ff7d815c1fa">build-nanoGPT at the pinned baseline revision</a>.</li>
+</ul>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
