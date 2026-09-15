@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="870" viewBox="0 0 1080 870" role="img" aria-labelledby="title desc">
+  <title id="title">GELU, SwiGLU, and ReLU training and validation loss curves</title>
+  <desc id="desc">One shared-axis chart shows the recorded fixed training-prefix and held-out validation cross-entropy losses of GELU, SwiGLU, and ReLU build-nanoGPT runs as processed training tokens increase. Each activation has a colored solid validation curve and a matching dashed training curve. A vertical dashed line at 176.2 million tokens marks the shared comparison point. Open circles show interpolated GELU and ReLU validation values and a filled circle shows the measured SwiGLU value.</desc>
+  <style>
+    .title { font: 700 40px Arial, sans-serif; fill: #20252b; }
+    .subtitle { font: 24px Arial, sans-serif; fill: #4b5563; }
+    .label { font: 28px Arial, sans-serif; fill: #20252b; }
+    .small { font: 24px Arial, sans-serif; fill: #4b5563; }
+    .axis { stroke: #3b4550; stroke-width: 2; }
+    .grid { stroke: #d8dee5; stroke-width: 1; }
+  </style>
+  <rect width="100%" height="100%" fill="#ffffff"/>
+<text x="540" y="48" text-anchor="middle" class="title">Loss decay in three build-nanoGPT runs</text>
+<text x="540" y="80" text-anchor="middle" class="subtitle">Solid: fixed held-out validation loss. Dashed: fixed training-prefix loss. Initialization is omitted.</text>
+<text x="150" y="122" class="label">Color</text>
+<line x1="238" y1="116" x2="294" y2="116" stroke="#1f77b4" stroke-width="6"/>
+<text x="306" y="123" class="label">GELU</text>
+<line x1="416" y1="116" x2="472" y2="116" stroke="#c94f1a" stroke-width="6"/>
+<text x="484" y="123" class="label">SwiGLU</text>
+<line x1="630" y1="116" x2="686" y2="116" stroke="#7442a8" stroke-width="6"/>
+<text x="698" y="123" class="label">ReLU</text>
+<text x="150" y="166" class="label">Line</text>
+<line x1="238" y1="160" x2="294" y2="160" stroke="#20252b" stroke-width="6"/>
+<text x="306" y="167" class="label">held-out validation</text>
+<line x1="564" y1="160" x2="620" y2="160" stroke="#20252b" stroke-width="5" stroke-dasharray="12 9"/>
+<text x="632" y="167" class="label">fixed training prefix</text>
+<circle cx="926" cy="160" r="9" fill="white" stroke="#20252b" stroke-width="4"/>
+<text x="944" y="167" class="small">interpolated</text>
+<text x="1010" y="207" text-anchor="end" class="small">vertical marker: shared 176.2M-token comparison</text>
+<line x1="150" y1="645.80" x2="1010" y2="645.80" class="grid"/>
+<text x="132" y="652.80" text-anchor="end" class="small">4.5</text>
+<line x1="150" y1="546.80" x2="1010" y2="546.80" class="grid"/>
+<text x="132" y="553.80" text-anchor="end" class="small">5.0</text>
+<line x1="150" y1="447.80" x2="1010" y2="447.80" class="grid"/>
+<text x="132" y="454.80" text-anchor="end" class="small">5.5</text>
+<line x1="150" y1="348.80" x2="1010" y2="348.80" class="grid"/>
+<text x="132" y="355.80" text-anchor="end" class="small">6.0</text>
+<line x1="150" y1="249.80" x2="1010" y2="249.80" class="grid"/>
+<text x="132" y="256.80" text-anchor="end" class="small">6.5</text>
+<line x1="150.00" y1="230" x2="150.00" y2="725" class="grid"/>
+<text x="150.00" y="759" text-anchor="middle" class="small">0</text>
+<line x1="376.32" y1="230" x2="376.32" y2="725" class="grid"/>
+<text x="376.32" y="759" text-anchor="middle" class="small">50M</text>
+<line x1="602.63" y1="230" x2="602.63" y2="725" class="grid"/>
+<text x="602.63" y="759" text-anchor="middle" class="small">100M</text>
+<line x1="828.95" y1="230" x2="828.95" y2="725" class="grid"/>
+<text x="828.95" y="759" text-anchor="middle" class="small">150M</text>
+<line x1="150" y1="725" x2="1010" y2="725" class="axis"/>
+<line x1="150" y1="230" x2="150" y2="725" class="axis"/>
+<line x1="947.62" y1="230" x2="947.62" y2="725" stroke="#374151" stroke-width="3" stroke-dasharray="10 9"/>
+<polyline points="178.22,306.85 206.36,402.93 234.50,462.03 262.61,488.47 290.72,519.93 318.82,539.52 346.89,560.79 375.00,570.52 403.07,586.28 431.14,598.79 459.21,601.71 487.28,617.24 515.35,625.83 543.41,621.45 571.48,620.36 599.52,625.07 627.58,685.53 655.65,672.97 683.72,667.17 711.79,669.23 739.86,660.67 767.93,663.68 796.00,666.77 824.07,662.65 852.14,668.16 880.21,667.36 908.28,668.88 936.35,670.38 964.42,676.24 992.49,673.15" fill="none" stroke="#1f77b4" stroke-width="4" stroke-dasharray="12 9" opacity="0.88"/>
+<polyline points="178.22,268.34 206.36,358.03 234.50,410.32 262.61,436.64 290.72,468.19 318.82,494.88 346.89,516.75 375.00,529.97 403.07,544.03 431.14,560.12 459.21,565.65 487.28,575.89 515.35,586.90 543.41,586.26 571.48,586.52 599.52,588.64 627.58,605.05 655.65,611.07 683.72,611.23 711.79,615.72 739.86,611.89 767.93,618.02 796.00,623.38 824.07,620.50 852.14,621.24 880.21,626.47 908.28,629.13 936.35,629.08 964.42,634.50 992.49,633.97" fill="none" stroke="#1f77b4" stroke-width="6"/>
+<circle cx="947.62" cy="631.26" r="10" fill="white" stroke="#1f77b4" stroke-width="5"/>
+<polyline points="176.62,312.43 203.25,398.23 229.83,455.33 256.42,499.14 283.04,519.41 309.66,535.41 336.25,554.99 362.84,569.61 389.42,586.51 416.01,597.89 442.59,605.71 469.14,611.90 495.73,623.41 522.32,629.03 548.90,634.38 575.49,629.94 602.04,632.92 628.62,695.46 655.21,682.52 681.80,678.09 708.42,677.60 735.00,672.00 761.55,669.31 788.14,669.53 814.73,671.25 841.31,676.10 867.90,675.14 894.45,676.35 921.03,672.03 947.62,674.74" fill="none" stroke="#c94f1a" stroke-width="4" stroke-dasharray="12 9" opacity="0.88"/>
+<polyline points="176.62,269.58 203.25,353.69 229.83,402.90 256.42,448.26 283.04,469.66 309.66,489.79 336.25,511.81 362.84,526.57 389.42,542.67 416.01,551.62 442.59,565.92 469.14,576.84 495.73,585.75 522.32,591.20 548.90,598.52 575.49,595.95 602.04,599.27 628.62,610.41 655.21,614.50 681.80,618.47 708.42,621.18 735.00,621.47 761.55,625.26 788.14,626.52 814.73,630.36 841.31,631.73 867.90,631.39 894.45,634.66 921.03,633.86 947.62,638.40" fill="none" stroke="#c94f1a" stroke-width="6"/>
+<circle cx="947.62" cy="638.40" r="10" fill="#c94f1a" stroke="#c94f1a" stroke-width="5"/>
+<polyline points="178.37,305.81 206.66,400.87 234.91,461.10 263.20,483.72 291.50,517.70 319.75,528.38 348.04,554.80 376.30,572.67 404.55,583.93 432.81,591.89 461.06,602.01 489.32,616.24 517.57,618.27 545.82,615.90 574.04,624.32 602.33,624.03 630.59,669.36 658.84,663.45 687.13,669.67 715.39,664.26 743.64,665.73 771.90,657.43 800.12,663.55 828.37,663.42 856.66,665.41 884.92,669.00 913.17,669.22 941.43,678.02 969.68,674.98 997.94,673.48" fill="none" stroke="#7442a8" stroke-width="4" stroke-dasharray="12 9" opacity="0.88"/>
+<polyline points="178.37,264.38 206.66,355.11 234.91,407.32 263.20,434.90 291.50,468.86 319.75,485.76 348.04,515.36 376.30,527.60 404.55,540.46 432.81,551.90 461.06,562.58 489.32,573.46 517.57,580.25 545.82,580.87 574.04,586.44 602.33,592.13 630.59,591.34 658.84,603.62 687.13,613.83 715.39,614.18 743.64,617.06 771.90,613.05 800.12,622.94 828.37,621.02 856.66,621.48 884.92,629.69 913.17,630.73 941.43,634.93 969.68,635.98 997.94,636.69" fill="none" stroke="#7442a8" stroke-width="6"/>
+<circle cx="947.62" cy="635.16" r="10" fill="white" stroke="#7442a8" stroke-width="5"/>
+<text x="580.00" y="846" text-anchor="middle" class="label">processed training tokens</text>
+<text x="39" y="477.50" text-anchor="middle" class="label" transform="rotate(-90 39 477.50)">cross-entropy loss, nats/token</text>
+</svg>
