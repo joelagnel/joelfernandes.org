@@ -22,7 +22,8 @@
   --sans: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, Ubuntu, "Noto Sans", sans-serif;
   /* --n, --nb, --t (grid size, blocks per side, tile size), --k16 = 16 / n and --gaps are set by JS */
   --n: 16; --nb: 8; --t: 2; --k16: 1; --gaps: 29px;
-  --unit: clamp(15px, min(var(--cellH, 24px), calc((100vw - 540px) / 32 - (var(--gaps) - 29px) / 16)), 24px);   /* --cellH: JS vertical fit */
+  --dg: calc((var(--gaps) - 29px) / 16);   /* extra gap per cell compared with the default 16×16 / 2×2 layout */
+  --unit: clamp(calc(15px - var(--dg)), min(var(--cellH, 24px), calc((100vw - 540px) / 32 - var(--dg))), calc(24px - var(--dg)));   /* --cellH: JS vertical fit */
   --cell: calc(var(--unit) * var(--k16));
   --cgap: 1px;
   --tgap: 3px;
@@ -389,22 +390,23 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
 .wb[data-t="4"] .th, .wb[data-t="8"] .th { border-radius: 7px; padding: 3px 4px; }
 .wb[data-t="4"] .th-op, .wb[data-t="8"] .th-op, .wb[data-t="4"] .th-n, .wb[data-t="8"] .th-h, .wb[data-t="4"] .th-acc small, .wb[data-t="8"] .th-acc small, .wb[data-t="4"] .sm .s, .wb[data-t="8"] .sm .s { display: none; }
 .wb[data-t="4"] .th-h { font-size: 9px; gap: 2px 3px; }
-.wb[data-t="4"] .th-st { margin-left: 0; font-size: 8.5px; padding: 1px 3px; }
-.wb[data-t="4"] .dot { width: 6px; height: 6px; }
+.wb[data-t="4"] .th { container-type: inline-size; }
+.wb[data-t="4"] .th-st { margin-left: 0; font-size: 8px; padding: 1px 2px; }
+.wb[data-t="4"] .dot { display: none; }
+@container (max-width: 25.9px) { .th-st { display: none; } }
 .wb[data-t="8"] .th { justify-content: center; border-radius: 5px; padding: 1px; }
-.wb[data-t="8"] .th-acc { justify-content: center; }
+.wb[data-t="8"] .th-acc { justify-content: center; font-size: 8px; letter-spacing: -.04em; }
 .wb[data-t="4"] .wb-sB, .wb[data-t="4"] .threads, .wb[data-t="8"] .wb-sB, .wb[data-t="8"] .threads { padding-left: 14px; }
 .wb[data-t="4"] .wb-sA, .wb[data-t="4"] .threads, .wb[data-t="8"] .wb-sA, .wb[data-t="8"] .threads { padding-top: 12px; }
 .wb[data-t="4"] .smlab, .wb[data-t="8"] .smlab { font-size: 9px; }
 .wb[data-t="4"] .wb-sB .smlab, .wb[data-t="8"] .wb-sB .smlab { writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
-.wb[data-t="4"] .barrier .arr, .wb[data-t="8"] .barrier .arr { display: grid; grid-template-columns: repeat(var(--t), auto); gap: 2px; justify-content: start; }
-.wb[data-t="4"] .barrier .arr i { width: 6px; height: 6px; }
-.wb[data-t="8"] .barrier .arr i { width: 4px; height: 4px; }
+.wb[data-t="4"] .barrier .arr { display: grid; grid-template-columns: repeat(8, 4px); gap: 2px; }
+.wb[data-t="4"] .barrier .arr i { width: 4px; height: 4px; }
 
 /* ---------- naive kernel: no shared memory, redundant global loads ---------- */
 .wb-note {
   grid-area: 1 / 2; align-self: center; justify-self: center; z-index: 1; max-width: 100%;
-  display: none; padding: 7px 9px; border-radius: 10px; font-size: 10px; line-height: 1.45; color: var(--ink2);
+  display: none; padding: 6px 8px; border-radius: 10px; font-size: 9.5px; line-height: 1.4; color: var(--ink2);
   border: 1px dashed rgba(251, 113, 133, .45); background: rgba(27, 20, 36, .94);
 }
 .wb-note b { color: #fecdd3; }
@@ -457,7 +459,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
             </div>
           </div>
           <div class="wb-sB" id="sBwrap"><span class="smlab">s_B</span></div>
-          <p class="wb-note"><b>No shared memory:</b> no <code>__shared__</code> array, so every load goes from global memory through L2 and L1 into one thread's register.</p>
+          <p class="wb-note"><b>No shared memory.</b> Without a <code>__shared__</code> array, each load goes from global memory (via the caches) straight into one thread's register.</p>
           <div class="wb-sA" id="sAwrap"><span class="smlab">s_A</span></div>
           <div class="threads" id="threads"></div>
         </div>
@@ -494,10 +496,10 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
       <section class="sec">
         <h2 class="ch">Run a block <span id="blockLbl"></span></h2>
         <div class="btns">
-          <button class="btn primary pulse" id="bPlay" type="button">▶ Play</button>
-          <button class="btn" id="bStep" type="button">⏭ Step</button>
-          <button class="btn" id="bEnd" type="button" title="Jump to the end state of this block (E)">⏩ End</button>
-          <button class="btn" id="bReset" type="button">↺ Reset</button>
+          <button class="btn primary pulse" id="bPlay" type="button" aria-keyshortcuts="Space">▶ Play</button>
+          <button class="btn" id="bStep" type="button" aria-keyshortcuts="ArrowRight">⏭ Step</button>
+          <button class="btn" id="bEnd" type="button" title="Jump to the end state of this block (E)" aria-keyshortcuts="E">⏩ End</button>
+          <button class="btn" id="bReset" type="button" aria-keyshortcuts="R">↺ Reset</button>
         </div>
         <label class="speed">Speed <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1" autocomplete="off"> <b id="speedLbl">1.00×</b></label>
         <div class="blk" id="blkInfo"></div>
@@ -512,9 +514,9 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
         </div>
         <div class="cfg">
           <label>Grid size <select id="selN" autocomplete="off"><option value="8">8×8</option><option value="16" selected>16×16</option><option value="32">32×32</option></select></label>
-          <label>Tile size <select id="selT" autocomplete="off"><option value="1">1×1</option><option value="2" selected>2×2</option><option value="4">4×4</option><option value="8">8×8</option></select></label>
+          <label><span id="tLbl">Tile size</span> <select id="selT" autocomplete="off"><option value="1">1×1</option><option value="2" selected>2×2</option><option value="4">4×4</option><option value="8">8×8</option></select></label>
         </div>
-        <p class="cfgnote" id="cfgNote"></p>
+        <p class="cfgnote" id="cfgNote" aria-live="polite"></p>
       </section>
 
       <section class="sec">
@@ -556,7 +558,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
       <p>One thread per output element. Thread (ty, tx) streams a whole row of A and column of B straight from global memory, the slow “main pantry”.</p>
       <pre class="code" id="codeNaive"></pre>
       <ul id="exNaive"></ul>
-      <p style="margin-top:8px">It uses no shared memory: without a <code>__shared__</code> array each value goes from global memory into one thread's register and is dropped after its multiply-add. The counts here are per-thread load requests. The hardware softens the redundancy: loads of the same address within a warp merge into one memory transaction, and the L1 and L2 caches can serve repeats. On Volta and later, L1 is the same on-chip SRAM as shared memory. But what stays cached is up to the hardware, so the reuse is not guaranteed. NVIDIA's <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory-in-matrix-multiplication-c-ab">Best Practices Guide</a> measures 120 GB/s for this kernel on a V100 and 196 GB/s once both tiles are staged in shared memory.</p>
+      <p style="margin-top:8px">It uses no shared memory: without a <code>__shared__</code> array each value goes from global memory into one thread's register and is dropped after its multiply-add. The counts here are per-thread load requests. The hardware softens the redundancy: loads of the same address within a warp merge into one memory transaction, and the L1 and L2 caches can serve repeats. On Volta and later, L1 is the same on-chip SRAM as shared memory. But what stays cached is up to the hardware, so the reuse is not guaranteed. NVIDIA's <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory-in-matrix-multiplication-c-ab">Best Practices Guide</a> measures 120 GB/s for a kernel like this on a V100 and 196 GB/s once both tiles are staged in shared memory.</p>
     </div>
     <div class="card">
       <h2>Tiled: load, sync, compute, sync</h2>
@@ -702,7 +704,7 @@ function accOf(ty, tx) {
 
 // Global loads so far.  Tiled: loads that landed in shared memory, and what a naive kernel would
 // have needed for the same multiply-adds.  Naive: loads that landed in registers, the distinct
-// values among them, and what a tiled kernel would have needed for the same progress.
+// values among them, and what a tiled kernel covering the same k range would have loaded.
 function counters() {
   let tiled = 0, naive = 0, ops = 0, distinct = 0;
   STEPS.forEach((S, j) => {
@@ -715,13 +717,16 @@ function counters() {
     } else if (S.type === 'mac' && p >= MAC_COMMIT) {
       ops += NT * 2;   // every thread does one multiply-add with one A and one B operand
     } else if (S.type === 'gload') {
-      for (let q = 0; q < NT; q++) naive += (p >= loadEnd(q, 'A')) + (p >= loadEnd(q, 'B'));
+      let landed = 0;
+      for (let q = 0; q < NT; q++) landed += (p >= loadEnd(q, 'A')) + (p >= loadEnd(q, 'B'));
+      naive += landed;
+      if (S.k % TILE === 0) tiled += landed;   // same 2·T² loads as the tiled phase that covers this k
       // The first thread of row y (q = y·T) and of column x (q = x) brings in each distinct value.
       for (let y = 0; y < TILE; y++) distinct += p >= loadEnd(y * TILE, 'A');
       for (let x = 0; x < TILE; x++) distinct += p >= loadEnd(x, 'B');
     }
   });
-  if (NAIVE) return { tiled: Math.floor(naive / TILE), naive, shared: 0, distinct };
+  if (NAIVE) return { tiled, naive, shared: 0, distinct };
   return { tiled, naive: ops, shared: ops, distinct: tiled };
 }
 
@@ -775,7 +780,8 @@ function buildRuler(root) {
     const grp = el('div', 'rg', root);
     for (let x = 0; x < TILE; x++) {
       const l = el('div', 'rl', grp);
-      l.textContent = g * TILE + x;
+      const i = g * TILE + x;
+      l.textContent = i % (N >= 32 ? Math.max(4, TILE) : 1) === 0 ? i : '';   // 32×32: label every 4th index
       labels.push(l);
     }
   }
@@ -831,9 +837,11 @@ function buildWorkbench() {
     return { card, stt, acc, op1, op2, name: `T(${ty},${tx})` };
   });
   $('arr').replaceChildren();
-  ARR = iota(NT).map(q => {
+  // One dot per thread, or per warp once a block spans more than one warp.
+  ARR = iota(NT > 32 ? NT / 32 : NT).map(n => {
     const d = el('i', '', $('arr'));
-    d.style.setProperty('--tc', TC[q]);
+    d.style.setProperty('--tc', TC[NT > 32 ? n * 32 : n]);
+    if (NT > 32) d.title = `warp ${n}`;
     return d;
   });
 }
@@ -965,6 +973,7 @@ const tip = $('tip');
 function buildScaleBars() {
   const root = $('scaleBars');
   root.replaceChildren();
+  tip.style.opacity = 0;   // the row under the mouse may be gone
   const me = NAIVE ? 1 : TILE, all = 2 * N * N * N;
   [1, 2, 4, 8, 16, 32].filter(T => T <= N).forEach(T => {
     const reads = all / T;
@@ -998,8 +1007,8 @@ function renderStatic() {
   const tiledTot = 2 * N * TILE, naiveTot = 2 * N * NT, all = 2 * N * N * N;
   const threads = NT === 1 ? 'its thread' : NT === 4 ? 'its four threads' : `its ${NT} threads`;
   $('subTxt').textContent = NAIVE
-    ? `C = A × B for ${dim} matrices, no tiling: ${blocks} blocks of ${tdim} threads, all operands read from global memory. Click any block of C to watch ${threads} work.`
-    : `C = A × B for ${dim} matrices with ${tdim} tiles: ${blocks} thread blocks, each marching through ${PHASES} phases along K. Click any block of C to watch ${threads} work.`;
+    ? `C = A × B for ${dim} matrices, no tiling: ${blocks} blocks of ${tdim} threads, each reading its operands from global memory. Click a block of C to run it.`
+    : `C = A × B for ${dim} matrices in ${tdim} tiles: ${blocks} blocks, each marching through ${plural(PHASES, 'phase')} along K. Click a block of C to watch ${threads} work.`;
   document.querySelectorAll('.dim').forEach(e => { e.textContent = dim; });
   $('blockTotal').textContent = blocks;
   $('matC').setAttribute('aria-label', `Output matrix C, ${NB} by ${NB} blocks`);
@@ -1011,7 +1020,7 @@ function renderStatic() {
   $('lgSync').hidden = NAIVE;
   $('tkSync').hidden = NAIVE;
   $('lgOver').hidden = !NAIVE || TILE === 1;
-  $('lgOverTxt').textContent = `fetched ${TILE}× by one block`;
+  $('lgOverTxt').textContent = `requested ${TILE}× by one block`;
   const lg = $('lgThreads');
   lg.replaceChildren();
   if (NT <= 4) {
@@ -1027,18 +1036,19 @@ function renderStatic() {
   }
 
   $('phaseTitle').textContent = NAIVE ? 'Iteration' : 'Phase';
+  $('tLbl').textContent = NAIVE ? 'Block size' : 'Tile size';
   $('trafficLbl').textContent = `this block, ${plural(NT, 'output')}`;
-  $('lblTiled').textContent = NAIVE ? 'Tiled (same progress)' : 'Tiled (shared memory)';
+  $('lblTiled').textContent = NAIVE ? 'Tiled (same k range)' : 'Tiled (shared memory)';
   $('lblNaive').textContent = NAIVE ? 'Naive (this run)' : 'Naive (same MACs)';
   $('totTiled').textContent = `/ ${tiledTot} loads`;
   $('totNaive').textContent = `/ ${naiveTot} loads`;
   $('goalTiled').style.left = `${100 / TILE}%`;
   $('goalTiled').title = `tiled total: ${tiledTot} loads`;
-  $('dtReuse').innerHTML = NAIVE ? 'Fetches per value<small>global loads per distinct value</small>' : 'Reuse factor<small>shared-memory reads per global load</small>';
+  $('dtReuse').innerHTML = NAIVE ? 'Requests per value<small>load requests per distinct value</small>' : 'Reuse factor<small>shared-memory reads per global load</small>';
   $('dtShared').innerHTML = NAIVE ? 'Shared-memory reads<small>no __shared__ arrays</small>' : 'Shared-memory reads';
-  $('dtSaved').textContent = NAIVE ? 'Redundant global loads issued' : 'Redundant global loads avoided';
+  $('dtSaved').textContent = NAIVE ? 'Redundant load requests' : 'Redundant global loads avoided';
   $('trafficNote').innerHTML = NAIVE
-    ? `Naive: each of the ${plural(NT, 'thread')} loads its own row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> global loads, but only <b>${tiledTot}</b> distinct values${TILE > 1 ? `, each fetched <b>${TILE}×</b>` : ''}. A ${tdim} tiled kernel loads each of them once. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`
+    ? `Naive: each of the ${plural(NT, 'thread')} loads its own row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> load requests, but only <b>${tiledTot}</b> distinct values${TILE > 1 ? `, each requested <b>${TILE}×</b>. The hardware merges same-address requests within a warp and caches may catch more, but nothing guarantees it` : ''}. A ${tdim} tiled kernel loads each value once. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`
     : `Naive: each thread walks a full row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> global loads. Tiled: ${PHASES} phases × ${2 * NT} cooperative loads = <b>${tiledTot}</b>, and every value staged in s_A / s_B is consumed by <b>${plural(TILE, 'thread')}</b>. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`;
   $('launchLbl').textContent = `${NAIVE ? 'matmulNaive' : 'matmulTiled'}<<<dim3(${NB}, ${NB}), dim3(${TILE}, ${TILE})>>>`;
   CODE = buildCode($('code'), NAIVE ? naiveKernel() : tiledKernel());
@@ -1056,9 +1066,11 @@ function renderStatic() {
   $('exTileDim').textContent = tdim;
   $('exTiled').innerHTML = [
     `<b>Load:</b> thread (ty, tx) fetches exactly one A and one B element, so ${2 * NT} global loads per phase.`,
-    `<b>__syncthreads():</b> nobody reads the tiles until all ${2 * NT} loads have landed. ` + (warps === 1
-      ? `(With TILE = ${TILE} the ${plural(NT, 'thread')} ${NT === 1 ? 'is' : 'form'} one warp that moves in lockstep; the staggered arrivals in the demo show what happens in larger, multi-warp blocks.)`
-      : `(With TILE = ${TILE} the ${NT} threads form ${warps} warps, which really can reach the barrier at different times.)`),
+    `<b>__syncthreads():</b> nobody reads the tiles until all ${2 * NT} loads have landed. ` + (NT === 1
+      ? '(With TILE = 1 the block has a single thread, so the barrier has nobody to wait for.)'
+      : warps === 1
+        ? `(With TILE = ${TILE} the ${NT} threads fit in one warp that moves in lockstep, so in hardware they reach the barrier together. The demo staggers them to show the wait; in multi-warp blocks whole warps arrive at different times.)`
+        : `(With TILE = ${TILE} the ${NT} threads form ${warps} warps. A warp waits for its slowest lane, so in hardware whole warps reach the barrier at different times; the demo staggers single threads to make the wait visible.)`),
     `<b>Compute:</b> acc += s_A[ty][i] · s_B[i][tx] for i = ${iList}, served from shared memory.`,
     '<b>__syncthreads():</b> nobody overwrites the tiles while a neighbour is still reading them.',
   ].map(x => `<li>${x}</li>`).join('');
@@ -1135,7 +1147,8 @@ function fitCells() {
     const top = stage.getBoundingClientRect().top + scrollY;
     const overhead = stage.offsetHeight - MA.root.offsetHeight - MB.root.offsetHeight;
     const W = (innerHeight - top - overhead - 12) / 2;
-    const cell = `${Math.max(15, Math.min(24, Math.floor(((W - GAPS) / 16) * 4) / 4))}px`;
+    const dg = (GAPS - 29) / 16;
+    const cell = `${Math.max(15 - dg, Math.min(24 - dg, Math.floor(((W - GAPS) / 16) * 4) / 4))}px`;
     if (root.getPropertyValue('--cellH') === cell) return;
     root.setProperty('--cellH', cell);
   }
@@ -1163,6 +1176,7 @@ function kWindow(m, S, t) {
     }
     return { kf: S.k, vis: 1 - seg(t, 0.3, 0.7) };
   }
+  if (m === 'write' || m === 'done') return { kf: (NAIVE ? N : PHASES) - 1, vis: 0 };
   return { kf: 0, vis: 0 };
 }
 
@@ -1383,8 +1397,8 @@ function renderWorkbench(m, S, t, accs) {
 
   const bar = NAIVE ? null : barrierState(m, S, t);
   setCls($('barrier'), 'barrier' + (NAIVE ? ' off' : bar ? (bar.released ? ' open' : ' on') : ''));
-  setText($('bs'), NAIVE ? 'not in this kernel' : !bar ? 'idle' : bar.released ? 'released → go' : bar.n === NT ? `all ${NT} arrived` : `waiting ${bar.n}/${NT}`);
-  ARR.forEach((d, q) => setCls(d, bar && bar.arrived[q] ? 'in' : ''));
+  setText($('bs'), NAIVE ? 'unused' : !bar ? 'idle' : bar.released ? 'released → go' : bar.n === NT ? `all ${NT} arrived` : `waiting ${bar.n}/${NT}`);
+  ARR.forEach((d, n) => setCls(d, bar && (NT > 32 ? iota(32).every(l => bar.arrived[n * 32 + l]) : bar.arrived[n]) ? 'in' : ''));
 
   TH.forEach((T, q) => {
     const v = threadView(q, m, S, t, bar);
@@ -1489,7 +1503,7 @@ function bannerFor(m, S, t, accs) {
     const sub = `blockIdx = (x ${bc}, y ${br})\nthreadIdx (tx, ty) ∈ ${tIdx}\nrow = ${r0} + ty, col = ${c0} + tx`;
     const who = NT === 1 ? '1 thread computes' : `${NT} threads compute`;
     if (NAIVE) {
-      return ['Ready', `Block (${br}, ${bc}) without tiling: ${who} ${span('cc', `C[${rows}, ${cols}]`)}, each thread reading its own row of ${span('ca', `A[${rows}, ${all}]`)} and column of ${span('cb', `B[${all}, ${cols}]`)} from global memory, one k at a time. Press <b>Play</b> or <b>Step</b>.`,
+      return ['Ready', `Block (${br}, ${bc}), no tiling: ${who} ${span('cc', `C[${rows}, ${cols}]`)}, each reading a row of ${span('ca', `A[${rows}, ${all}]`)} and a column of ${span('cb', `B[${all}, ${cols}]`)} from global memory. Press <b>Play</b> or <b>Step</b>.`,
         `${sub}\nno __shared__, no __syncthreads()`];
     }
     return ['Ready', `Block (${br}, ${bc}): ${who} ${span('cc', `C[${rows}, ${cols}]`)} by sliding a ${TILE}×${TILE} window along ${span('ca', `A[${rows}, ${all}]`)} and ${span('cb', `B[${all}, ${cols}]`)} in ${plural(PHASES, 'phase')}. Press <b>Play</b> or <b>Step</b>.`, sub];
@@ -1505,13 +1519,13 @@ function bannerFor(m, S, t, accs) {
     return ['✓ Done', `Block (${br}, ${bc}) complete: ${span('cc', tiledTot)} global loads with tiling vs ${span('cr', naiveTot)} for the naive kernel, ${TILE > 1 ? `so ${TILE}× less global-memory traffic` : 'the same traffic, because a 1×1 tile has no reuse'}. Click another block in C.`, sub];
   }
   if (m === 'gload') {
-    return ['① Load', `k = ${S.k}: every thread loads its own ${span('ca', `A[row][${S.k}]`)} and ${span('cb', `B[${S.k}][col]`)} from global memory into registers` + (TILE > 1 ? `: ${2 * NT} loads for ${2 * TILE} distinct values, because the ${TILE} threads of a row all fetch the same A value` : ''),
-      `ld A[row][k] → register a\nld B[k][col] → register b\nno __shared__: nothing kept for neighbours\nL1/L2 may absorb repeats (hardware)`];
+    return ['① Load', `k = ${S.k}: each thread loads its own ${span('ca', `A[row][${S.k}]`)} and ${span('cb', `B[${S.k}][col]`)} from global memory into registers` + (TILE > 1 ? `, so ${2 * NT} load requests bring in only ${2 * TILE} distinct values` : ''),
+      `ld A[row][k] → register a\nld B[k][col] → register b\nno __shared__: nothing kept for neighbours\nrepeats may be merged or cached (hardware)`];
   }
   if (m === 'fma') {
     return ['② Compute', S.k === N - 1
       ? `k = ${S.k}: the last multiply-add. Each thread's register now holds its full ${N}-term dot product.`
-      : `k = ${S.k}: every thread does acc += a × b in its own registers. Nothing is kept for its neighbours, so iteration ${S.k + 1} fetches from global memory again.`,
+      : `k = ${S.k}: every thread does acc += a × b in its own registers. Nothing is shared: a thread that needs the same A or B value as its neighbour loads its own copy.`,
       `acc += A[row][k] · B[k][col]\n0 shared-memory reads\n${accTxt}`];
   }
   const K0 = S.k * TILE, ks = rng(K0, TILE);
@@ -1521,9 +1535,9 @@ function bannerFor(m, S, t, accs) {
   }
   if (m === 'sync') {
     const q = straggler(S.k), bar = barrierState(m, S, t), warps = Math.ceil(NT / 32);
-    const note = warps === 1
-      ? `Illustrative: ${NT === 1 ? '1 thread is' : `${NT} threads are`} one lockstep warp;\nreal 16×16 blocks span 8 warps.`
-      : `${NT} threads = ${warps} warps, which\ncan reach the barrier at different times.`;
+    const note = NT === 1 ? 'A 1-thread block never waits.'
+      : warps === 1 ? `Illustrative: ${NT} threads fit in one lockstep warp;\nreal 16×16 blocks span 8 warps.`
+      : 'Illustrative: a warp waits for its slowest\nlane, so whole warps arrive late.';
     if (q < 0) {
       return ['② Sync', `Phase ${S.k}: the block's only thread has stored its values and reaches ${sync}; with nobody to wait for, the barrier opens.`,
         `${bar.n} of ${NT} threads at the barrier\n${note}`];
@@ -1534,7 +1548,7 @@ function bannerFor(m, S, t, accs) {
       : t < SYNC_RELEASE
         ? `Phase ${S.k}: ${who}'s slow load has landed in s_B and it reaches ${sync}; the last arrival lets the barrier open.`
         : `Phase ${S.k}: all ${NT} threads reached ${sync}, so shared memory is fully stocked and everyone proceeds.`;
-    return ['② Sync', main, `${bar.n} of ${NT} threads at the barrier\nGlobal-load latency varies per thread.\n${note}`];
+    return ['② Sync', main, `${bar.n} of ${NT} threads at the barrier\nGlobal-load latency varies per load.\n${note}`];
   }
   if (m === 'mac') {
     return ['③ Compute', `Phase ${S.k}, i = ${S.i}: every thread does acc += ${span('ca', `s_A[ty][${S.i}]`)} × ${span('cb', `s_B[${S.i}][tx]`)} (global K = ${K0 + S.i}) straight from shared memory`,
@@ -1744,6 +1758,7 @@ function applyConfig(change) {
   restart();
   syncControls();
   measure();
+  render();
   fitCells();
   measure();
   dirty = true;
@@ -1791,13 +1806,13 @@ document.querySelectorAll('.btn, .linkbtn').forEach(b => b.addEventListener('mou
 document.addEventListener('keydown', e => {
   if (e.ctrlKey || e.metaKey || e.altKey) return;
   const target = e.target instanceof Element ? e.target : document.body;
-  const onRange = target.matches('input[type="range"]');
-  if (target.closest('textarea, select, input:not([type="range"])')) return;
+  const onRange = target.matches('input[type="range"]'), onRadio = target.matches('input[type="radio"]');
+  if (target.closest('textarea, select, input:not([type="range"]):not([type="radio"])')) return;
   if (e.code === 'Space') {
     if (target.closest('button')) return;   // keyboard users: a focused button handles its own Space
     e.preventDefault();
     st.playing ? pause() : play();
-  } else if (e.key === 'ArrowRight' && !onRange) {
+  } else if (e.key === 'ArrowRight' && !onRange && !onRadio) {
     e.preventDefault();
     stepForward();
   } else if (e.key === 'e' || e.key === 'E') {
