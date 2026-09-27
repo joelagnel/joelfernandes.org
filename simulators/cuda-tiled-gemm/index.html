@@ -20,13 +20,19 @@
   --ok: #34d399;
   --mono: "IBM Plex Mono", "JetBrains Mono", "SF Mono", "Cascadia Code", ui-monospace, Menlo, Consolas, monospace;
   --sans: "IBM Plex Sans", "Segoe UI Variable Text", "Segoe UI", -apple-system, system-ui, Ubuntu, "Noto Sans", sans-serif;
-  --cell: clamp(15px, min(var(--cellH, 24px), calc((100vw - 540px) / 32)), 24px);   /* --cellH: JS vertical fit */
+  /* --n, --nb, --t (grid size, blocks per side, tile size), --k16 = 16 / n and --gaps are set by JS */
+  --n: 16; --nb: 8; --t: 2; --k16: 1; --gaps: 29px;
+  --unit: clamp(15px, min(var(--cellH, 24px), calc((100vw - 540px) / 32 - (var(--gaps) - 29px) / 16)), 24px);   /* --cellH: JS vertical fit */
+  --cell: calc(var(--unit) * var(--k16));
   --cgap: 1px;
   --tgap: 3px;
-  --W: calc(16 * var(--cell) + 8 * var(--cgap) + 7 * var(--tgap));
-  --sm: calc(var(--W) * .14);
+  --W: calc(var(--n) * var(--cell) + var(--nb) * (var(--t) - 1) * var(--cgap) + (var(--nb) - 1) * var(--tgap));
+  --smgap: 4px;
+  --thgap: 8px;
+  --sm: min(var(--W) * .2, calc((var(--W) * .28 - (var(--t) - 2) * var(--smgap)) / var(--t)));
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
 html, body { background: var(--bg); color: var(--ink); font-family: var(--sans); }
 body {
   min-height: 100vh;
@@ -78,9 +84,9 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
   color: var(--C); background: rgba(34, 211, 238, .14); border: 1px solid rgba(34, 211, 238, .45);
   transition: color .3s, background-color .3s, border-color .3s;
 }
-.tag[data-type="load"] { color: #93c5fd; background: rgba(96, 165, 250, .14); border-color: rgba(96, 165, 250, .5); }
+.tag[data-type="load"], .tag[data-type="gload"] { color: #93c5fd; background: rgba(96, 165, 250, .14); border-color: rgba(96, 165, 250, .5); }
 .tag[data-type="sync"], .tag[data-type="adv"] { color: #fda4af; background: rgba(251, 113, 133, .14); border-color: rgba(251, 113, 133, .5); }
-.tag[data-type="mac"] { color: #6ee7b7; background: rgba(52, 211, 153, .12); border-color: rgba(52, 211, 153, .5); }
+.tag[data-type="mac"], .tag[data-type="fma"] { color: #6ee7b7; background: rgba(52, 211, 153, .12); border-color: rgba(52, 211, 153, .5); }
 .tag[data-type="done"] { color: #6ee7b7; background: rgba(52, 211, 153, .12); border-color: rgba(52, 211, 153, .5); }
 .bmain { font-size: 14.5px; line-height: 1.45; max-width: 68ch; }
 .bsub { font: 500 11px/1.5 var(--mono); color: var(--ink2); white-space: pre-line; padding-left: 14px; border-left: 1px solid rgba(34, 211, 238, .22); }
@@ -108,15 +114,15 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
 }
 .linkbtn:hover { color: var(--ink); border-color: rgba(34, 211, 238, .6); }
 
-.mat { position: relative; display: grid; grid-template-columns: repeat(8, auto); gap: var(--tgap); width: var(--W); height: var(--W); }
+.mat { position: relative; display: grid; grid-template-columns: repeat(var(--nb), auto); gap: var(--tgap); width: var(--W); height: var(--W); }
 .tile {
   position: relative; display: grid; gap: var(--cgap); border-radius: 4px;
-  grid-template-columns: repeat(2, var(--cell)); grid-template-rows: repeat(2, var(--cell));
+  grid-template-columns: repeat(var(--t), var(--cell)); grid-template-rows: repeat(var(--t), var(--cell));
 }
 .cell {
   border-radius: 3px; display: grid; place-items: center;
   background: rgba(148, 163, 184, .055); color: #4b5a70;
-  font: 500 max(8px, calc(var(--cell) * .46))/1 var(--mono);
+  font: 500 min(18px, max(8px, calc(var(--cell) * .46)))/1 var(--mono);
   transition: background-color .3s, color .3s, box-shadow .3s;
 }
 .mA .cell.strip { background: rgba(96, 165, 250, .13); color: #93c5fd; }
@@ -154,12 +160,12 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
 .mC .cell.reg.hot { background: rgba(34, 211, 238, .3); color: #ecfeff; box-shadow: inset 0 0 0 1px #22d3ee, 0 0 12px rgba(34, 211, 238, .7); }
 .mC .tile .cell.solid { background: #22d3ee; color: #042f3a; font-weight: 800; font-style: normal; box-shadow: 0 0 12px rgba(34, 211, 238, .8); }
 
-.ruler { display: grid; gap: var(--tgap); font: 500 max(7px, calc(var(--cell) * .42))/1 var(--mono); color: #475569; }
-.ruler.h { grid-template-columns: repeat(8, auto); align-content: center; }
-.ruler.v { grid-template-rows: repeat(8, auto); justify-content: center; }
+.ruler { display: grid; gap: var(--tgap); font: 500 min(12px, max(7px, calc(var(--cell) * .42)))/1 var(--mono); color: #475569; }
+.ruler.h { grid-template-columns: repeat(var(--nb), auto); align-content: center; }
+.ruler.v { grid-template-rows: repeat(var(--nb), auto); justify-content: center; }
 .rg { display: grid; gap: var(--cgap); }
-.ruler.h .rg { grid-template-columns: repeat(2, var(--cell)); height: 16px; }
-.ruler.v .rg { grid-template-rows: repeat(2, var(--cell)); width: 18px; }
+.ruler.h .rg { grid-template-columns: repeat(var(--t), var(--cell)); height: 16px; }
+.ruler.v .rg { grid-template-rows: repeat(var(--t), var(--cell)); width: 18px; }
 .rl { display: grid; place-items: center; border-radius: 3px; transition: color .3s, background-color .3s; }
 .rl.onA { color: #bfdbfe; background: rgba(96, 165, 250, .2); }
 .rl.onB { color: #e9d5ff; background: rgba(192, 132, 252, .2); }
@@ -173,22 +179,25 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
   border: 1px solid rgba(34, 211, 238, .3);
   box-shadow: 0 0 32px rgba(34, 211, 238, .08), inset 0 1px 0 rgba(255, 255, 255, .04);
 }
-.wb-corner { display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
-.wb-sB, .wb-sA { position: relative; display: grid; gap: 8px; }
-.wb-sB { grid-template-columns: 1fr 1fr; }
-.wb-sA { grid-template-rows: 1fr 1fr; }
-.smcol, .smrow { display: flex; gap: 4px; align-items: center; justify-content: center; }
+.wb-corner { grid-area: 1 / 1; display: flex; flex-direction: column; justify-content: center; gap: 6px; min-width: 0; }
+.wb-sB { grid-area: 1 / 2; }
+.wb-sA { grid-area: 2 / 1; }
+.threads { grid-area: 2 / 2; }
+.wb-sB, .wb-sA { position: relative; display: grid; gap: var(--thgap); }
+.wb-sB { grid-template-columns: repeat(var(--t), minmax(0, 1fr)); }
+.wb-sA { grid-template-rows: repeat(var(--t), minmax(0, 1fr)); }
+.smcol, .smrow { display: flex; gap: var(--smgap); align-items: center; justify-content: center; }
 .smcol { flex-direction: column; }
 .smlab { position: absolute; font: 800 11px/1 var(--mono); letter-spacing: .02em; }
 .wb-sB .smlab { left: 0; top: 50%; color: #d8b4fe; transform: translateY(-50%); }
 .wb-sA .smlab { left: 50%; top: 0; color: #93c5fd; transform: translateX(-50%); }
 .sm {
-  position: relative; width: var(--sm); height: var(--sm); border-radius: 8px;
+  position: relative; width: var(--sm); height: var(--sm); border-radius: min(8px, calc(var(--sm) * .2));
   display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
   background: rgba(148, 163, 184, .05); border: 1px solid rgba(148, 163, 184, .2);
   transition: background-color .3s, border-color .3s, box-shadow .3s, opacity .3s, transform .3s;
 }
-.sm .v { font: 750 calc(var(--sm) * .4)/1 var(--mono); color: var(--ink); }
+.sm .v { font: 750 max(7px, calc(var(--sm) * .4))/1 var(--mono); color: var(--ink); }
 .sm .s { font: 500 max(7px, calc(var(--sm) * .16))/1 var(--mono); color: var(--ink3); white-space: nowrap; }
 .sm.empty .v { color: #334155; }
 .sm.fresh { border-color: var(--tc); background: var(--tcs); box-shadow: 0 0 14px var(--tc); }
@@ -198,7 +207,7 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
 .wb-sA .sm.read { border-color: #93c5fd; background: rgba(96, 165, 250, .3); box-shadow: 0 0 16px rgba(96, 165, 250, .8); transform: scale(1.07); }
 .wb-sB .sm.read { border-color: #d8b4fe; background: rgba(192, 132, 252, .3); box-shadow: 0 0 16px rgba(192, 132, 252, .8); transform: scale(1.07); }
 
-.threads { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 8px; min-width: 0; min-height: 0; }
+.threads { display: grid; grid-template-columns: repeat(var(--t), minmax(0, 1fr)); grid-template-rows: repeat(var(--t), minmax(0, 1fr)); gap: var(--thgap); min-width: 0; min-height: 0; }
 .th {
   position: relative; min-width: 0; min-height: 0; overflow: hidden; border-radius: 12px; padding: 5px 7px;
   display: flex; flex-direction: column; justify-content: space-between;
@@ -212,7 +221,7 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
   margin-left: auto; font: 650 max(8.5px, calc(var(--W) * .024))/1 var(--sans); padding: 2px 5px; border-radius: 5px;
   background: rgba(148, 163, 184, .13); color: var(--ink2);
 }
-.th-acc { display: flex; align-items: baseline; gap: 5px; font: 800 calc(var(--W) * .062)/1 var(--mono); color: var(--ink); transition: color .25s, text-shadow .25s; }
+.th-acc { display: flex; align-items: baseline; gap: 5px; font: 800 clamp(9px, calc(var(--W) * .124 / var(--t)), 40px)/1 var(--mono); color: var(--ink); transition: color .25s, text-shadow .25s; }
 .th-acc small { font: 600 9px/1 var(--mono); color: var(--ink3); }
 .th-op { font: 500 max(8px, calc(var(--W) * .028))/1.4 var(--mono); color: var(--ink2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .th-op i { font-style: normal; color: var(--ink); }
@@ -243,8 +252,8 @@ h1 { font-size: 22px; line-height: 1.15; font-weight: 650; letter-spacing: -.015
 .fx { position: absolute; inset: 0; pointer-events: none; z-index: 30; }
 .fx svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .pkt {
-  position: absolute; left: 0; top: 0; min-width: 22px; height: 22px; padding: 0 5px; border-radius: 7px;
-  display: grid; place-items: center; font: 800 12px/1 var(--mono); color: #0b1120;
+  position: absolute; left: 0; top: 0; min-width: var(--pk, 22px); height: var(--pk, 22px); padding: 0 calc(var(--pk, 22px) * .22); border-radius: calc(var(--pk, 22px) * .32);
+  display: grid; place-items: center; font: 800 calc(var(--pk, 22px) * .545)/1 var(--mono); color: #0b1120;
   background: var(--tc); box-shadow: 0 0 14px var(--tc), inset 0 0 0 1px rgba(255, 255, 255, .6);
   opacity: 0; will-change: transform, opacity;
 }
@@ -286,9 +295,9 @@ kbd { font: 600 10px/1 var(--mono); padding: 2px 5px; border-radius: 4px; border
 .tl { position: relative; display: flex; height: 18px; margin: 12px 0 4px; border-radius: 5px; overflow: hidden; background: rgba(148, 163, 184, .06); cursor: pointer; }
 .tn { flex: 1 1 0; min-width: 0; opacity: .2; transition: opacity .25s, box-shadow .25s; }
 .tn[data-gap] { box-shadow: inset 2px 0 0 #111827; }
-.tn[data-type="load"] { background: #60a5fa; }
+.tn[data-type="load"], .tn[data-type="gload"] { background: #60a5fa; }
 .tn[data-type="sync"], .tn[data-type="adv"] { background: #fb7185; }
-.tn[data-type="mac"] { background: #34d399; }
+.tn[data-type="mac"], .tn[data-type="fma"] { background: #34d399; }
 .tn[data-type="write"] { background: #22d3ee; }
 .tn.done { opacity: .6; }
 .tn.on { opacity: 1; }
@@ -348,7 +357,65 @@ pre.code { font: 500 11px/1.6 var(--mono); color: #cbd5e1; overflow-x: auto; }
 .mem { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
 .memc { border-radius: 10px; padding: 9px; border: 1px solid var(--line); background: rgba(15, 23, 42, .7); font-size: 11.5px; color: var(--ink2); line-height: 1.45; }
 .memc b { display: block; font-size: 12.5px; margin-bottom: 3px; }
+.explain a { color: #67e8f9; text-decoration-color: rgba(103, 232, 249, .4); }
+.explain code { font: 600 11.5px var(--mono); color: #f9a8d4; }
 footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink3); }
+
+/* ---------- setup: kernel variant, grid size, tile size ---------- */
+.cht { font-style: normal; }
+.seg { display: flex; border-radius: 9px; border: 1px solid var(--line2); overflow: hidden; }
+.seg label { position: relative; flex: 1; cursor: pointer; }
+.seg label + label { border-left: 1px solid var(--line2); }
+.seg input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.seg span { display: flex; align-items: center; justify-content: center; height: 32px; font: 650 12px/1 var(--sans); color: var(--ink2); transition: background-color .2s, color .2s; }
+.seg label:hover span { color: var(--ink); }
+.seg input:checked + span { color: #ecfeff; background: rgba(34, 211, 238, .16); box-shadow: inset 0 -2px 0 var(--C); }
+.seg input[value="naive"]:checked + span { color: #fff1f2; background: rgba(251, 113, 133, .16); box-shadow: inset 0 -2px 0 var(--bar); }
+.seg input:focus-visible + span { outline: 2px solid var(--C); outline-offset: -2px; }
+.cfg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.cfg label { display: flex; flex-direction: column; gap: 5px; font-size: 11.5px; color: var(--ink2); }
+.cfg select {
+  height: 32px; padding: 0 8px; border-radius: 8px; color-scheme: dark; cursor: pointer;
+  background: rgba(30, 41, 59, .7); color: var(--ink); border: 1px solid var(--line2); font: 600 12.5px/1 var(--mono);
+}
+.cfg select:hover { border-color: rgba(34, 211, 238, .65); }
+.cfgnote { margin-top: 9px; font-size: 11.5px; line-height: 1.5; color: var(--ink3); }
+.lgt { display: contents; }
+
+/* ---------- other grid / tile sizes ---------- */
+.stage.dense .mC .cell { font-size: 0; }
+.stage.dense .cell { border-radius: 2px; }
+.tl.many .tn[data-gap] { box-shadow: inset 1px 0 0 #111827; }
+.wb[data-t="4"] .th, .wb[data-t="8"] .th { border-radius: 7px; padding: 3px 4px; }
+.wb[data-t="4"] .th-op, .wb[data-t="8"] .th-op, .wb[data-t="4"] .th-n, .wb[data-t="8"] .th-h, .wb[data-t="4"] .th-acc small, .wb[data-t="8"] .th-acc small, .wb[data-t="4"] .sm .s, .wb[data-t="8"] .sm .s { display: none; }
+.wb[data-t="4"] .th-h { font-size: 9px; gap: 2px 3px; }
+.wb[data-t="4"] .th-st { margin-left: 0; font-size: 8.5px; padding: 1px 3px; }
+.wb[data-t="4"] .dot { width: 6px; height: 6px; }
+.wb[data-t="8"] .th { justify-content: center; border-radius: 5px; padding: 1px; }
+.wb[data-t="8"] .th-acc { justify-content: center; }
+.wb[data-t="4"] .wb-sB, .wb[data-t="4"] .threads, .wb[data-t="8"] .wb-sB, .wb[data-t="8"] .threads { padding-left: 14px; }
+.wb[data-t="4"] .wb-sA, .wb[data-t="4"] .threads, .wb[data-t="8"] .wb-sA, .wb[data-t="8"] .threads { padding-top: 12px; }
+.wb[data-t="4"] .smlab, .wb[data-t="8"] .smlab { font-size: 9px; }
+.wb[data-t="4"] .wb-sB .smlab, .wb[data-t="8"] .wb-sB .smlab { writing-mode: vertical-rl; transform: translateY(-50%) rotate(180deg); }
+.wb[data-t="4"] .barrier .arr, .wb[data-t="8"] .barrier .arr { display: grid; grid-template-columns: repeat(var(--t), auto); gap: 2px; justify-content: start; }
+.wb[data-t="4"] .barrier .arr i { width: 6px; height: 6px; }
+.wb[data-t="8"] .barrier .arr i { width: 4px; height: 4px; }
+
+/* ---------- naive kernel: no shared memory, redundant global loads ---------- */
+.wb-note {
+  grid-area: 1 / 2; align-self: center; justify-self: center; z-index: 1; max-width: 100%;
+  display: none; padding: 7px 9px; border-radius: 10px; font-size: 10px; line-height: 1.45; color: var(--ink2);
+  border: 1px dashed rgba(251, 113, 133, .45); background: rgba(27, 20, 36, .94);
+}
+.wb-note b { color: #fecdd3; }
+.wb-note code { font: 600 9.5px/1 var(--mono); color: #f9a8d4; }
+.wb[data-mode="naive"] { border-color: rgba(251, 113, 133, .3); box-shadow: 0 0 32px rgba(251, 113, 133, .07), inset 0 1px 0 rgba(255, 255, 255, .04); }
+.barrier.off { opacity: .4; }
+.barrier.off .bf { text-decoration: line-through; }
+.wb[data-mode="naive"] .wb-note { display: block; }
+.wb[data-mode="naive"] .sm { opacity: .35; border-style: dashed; }
+.wb[data-mode="naive"] .smlab { opacity: .45; }
+.mA .cell.over, .mB .cell.over { background: rgba(251, 113, 133, .16); color: #fda4af; }
 
 @media (max-width: 1180px) {
   .explain { grid-template-columns: 1fr; }
@@ -365,7 +432,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
       <div class="logo" aria-hidden="true"><i style="background:#34d399"></i><i style="background:#fbbf24"></i><i style="background:#f472b6"></i><i style="background:#38bdf8"></i></div>
       <h1>Tiled CUDA GEMM: shared memory vs naive global memory</h1>
     </div>
-    <p class="sub">C = A × B for 16×16 matrices with 2×2 tiles: 64 thread blocks, each marching through 8 phases along K. Click any block of C to watch its four threads work.</p>
+    <p class="sub" id="subTxt"></p>
   </header>
 
   <div class="banner">
@@ -377,8 +444,8 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
   <main class="layout">
     <div class="stagecol">
       <div class="stage" id="stage">
-        <div class="mtitle" style="grid-area:1/1"><b>Shared Memory Workbench</b><span class="grow"></span><span id="wbBlock" class="mono"></span></div>
-        <div class="mtitle" style="grid-area:1/3"><span class="nm" style="color:var(--B)">B</span><b>16×16</b> global memory (K × N)</div>
+        <div class="mtitle" style="grid-area:1/1"><b id="wbTitle">Shared Memory Workbench</b><span class="grow"></span><span id="wbBlock" class="mono"></span></div>
+        <div class="mtitle" style="grid-area:1/3"><span class="nm" style="color:var(--B)">B</span><b class="dim">16×16</b> global memory (K × N)</div>
 
         <div class="wb" id="wb" style="grid-area:2/1">
           <div class="wb-corner">
@@ -390,6 +457,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
             </div>
           </div>
           <div class="wb-sB" id="sBwrap"><span class="smlab">s_B</span></div>
+          <p class="wb-note"><b>No shared memory:</b> no <code>__shared__</code> array, so every load goes from global memory through L2 and L1 into one thread's register.</p>
           <div class="wb-sA" id="sAwrap"><span class="smlab">s_A</span></div>
           <div class="threads" id="threads"></div>
         </div>
@@ -404,23 +472,21 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
         <div class="ruler v" id="rulerRows" style="grid-area:4/2" title="row index of A and C"></div>
         <div class="mat mC" id="matC" style="grid-area:4/3" role="group" aria-label="Output matrix C, 8 by 8 blocks"></div>
 
-        <div class="mtitle" style="grid-area:5/1"><span class="nm" style="color:var(--A)">A</span><b>16×16</b> global memory (M × K)</div>
-        <div class="mtitle" style="grid-area:5/3"><span class="nm" style="color:var(--C)">C</span><b>16×16</b><span title="blocks written to C"><span id="doneCount">0</span>/64 blocks</span><span class="grow"></span><button class="linkbtn" id="fillAll" type="button">Fill all</button><button class="linkbtn" id="clearAll" type="button">Clear</button></div>
+        <div class="mtitle" style="grid-area:5/1"><span class="nm" style="color:var(--A)">A</span><b class="dim">16×16</b> global memory (M × K)</div>
+        <div class="mtitle" style="grid-area:5/3"><span class="nm" style="color:var(--C)">C</span><b class="dim">16×16</b><span title="blocks written to C"><span id="doneCount">0</span>/<span id="blockTotal">64</span> blocks</span><span class="grow"></span><button class="linkbtn" id="fillAll" type="button">Fill all</button><button class="linkbtn" id="clearAll" type="button">Clear</button></div>
 
         <div class="fx" id="fx"><svg id="fxsvg"></svg></div>
       </div>
       <div class="legend" role="group" aria-label="Legend">
         <span class="lg"><i class="sw" style="background:rgba(96,165,250,.35)"></i>A row strip</span>
         <span class="lg"><i class="sw" style="background:rgba(192,132,252,.35)"></i>B column strip</span>
-        <span class="lg"><i class="sw" style="border:2px solid #60a5fa;box-shadow:0 0 6px #60a5fa"></i>active K-tile</span>
+        <span class="lg"><i class="sw" style="border:2px solid #60a5fa;box-shadow:0 0 6px #60a5fa"></i><span id="lgWin">active K-tile</span></span>
         <span class="lg"><i class="sw" style="border:2px solid #22d3ee;box-shadow:0 0 6px #22d3ee"></i>selected block</span>
         <span class="lg"><i class="sw" style="background:rgba(34,211,238,.12);box-shadow:inset 0 0 0 1px rgba(34,211,238,.6)"></i>register acc</span>
         <span class="lg"><i class="sw" style="background:#22d3ee"></i>written to C</span>
-        <span class="lg"><i class="sw" style="border:1px solid #fb7185;background:rgba(251,113,133,.2)"></i>__syncthreads()</span>
-        <span class="lg"><i class="sw" style="background:#34d399"></i>T(0,0)</span>
-        <span class="lg"><i class="sw" style="background:#fbbf24"></i>T(0,1)</span>
-        <span class="lg"><i class="sw" style="background:#f472b6"></i>T(1,0)</span>
-        <span class="lg"><i class="sw" style="background:#38bdf8"></i>T(1,1)</span>
+        <span class="lg" id="lgSync"><i class="sw" style="border:1px solid #fb7185;background:rgba(251,113,133,.2)"></i>__syncthreads()</span>
+        <span class="lg" id="lgOver" hidden><i class="sw" style="background:rgba(251,113,133,.3)"></i><span id="lgOverTxt"></span></span>
+        <span class="lgt" id="lgThreads"></span>
       </div>
     </div>
 
@@ -430,41 +496,55 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
         <div class="btns">
           <button class="btn primary pulse" id="bPlay" type="button">▶ Play</button>
           <button class="btn" id="bStep" type="button">⏭ Step</button>
+          <button class="btn" id="bEnd" type="button" title="Jump to the end state of this block (E)">⏩ End</button>
           <button class="btn" id="bReset" type="button">↺ Reset</button>
         </div>
         <label class="speed">Speed <input type="range" id="speed" min="0.25" max="3" step="0.25" value="1" autocomplete="off"> <b id="speedLbl">1.00×</b></label>
         <div class="blk" id="blkInfo"></div>
-        <p class="hint">Click a 2×2 block in C to run it. Keys: <kbd>Space</kbd> play or pause, <kbd>→</kbd> step, <kbd>R</kbd> reset.</p>
+        <p class="hint">Click a block in C to run it. Keys: <kbd>Space</kbd> play or pause, <kbd>→</kbd> step, <kbd>E</kbd> end, <kbd>R</kbd> reset.</p>
       </section>
 
       <section class="sec">
-        <h2 class="ch">Phase <span id="microLbl"></span></h2>
+        <h2 class="ch">Setup <span>any change resets the run</span></h2>
+        <div class="seg" role="radiogroup" aria-label="Kernel">
+          <label><input type="radio" name="kmode" value="tiled" checked><span>Tiled (shared memory)</span></label>
+          <label><input type="radio" name="kmode" value="naive"><span>Naive (no tiling)</span></label>
+        </div>
+        <div class="cfg">
+          <label>Grid size <select id="selN" autocomplete="off"><option value="8">8×8</option><option value="16" selected>16×16</option><option value="32">32×32</option></select></label>
+          <label>Tile size <select id="selT" autocomplete="off"><option value="1">1×1</option><option value="2" selected>2×2</option><option value="4">4×4</option><option value="8">8×8</option></select></label>
+        </div>
+        <p class="cfgnote" id="cfgNote"></p>
+      </section>
+
+      <section class="sec">
+        <h2 class="ch"><em class="cht" id="phaseTitle">Phase</em> <span id="microLbl"></span></h2>
         <div class="phase"><b id="phaseNum">–</b><span class="of" id="phaseOf">of 7</span><span class="kwin" id="phaseK"></span></div>
         <div class="tl" id="tl" title="Micro-step timeline: click a segment to jump there"><div class="tlhead" id="tlhead"></div></div>
         <div class="tln" id="tln"></div>
-        <div class="tlkey"><span><i style="background:#60a5fa"></i>load</span><span><i style="background:#fb7185"></i>__syncthreads()</span><span><i style="background:#34d399"></i>compute</span><span><i style="background:#22d3ee"></i>write C</span></div>
+        <div class="tlkey"><span><i style="background:#60a5fa"></i>load</span><span id="tkSync"><i style="background:#fb7185"></i>__syncthreads()</span><span><i style="background:#34d399"></i>compute</span><span><i style="background:#22d3ee"></i>write C</span></div>
       </section>
 
       <section class="sec">
-        <h2 class="ch">Global memory traffic <span>this block, 4 outputs</span></h2>
+        <h2 class="ch">Global memory traffic <span id="trafficLbl">this block, 4 outputs</span></h2>
         <div class="metric">
-          <div class="mrow"><span>Tiled (shared memory)</span><b><span id="mTiled">0</span> <small>/ 64 loads</small></b></div>
-          <div class="track"><div class="fill t" id="fTiled"></div><div class="goal" style="left:50%" title="tiled total: 64 loads"></div></div>
+          <div class="mrow"><span id="lblTiled">Tiled (shared memory)</span><b><span id="mTiled">0</span> <small id="totTiled">/ 64 loads</small></b></div>
+          <div class="track"><div class="fill t" id="fTiled"></div><div class="goal" id="goalTiled" style="left:50%" title="tiled total: 64 loads"></div></div>
         </div>
         <div class="metric">
-          <div class="mrow"><span>Naive (same MACs)</span><b><span id="mNaive">0</span> <small>/ 128 loads</small></b></div>
+          <div class="mrow"><span id="lblNaive">Naive (same MACs)</span><b><span id="mNaive">0</span> <small id="totNaive">/ 128 loads</small></b></div>
           <div class="track"><div class="fill n" id="fNaive"></div></div>
         </div>
         <dl class="stats">
-          <div><dt>Reuse factor<small>shared-memory reads per global load</small></dt><dd id="mReuse">–</dd></div>
-          <div><dt>Shared-memory reads</dt><dd id="mShared">0</dd></div>
-          <div><dt>Redundant global loads avoided</dt><dd id="mSaved">0</dd></div>
+          <div><dt id="dtReuse">Reuse factor<small>shared-memory reads per global load</small></dt><dd id="mReuse">–</dd></div>
+          <div><dt id="dtShared">Shared-memory reads</dt><dd id="mShared">0</dd></div>
+          <div><dt id="dtSaved">Redundant global loads avoided</dt><dd id="mSaved">0</dd></div>
         </dl>
-        <p class="note">Naive: each thread walks a full row of A and column of B, 4 × 32 = <b>128</b> global loads. Tiled: 8 phases × 8 cooperative loads = <b>64</b>, and every value staged in s_A / s_B is consumed by <b>2 threads</b>. For the whole 16×16 GEMM that is <b>8,192</b> naive vs <b>4,096</b> tiled global loads.</p>
+        <p class="note" id="trafficNote"></p>
       </section>
 
       <section class="sec">
-        <h2 class="ch">Kernel <span class="mono">matmulTiled&lt;&lt;&lt;dim3(8, 8), dim3(2, 2)&gt;&gt;&gt;</span></h2>
+        <h2 class="ch">Kernel <span class="mono" id="launchLbl"></span></h2>
         <pre class="code" id="code"></pre>
       </section>
     </aside>
@@ -475,22 +555,13 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
       <h2>Naive: every thread walks global memory</h2>
       <p>One thread per output element. Thread (ty, tx) streams a whole row of A and column of B straight from global memory, the slow “main pantry”.</p>
       <pre class="code" id="codeNaive"></pre>
-      <ul>
-        <li>Per thread: 16 + 16 = <b>32</b> global loads; per 2×2 block: <b>128</b>.</li>
-        <li>T(0,0) and T(0,1) both fetch the <b>same</b> row of A; across the grid every element of A and B is fetched 16 times.</li>
-        <li>Whole GEMM: 2·N³ = <b>8,192</b> loads for only 512 distinct values.</li>
-      </ul>
-      <p style="margin-top:8px">Counts here are global load requests. On real GPUs the L1/L2 caches absorb part of the naive kernel's redundancy (a 16×16 problem fits entirely in L2); shared memory makes the reuse explicit and guaranteed.</p>
+      <ul id="exNaive"></ul>
+      <p style="margin-top:8px">It uses no shared memory: without a <code>__shared__</code> array each value goes from global memory into one thread's register and is dropped after its multiply-add. The counts here are per-thread load requests. The hardware softens the redundancy: loads of the same address within a warp merge into one memory transaction, and the L1 and L2 caches can serve repeats. On Volta and later, L1 is the same on-chip SRAM as shared memory. But what stays cached is up to the hardware, so the reuse is not guaranteed. NVIDIA's <a href="https://docs.nvidia.com/cuda/cuda-c-best-practices-guide/index.html#shared-memory-in-matrix-multiplication-c-ab">Best Practices Guide</a> measures 120 GB/s for this kernel on a V100 and 196 GB/s once both tiles are staged in shared memory.</p>
     </div>
     <div class="card">
       <h2>Tiled: load, sync, compute, sync</h2>
-      <p>The block fetches a 2×2 tile of A and of B <b>once</b> into shared memory (the “workbench”), then every thread computes from there.</p>
-      <ul>
-        <li><b>Load:</b> thread (ty, tx) fetches exactly one A and one B element, so 8 global loads per phase.</li>
-        <li><b>__syncthreads():</b> nobody reads the tiles until all 8 loads have landed. (With TILE = 2 the 4 threads form one warp that moves in lockstep; the staggered arrivals in the demo show what happens in larger, multi-warp blocks.)</li>
-        <li><b>Compute:</b> acc += s_A[ty][i] · s_B[i][tx] for i = 0, 1, served from shared memory.</li>
-        <li><b>__syncthreads():</b> nobody overwrites the tiles while a neighbour is still reading them.</li>
-      </ul>
+      <p>The block fetches a <span id="exTileDim">2×2</span> tile of A and of B <b>once</b> into shared memory (the “workbench”), then every thread computes from there.</p>
+      <ul id="exTiled"></ul>
       <div class="mem">
         <div class="memc"><b style="color:#fda4af">Global memory (DRAM)</b>Visible to every block. Hundreds of cycles per access.</div>
         <div class="memc"><b style="color:#67e8f9">Shared memory (SRAM)</b>Per block, on-chip. ~20–30 cycles per access.</div>
@@ -498,7 +569,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
     </div>
     <div class="card">
       <h2>Reuse grows with the tile size</h2>
-      <p>With TILE = T, each staged value feeds T threads, so global loads fall to 2·N³ / T. This demo uses T = 2; production kernels use 16–32 (or larger, register-blocked tiles).</p>
+      <p id="exScale"></p>
       <div class="bars" id="scaleBars"></div>
       <p style="margin-top:10px">Shared memory per block is 2·T²·4 B: 2 KB at T = 16, 8 KB at T = 32. For this one-thread-per-output kernel the real cap is threads per block (T² ≤ 1024, so T ≤ 32); register-blocked kernels use bigger tiles, where shared-memory capacity and occupancy become the limit.</p>
     </div>
@@ -510,17 +581,28 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
 (() => {
 'use strict';
 
-/* ================= problem setup ================= */
-const N = 16, TILE = 2, NB = N / TILE, PHASES = N / TILE;   // 64 blocks, 8 phases
-const TC  = ['#34d399', '#fbbf24', '#f472b6', '#38bdf8'];   // thread q = ty * 2 + tx
-const TCS = ['rgba(52,211,153,.16)', 'rgba(251,191,36,.16)', 'rgba(244,114,182,.16)', 'rgba(56,189,248,.16)'];
-const TCB = ['rgba(52,211,153,.45)', 'rgba(251,191,36,.45)', 'rgba(244,114,182,.45)', 'rgba(56,189,248,.45)'];
+/* ================= configuration ================= */
+// Grid size N (A, B, C are N×N), tile size T (blocks of T×T threads) and kernel variant.
+// Any change rebuilds everything and resets the run.
+const cfg = { n: 16, t: 2, mode: 'tiled' };
+const T_OPTS = [1, 2, 4, 8];
+const tileOk = (n, t) => n % t === 0 && t < n;   // at least 2×2 blocks
+let N, TILE, NB, PHASES, NT, NAIVE, TOF, TGAP, GAPS;   // NT: threads per block, TOF[i]: tile index of i
+let A, B, Cref, STEPS, SPP, TC, TCS, TCB;              // SPP: micro-steps per phase (loop iteration)
+
+const DEF_TC  = ['#34d399', '#fbbf24', '#f472b6', '#38bdf8'];   // thread q = ty * TILE + tx
+const DEF_TCS = ['rgba(52,211,153,.16)', 'rgba(251,191,36,.16)', 'rgba(244,114,182,.16)', 'rgba(56,189,248,.16)'];
+const DEF_TCB = ['rgba(52,211,153,.45)', 'rgba(251,191,36,.45)', 'rgba(244,114,182,.45)', 'rgba(56,189,248,.45)'];
 
 const $ = id => document.getElementById(id);
 const clamp01 = x => (x < 0 ? 0 : x > 1 ? 1 : x);
 const ease = x => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
 const lerp = (a, b, f) => a + (b - a) * f;
+const iota = n => Array.from({ length: n }, (_, i) => i);
+const rng = (a, n) => (n > 1 ? `${a}..${a + n - 1}` : `${a}`);   // index range label
+const fmt = v => v.toLocaleString('en-US');
+const plural = (n, w) => `${n} ${w}${n === 1 ? '' : 's'}`;
 
 // Deterministic small integers (0..4) so every dot product can be checked by hand.
 function mulberry32(a) {
@@ -531,37 +613,71 @@ function mulberry32(a) {
     return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
-const rand = mulberry32(0x5eed2);
-const randMat = () => Array.from({ length: N }, () => Array.from({ length: N }, () => Math.floor(rand() * 5)));
-const A = randMat();
-const B = randMat();
-const Cref = A.map(row => B[0].map((_, j) => row.reduce((s, a, k) => s + a * B[k][j], 0)));
 
 /* ================= micro-step model ================= */
-// Each phase k: fetch -> barrier -> MAC(i=0) -> MAC(i=1) -> barrier + slide.  Then one final write.
-const STEPS = [];
-for (let k = 0; k < PHASES; k++) {
-  STEPS.push({ type: 'load', k }, { type: 'sync', k }, { type: 'mac', k, i: 0 }, { type: 'mac', k, i: 1 }, { type: 'adv', k });
+// Tiled, per phase k: fetch -> barrier -> MAC(i = 0..T-1) -> barrier + slide.  Then one final write.
+// Naive, per k: every thread loads A[row][k], B[k][col] into registers -> one multiply-add.
+const DUR = { load: 2300, sync: 1500, mac: 1500, adv: 1250, write: 1800, gload: 2000, fma: 1100 };   // ms at 1x
+
+function setup() {
+  N = cfg.n;
+  TILE = cfg.t;
+  NB = N / TILE;
+  PHASES = N / TILE;
+  NT = TILE * TILE;
+  NAIVE = cfg.mode === 'naive';
+  TOF = iota(N).map(i => Math.floor(i / TILE));
+  TGAP = NB <= 8 ? 3 : NB <= 16 ? 2 : 1;
+  GAPS = NB * (TILE - 1) + (NB - 1) * TGAP;   // cell gaps (1px) + tile gaps across one matrix
+  const rand = mulberry32(0x5eed2);
+  const randMat = () => iota(N).map(() => iota(N).map(() => Math.floor(rand() * 5)));
+  A = randMat();
+  B = randMat();
+  Cref = A.map(row => B[0].map((_, j) => row.reduce((s, a, k) => s + a * B[k][j], 0)));
+  if (NT <= 4) {
+    TC = DEF_TC.slice(0, NT);
+    TCS = DEF_TCS.slice(0, NT);
+    TCB = DEF_TCB.slice(0, NT);
+  } else {   // golden-angle hues so neighbouring threads get distinct colours
+    const hue = q => ((158 + q * 137.508) % 360).toFixed(1);
+    TC = iota(NT).map(q => `hsl(${hue(q)} 80% 64%)`);
+    TCS = iota(NT).map(q => `hsl(${hue(q)} 80% 64% / .16)`);
+    TCB = iota(NT).map(q => `hsl(${hue(q)} 80% 64% / .45)`);
+  }
+  STEPS = [];
+  if (NAIVE) {
+    for (let k = 0; k < N; k++) STEPS.push({ type: 'gload', k }, { type: 'fma', k });
+    STEPS.push({ type: 'write', k: N });
+  } else {
+    for (let k = 0; k < PHASES; k++) {
+      STEPS.push({ type: 'load', k }, { type: 'sync', k });
+      for (let i = 0; i < TILE; i++) STEPS.push({ type: 'mac', k, i });
+      STEPS.push({ type: 'adv', k });
+    }
+    STEPS.push({ type: 'write', k: PHASES });
+  }
+  SPP = NAIVE ? 2 : TILE + 3;
 }
-STEPS.push({ type: 'write', k: PHASES });
-const DUR = { load: 2300, sync: 1500, mac: 1500, adv: 1250, write: 1800 };   // ms at 1x
 
 // Timeline landmarks inside a micro-step, as fractions of t in [0, 1].
 const FLIGHT = 0.45;
-const loadStart = (q, m) => 0.12 + q * 0.06 + (m === 'B' ? 0.03 : 0);
+const spread = (q, span) => (NT > 1 ? (q / (NT - 1)) * span : 0);   // stagger threads over `span`
+const loadStart = (q, m) => 0.12 + spread(q, 0.18) + (m === 'B' ? 0.03 : 0);
 const loadEnd = (q, m) => loadStart(q, m) + FLIGHT;
 // Global-load latency varies: each phase one thread's B load is slow and only lands during the
 // barrier step, so the threads that finished early visibly wait at __syncthreads() for it.
-const straggler = k => 3 - (k % 4);
+const straggler = k => (NT > 1 ? NT - 1 - (k % NT) : -1);
 const STRAG_P = 0.62;       // share of its flight completed when the load step ends
 const STRAG_LAND = 0.42;    // barrier-step time at which it lands in shared memory
 const STRAG_ARRIVE = 0.5;   // ...and its thread reaches the barrier
 const SYNC_RELEASE = 0.7;
-const ADV_RELEASE = 0.18;   // after the MACs all 4 threads (one warp) arrive together
+const ADV_RELEASE = 0.18;   // after the MACs all threads arrive together
 const SLIDE = [0.34, 0.9];
 const MAC_FLY = [0.06, 0.5];
 const MAC_COMMIT = 0.56;
-const writeStart = q => 0.08 + q * 0.05;
+const FMA_COMMIT = 0.45;
+const NSLIDE = 0.15;        // naive: the k window moves to the next column during this share of the load
+const writeStart = q => 0.08 + spread(q, 0.15);
 const writeEnd = q => writeStart(q) + FLIGHT;
 
 const st = { br: 1, bc: 0, idx: -1, t: 0, playing: false, stepping: false, finished: false, speed: 1, done: new Set() };
@@ -571,34 +687,45 @@ const mode = () => (st.finished ? 'done' : st.idx < 0 ? 'idle' : STEPS[st.idx].t
 const progressOf = j => (st.finished || j < st.idx ? 1 : j === st.idx ? st.t : 0);
 
 function accOf(ty, tx) {
+  const row = st.br * TILE + ty, col = st.bc * TILE + tx;
   let s = 0;
   STEPS.forEach((S, j) => {
     if (S.type === 'mac' && progressOf(j) >= MAC_COMMIT) {
       const K = S.k * TILE + S.i;
-      s += A[st.br * TILE + ty][K] * B[K][st.bc * TILE + tx];
+      s += A[row][K] * B[K][col];
+    } else if (S.type === 'fma' && progressOf(j) >= FMA_COMMIT) {
+      s += A[row][S.k] * B[S.k][col];
     }
   });
   return s;
 }
 
+// Global loads so far.  Tiled: loads that landed in shared memory, and what a naive kernel would
+// have needed for the same multiply-adds.  Naive: loads that landed in registers, the distinct
+// values among them, and what a tiled kernel would have needed for the same progress.
 function counters() {
-  let tiled = 0, macSteps = 0;
+  let tiled = 0, naive = 0, ops = 0, distinct = 0;
   STEPS.forEach((S, j) => {
     const p = progressOf(j);
     if (S.type === 'load') {
-      for (let q = 0; q < 4; q++) tiled += (p >= loadEnd(q, 'A')) + (q !== straggler(S.k) && p >= loadEnd(q, 'B'));
+      const slow = straggler(S.k);
+      for (let q = 0; q < NT; q++) tiled += (p >= loadEnd(q, 'A')) + (q !== slow && p >= loadEnd(q, 'B'));
     } else if (S.type === 'sync') {
-      tiled += p >= STRAG_LAND;   // the straggler's slow B load
+      tiled += straggler(S.k) >= 0 && p >= STRAG_LAND;   // the straggler's slow B load
     } else if (S.type === 'mac' && p >= MAC_COMMIT) {
-      macSteps++;
+      ops += NT * 2;   // every thread does one multiply-add with one A and one B operand
+    } else if (S.type === 'gload') {
+      for (let q = 0; q < NT; q++) naive += (p >= loadEnd(q, 'A')) + (p >= loadEnd(q, 'B'));
+      // The first thread of row y (q = y·T) and of column x (q = x) brings in each distinct value.
+      for (let y = 0; y < TILE; y++) distinct += p >= loadEnd(y * TILE, 'A');
+      for (let x = 0; x < TILE; x++) distinct += p >= loadEnd(x, 'B');
     }
   });
-  // Each MAC step = 4 threads x 1 multiply-add, each needing one A and one B operand.
-  const operands = macSteps * 4 * 2;
-  return { tiled, naive: operands, shared: operands };
+  if (NAIVE) return { tiled: Math.floor(naive / TILE), naive, shared: 0, distinct };
+  return { tiled, naive: ops, shared: ops, distinct: tiled };
 }
 
-/* ================= DOM construction ================= */
+/* ================= DOM construction (rebuilt whenever the setup changes) ================= */
 function el(tag, cls, parent) {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
@@ -607,8 +734,9 @@ function el(tag, cls, parent) {
 }
 
 function buildMatrix(root, kind) {
-  const cells = Array.from({ length: N }, () => []);
-  const tiles = Array.from({ length: NB }, () => []);
+  root.replaceChildren();
+  const cells = iota(N).map(() => []);
+  const tiles = iota(NB).map(() => []);
   for (let bi = 0; bi < NB; bi++) {
     for (let bj = 0; bj < NB; bj++) {
       const tile = el('div', 'tile', root);
@@ -617,22 +745,21 @@ function buildMatrix(root, kind) {
         for (let x = 0; x < TILE; x++) {
           const i = bi * TILE + y, j = bj * TILE + x;
           const c = el('div', 'cell', tile);
-          c.style.setProperty('--tc', TC[y * 2 + x]);   // thread (y, x) of a block owns this slot
+          c.style.setProperty('--tc', TC[y * TILE + x]);   // thread (y, x) of a block owns this slot
           if (kind === 'A') c.textContent = A[i][j];
           if (kind === 'B') c.textContent = B[i][j];
           cells[i][j] = c;
         }
       }
       if (kind === 'C') {
-        tile.style.setProperty('--h', ((bi * NB + bj) * 5.625).toFixed(1));
+        tile.style.setProperty('--h', ((bi * NB + bj) * (360 / (NB * NB))).toFixed(1));
         tile.tabIndex = -1;   // roving tab stop: render() gives the selected block tabindex 0
         tile.setAttribute('role', 'button');
-        const lbl = `Block (${bi}, ${bj}) computes C[${bi * 2}..${bi * 2 + 1}, ${bj * 2}..${bj * 2 + 1}]`;
+        tile.dataset.bi = bi;
+        tile.dataset.bj = bj;
+        const lbl = `Block (${bi}, ${bj}) computes C[${rng(bi * TILE, TILE)}, ${rng(bj * TILE, TILE)}]`;
         tile.setAttribute('aria-label', lbl);
         tile.title = `${lbl}. Click to run it.`;
-        tile.addEventListener('mousedown', e => e.preventDefault());   // keep Space for play/pause
-        tile.addEventListener('click', () => activateBlock(bi, bj));
-        tile.addEventListener('keydown', e => onTileKey(e, bi, bj));
       }
     }
   }
@@ -642,6 +769,7 @@ function buildMatrix(root, kind) {
 }
 
 function buildRuler(root) {
+  root.replaceChildren();
   const labels = [];
   for (let g = 0; g < NB; g++) {
     const grp = el('div', 'rg', root);
@@ -662,68 +790,73 @@ function smCell(parent) {
   return { c, v, s };
 }
 
-const MA = buildMatrix($('matA'), 'A');
-const MB = buildMatrix($('matB'), 'B');
-const MC = buildMatrix($('matC'), 'C');
-const R = {
-  aCols: buildRuler($('rulerAcols')),
-  cCols: buildRuler($('rulerCcols')),
-  bRows: buildRuler($('rulerBrows')),
-  rows: buildRuler($('rulerRows')),
-};
+let MA, MB, MC, R, sA, sB, TH, ARR, CODE, TLN, TL_START, TL_TOTAL;
+let PK = [];
 
 // Workbench laid out as a mini GEMM: s_B on top (columns = tx), s_A on the left (rows = ty).
-const sB = [[], []], sA = [[], []];
-for (let tx = 0; tx < TILE; tx++) {
-  const col = el('div', 'smcol', $('sBwrap'));
-  for (let i = 0; i < TILE; i++) sB[i][tx] = smCell(col);
-}
-for (let ty = 0; ty < TILE; ty++) {
-  const row = el('div', 'smrow', $('sAwrap'));
-  for (let i = 0; i < TILE; i++) sA[ty][i] = smCell(row);
-}
-const TH = [];
-for (let q = 0; q < 4; q++) {
-  const ty = q >> 1, tx = q & 1;
-  const card = el('div', 'th', $('threads'));
-  card.style.setProperty('--tc', TC[q]);
-  card.style.setProperty('--tcs', TCS[q]);
-  card.style.setProperty('--tcb', TCB[q]);
-  const h = el('div', 'th-h', card);
-  el('span', 'dot', h);
-  el('span', '', h).textContent = `T(${ty},${tx})`;
-  const stt = el('span', 'th-st', h);
-  const accRow = el('div', 'th-acc', card);
-  el('small', '', accRow).textContent = 'acc';
-  const acc = el('span', '', accRow);
-  const op1 = el('div', 'th-op', card);
-  const op2 = el('div', 'th-op', card);
-  TH.push({ card, stt, acc, op1, op2 });
-}
-const ARR = [];
-for (let q = 0; q < 4; q++) {
-  const d = el('i', '', $('arr'));
-  d.style.setProperty('--tc', TC[q]);
-  ARR.push(d);
+function buildWorkbench() {
+  const wb = $('wb');
+  wb.dataset.t = TILE;
+  wb.dataset.mode = cfg.mode;
+  $('sBwrap').replaceChildren();
+  $('sAwrap').replaceChildren();
+  el('span', 'smlab', $('sBwrap')).textContent = 's_B';
+  el('span', 'smlab', $('sAwrap')).textContent = 's_A';
+  sB = iota(TILE).map(() => []);
+  sA = iota(TILE).map(() => []);
+  for (let tx = 0; tx < TILE; tx++) {
+    const col = el('div', 'smcol', $('sBwrap'));
+    for (let i = 0; i < TILE; i++) sB[i][tx] = smCell(col);
+  }
+  for (let ty = 0; ty < TILE; ty++) {
+    const row = el('div', 'smrow', $('sAwrap'));
+    for (let i = 0; i < TILE; i++) sA[ty][i] = smCell(row);
+  }
+  $('threads').replaceChildren();
+  TH = iota(NT).map(q => {
+    const ty = Math.floor(q / TILE), tx = q % TILE;
+    const card = el('div', 'th', $('threads'));
+    card.style.setProperty('--tc', TC[q]);
+    card.style.setProperty('--tcs', TCS[q]);
+    card.style.setProperty('--tcb', TCB[q]);
+    const h = el('div', 'th-h', card);
+    el('span', 'dot', h);
+    el('span', 'th-n', h).textContent = `T(${ty},${tx})`;
+    const stt = el('span', 'th-st', h);
+    const accRow = el('div', 'th-acc', card);
+    el('small', '', accRow).textContent = 'acc';
+    const acc = el('span', '', accRow);
+    const op1 = el('div', 'th-op', card);
+    const op2 = el('div', 'th-op', card);
+    return { card, stt, acc, op1, op2, name: `T(${ty},${tx})` };
+  });
+  $('arr').replaceChildren();
+  ARR = iota(NT).map(q => {
+    const d = el('i', '', $('arr'));
+    d.style.setProperty('--tc', TC[q]);
+    return d;
+  });
 }
 
-// Packet pool for the fx overlay (values in flight + dashed trails).
+// Packet pool for the fx overlay (values in flight + dashed trails): at most 2 per thread at once.
 const SVGNS = 'http://www.w3.org/2000/svg';
-const PK = [];
-for (let n = 0; n < 8; n++) {
-  const p = el('div', 'pkt', $('fx'));
-  const path = document.createElementNS(SVGNS, 'path');
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke-width', '1.5');
-  path.setAttribute('stroke-dasharray', '4 4');
-  path.setAttribute('stroke-linecap', 'round');
-  $('fxsvg').appendChild(path);
-  PK.push({ p, path });
+function buildPackets() {
+  PK.forEach(pk => { pk.p.remove(); pk.path.remove(); });
+  PK = iota(2 * NT).map(() => {
+    const p = el('div', 'pkt', $('fx'));
+    const path = document.createElementNS(SVGNS, 'path');
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke-width', '1.5');
+    path.setAttribute('stroke-dasharray', '4 4');
+    path.setAttribute('stroke-linecap', 'round');
+    $('fxsvg').appendChild(path);
+    return { p, path };
+  });
 }
 
 /* ================= code listings ================= */
-const KERNEL = [
-  '#define TILE 2',
+const tiledKernel = () => [
+  `#define TILE ${TILE}`,
   '__global__ void matmulTiled(const float* A,',
   '    const float* B, float* C, int N) {',
   '  __shared__ float s_A[TILE][TILE];',
@@ -732,7 +865,7 @@ const KERNEL = [
   '  int row = blockIdx.y * TILE + ty;',
   '  int col = blockIdx.x * TILE + tx;',
   '  float acc = 0.0f;               // register',
-  '  for (int k = 0; k < N / TILE; ++k) { // 8 phases',
+  `  for (int k = 0; k < N / TILE; ++k) { // ${plural(PHASES, 'phase')}`,
   '    s_A[ty][tx] = A[row * N + k * TILE + tx];',
   '    s_B[ty][tx] = B[(k * TILE + ty) * N + col];',
   '    __syncthreads();',
@@ -743,14 +876,17 @@ const KERNEL = [
   '  C[row * N + col] = acc;',
   '}',
 ];
-const NAIVE = [
+const naiveKernel = () => [
   '__global__ void matmulNaive(const float* A,',
   '    const float* B, float* C, int N) {',
   '  int row = blockIdx.y * blockDim.y + threadIdx.y;',
   '  int col = blockIdx.x * blockDim.x + threadIdx.x;',
-  '  float acc = 0.0f;',
-  '  for (int k = 0; k < N; ++k)',
-  '    acc += A[row * N + k] * B[k * N + col]; // 2 global loads',
+  '  float acc = 0.0f;               // register',
+  `  for (int k = 0; k < N; ++k) {   // ${N} iterations`,
+  '    float a = A[row * N + k];     // global load',
+  '    float b = B[k * N + col];     // global load',
+  '    acc += a * b;                 // registers only',
+  '  }',
   '  C[row * N + col] = acc;',
   '}',
 ];
@@ -761,6 +897,13 @@ const CODE_HL = {
   mac: { on: [13, 14], ctx: [9] },
   adv: { on: [15], ctx: [9] },
   write: { on: [17], ctx: [] },
+  done: { on: [], ctx: [] },
+};
+const NAIVE_HL = {
+  idle: { on: [], ctx: [2, 3, 4] },
+  gload: { on: [6, 7], ctx: [5] },
+  fma: { on: [8], ctx: [5] },
+  write: { on: [10], ctx: [] },
   done: { on: [], ctx: [] },
 };
 
@@ -777,65 +920,182 @@ function highlight(src) {
     `<span class="nu">${nu}</span>`);
 }
 function buildCode(pre, lines) {
+  pre.replaceChildren();
   return lines.map(src => {
     const ln = el('span', 'ln', pre);
     ln.innerHTML = highlight(src) || ' ';
     return ln;
   });
 }
-const CODE = buildCode($('code'), KERNEL);
-buildCode($('codeNaive'), NAIVE);
 
 /* ================= static widgets ================= */
 // Micro-step timeline in the style of a profiler trace: segment widths follow the step durations.
-const TL_START = [];
-let TL_TOTAL = 0;
-const STEP_NAME = { load: 'load tiles', sync: '__syncthreads()', adv: '__syncthreads() + slide' };
-const TLN = STEPS.map((S, j) => {
-  TL_START.push(TL_TOTAL);
-  TL_TOTAL += DUR[S.type];
-  const n = el('div', 'tn', $('tl'));
-  n.dataset.type = S.type;
-  n.style.flexGrow = DUR[S.type];
-  if (j > 0 && j % 5 === 0) n.dataset.gap = '';
-  n.title = S.type === 'write' ? 'final write to C' : `phase ${S.k}: ${S.type === 'mac' ? `compute i = ${S.i}` : STEP_NAME[S.type]}`;
-  n.addEventListener('click', () => seek(j));
-  return n;
-});
-const PHASE_DUR = DUR.load + DUR.sync + 2 * DUR.mac + DUR.adv;
-for (let k = 0; k <= PHASES; k++) {
-  const l = el('span', '', $('tln'));
-  l.textContent = k < PHASES ? k : 'C';
-  l.style.flexGrow = k < PHASES ? PHASE_DUR : DUR.write;
+const STEP_NAME = { load: 'load tiles', sync: '__syncthreads()', adv: '__syncthreads() + slide', gload: 'load A, B into registers', fma: 'acc += a · b' };
+function buildTimeline() {
+  const tl = $('tl');
+  tl.querySelectorAll('.tn').forEach(n => n.remove());   // keep the play head
+  tl.classList.toggle('many', STEPS.length > 60);
+  TL_START = [];
+  TL_TOTAL = 0;
+  TLN = STEPS.map((S, j) => {
+    TL_START.push(TL_TOTAL);
+    TL_TOTAL += DUR[S.type];
+    const n = el('div', 'tn', tl);
+    n.dataset.type = S.type;
+    n.dataset.j = j;
+    n.style.flexGrow = DUR[S.type];
+    if (j > 0 && j % SPP === 0) n.dataset.gap = '';
+    n.title = S.type === 'write' ? 'final write to C'
+      : NAIVE ? `k = ${S.k}: ${STEP_NAME[S.type]}`
+      : `phase ${S.k}: ${S.type === 'mac' ? `compute i = ${S.i}` : STEP_NAME[S.type]}`;
+    return n;
+  });
+  $('tln').replaceChildren();
+  const units = NAIVE ? N : PHASES, every = Math.ceil(units / 16);
+  const unitDur = NAIVE ? DUR.gload + DUR.fma : DUR.load + DUR.sync + TILE * DUR.mac + DUR.adv;
+  for (let k = 0; k <= units; k++) {
+    const l = el('span', '', $('tln'));
+    l.textContent = k === units ? 'C' : k % every === 0 ? k : '';
+    l.style.flexGrow = k < units ? unitDur : DUR.write;
+  }
 }
 
-// Tile-size scaling chart: global reads for the whole N = 16 GEMM.
+// Tile-size scaling chart: global reads for the whole N×N GEMM.
 const tip = $('tip');
-[1, 2, 4, 8, 16].forEach(T => {
-  const reads = (2 * N * N * N) / T;
-  const row = el('div', 'brow' + (T === 1 ? ' nv' : T === TILE ? ' me' : ''), $('scaleBars'));
-  el('span', '', row).textContent = T === 1 ? 'T = 1' : `T = ${T}`;
-  const track = el('div', 'track', row);
-  el('div', 'fill', track).style.width = `${(reads / (2 * N * N * N)) * 100}%`;
-  el('span', 'val', row).textContent = reads.toLocaleString('en-US');
-  const text = T === 1
-    ? `<b>TILE = 1 (≡ naive)</b><br>${reads.toLocaleString('en-US')} global loads, no reuse`
-    : `<b>TILE = ${T}${T === TILE ? ' (this demo)' : ''}</b><br>${reads.toLocaleString('en-US')} global loads<br>each staged value feeds ${T} threads<br>shared memory: ${(2 * T * T * 4).toLocaleString('en-US')} B per block`;
-  let tw = 0, th = 0;
-  row.addEventListener('mouseenter', () => {
-    tip.innerHTML = text;
-    tip.style.opacity = 1;
-    tw = tip.offsetWidth;
-    th = tip.offsetHeight;
+function buildScaleBars() {
+  const root = $('scaleBars');
+  root.replaceChildren();
+  const me = NAIVE ? 1 : TILE, all = 2 * N * N * N;
+  [1, 2, 4, 8, 16, 32].filter(T => T <= N).forEach(T => {
+    const reads = all / T;
+    const row = el('div', 'brow' + (T === me ? ' me' : '') + (T === 1 ? ' nv' : ''), root);
+    el('span', '', row).textContent = `T = ${T}`;
+    const track = el('div', 'track', row);
+    el('div', 'fill', track).style.width = `${(reads / all) * 100}%`;
+    el('span', 'val', row).textContent = fmt(reads);
+    const tag = T === me ? (NAIVE ? ' (the naive kernel)' : ' (this demo)') : '';
+    const text = T === 1
+      ? `<b>TILE = 1 (≡ naive)${tag}</b><br>${fmt(reads)} global loads, no reuse`
+      : `<b>TILE = ${T}${tag}</b><br>${fmt(reads)} global loads<br>each staged value feeds ${T} threads<br>shared memory: ${fmt(2 * T * T * 4)} B per block`;
+    let tw = 0, th = 0;
+    row.addEventListener('mouseenter', () => {
+      tip.innerHTML = text;
+      tip.style.opacity = 1;
+      tw = tip.offsetWidth;
+      th = tip.offsetHeight;
+    });
+    row.addEventListener('mousemove', e => {
+      tip.style.left = `${Math.min(e.clientX + 14, innerWidth - tw - 8)}px`;
+      tip.style.top = `${Math.min(e.clientY + 14, innerHeight - th - 8)}px`;
+    });
+    row.addEventListener('mouseleave', () => { tip.style.opacity = 0; });
   });
-  row.addEventListener('mousemove', e => {
-    tip.style.left = `${Math.min(e.clientX + 14, innerWidth - tw - 8)}px`;
-    tip.style.top = `${Math.min(e.clientY + 14, innerHeight - th - 8)}px`;
-  });
-  row.addEventListener('mouseleave', () => { tip.style.opacity = 0; });
-});
+}
 
-/* ================= rendering: a pure function of (block, step, t) ================= */
+// Text that depends only on the setup (grid size, tile size, kernel).
+function renderStatic() {
+  const dim = `${N}×${N}`, tdim = `${TILE}×${TILE}`, blocks = NB * NB;
+  const tiledTot = 2 * N * TILE, naiveTot = 2 * N * NT, all = 2 * N * N * N;
+  const threads = NT === 1 ? 'its thread' : NT === 4 ? 'its four threads' : `its ${NT} threads`;
+  $('subTxt').textContent = NAIVE
+    ? `C = A × B for ${dim} matrices, no tiling: ${blocks} blocks of ${tdim} threads, all operands read from global memory. Click any block of C to watch ${threads} work.`
+    : `C = A × B for ${dim} matrices with ${tdim} tiles: ${blocks} thread blocks, each marching through ${PHASES} phases along K. Click any block of C to watch ${threads} work.`;
+  document.querySelectorAll('.dim').forEach(e => { e.textContent = dim; });
+  $('blockTotal').textContent = blocks;
+  $('matC').setAttribute('aria-label', `Output matrix C, ${NB} by ${NB} blocks`);
+  $('wbTitle').textContent = NAIVE ? 'Registers only: no shared memory' : 'Shared Memory Workbench';
+  $('stage').classList.toggle('dense', N >= 32);
+  $('cfgNote').textContent = `Matrices are ${dim}; the launch grid is ${NB}×${NB} blocks of ${tdim} threads, and each ${NAIVE ? `thread runs ${N} loop iterations` : `block runs ${plural(PHASES, 'phase')}`}.`;
+
+  $('lgWin').textContent = NAIVE ? 'active k' : 'active K-tile';
+  $('lgSync').hidden = NAIVE;
+  $('tkSync').hidden = NAIVE;
+  $('lgOver').hidden = !NAIVE || TILE === 1;
+  $('lgOverTxt').textContent = `fetched ${TILE}× by one block`;
+  const lg = $('lgThreads');
+  lg.replaceChildren();
+  if (NT <= 4) {
+    TC.forEach((c, q) => {
+      const e = el('span', 'lg', lg);
+      el('i', 'sw', e).style.background = c;
+      e.append(`T(${Math.floor(q / TILE)},${q % TILE})`);
+    });
+  } else {
+    const e = el('span', 'lg', lg);
+    el('i', 'sw', e).style.background = `linear-gradient(90deg, ${TC.slice(0, 6).join(', ')})`;
+    e.append(`${NT} threads, one colour each`);
+  }
+
+  $('phaseTitle').textContent = NAIVE ? 'Iteration' : 'Phase';
+  $('trafficLbl').textContent = `this block, ${plural(NT, 'output')}`;
+  $('lblTiled').textContent = NAIVE ? 'Tiled (same progress)' : 'Tiled (shared memory)';
+  $('lblNaive').textContent = NAIVE ? 'Naive (this run)' : 'Naive (same MACs)';
+  $('totTiled').textContent = `/ ${tiledTot} loads`;
+  $('totNaive').textContent = `/ ${naiveTot} loads`;
+  $('goalTiled').style.left = `${100 / TILE}%`;
+  $('goalTiled').title = `tiled total: ${tiledTot} loads`;
+  $('dtReuse').innerHTML = NAIVE ? 'Fetches per value<small>global loads per distinct value</small>' : 'Reuse factor<small>shared-memory reads per global load</small>';
+  $('dtShared').innerHTML = NAIVE ? 'Shared-memory reads<small>no __shared__ arrays</small>' : 'Shared-memory reads';
+  $('dtSaved').textContent = NAIVE ? 'Redundant global loads issued' : 'Redundant global loads avoided';
+  $('trafficNote').innerHTML = NAIVE
+    ? `Naive: each of the ${plural(NT, 'thread')} loads its own row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> global loads, but only <b>${tiledTot}</b> distinct values${TILE > 1 ? `, each fetched <b>${TILE}×</b>` : ''}. A ${tdim} tiled kernel loads each of them once. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`
+    : `Naive: each thread walks a full row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> global loads. Tiled: ${PHASES} phases × ${2 * NT} cooperative loads = <b>${tiledTot}</b>, and every value staged in s_A / s_B is consumed by <b>${plural(TILE, 'thread')}</b>. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`;
+  $('launchLbl').textContent = `${NAIVE ? 'matmulNaive' : 'matmulTiled'}<<<dim3(${NB}, ${NB}), dim3(${TILE}, ${TILE})>>>`;
+  CODE = buildCode($('code'), NAIVE ? naiveKernel() : tiledKernel());
+  buildCode($('codeNaive'), naiveKernel());
+
+  const iList = TILE === 1 ? '0' : TILE === 2 ? '0, 1' : `0..${TILE - 1}`;
+  const warps = Math.ceil(NT / 32);
+  $('exNaive').innerHTML = [
+    `Per thread: ${N} + ${N} = <b>${2 * N}</b> global loads; per ${tdim} block: <b>${naiveTot}</b>.`,
+    TILE === 1
+      ? `A 1×1 block has no neighbour to share with; across the grid every element of A and B is fetched ${N} times.`
+      : `The ${TILE} threads of a block row fetch the <b>same</b> row of A (and those of a column the same column of B); across the grid every element of A and B is fetched ${N} times.`,
+    `Whole GEMM: 2·N³ = <b>${fmt(all)}</b> loads for only ${fmt(2 * N * N)} distinct values.`,
+  ].map(x => `<li>${x}</li>`).join('');
+  $('exTileDim').textContent = tdim;
+  $('exTiled').innerHTML = [
+    `<b>Load:</b> thread (ty, tx) fetches exactly one A and one B element, so ${2 * NT} global loads per phase.`,
+    `<b>__syncthreads():</b> nobody reads the tiles until all ${2 * NT} loads have landed. ` + (warps === 1
+      ? `(With TILE = ${TILE} the ${plural(NT, 'thread')} ${NT === 1 ? 'is' : 'form'} one warp that moves in lockstep; the staggered arrivals in the demo show what happens in larger, multi-warp blocks.)`
+      : `(With TILE = ${TILE} the ${NT} threads form ${warps} warps, which really can reach the barrier at different times.)`),
+    `<b>Compute:</b> acc += s_A[ty][i] · s_B[i][tx] for i = ${iList}, served from shared memory.`,
+    '<b>__syncthreads():</b> nobody overwrites the tiles while a neighbour is still reading them.',
+  ].map(x => `<li>${x}</li>`).join('');
+  $('exScale').textContent = `With TILE = T, each staged value feeds T threads, so global loads fall to 2·N³ / T. ${NAIVE ? 'The naive kernel behaves like T = 1 whatever its block size' : `This demo uses T = ${TILE}`}; production kernels use 16–32 (or larger, register-blocked tiles).`;
+}
+
+function build() {
+  setup();
+  const root = document.documentElement.style;
+  root.setProperty('--n', N);
+  root.setProperty('--nb', NB);
+  root.setProperty('--t', TILE);
+  root.setProperty('--k16', 16 / N);
+  root.setProperty('--tgap', `${TGAP}px`);
+  root.setProperty('--gaps', `${GAPS}px`);
+  root.setProperty('--smgap', `${TILE >= 8 ? 1 : TILE >= 4 ? 2 : 4}px`);
+  root.setProperty('--thgap', `${TILE >= 8 ? 3 : TILE >= 4 ? 5 : 8}px`);
+  root.setProperty('--pk', `${TILE >= 8 ? 12 : TILE >= 4 ? 16 : 22}px`);
+  st.br = Math.min(st.br, NB - 1);
+  st.bc = Math.min(st.bc, NB - 1);
+  MA = buildMatrix($('matA'), 'A');
+  MB = buildMatrix($('matB'), 'B');
+  MC = buildMatrix($('matC'), 'C');
+  R = {
+    aCols: buildRuler($('rulerAcols')),
+    cCols: buildRuler($('rulerCcols')),
+    bRows: buildRuler($('rulerBrows')),
+    rows: buildRuler($('rulerRows')),
+  };
+  buildWorkbench();
+  buildPackets();
+  buildTimeline();
+  buildScaleBars();
+  renderStatic();
+}
+
+/* ================= rendering: a pure function of (setup, block, step, t) ================= */
 function setText(e, v) { v = String(v); if (e._t !== v) { e._t = v; e.textContent = v; } }
 function setHTML(e, v) { if (e._h !== v) { e._h = v; e.innerHTML = v; } }
 function setCls(e, v) { if (e._c !== v) { e._c = v; e.className = v; } }
@@ -845,20 +1105,21 @@ const span = (cls, s) => `<span class="${cls}">${s}</span>`;
 const RM = matchMedia('(prefers-reduced-motion: reduce)');
 let REDUCED = RM.matches;
 RM.addEventListener('change', e => { REDUCED = e.matches; dirty = true; });
-const isHot = (m, t) => m === 'mac' && t >= MAC_COMMIT && t < MAC_COMMIT + 0.3;
+const isHot = (m, t) => (m === 'mac' && t >= MAC_COMMIT && t < MAC_COMMIT + 0.3) || (m === 'fma' && t >= FMA_COMMIT && t < FMA_COMMIT + 0.3);
 // Value (and global source) held by s_A[y][x] / s_B[y][x] of the selected block during `phase`.
 const smemVal = (which, y, x, phase) =>
   (which === 'A' ? A[st.br * TILE + y][phase * TILE + x] : B[phase * TILE + y][st.bc * TILE + x]);
 const smemSrc = (which, y, x, phase) =>
   (which === 'A' ? `A[${st.br * TILE + y}][${phase * TILE + x}]` : `B[${phase * TILE + y}][${st.bc * TILE + x}]`);
 
+// Cell positions inside A and B, for the moving K window and its row / column band.
 let geo = null;
 function measure() {
   const g = M => ({
-    x: M.tiles[0].map(t => t.offsetLeft),
-    y: M.tiles.map(r => r[0].offsetTop),
-    w: M.tiles[0][0].offsetWidth,
-    h: M.tiles[0][0].offsetHeight,
+    colX: iota(N).map(j => M.tiles[0][TOF[j]].offsetLeft + M.cells[0][j].offsetLeft),
+    rowY: iota(N).map(i => M.tiles[TOF[i]][0].offsetTop + M.cells[i][0].offsetTop),
+    cw: M.cells[0][0].offsetWidth,
+    ch: M.cells[0][0].offsetHeight,
     W: M.root.clientWidth,
     H: M.root.clientHeight,
   });
@@ -866,6 +1127,7 @@ function measure() {
 }
 
 // Size the cells so the whole GEMM cross fits below the header when the window is tall enough.
+// --unit is the cell size of a 16×16 grid; the other grid sizes scale it so the matrices keep their width.
 function fitCells() {
   const root = document.documentElement.style;
   for (let n = 0; n < 3; n++) {
@@ -873,7 +1135,7 @@ function fitCells() {
     const top = stage.getBoundingClientRect().top + scrollY;
     const overhead = stage.offsetHeight - MA.root.offsetHeight - MB.root.offsetHeight;
     const W = (innerHeight - top - overhead - 12) / 2;
-    const cell = `${Math.max(15, Math.min(24, Math.floor(((W - 29) / 16) * 4) / 4))}px`;
+    const cell = `${Math.max(15, Math.min(24, Math.floor(((W - GAPS) / 16) * 4) / 4))}px`;
     if (root.getPropertyValue('--cellH') === cell) return;
     root.setProperty('--cellH', cell);
   }
@@ -886,9 +1148,14 @@ function box(e, x, y, w, h, op) {
   setSty(e, 'opacity', String(op));
 }
 
-// Where the sliding K-window sits (fractional tile index) and whether it is shown.
+// Where the sliding K window sits (fractional position along K, in window widths) and whether it is shown.
+// Tiled: the window is one T×T tile and moves once per phase.  Naive: it is one column of A / row of B.
 function kWindow(m, S, t) {
-  if (m === 'load' || m === 'sync' || m === 'mac') return { kf: S.k, vis: 1 };
+  if (m === 'load' || m === 'sync' || m === 'mac' || m === 'fma') return { kf: S.k, vis: 1 };
+  if (m === 'gload') {
+    const f = S.k > 0 ? seg(t, 0, NSLIDE) : 1;
+    return { kf: S.k - 1 + (REDUCED ? Math.round(f) : ease(f)), vis: 1 };
+  }
   if (m === 'adv') {
     if (S.k < PHASES - 1) {
       const f = seg(t, SLIDE[0], SLIDE[1]);
@@ -902,26 +1169,38 @@ function kWindow(m, S, t) {
 function placeOverlays(m, S, t) {
   const { br, bc } = st;
   const { kf, vis } = kWindow(m, S, t);
-  const lo = Math.floor(kf), hi = Math.min(PHASES - 1, lo + 1), f = kf - lo;
-  const lbl = `k = ${Math.round(kf)}`;
+  const span = NAIVE ? 1 : TILE, units = NAIVE ? N : PHASES;
+  const lo = Math.max(0, Math.floor(kf)), hi = Math.min(units - 1, lo + 1), f = kf - lo;
+  // Start and end coordinate of window `u` along the K axis.
+  const ext = (xs, w, u) => [xs[u * span], xs[u * span + span - 1] + w];
+  const slide = (xs, w) => {
+    const [s0, e0] = ext(xs, w, lo), [s1, e1] = ext(xs, w, hi);
+    return [lerp(s0, s1, f), lerp(e0, e1, f)];
+  };
   const a = geo.A, b = geo.B;
-  box(MA.band, -3, a.y[br] - 3, a.W + 6, a.h + 6, 1);
-  box(MA.win, lerp(a.x[lo], a.x[hi], f) - 4, a.y[br] - 4, a.w + 8, a.h + 8, vis);
-  box(MB.band, b.x[bc] - 3, -3, b.w + 6, b.H + 6, 1);
-  box(MB.win, b.x[bc] - 4, lerp(b.y[lo], b.y[hi], f) - 4, b.w + 8, b.h + 8, vis);
+  const r0 = br * TILE, c0 = bc * TILE;
+  const ay0 = a.rowY[r0], ay1 = a.rowY[r0 + TILE - 1] + a.ch;
+  const [ax0, ax1] = slide(a.colX, a.cw);
+  box(MA.band, -3, ay0 - 3, a.W + 6, ay1 - ay0 + 6, 1);
+  box(MA.win, ax0 - 4, ay0 - 4, ax1 - ax0 + 8, ay1 - ay0 + 8, vis);
+  const bx0 = b.colX[c0], bx1 = b.colX[c0 + TILE - 1] + b.cw;
+  const [by0, by1] = slide(b.rowY, b.ch);
+  box(MB.band, bx0 - 3, -3, bx1 - bx0 + 6, b.H + 6, 1);
+  box(MB.win, bx0 - 4, by0 - 4, bx1 - bx0 + 8, by1 - by0 + 8, vis);
+  const lbl = `k = ${Math.round(kf)}`;
   if (MA.win.dataset.label !== lbl) { MA.win.dataset.label = lbl; MB.win.dataset.label = lbl; }
   MA.win.toggleAttribute('data-flip', br === NB - 1);   // keep the label off the matrix title
   MB.win.toggleAttribute('data-flip', bc === NB - 1);
 }
 
-// Tiles along K that are active / already consumed, for the A row strip and B column strip.
+// Windows along K (tiles when tiled, single k when naive) that are active / already consumed.
 function kTiles(m, S, t) {
-  if (m === 'load' || m === 'sync' || m === 'mac') return { act: S.k, used: S.k };
+  if (m === 'load' || m === 'sync' || m === 'mac' || m === 'gload' || m === 'fma') return { act: S.k, used: S.k };
   if (m === 'adv') {
     if (seg(t, SLIDE[0], SLIDE[1]) < 0.5) return { act: S.k, used: S.k };
     return { act: S.k + 1 < PHASES ? S.k + 1 : -1, used: S.k + 1 };
   }
-  if (m === 'write' || m === 'done') return { act: -1, used: PHASES };
+  if (m === 'write' || m === 'done') return { act: -1, used: NAIVE ? N : PHASES };
   return { act: -1, used: 0 };
 }
 
@@ -934,35 +1213,37 @@ function loadLanded(q, which, m, S, t) {
 }
 
 // Who has reached __syncthreads() and whether it has opened.  First barrier: a thread arrives
-// once both of its loads have landed.  Second barrier: the MACs finish in lockstep (one warp).
+// once both of its loads have landed.  Second barrier: the MACs finish in lockstep.
 function barrierState(m, S, t) {
   if (m === 'load' || m === 'sync') {
-    const arrived = [0, 1, 2, 3].map(q => (m === 'sync' && q === straggler(S.k)
+    const arrived = iota(NT).map(q => (m === 'sync' && q === straggler(S.k)
       ? t >= STRAG_ARRIVE
       : loadLanded(q, 'A', m, S, t) && loadLanded(q, 'B', m, S, t)));
     if (!arrived.some(Boolean)) return null;
     return { arrived, n: arrived.filter(Boolean).length, released: m === 'sync' && t >= SYNC_RELEASE };
   }
-  if (m === 'adv' && t < SLIDE[0] + 0.12) return { arrived: [true, true, true, true], n: 4, released: t >= ADV_RELEASE };
+  if (m === 'adv' && t < SLIDE[0] + 0.12) return { arrived: iota(NT).map(() => true), n: NT, released: t >= ADV_RELEASE };
   return null;
 }
 
 function renderMatrices(m, S, t, accs) {
   const { br, bc } = st;
   const { act, used } = kTiles(m, S, t);
-  const fetch = m === 'load' && t > 0.04 ? ' fetch' : '';
-  const stripCls = kt => (kt === act ? ' strip act' + fetch : kt < used ? ' strip used' : ' strip');
+  const fetch = (m === 'load' || m === 'gload') && t > 0.04 ? ' fetch' : '';
+  const over = NAIVE && TILE > 1 ? ' over' : '';   // the naive kernel fetched these TILE times
+  const stripCls = kt => (kt === act ? ' strip act' + fetch : kt < used ? ' strip used' + over : ' strip');
+  const kw = NAIVE ? iota(N) : TOF;   // window index of a position along K
   // The straggler's slow B load is still being fetched during the barrier step.
   let slowI = -1, slowJ = -1;
-  if (m === 'sync' && t < STRAG_LAND) {
+  if (m === 'sync' && t < STRAG_LAND && straggler(S.k) >= 0) {
     const q = straggler(S.k);
-    slowI = S.k * TILE + (q >> 1);
-    slowJ = bc * TILE + (q & 1);
+    slowI = S.k * TILE + Math.floor(q / TILE);
+    slowJ = bc * TILE + (q % TILE);
   }
   for (let i = 0; i < N; i++) {
     for (let j = 0; j < N; j++) {
-      setCls(MA.cells[i][j], 'cell' + ((i >> 1) === br ? stripCls(j >> 1) : ''));
-      setCls(MB.cells[i][j], 'cell' + ((j >> 1) === bc ? stripCls(i >> 1) : '') + (i === slowI && j === slowJ ? ' fetch' : ''));
+      setCls(MA.cells[i][j], 'cell' + (TOF[i] === br ? stripCls(kw[j]) : ''));
+      setCls(MB.cells[i][j], 'cell' + (TOF[j] === bc ? stripCls(kw[i]) : '') + (i === slowI && j === slowJ ? ' fetch' : ''));
     }
   }
   const running = st.idx >= 0 && !st.finished;
@@ -975,8 +1256,8 @@ function renderMatrices(m, S, t, accs) {
       setCls(tile, 'tile' + (sel ? ' sel' : '') + (done && !(sel && running) ? ' done' : ''));
       setAttr(tile, 'tabindex', sel ? '0' : '-1');
       setAttr(tile, 'aria-current', sel ? 'true' : 'false');
-      for (let q = 0; q < 4; q++) {
-        const i = bi * TILE + (q >> 1), j = bj * TILE + (q & 1), c = MC.cells[i][j];
+      for (let q = 0; q < NT; q++) {
+        const i = bi * TILE + Math.floor(q / TILE), j = bj * TILE + (q % TILE), c = MC.cells[i][j];
         if (sel && (running || st.finished)) {
           const stored = st.finished || (m === 'write' && t >= writeEnd(q));
           setCls(c, stored ? 'cell solid' : 'cell reg' + (hot ? ' hot' : ''));
@@ -988,16 +1269,17 @@ function renderMatrices(m, S, t, accs) {
       }
     }
   }
-  R.rows.forEach((l, i) => setCls(l, 'rl' + ((i >> 1) === br ? ' onA' : '')));
-  R.cCols.forEach((l, j) => setCls(l, 'rl' + ((j >> 1) === bc ? ' onB' : '')));
-  R.aCols.forEach((l, j) => setCls(l, 'rl' + ((j >> 1) === act ? ' onA' : '')));
-  R.bRows.forEach((l, i) => setCls(l, 'rl' + ((i >> 1) === act ? ' onB' : '')));
+  R.rows.forEach((l, i) => setCls(l, 'rl' + (TOF[i] === br ? ' onA' : '')));
+  R.cCols.forEach((l, j) => setCls(l, 'rl' + (TOF[j] === bc ? ' onB' : '')));
+  R.aCols.forEach((l, j) => setCls(l, 'rl' + (kw[j] === act ? ' onA' : '')));
+  R.bRows.forEach((l, i) => setCls(l, 'rl' + (kw[i] === act ? ' onB' : '')));
 }
 
 // Contents of one shared-memory slot: which phase's value it holds and how to draw it.
 function smemSlot(which, y, x, m, S, t) {
-  const q = y * 2 + x;
+  const q = y * TILE + x;
   let phase = -1, cls = 'empty';
+  if (NAIVE) return { cls, v: '·', s: '' };
   if (m === 'load' || m === 'sync') {
     if (loadLanded(q, which, m, S, t)) {
       const late = which === 'B' && q === straggler(S.k);
@@ -1021,75 +1303,98 @@ function smemSlot(which, y, x, m, S, t) {
   return { cls, v: smemVal(which, y, x, phase), s: smemSrc(which, y, x, phase) };
 }
 
+// State label and the two operation lines of thread q.
+function threadView(q, m, S, t, bar) {
+  const ty = Math.floor(q / TILE), tx = q % TILE;
+  const row = st.br * TILE + ty, col = st.bc * TILE + tx;
+  let state = 'Ready', op1 = `→ C[${row}][${col}]`, op2 = `r=${row} c=${col}`, cls = 'th';
+  if (m === 'load' || m === 'sync') {
+    const K0 = S.k * TILE;
+    if (bar && bar.released) {
+      state = 'Go'; op1 = 'tiles ready'; op2 = `${NT}/${NT} arrived`; cls += ' go';
+    } else if (bar && bar.arrived[q]) {
+      state = 'Wait'; op1 = '‖ at barrier'; op2 = `${bar.n}/${NT} arrived`; cls += ' wait arrived';
+    } else {
+      state = q === straggler(S.k) && (m === 'sync' || t >= loadEnd(q, 'A')) ? 'Slow' : 'Load';
+      op1 = `ld A[${row}][${K0 + tx}]`;
+      op2 = `ld B[${K0 + ty}][${col}]`;
+      if (m === 'sync' || t >= loadStart(q, 'A')) cls += ' go';
+    }
+  } else if (m === 'mac') {
+    const a = smemVal('A', ty, S.i, S.k), b = smemVal('B', S.i, tx, S.k);
+    state = 'MAC';
+    op1 = `+= ${a}×${b} = ${a * b}`;
+    op2 = `i=${S.i} (K=${S.k * TILE + S.i})`;
+    if (isHot(m, t)) cls += ' hot';
+  } else if (m === 'adv') {
+    const last = S.k === PHASES - 1;
+    if (bar && !bar.released) {
+      state = 'Sync'; op1 = '‖ at barrier'; op2 = `${NT}/${NT} arrived`; cls += ' arrived';
+    } else {
+      state = last ? 'Exit' : 'Next';
+      op1 = last ? `${PHASES}/${PHASES} phases` : `→ K ${rng((S.k + 1) * TILE, TILE)}`;
+      op2 = `${(S.k + 1) * TILE}/${N} terms`;
+    }
+  } else if (m === 'gload') {
+    const a = A[row][S.k], b = B[S.k][col], gotA = t >= loadEnd(q, 'A'), gotB = t >= loadEnd(q, 'B');
+    if (gotA && gotB) {
+      state = 'Ready'; op1 = `a=${a} b=${b}`; op2 = 'in registers';
+    } else {
+      state = 'Load';
+      op1 = gotA ? `a=${a} ✓` : `ld A[${row}][${S.k}]`;
+      op2 = `ld B[${S.k}][${col}]`;
+      if (t >= loadStart(q, 'A')) cls += ' go';
+    }
+  } else if (m === 'fma') {
+    const a = A[row][S.k], b = B[S.k][col];
+    state = 'FMA';
+    op1 = `+= ${a}×${b} = ${a * b}`;
+    op2 = `k=${S.k} (${S.k + 1}/${N} terms)`;
+    if (isHot(m, t)) cls += ' hot';
+  } else if (m === 'write') {
+    const stored = t >= writeEnd(q);
+    state = 'Store';
+    op1 = `→ C[${row}][${col}]`;
+    op2 = stored ? '✓ stored' : 'storing…';
+    if (t >= writeStart(q) && !stored) cls += ' go';
+  } else if (m === 'done') {
+    state = 'Done';
+    op1 = `C[${row}][${col}]=${Cref[row][col]}`;
+    op2 = '✓ stored';
+  }
+  return { state, op1, op2, cls };
+}
+
 function renderWorkbench(m, S, t, accs) {
   for (let y = 0; y < TILE; y++) {
     for (let x = 0; x < TILE; x++) {
-      const q = y * 2 + x;
+      const q = y * TILE + x;
       [['A', sA[y][x]], ['B', sB[y][x]]].forEach(([which, cell]) => {
         const v = smemSlot(which, y, x, m, S, t);
         setCls(cell.c, 'sm ' + v.cls);
         setSty(cell.c, '--tc', TC[q]);
         setSty(cell.c, '--tcs', TCS[q]);
-        setAttr(cell.c, 'title', `s_${which}[${y}][${x}]` + (v.s ? ` ← ${v.s}` : ''));
+        setAttr(cell.c, 'title', `s_${which}[${y}][${x}]` + (NAIVE ? ': unused by the naive kernel' : v.s ? ` ← ${v.s}` : ''));
         setText(cell.v, v.v);
         setText(cell.s, v.s);
       });
     }
   }
 
-  const bar = barrierState(m, S, t);
-  setCls($('barrier'), 'barrier' + (bar ? (bar.released ? ' open' : ' on') : ''));
-  setText($('bs'), !bar ? 'idle' : bar.released ? 'released → go' : bar.n === 4 ? 'all 4 arrived' : `waiting ${bar.n}/4`);
+  const bar = NAIVE ? null : barrierState(m, S, t);
+  setCls($('barrier'), 'barrier' + (NAIVE ? ' off' : bar ? (bar.released ? ' open' : ' on') : ''));
+  setText($('bs'), NAIVE ? 'not in this kernel' : !bar ? 'idle' : bar.released ? 'released → go' : bar.n === NT ? `all ${NT} arrived` : `waiting ${bar.n}/${NT}`);
   ARR.forEach((d, q) => setCls(d, bar && bar.arrived[q] ? 'in' : ''));
 
-  const { br, bc } = st, r0 = br * TILE, c0 = bc * TILE;
-  for (let q = 0; q < 4; q++) {
-    const ty = q >> 1, tx = q & 1, row = r0 + ty, col = c0 + tx, T = TH[q];
-    let state = 'Ready', op1 = `→ C[${row}][${col}]`, op2 = `r=${row} c=${col}`, cls = 'th';
-    if (m === 'load' || m === 'sync') {
-      const K0 = S.k * TILE;
-      if (bar && bar.released) {
-        state = 'Go'; op1 = 'tiles ready'; op2 = '4/4 arrived'; cls += ' go';
-      } else if (bar && bar.arrived[q]) {
-        state = 'Wait'; op1 = '‖ at barrier'; op2 = `${bar.n}/4 arrived`; cls += ' wait arrived';
-      } else {
-        state = q === straggler(S.k) && (m === 'sync' || t >= loadEnd(q, 'A')) ? 'Slow' : 'Load';
-        op1 = `ld A[${row}][${K0 + tx}]`;
-        op2 = `ld B[${K0 + ty}][${col}]`;
-        if (m === 'sync' || t >= loadStart(q, 'A')) cls += ' go';
-      }
-    } else if (m === 'mac') {
-      const a = smemVal('A', ty, S.i, S.k), b = smemVal('B', S.i, tx, S.k);
-      state = 'MAC';
-      op1 = `+= ${a}×${b} = ${a * b}`;
-      op2 = `i=${S.i} (K=${S.k * TILE + S.i})`;
-      if (isHot(m, t)) cls += ' hot';
-    } else if (m === 'adv') {
-      const last = S.k === PHASES - 1;
-      if (bar && !bar.released) {
-        state = 'Sync'; op1 = '‖ at barrier'; op2 = '4/4 arrived'; cls += ' arrived';
-      } else {
-        state = last ? 'Exit' : 'Next';
-        op1 = last ? '8/8 phases' : `→ K ${S.k * 2 + 2}..${S.k * 2 + 3}`;
-        op2 = `${(S.k + 1) * TILE}/16 terms`;
-      }
-    } else if (m === 'write') {
-      const stored = t >= writeEnd(q);
-      state = 'Store';
-      op1 = `→ C[${row}][${col}]`;
-      op2 = stored ? '✓ stored' : 'storing…';
-      if (t >= writeStart(q) && !stored) cls += ' go';
-    } else if (m === 'done') {
-      state = 'Done';
-      op1 = `C[${row}][${col}]=${Cref[row][col]}`;
-      op2 = '✓ stored';
-    }
-    setCls(T.card, cls);
-    setText(T.stt, state);
+  TH.forEach((T, q) => {
+    const v = threadView(q, m, S, t, bar);
+    setCls(T.card, v.cls);
+    setText(T.stt, v.state);
     setText(T.acc, accs[q]);
-    setText(T.op1, op1);
-    setText(T.op2, op2);
-  }
+    setText(T.op1, v.op1);
+    setText(T.op2, v.op2);
+    if (TILE >= 4) setAttr(T.card, 'title', `${T.name} ${v.state}: ${v.op1}, ${v.op2}, acc = ${accs[q]}`);
+  });
 }
 
 function flights(m, S, t, accs) {
@@ -1097,8 +1402,8 @@ function flights(m, S, t, accs) {
   const { br, bc } = st, r0 = br * TILE, c0 = bc * TILE;
   if (m === 'load' || m === 'sync') {
     const K0 = S.k * TILE, slow = straggler(S.k);
-    for (let q = 0; q < 4; q++) {
-      const ty = q >> 1, tx = q & 1;
+    for (let q = 0; q < NT; q++) {
+      const ty = Math.floor(q / TILE), tx = q % TILE;
       [['A', MA.cells[r0 + ty][K0 + tx], sA[ty][tx].c, A[r0 + ty][K0 + tx]],
        ['B', MB.cells[K0 + ty][c0 + tx], sB[ty][tx].c, B[K0 + ty][c0 + tx]]].forEach(([w, from, to, val]) => {
         const s = loadStart(q, w);
@@ -1114,17 +1419,27 @@ function flights(m, S, t, accs) {
       });
     }
   } else if (m === 'mac' && t >= MAC_FLY[0] && t < MAC_FLY[1]) {
-    // Fan-out: each s_A value feeds both threads of its row, each s_B value both threads of its column.
+    // Fan-out: each s_A value feeds every thread of its row, each s_B value every thread of its column.
     const p = seg(t, MAC_FLY[0], MAC_FLY[1]);
-    for (let q = 0; q < 4; q++) {
-      const ty = q >> 1, tx = q & 1;
+    for (let q = 0; q < NT; q++) {
+      const ty = Math.floor(q / TILE), tx = q % TILE;
       out.push({ from: sA[ty][S.i].c, to: TH[q].card, q, val: smemVal('A', ty, S.i, S.k), p });
       out.push({ from: sB[S.i][tx].c, to: TH[q].card, q, val: smemVal('B', S.i, tx, S.k), p });
     }
+  } else if (m === 'gload') {
+    // No staging: every thread pulls its own copy from global memory, so each A value leaves
+    // its cell once per thread of that row, and each B value once per thread of that column.
+    for (let q = 0; q < NT; q++) {
+      const row = r0 + Math.floor(q / TILE), col = c0 + (q % TILE);
+      [['A', MA.cells[row][S.k], A[row][S.k]], ['B', MB.cells[S.k][col], B[S.k][col]]].forEach(([w, from, val]) => {
+        const s = loadStart(q, w);
+        if (t >= s && t < loadEnd(q, w)) out.push({ from, to: TH[q].card, q, val, p: (t - s) / FLIGHT });
+      });
+    }
   } else if (m === 'write') {
-    for (let q = 0; q < 4; q++) {
+    for (let q = 0; q < NT; q++) {
       const s = writeStart(q), e = writeEnd(q);
-      if (t >= s && t < e) out.push({ from: TH[q].card, to: MC.cells[r0 + (q >> 1)][c0 + (q & 1)], q, val: accs[q], p: (t - s) / (e - s) });
+      if (t >= s && t < e) out.push({ from: TH[q].card, to: MC.cells[r0 + Math.floor(q / TILE)][c0 + (q % TILE)], q, val: accs[q], p: (t - s) / (e - s) });
     }
   }
   return out;
@@ -1163,90 +1478,131 @@ function renderPackets(list) {
 
 function bannerFor(m, S, t, accs) {
   const { br, bc } = st, r0 = br * TILE, c0 = bc * TILE;
-  const rows = `${r0}..${r0 + 1}`, cols = `${c0}..${c0 + 1}`;
-  const accTxt = `acc = [${accs.join(', ')}]`;
-  const formula = 'C[ty,tx] += s_A[ty,0]·s_B[0,tx] + s_A[ty,1]·s_B[1,tx]';
+  const rows = rng(r0, TILE), cols = rng(c0, TILE), all = `0..${N - 1}`;
+  const accTxt = NT <= 4 ? `acc = [${accs.join(', ')}]` : `acc: T(0,0) = ${accs[0]} … T(${TILE - 1},${TILE - 1}) = ${accs[NT - 1]}`;
+  const terms = iota(TILE).map(i => `s_A[ty,${i}]·s_B[${i},tx]`);
+  const formula = TILE <= 2 ? `C[ty,tx] += ${terms.join(' + ')}` : `C[ty,tx] += Σ s_A[ty,i]·s_B[i,tx], i = 0..${TILE - 1}`;
   const sync = span('cr', '__syncthreads()');
+  const tiledTot = 2 * N * TILE, naiveTot = 2 * N * NT;
   if (m === 'idle') {
-    return ['Ready', `Block (${br}, ${bc}): 4 threads compute ${span('cc', `C[${rows}, ${cols}]`)} by sliding a 2×2 window along ${span('ca', `A[${rows}, 0..15]`)} and ${span('cb', `B[0..15, ${cols}]`)} in 8 phases. Press <b>Play</b> or <b>Step</b>.`,
-      `blockIdx = (x ${bc}, y ${br})\nthreadIdx (tx, ty) ∈ {0, 1}²\nrow = ${r0} + ty, col = ${c0} + tx`];
+    const tIdx = TILE === 1 ? '{0}²' : TILE === 2 ? '{0, 1}²' : `{0..${TILE - 1}}²`;
+    const sub = `blockIdx = (x ${bc}, y ${br})\nthreadIdx (tx, ty) ∈ ${tIdx}\nrow = ${r0} + ty, col = ${c0} + tx`;
+    const who = NT === 1 ? '1 thread computes' : `${NT} threads compute`;
+    if (NAIVE) {
+      return ['Ready', `Block (${br}, ${bc}) without tiling: ${who} ${span('cc', `C[${rows}, ${cols}]`)}, each thread reading its own row of ${span('ca', `A[${rows}, ${all}]`)} and column of ${span('cb', `B[${all}, ${cols}]`)} from global memory, one k at a time. Press <b>Play</b> or <b>Step</b>.`,
+        `${sub}\nno __shared__, no __syncthreads()`];
+    }
+    return ['Ready', `Block (${br}, ${bc}): ${who} ${span('cc', `C[${rows}, ${cols}]`)} by sliding a ${TILE}×${TILE} window along ${span('ca', `A[${rows}, ${all}]`)} and ${span('cb', `B[${all}, ${cols}]`)} in ${plural(PHASES, 'phase')}. Press <b>Play</b> or <b>Step</b>.`, sub];
   }
   if (m === 'done') {
-    const v = [[Cref[r0][c0], Cref[r0][c0 + 1]], [Cref[r0 + 1][c0], Cref[r0 + 1][c0 + 1]]];
-    return ['✓ Done', `Block (${br}, ${bc}) complete: ${span('cc', '64')} global loads with tiling vs ${span('cr', '128')} for the naive kernel, so 2× less global-memory traffic. Click another block in C.`,
-      `C[${rows}, ${cols}] = [[${v[0].join(', ')}], [${v[1].join(', ')}]]\n${st.done.size} of 64 blocks computed`];
+    const vals = NT <= 4
+      ? `C[${rows}, ${cols}] = [${iota(TILE).map(y => `[${iota(TILE).map(x => Cref[r0 + y][c0 + x]).join(', ')}]`).join(', ')}]`
+      : `C[${rows}, ${cols}]: ${NT} values stored`;
+    const sub = `${vals}\n${st.done.size} of ${NB * NB} blocks computed`;
+    if (NAIVE) {
+      return ['✓ Done', `Block (${br}, ${bc}) complete without tiling: ${span('cr', naiveTot)} global loads, ${TILE > 1 ? `${TILE}× the ${span('cc', tiledTot)} that ${TILE}×${TILE} tiles need` : 'the same as with 1×1 tiles, which have no reuse'}. Click another block in C.`, sub];
+    }
+    return ['✓ Done', `Block (${br}, ${bc}) complete: ${span('cc', tiledTot)} global loads with tiling vs ${span('cr', naiveTot)} for the naive kernel, ${TILE > 1 ? `so ${TILE}× less global-memory traffic` : 'the same traffic, because a 1×1 tile has no reuse'}. Click another block in C.`, sub];
   }
-  const K0 = S.k * TILE, ks = `${K0}..${K0 + 1}`;
+  if (m === 'gload') {
+    return ['① Load', `k = ${S.k}: every thread loads its own ${span('ca', `A[row][${S.k}]`)} and ${span('cb', `B[${S.k}][col]`)} from global memory into registers` + (TILE > 1 ? `: ${2 * NT} loads for ${2 * TILE} distinct values, because the ${TILE} threads of a row all fetch the same A value` : ''),
+      `ld A[row][k] → register a\nld B[k][col] → register b\nno __shared__: nothing kept for neighbours\nL1/L2 may absorb repeats (hardware)`];
+  }
+  if (m === 'fma') {
+    return ['② Compute', S.k === N - 1
+      ? `k = ${S.k}: the last multiply-add. Each thread's register now holds its full ${N}-term dot product.`
+      : `k = ${S.k}: every thread does acc += a × b in its own registers. Nothing is kept for its neighbours, so iteration ${S.k + 1} fetches from global memory again.`,
+      `acc += A[row][k] · B[k][col]\n0 shared-memory reads\n${accTxt}`];
+  }
+  const K0 = S.k * TILE, ks = rng(K0, TILE);
   if (m === 'load') {
-    return ['① Load', `Phase ${S.k}: Threads loading ${span('ca', `A[${rows}, ${ks}]`)} and ${span('cb', `B[${ks}, ${cols}]`)} into Shared Memory`,
-      'Thread (ty, tx) loads\nA[row, k·2 + tx] → s_A[ty][tx]\nB[k·2 + ty, col] → s_B[ty][tx]\n8 global loads: one A + one B per thread'];
+    return ['① Load', `Phase ${S.k}: ${NT === 1 ? 'The thread loads' : 'Threads loading'} ${span('ca', `A[${rows}, ${ks}]`)} and ${span('cb', `B[${ks}, ${cols}]`)} into Shared Memory`,
+      `Thread (ty, tx) loads\nA[row, k·${TILE} + tx] → s_A[ty][tx]\nB[k·${TILE} + ty, col] → s_B[ty][tx]\n${2 * NT} global loads: one A + one B per thread`];
   }
   if (m === 'sync') {
-    const q = straggler(S.k), who = `T(${q >> 1},${q & 1})`, bar = barrierState(m, S, t);
+    const q = straggler(S.k), bar = barrierState(m, S, t), warps = Math.ceil(NT / 32);
+    const note = warps === 1
+      ? `Illustrative: ${NT === 1 ? '1 thread is' : `${NT} threads are`} one lockstep warp;\nreal 16×16 blocks span 8 warps.`
+      : `${NT} threads = ${warps} warps, which\ncan reach the barrier at different times.`;
+    if (q < 0) {
+      return ['② Sync', `Phase ${S.k}: the block's only thread has stored its values and reaches ${sync}; with nobody to wait for, the barrier opens.`,
+        `${bar.n} of ${NT} threads at the barrier\n${note}`];
+    }
+    const who = `T(${Math.floor(q / TILE)},${q % TILE})`;
     const main = t < STRAG_LAND
-      ? `Phase ${S.k}: ${sync} barrier. ${bar.n}/4 threads have stored their values and wait: ${who}'s B load is still in flight, so nobody may read s_A / s_B yet.`
+      ? `Phase ${S.k}: ${sync} barrier. ${bar.n}/${NT} threads have stored their values and wait: ${who}'s B load is still in flight, so nobody may read s_A / s_B yet.`
       : t < SYNC_RELEASE
         ? `Phase ${S.k}: ${who}'s slow load has landed in s_B and it reaches ${sync}; the last arrival lets the barrier open.`
-        : `Phase ${S.k}: all 4 threads reached ${sync}, so shared memory is fully stocked and everyone proceeds.`;
-    return ['② Sync', main,
-      `${bar.n} of 4 threads at the barrier\nGlobal-load latency varies per thread.\nIllustrative: 4 threads are one lockstep warp;\nreal 16×16 blocks span 8 warps.`];
+        : `Phase ${S.k}: all ${NT} threads reached ${sync}, so shared memory is fully stocked and everyone proceeds.`;
+    return ['② Sync', main, `${bar.n} of ${NT} threads at the barrier\nGlobal-load latency varies per thread.\n${note}`];
   }
   if (m === 'mac') {
     return ['③ Compute', `Phase ${S.k}, i = ${S.i}: every thread does acc += ${span('ca', `s_A[ty][${S.i}]`)} × ${span('cb', `s_B[${S.i}][tx]`)} (global K = ${K0 + S.i}) straight from shared memory`,
-      `${formula}\ni = ${S.i}: s_A[ty][${S.i}] → row ty, s_B[${S.i}][tx] → col tx\n2× reuse, 0 global loads\n${accTxt}`];
+      `${formula}\ni = ${S.i}: s_A[ty][${S.i}] → row ty, s_B[${S.i}][tx] → col tx\n${TILE}× reuse, 0 global loads\n${accTxt}`];
   }
   if (m === 'adv') {
-    const last = S.k === PHASES - 1;
+    const last = S.k === PHASES - 1, next = TILE > 1 ? `[${K0 + TILE}, ${K0 + 2 * TILE - 1}]` : K0 + 1;
     return [last ? '④ Sync + exit' : '④ Sync + slide',
-      last ? `Phase 7 done: after the second ${sync} the K-loop exits. Each thread's register now holds its full 16-term dot product.`
-           : `Phase ${S.k} done: second ${sync} so nobody overwrites s_A / s_B while a neighbour still reads them. The K-window slides to K = [${K0 + 2}, ${K0 + 3}].`,
+      last ? `Phase ${PHASES - 1} done: after the second ${sync} the K-loop exits. Each thread's register now holds its full ${N}-term dot product.`
+           : `Phase ${S.k} done: second ${sync} so nobody overwrites s_A / s_B while a neighbour still reads them. The K-window slides to K = ${next}.`,
       `${formula}\n${accTxt}`];
   }
-  return ['⑤ Write', `Final write: each thread stores its register accumulator to ${span('cc', `C[${rows}, ${cols}]`)} in global memory, exactly once per output`,
-    `C[row][col] = acc, 4 global writes\n${accTxt}`];
+  return [NAIVE ? '③ Write' : '⑤ Write', `Final write: each thread stores its register accumulator to ${span('cc', `C[${rows}, ${cols}]`)} in global memory, exactly once per output`,
+    `C[row][col] = acc, ${NT} global write${NT === 1 ? '' : 's'}\n${accTxt}`];
 }
 
 function renderDash(m, S, t) {
   const { br, bc } = st, r0 = br * TILE, c0 = bc * TILE;
-  const inLoop = m === 'load' || m === 'sync' || m === 'mac' || m === 'adv';
+  const inLoop = S !== null && m !== 'write';
+  const units = NAIVE ? N : PHASES;
   setText($('phaseNum'), inLoop ? S.k : m === 'idle' ? '–' : '✓');
-  setText($('phaseOf'), inLoop || m === 'idle' ? 'of 7' : 'all 8 phases');
-  setText($('phaseK'), inLoop ? `(K = [${S.k * 2}, ${S.k * 2 + 1}])` : m === 'idle' ? '(press Play)' : m === 'write' ? 'final write' : 'block complete');
+  setText($('phaseOf'), inLoop || m === 'idle' ? `of ${units - 1}` : NAIVE ? `all ${N} iterations` : `all ${plural(PHASES, 'phase')}`);
+  const kLabel = k => (NAIVE ? `(K = ${k})` : TILE === 1 ? `(K = ${k})` : `(K = [${k * TILE}, ${k * TILE + TILE - 1}])`);
+  setText($('phaseK'), inLoop ? kLabel(S.k) : m === 'idle' ? '(press Play)' : m === 'write' ? 'final write' : 'block complete');
   setText($('microLbl'), st.idx < 0 ? `${STEPS.length} micro-steps` : `micro-step ${st.finished ? STEPS.length : st.idx + 1} / ${STEPS.length}`);
   TLN.forEach((n, j) => setCls(n, 'tn' + (st.finished || j < st.idx ? ' done' : j === st.idx ? ' on' : '')));
   const elapsed = st.finished ? TL_TOTAL : st.idx < 0 ? 0 : TL_START[st.idx] + st.t * DUR[STEPS[st.idx].type];
   setSty($('tlhead'), 'left', `${((elapsed / TL_TOTAL) * 100).toFixed(2)}%`);
   setSty($('tlhead'), 'opacity', st.idx < 0 ? '0' : '1');
 
-  const { tiled, naive, shared } = counters();
+  const { tiled, naive, shared, distinct } = counters();
+  const full = 2 * N * NT;   // naive loads for the whole block
   setText($('mTiled'), tiled);
   setText($('mNaive'), naive);
-  setSty($('fTiled'), 'width', `${(tiled / 128) * 100}%`);
-  setSty($('fNaive'), 'width', `${(naive / 128) * 100}%`);
+  setSty($('fTiled'), 'width', `${(tiled / full) * 100}%`);
+  setSty($('fNaive'), 'width', `${(naive / full) * 100}%`);
   setText($('mShared'), shared);
-  setText($('mSaved'), Math.max(0, naive - tiled));
-  // Live reuse: shared-memory operand reads per global load; reaches TILE at the end of every phase.
-  setText($('mReuse'), shared ? `${(shared / tiled).toFixed(2)}×` : '–');
+  if (NAIVE) {
+    // Global loads per distinct value fetched; reaches TILE once every thread has loaded.
+    setText($('mReuse'), distinct ? `${(naive / distinct).toFixed(2)}×` : '–');
+    setText($('mSaved'), naive - distinct);
+  } else {
+    // Live reuse: shared-memory operand reads per global load; reaches TILE at the end of every phase.
+    setText($('mReuse'), shared ? `${(shared / tiled).toFixed(2)}×` : '–');
+    setText($('mSaved'), Math.max(0, naive - tiled));
+  }
 
-  const hl = CODE_HL[m];
+  const hl = (NAIVE ? NAIVE_HL : CODE_HL)[m];
   CODE.forEach((ln, n) => setCls(ln, 'ln' + (hl.on.includes(n) ? ' on' : hl.ctx.includes(n) ? ' ctx' : '')));
 
+  const span2 = (w, a) => (TILE > 1 ? `${w}s ${a}–${a + TILE - 1}` : `${w} ${a}`);
   setText($('blockLbl'), `block (${br}, ${bc})`);
   setText($('wbBlock'), `block (${br}, ${bc})`);
-  setHTML($('blkInfo'), `Block <b>(${br}, ${bc})</b>, blockIdx = (x ${bc}, y ${br}), computes <b>C[${r0}..${r0 + 1}, ${c0}..${c0 + 1}]</b> from A rows ${r0}–${r0 + 1} and B columns ${c0}–${c0 + 1}`);
+  setHTML($('blkInfo'), `Block <b>(${br}, ${bc})</b>, blockIdx = (x ${bc}, y ${br}), computes <b>C[${rng(r0, TILE)}, ${rng(c0, TILE)}]</b> from A ${span2('row', r0)} and B ${span2('column', c0)}`);
   setText($('doneCount'), st.done.size);
 
   const play = $('bPlay');
   setText(play, st.playing ? '❚❚ Pause' : st.finished ? '↻ Replay' : st.idx < 0 ? '▶ Play' : '▶ Resume');
   setCls(play, 'btn primary' + (st.idx < 0 && !st.playing ? ' pulse' : ''));
   $('bStep').disabled = st.finished;
+  $('bEnd').disabled = st.finished;
 }
 
 function render() {
   const m = mode();
   const S = st.idx >= 0 && !st.finished ? STEPS[st.idx] : null;
   const t = st.t;
-  const accs = [0, 1, 2, 3].map(q => accOf(q >> 1, q & 1));
+  const accs = iota(NT).map(q => accOf(Math.floor(q / TILE), q % TILE));
   renderMatrices(m, S, t, accs);
   renderWorkbench(m, S, t, accs);
   placeOverlays(m, S, t);
@@ -1320,6 +1676,13 @@ function stepForward() {
   else finish();
   dirty = true;
 }
+// Fast-forward: skip the rest of the animation and show the block's end state.
+function toEnd() {
+  if (st.finished) return;
+  st.idx = STEPS.length - 1;
+  finish();
+  dirty = true;
+}
 // Timeline click: jump to the start of micro-step j; keep playing, or play just that step.
 function seek(j) {
   st.finished = false;
@@ -1361,8 +1724,34 @@ function syncSpeed() {
   $('speedLbl').textContent = `${st.speed.toFixed(2)}×`;
 }
 
+// Setup controls mirror cfg; tile sizes that do not divide the grid (or leave one block) are disabled.
+function syncControls() {
+  $('selN').value = String(cfg.n);
+  [...$('selT').options].forEach(o => { o.disabled = !tileOk(cfg.n, Number(o.value)); });
+  $('selT').value = String(cfg.t);
+  document.querySelectorAll('input[name="kmode"]').forEach(r => { r.checked = r.value === cfg.mode; });
+}
+// Any setup change is a full reset: new matrices, default block, nothing computed yet.
+function applyConfig(change) {
+  const next = { ...cfg, ...change };
+  if (!tileOk(next.n, next.t)) next.t = Math.max(...T_OPTS.filter(t => t <= next.t && tileOk(next.n, t)));
+  Object.assign(cfg, next);
+  st.playing = false;
+  st.done.clear();
+  st.br = 1;
+  st.bc = 0;
+  build();
+  restart();
+  syncControls();
+  measure();
+  fitCells();
+  measure();
+  dirty = true;
+}
+
 $('bPlay').addEventListener('click', () => (st.playing ? pause() : play()));
 $('bStep').addEventListener('click', stepForward);
+$('bEnd').addEventListener('click', toEnd);
 $('bReset').addEventListener('click', reset);
 $('speed').addEventListener('input', syncSpeed);
 $('speed').addEventListener('pointerup', e => e.target.blur());   // keep keyboard shortcuts live
@@ -1374,6 +1763,28 @@ $('clearAll').addEventListener('click', () => {
   st.done.clear();
   if (st.finished) restart();
   dirty = true;
+});
+const matC = $('matC');
+const tileOf = e => e.target instanceof Element && e.target.closest('#matC .tile');
+matC.addEventListener('mousedown', e => { if (tileOf(e)) e.preventDefault(); });   // keep Space for play/pause
+matC.addEventListener('click', e => { const tl = tileOf(e); if (tl) activateBlock(Number(tl.dataset.bi), Number(tl.dataset.bj)); });
+matC.addEventListener('keydown', e => { const tl = tileOf(e); if (tl) onTileKey(e, Number(tl.dataset.bi), Number(tl.dataset.bj)); });
+$('tl').addEventListener('click', e => {
+  const n = e.target instanceof Element && e.target.closest('.tn');
+  if (n) seek(Number(n.dataset.j));
+});
+// A pointer-driven change drops focus again so Space goes back to play/pause.
+let viaPointer = false;
+[$('selN'), $('selT')].forEach(s => {
+  s.addEventListener('pointerdown', () => { viaPointer = true; });
+  s.addEventListener('keydown', () => { viaPointer = false; });
+});
+$('selN').addEventListener('change', e => { applyConfig({ n: Number(e.target.value) }); if (viaPointer) e.target.blur(); });
+$('selT').addEventListener('change', e => { applyConfig({ t: Number(e.target.value) }); if (viaPointer) e.target.blur(); });
+document.querySelectorAll('.seg label').forEach(l => l.addEventListener('pointerdown', () => { viaPointer = true; }));
+document.querySelectorAll('input[name="kmode"]').forEach(r => {
+  r.addEventListener('keydown', () => { viaPointer = false; });
+  r.addEventListener('change', () => { applyConfig({ mode: r.value }); if (viaPointer) r.blur(); });
 });
 // Mouse clicks must not park focus on a button, so Space keeps meaning play/pause.
 document.querySelectorAll('.btn, .linkbtn').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
@@ -1389,6 +1800,8 @@ document.addEventListener('keydown', e => {
   } else if (e.key === 'ArrowRight' && !onRange) {
     e.preventDefault();
     stepForward();
+  } else if (e.key === 'e' || e.key === 'E') {
+    toEnd();
   } else if (e.key === 'r' || e.key === 'R') {
     reset();
   }
@@ -1401,6 +1814,8 @@ addEventListener('resize', () => {
   requestAnimationFrame(() => { fitQueued = false; fitCells(); });
 });
 new ResizeObserver(() => { measure(); dirty = true; }).observe($('stage'));
+build();
+syncControls();
 syncSpeed();
 measure();
 render();
