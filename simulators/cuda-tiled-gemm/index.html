@@ -387,7 +387,7 @@ footer { margin-top: 20px; text-align: center; font-size: 11px; color: var(--ink
 .stage.dense .mC .cell { font-size: 0; }
 .stage.dense .cell { border-radius: 2px; }
 .tl.many .tn[data-gap] { box-shadow: inset 1px 0 0 #111827; }
-.wb[data-t="4"] .th, .wb[data-t="8"] .th { border-radius: 7px; padding: 3px 4px; }
+.wb[data-t="4"] .th, .wb[data-t="8"] .th { border-radius: 7px; padding: 3px 1px 3px 3px; }
 .wb[data-t="4"] .th-op, .wb[data-t="8"] .th-op, .wb[data-t="4"] .th-n, .wb[data-t="8"] .th-h, .wb[data-t="4"] .th-acc small, .wb[data-t="8"] .th-acc small, .wb[data-t="4"] .sm .s, .wb[data-t="8"] .sm .s { display: none; }
 .wb[data-t="4"] .th-h { font-size: 9px; gap: 2px 3px; }
 .wb[data-t="4"] .th { container-type: inline-size; }
@@ -1048,7 +1048,7 @@ function renderStatic() {
   $('dtShared').innerHTML = NAIVE ? 'Shared-memory reads<small>no __shared__ arrays</small>' : 'Shared-memory reads';
   $('dtSaved').textContent = NAIVE ? 'Redundant load requests' : 'Redundant global loads avoided';
   $('trafficNote').innerHTML = NAIVE
-    ? `Naive: each of the ${plural(NT, 'thread')} loads its own row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> load requests, but only <b>${tiledTot}</b> distinct values${TILE > 1 ? `, each requested <b>${TILE}×</b>. The hardware merges same-address requests within a warp and caches may catch more, but nothing guarantees it` : ''}. A ${tdim} tiled kernel loads each value once. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`
+    ? `Naive: ${NT === 1 ? 'the thread' : `each of the ${NT} threads`} loads its own row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> load requests${TILE > 1 ? `, but only <b>${tiledTot}</b> distinct values, each requested <b>${TILE}×</b>. Requests for the same address within a warp always merge into one memory transaction; repeats across warps and blocks are left to the L1 and L2 caches, with no guarantee` : ''}. ${TILE === 8 ? 'An' : 'A'} ${tdim} tiled kernel loads each value once. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`
     : `Naive: each thread walks a full row of A and column of B, ${NT} × ${2 * N} = <b>${naiveTot}</b> global loads. Tiled: ${PHASES} phases × ${2 * NT} cooperative loads = <b>${tiledTot}</b>, and every value staged in s_A / s_B is consumed by <b>${plural(TILE, 'thread')}</b>. For the whole ${dim} GEMM that is <b>${fmt(all)}</b> naive vs <b>${fmt(all / TILE)}</b> tiled global loads.`;
   $('launchLbl').textContent = `${NAIVE ? 'matmulNaive' : 'matmulTiled'}<<<dim3(${NB}, ${NB}), dim3(${TILE}, ${TILE})>>>`;
   CODE = buildCode($('code'), NAIVE ? naiveKernel() : tiledKernel());
@@ -1066,13 +1066,13 @@ function renderStatic() {
   $('exTileDim').textContent = tdim;
   $('exTiled').innerHTML = [
     `<b>Load:</b> thread (ty, tx) fetches exactly one A and one B element, so ${2 * NT} global loads per phase.`,
-    `<b>__syncthreads():</b> nobody reads the tiles until all ${2 * NT} loads have landed. ` + (NT === 1
+    `<b>__syncthreads():</b> nobody reads the tiles until ${NT === 1 ? 'both' : `all ${2 * NT}`} loads have landed. ` + (NT === 1
       ? '(With TILE = 1 the block has a single thread, so the barrier has nobody to wait for.)'
       : warps === 1
         ? `(With TILE = ${TILE} the ${NT} threads fit in one warp that moves in lockstep, so in hardware they reach the barrier together. The demo staggers them to show the wait; in multi-warp blocks whole warps arrive at different times.)`
         : `(With TILE = ${TILE} the ${NT} threads form ${warps} warps. A warp waits for its slowest lane, so in hardware whole warps reach the barrier at different times; the demo staggers single threads to make the wait visible.)`),
     `<b>Compute:</b> acc += s_A[ty][i] · s_B[i][tx] for i = ${iList}, served from shared memory.`,
-    '<b>__syncthreads():</b> nobody overwrites the tiles while a neighbour is still reading them.',
+    `<b>__syncthreads():</b> nobody overwrites the tiles while ${NT === 1 ? 'they are still being read' : 'a neighbour is still reading them'}.`,
   ].map(x => `<li>${x}</li>`).join('');
   $('exScale').textContent = `With TILE = T, each staged value feeds T threads, so global loads fall to 2·N³ / T. ${NAIVE ? 'The naive kernel behaves like T = 1 whatever its block size' : `This demo uses T = ${TILE}`}; production kernels use 16–32 (or larger, register-blocked tiles).`;
 }
@@ -1503,10 +1503,10 @@ function bannerFor(m, S, t, accs) {
     const sub = `blockIdx = (x ${bc}, y ${br})\nthreadIdx (tx, ty) ∈ ${tIdx}\nrow = ${r0} + ty, col = ${c0} + tx`;
     const who = NT === 1 ? '1 thread computes' : `${NT} threads compute`;
     if (NAIVE) {
-      return ['Ready', `Block (${br}, ${bc}), no tiling: ${who} ${span('cc', `C[${rows}, ${cols}]`)}, each reading a row of ${span('ca', `A[${rows}, ${all}]`)} and a column of ${span('cb', `B[${all}, ${cols}]`)} from global memory. Press <b>Play</b> or <b>Step</b>.`,
+      return ['Ready', `Block (${br}, ${bc}), no tiling: ${who} ${span('cc', `C[${rows}, ${cols}]`)}, ${NT === 1 ? 'reading' : 'each reading'} a row of ${span('ca', `A[${rows}, ${all}]`)} and a column of ${span('cb', `B[${all}, ${cols}]`)} from global memory. Press <b>Play</b> or <b>Step</b>.`,
         `${sub}\nno __shared__, no __syncthreads()`];
     }
-    return ['Ready', `Block (${br}, ${bc}): ${who} ${span('cc', `C[${rows}, ${cols}]`)} by sliding a ${TILE}×${TILE} window along ${span('ca', `A[${rows}, ${all}]`)} and ${span('cb', `B[${all}, ${cols}]`)} in ${plural(PHASES, 'phase')}. Press <b>Play</b> or <b>Step</b>.`, sub];
+    return ['Ready', `Block (${br}, ${bc}): ${who} ${span('cc', `C[${rows}, ${cols}]`)} by sliding ${TILE === 8 ? 'an' : 'a'} ${TILE}×${TILE} window along ${span('ca', `A[${rows}, ${all}]`)} and ${span('cb', `B[${all}, ${cols}]`)} in ${plural(PHASES, 'phase')}. Press <b>Play</b> or <b>Step</b>.`, sub];
   }
   if (m === 'done') {
     const vals = NT <= 4
@@ -1514,13 +1514,13 @@ function bannerFor(m, S, t, accs) {
       : `C[${rows}, ${cols}]: ${NT} values stored`;
     const sub = `${vals}\n${st.done.size} of ${NB * NB} blocks computed`;
     if (NAIVE) {
-      return ['✓ Done', `Block (${br}, ${bc}) complete without tiling: ${span('cr', naiveTot)} global loads, ${TILE > 1 ? `${TILE}× the ${span('cc', tiledTot)} that ${TILE}×${TILE} tiles need` : 'the same as with 1×1 tiles, which have no reuse'}. Click another block in C.`, sub];
+      return ['✓ Done', `Block (${br}, ${bc}) complete without tiling: ${span('cr', naiveTot)} load requests, ${TILE > 1 ? `${TILE}× the ${span('cc', tiledTot)} that ${TILE}×${TILE} tiles need` : 'the same as with 1×1 tiles, which have no reuse'}. Click another block in C.`, sub];
     }
     return ['✓ Done', `Block (${br}, ${bc}) complete: ${span('cc', tiledTot)} global loads with tiling vs ${span('cr', naiveTot)} for the naive kernel, ${TILE > 1 ? `so ${TILE}× less global-memory traffic` : 'the same traffic, because a 1×1 tile has no reuse'}. Click another block in C.`, sub];
   }
   if (m === 'gload') {
     return ['① Load', `k = ${S.k}: each thread loads its own ${span('ca', `A[row][${S.k}]`)} and ${span('cb', `B[${S.k}][col]`)} from global memory into registers` + (TILE > 1 ? `, so ${2 * NT} load requests bring in only ${2 * TILE} distinct values` : ''),
-      `ld A[row][k] → register a\nld B[k][col] → register b\nno __shared__: nothing kept for neighbours\nrepeats may be merged or cached (hardware)`];
+      `ld A[row][k] → register a\nld B[k][col] → register b\nno __shared__: nothing kept for neighbours\nsame address in one warp: 1 transaction`];
   }
   if (m === 'fma') {
     return ['② Compute', S.k === N - 1
@@ -1799,7 +1799,8 @@ $('selT').addEventListener('change', e => { applyConfig({ t: Number(e.target.val
 document.querySelectorAll('.seg label').forEach(l => l.addEventListener('pointerdown', () => { viaPointer = true; }));
 document.querySelectorAll('input[name="kmode"]').forEach(r => {
   r.addEventListener('keydown', () => { viaPointer = false; });
-  r.addEventListener('change', () => { applyConfig({ mode: r.value }); if (viaPointer) r.blur(); });
+  r.addEventListener('change', () => applyConfig({ mode: r.value }));
+  r.addEventListener('click', () => { if (viaPointer) r.blur(); });   // also fires when already checked
 });
 // Mouse clicks must not park focus on a button, so Space keeps meaning play/pause.
 document.querySelectorAll('.btn, .linkbtn').forEach(b => b.addEventListener('mousedown', e => e.preventDefault()));
