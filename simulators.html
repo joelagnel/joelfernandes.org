@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html data-theme="">
 <head>
-<title>About Site - Joel Fernandes</title>
+<title>Simulators - Interactive Visualizations - Joel Fernandes</title>
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <meta name="author" content="Joel Fernandes">
 <meta name="viewport" content="width=device-width">
@@ -416,11 +416,47 @@
 
 <p><a href="/">&laquo; Back to Home</a></p>
 
-<h1 id="about-site">About Site</h1>
+<div class="header">
+<h1 class="title">Simulators <span style="font-size:0.6em; font-weight:normal; color:#666;">Interactive Visualizations</span></h1>
+</div>
 
-<p>This website is built using <a href="https://jekyllrb.com/">Jekyll</a>, a static site generator, and hosted on <a href="https://pages.github.com/">GitHub Pages</a>.</p>
+<div class="post">
 
-<p>This website’s design is inspired by <a href="https://www.brendangregg.com/">Brendan Gregg’s beautiful website</a>, who was kind enough to allow me to reuse some design ideas. Brendan also mentioned that he drew inspiration from the <a href="https://www.nokia.com/bell-labs/about/dennis-m-ritchie/">Nokia Bell Labs Dennis M. Ritchie memorial page</a>.</p>
+<p>
+Interactive simulators that I host here in case others find them useful. Each one is a single web page that
+animates a piece of hardware or an algorithm step by step, with controls to play, pause, and single-step so
+that every intermediate state can be inspected. They run in any modern browser with nothing to install. Like
+the workshops on the <a href="/how.html">How!</a> page, these are mostly AI generated.
+</p>
+
+<hr>
+
+<h2>Simulators</h2>
+
+<div style="margin: 1.5em 0; padding: 1.2em 1.4em; border-left: 4px solid #4a7fb5; background: #f6f9fc; border-radius: 0 6px 6px 0;">
+  <h3 style="margin-top: 0;"><a href="/simulators/cuda-tiled-gemm/index.html">CUDA Tiled GEMM Visualizer</a></h3>
+  <p style="margin: 0.5em 0 0 0; color: #444;">
+    An animated walk through a tiled GEMM (general matrix multiply) CUDA kernel computing C = A &times; B for
+    16&times;16 matrices. The output is split into 2&times;2 tiles, and each tile is computed by one thread block
+    (a group of GPU threads that can share fast on-chip memory), giving 64 blocks of 4 threads. Click any block
+    of C to watch it run through 8 phases, one per 2-wide slice of the shared dimension. In each phase the threads
+    copy a 2&times;2 tile of A and a 2&times;2 tile of B from global memory (the GPU's large but slow DRAM) into
+    shared memory (fast on-chip memory visible only to the threads of one block), wait at a
+    <code>__syncthreads()</code> barrier until every copy has landed, and then do their multiply-adds from shared
+    memory. A live counter compares global memory loads: 64 per block with tiling (8 phases of 8 loads) against
+    128 for a naive kernel (4 threads, each reading 16 values of A and 16 of B itself), because each value staged
+    in shared memory is used by two threads. The simulator was inspired by Zachary Huang's video
+    <a href="https://youtu.be/xewKxorikwE">Give Me 30 min, I'll Make CUDA Click Forever</a>, whose load,
+    synchronize, compute pattern it animates, and its visual style is borrowed from
+    <a href="https://x.com/addyosmani/status/2103009037164110327">Addy Osmani's X post</a> showing how browsers
+    work in a 40-second animation drawn frame by frame in JavaScript.
+  </p>
+  <p style="margin: 0.6em 0 0 0; color: #666; font-size: 0.93em;">
+    single web page, no install &middot; play, pause, and step at 0.25&times; to 3&times; speed &middot; kernel source with the active line highlighted
+  </p>
+</div>
+
+</div>
 
 </div>
 
