@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>Simulators - Interactive Visualizations - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a> <span class="navsep">&middot;</span>
+<a href="/simulators.html">Simulators</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+<a href="/simulators.html">Simulators</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-09-15 &raquo;<br><a href="/blog/2026-09-15/build-nanogpt-activation-loss-decay.html">My training run of build-nanoGPT: replacing activation functions to see loss decay</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-09 &raquo;<br><a href="/blog/2026-09-09/cross-entropy-gradient-accumulation-ddp.html">Multi-GPU calculation of gradients for accelerated training</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-05 &raquo;<br><a href="/blog/2026-08-05/batchnorm-gradient.html">Backprop: Gradients Through Batch Normalization</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<div class="header">
+<h1 class="title">Simulators <span style="font-size:0.6em; font-weight:normal; color:#666;">Interactive Visualizations</span></h1>
+</div>
+
+<div class="post">
+
+<p>
+Interactive simulators that I host here in case others find them useful. Each one is a single web page that
+animates a piece of hardware or an algorithm step by step, with controls to play, pause, and single-step so
+that every intermediate state can be inspected. They run in any modern browser with nothing to install. Like
+the workshops on the <a href="/how.html">How!</a> page, these are mostly AI generated.
+</p>
+
+<hr>
+
+<h2>Simulators</h2>
+
+<div style="margin: 1.5em 0; padding: 1.2em 1.4em; border-left: 4px solid #4a7fb5; background: #f6f9fc; border-radius: 0 6px 6px 0;">
+  <h3 style="margin-top: 0;"><a href="/simulators/cuda-tiled-gemm/index.html">CUDA Tiled GEMM Visualizer</a></h3>
+  <p style="margin: 0.5em 0 0 0; color: #444;">
+    An animated walk through a tiled GEMM (general matrix multiply) CUDA kernel computing C = A &times; B for
+    16&times;16 matrices. The output is split into 2&times;2 tiles, and each tile is computed by one thread block
+    (a group of GPU threads that can share fast on-chip memory), giving 64 blocks of 4 threads. Click any block
+    of C to watch it run through 8 phases, one per 2-wide slice of the shared dimension. In each phase the threads
+    copy a 2&times;2 tile of A and a 2&times;2 tile of B from global memory (the GPU's large but slow DRAM) into
+    shared memory (fast on-chip memory visible only to the threads of one block), wait at a
+    <code>__syncthreads()</code> barrier until every copy has landed, and then do their multiply-adds from shared
+    memory. A live counter compares global memory loads: 64 per block with tiling (8 phases of 8 loads) against
+    128 for a naive kernel (4 threads, each reading 16 values of A and 16 of B itself), because each value staged
+    in shared memory is used by two threads. The simulator was inspired by Zachary Huang's video
+    <a href="https://youtu.be/xewKxorikwE">Give Me 30 min, I'll Make CUDA Click Forever</a>, whose load,
+    synchronize, compute pattern it animates, and its visual style is borrowed from
+    <a href="https://x.com/addyosmani/status/2103009037164110327">Addy Osmani's X post</a> showing how browsers
+    work in a 40-second animation drawn frame by frame in JavaScript.
+  </p>
+  <p style="margin: 0.6em 0 0 0; color: #666; font-size: 0.93em;">
+    single web page, no install &middot; play, pause, and step at 0.25&times; to 3&times; speed &middot; kernel source with the active line highlighted
+  </p>
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
