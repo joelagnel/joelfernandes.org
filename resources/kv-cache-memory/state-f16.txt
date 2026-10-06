@@ -1,0 +1,23 @@
+file: /home/joel/scratch/kv-cache-blog-20261005/state-f16.bin, 803,596 bytes
+@       0  magic = 0xaf143cd8, seq_id = 0, n_stream = 1
+@      12  stream 0: cell_count = 7
+@      16    cell 0: pos = 0, n_seq_id = 1, seq_ids = [0]
+@      28    cell 1: pos = 1, n_seq_id = 1, seq_ids = [0]
+@      40    cell 2: pos = 2, n_seq_id = 1, seq_ids = [0]
+@      88    cell 6: pos = 6, n_seq_id = 1, seq_ids = [0]
+@     100  v_trans = 0, n_layer = 28
+@     108  K layer 0: type 1 (f16), row = 2048 bytes, 7 rows = 14,336 bytes
+            cell 0 (pos 0): first bytes 31 37 46 35 a8 b4 6f b0 -> [ 0.4495  0.3296 -0.291  -0.1385 -0.1548  1.2725 -1.0107 -0.5576]
+            cell 1 (pos 1): first bytes 6d 30 98 bc f2 42 da 31 -> [ 0.1383 -1.1484  3.4727  0.1829  1.624   3.1836  2.6758  0.103 ]
+            cell 2 (pos 2): first bytes 76 bc 54 34 5e 47 af 3b -> [-1.1152  0.2705  7.3672  0.9604  3.0645  1.6816  5.5078 -1.3936]
+@   14456  K layer 1: type 1 (f16), row = 2048 bytes, 7 rows = 14,336 bytes
+            cell 0 (pos 0): first bytes 2d 40 00 9a 07 41 46 b2 -> [ 2.0879 -0.0029  2.5137 -0.196  -0.0729 -0.428  -0.3862 -0.3096]
+            cell 1 (pos 1): first bytes 7f 46 44 3d 20 bf 43 32 -> [ 6.4961  1.3164 -1.7812  0.1957  0.6079  0.9829  0.354   0.1295]
+            cell 2 (pos 2): first bytes a5 c1 9c b8 5e c1 30 c0 -> [-2.8223 -0.5762 -2.6836 -2.0938  1.6826 -0.012   0.5342 -0.6465]
+@  387504  K layer 27: type 1 (f16), row = 2048 bytes, 7 rows = 14,336 bytes
+            cell 0 (pos 0): first bytes 66 16 d0 a1 43 14 87 28 -> [ 0.0016 -0.0114  0.001   0.0354 -0.0083 -0.0359  0.0055 -0.0255]
+            cell 1 (pos 1): first bytes 6a bd 0d b9 88 37 d0 3d -> [-1.3535 -0.6313  0.4707  1.4531  2.1348 -0.9478  0.6108 -0.9863]
+            cell 2 (pos 2): first bytes 42 bb 50 be ec 3d e5 3c -> [-0.9072 -1.5781  1.4805  1.2236  1.875  -2.2031  1.1729 -0.8594]
+@  401852  V layer 0: type 1, row = 2048 bytes, 7 rows
+@  789248  V layer 27: type 1, row = 2048 bytes, 7 rows
+@  803596  end (exact)
