@@ -426,7 +426,7 @@
 <p class="meta">05 Oct 2026</p>
 
 <div class="post">
-<p>I wanted to see what llama.cpp’s KV cache actually looks like in memory, so I dumped the cached keys and values for a short prompt in <strong>Qwen3-0.6B</strong>. This is the small, 28-layer model from the first episode of my KV-cache video series. I used an RTX 4090, an F16 cache, and a context capacity of 4,096 tokens.</p>
+<p>I wanted to see what llama.cpp’s KV cache actually looks like in memory, so I dumped the cached keys and values for a short prompt in <strong>Qwen3-0.6B</strong>, a small model with 28 layers. I used an RTX 4090, an F16 cache, and a context capacity of 4,096 tokens.</p>
 
 <p>The useful picture is fairly simple: every layer has its own K and V tensors, every occupied row holds one token’s numbers, and streams add another dimension. Here is that picture, followed down to an actual pair of bytes in the dump.</p>
 
@@ -464,7 +464,7 @@
 </code></pre></div></div>
 
 <details class="kv-memory-detail">
-<summary>The constructor and per-layer structure from the video</summary>
+<summary>The constructor and per-layer structure</summary>
 <figure class="kv-memory-figure">
 <a href="/images/kv-cache-memory/tensor-constructor.png"><img src="/images/kv-cache-memory/tensor-constructor.png" alt="The llama_kv_cache constructor loops over layers and creates one three-dimensional K tensor and one V tensor for each included layer." loading="lazy" /></a>
 <figcaption>The layer loop and the two tensor allocations.</figcaption>
@@ -619,7 +619,7 @@ V0, V1, ... V27   (header + 7 rows in each record)
 
 <figure class="kv-memory-figure">
 <a href="/images/kv-cache-memory/stream-slabs.png"><img src="/images/kv-cache-memory/stream-slabs.png" alt="A layer's K tensor contains one two-dimensional slab per stream. ggml_view_2d selects a slab at offset s times nb[2] without copying it." loading="lazy" /></a>
-<figcaption>The stream dimension, illustrated in episode four. Stream <code>s</code> starts at <code>s × nb[2]</code>.</figcaption>
+<figcaption>Each stream occupies one slab. Stream <code>s</code> starts at <code>s × nb[2]</code>.</figcaption>
 </figure>
 
 <p>The source expresses the choice directly:</p>
@@ -634,7 +634,7 @@ V0, V1, ... V27   (header + 7 rows in each record)
 </code></pre></div></div>
 
 <details class="kv-memory-detail">
-<summary>The stream-selection code from episode four</summary>
+<summary>The stream-selection code</summary>
 <figure class="kv-memory-figure">
 <a href="/images/kv-cache-memory/stream-choice.png"><img src="/images/kv-cache-memory/stream-choice.png" alt="The constructor selects one stream for unified mode or n_seq_max streams otherwise." loading="lazy" /></a>
 <figcaption>With only one allowed sequence, both choices give one stream. The dump above used that single-sequence case.</figcaption>
@@ -673,7 +673,7 @@ V0, V1, ... V27   (header + 7 rows in each record)
 
 <h3 id="source">Source</h3>
 
-<p>The experiment and extracted diagrams use llama.cpp <a href="https://github.com/ggml-org/llama.cpp/tree/99b95488cac0f00ce3f05af113a8c1e287753f87">99b95488c</a> and <a href="https://huggingface.co/Qwen/Qwen3-0.6B">Qwen3-0.6B</a>. The main code is in <a href="https://github.com/ggml-org/llama.cpp/blob/99b95488cac0f00ce3f05af113a8c1e287753f87/src/llama-kv-cache.cpp">llama-kv-cache.cpp</a>, including tensor construction and state serialization. The memory and dump diagrams are from episode one; the stream comparison is from episode four.</p>
+<p>The experiment and diagrams use llama.cpp <a href="https://github.com/ggml-org/llama.cpp/tree/99b95488cac0f00ce3f05af113a8c1e287753f87">99b95488c</a> and <a href="https://huggingface.co/Qwen/Qwen3-0.6B">Qwen3-0.6B</a>. The main code is in <a href="https://github.com/ggml-org/llama.cpp/blob/99b95488cac0f00ce3f05af113a8c1e287753f87/src/llama-kv-cache.cpp">llama-kv-cache.cpp</a>, including tensor construction and state serialization.</p>
 
 </div>
 
