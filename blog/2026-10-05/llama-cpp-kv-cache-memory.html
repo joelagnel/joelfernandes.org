@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>What does llama.cpp's KV cache actually look like in memory? - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a> <span class="navsep">&middot;</span>
+<a href="/simulators.html">Simulators</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+<a href="/simulators.html">Simulators</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-10-05 &raquo;<br><a href="/blog/2026-10-05/llama-cpp-kv-cache-memory.html">What does llama.cpp's KV cache actually look like in memory?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-15 &raquo;<br><a href="/blog/2026-09-15/build-nanogpt-activation-loss-decay.html">My training run of build-nanoGPT: replacing activation functions to see loss decay</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-09 &raquo;<br><a href="/blog/2026-09-09/cross-entropy-gradient-accumulation-ddp.html">Multi-GPU calculation of gradients for accelerated training</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-13 &raquo;<br><a href="/blog/2026-08-13/catching-overfitting.html">Deep transformers and overfitting</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">What does llama.cpp's KV cache actually look like in memory?</h1>
+<p class="meta">05 Oct 2026</p>
+
+<div class="post">
+<p>I wanted to see what llama.cpp’s KV cache actually looks like in memory, so I dumped the cached keys and values for a short prompt in <strong>Qwen3-0.6B</strong>. This is the small, 28-layer model from the first episode of my KV-cache video series. I used an RTX 4090, an F16 cache, and a context capacity of 4,096 tokens.</p>
+
+<p>The useful picture is fairly simple: every layer has its own K and V tensors, every occupied row holds one token’s numbers, and streams add another dimension. Here is that picture, followed down to an actual pair of bytes in the dump.</p>
+
+<style>
+.kv-memory-figure { margin: 1.6em 0; }
+.kv-memory-figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+.kv-memory-figure figcaption { margin-top: .5em; font-size: .92em; line-height: 1.45; }
+.kv-memory-detail { margin: 1.1em 0; }
+.kv-memory-detail summary { cursor: pointer; font-weight: bold; }
+.kv-memory-detail[open] summary { margin-bottom: .8em; }
+</style>
+
+<h2 id="28-layers-56-tensors">28 layers, 56 tensors</h2>
+
+<p>Attention happens in every one of this model’s 28 layers. Each layer computes its own keys and values, so the cache keeps <strong>28 K tensors and 28 V tensors: 56 tensors in all</strong>.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/28-layers.png"><img src="/images/kv-cache-memory/28-layers.png" alt="A stack of 28 model layers, each with its own blue K and orange V storage." /></a>
+<figcaption>Each token contributes keys and values at every layer. Blue is K, orange is V. Click any diagram to see it at full size.</figcaption>
+</figure>
+
+<p>With all layers offloaded to the GPU, these tensors live in one CUDA buffer. The diagram groups the keys and values by color; it is an inventory, not their address order. In this build, the live buffer contains the layer pairs in order: <code class="language-plaintext highlighter-rouge">K0, V0, K1, V1, ...</code>. The saved file uses a different order, which we will see below.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/56-tensors.png"><img src="/images/kv-cache-memory/56-tensors.png" alt="All 28 K tensors and 28 V tensors grouped inside one 448 MiB CUDA0 allocation." loading="lazy" /></a>
+<figcaption>The 56 tensors share one GPU buffer in this all-GPU run.</figcaption>
+</figure>
+
+<p>The constructor creates the two tensors inside its layer loop. For this model, the relevant calls are:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ggml_new_tensor_3d</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">type_k</span><span class="p">,</span>
+                   <span class="n">n_embd_k_gqa</span><span class="p">,</span> <span class="n">kv_size</span><span class="p">,</span> <span class="n">n_stream</span><span class="p">);</span>
+<span class="n">ggml_new_tensor_3d</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">type_v</span><span class="p">,</span>
+                   <span class="n">n_embd_v_gqa</span><span class="p">,</span> <span class="n">kv_size</span><span class="p">,</span> <span class="n">n_stream</span><span class="p">);</span>
+</code></pre></div></div>
+
+<details class="kv-memory-detail">
+<summary>The constructor and per-layer structure from the video</summary>
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/tensor-constructor.png"><img src="/images/kv-cache-memory/tensor-constructor.png" alt="The llama_kv_cache constructor loops over layers and creates one three-dimensional K tensor and one V tensor for each included layer." loading="lazy" /></a>
+<figcaption>The layer loop and the two tensor allocations.</figcaption>
+</figure>
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/layer-struct.png"><img src="/images/kv-cache-memory/layer-struct.png" alt="The kv_layer structure holds the model layer index, K and V tensor pointers, and per-stream views." loading="lazy" /></a>
+<figcaption><code>kv_layer</code> keeps the pair of tensors and their stream views together.</figcaption>
+</figure>
+</details>
+
+<h2 id="one-row-one-tokens-keys">One row, one token’s keys</h2>
+
+<p>For one token in one layer, K contains <strong>1,024 numbers</strong>. That is eight KV heads with 128 numbers each, packed next to each other in a row. V has the same size. Each F16 number takes two bytes, so a K row occupies <strong>2,048 bytes, or 2 KiB</strong>. A V row takes another 2 KiB.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/token-rows.png"><img src="/images/kv-cache-memory/token-rows.png" alt="Rows of the layer-zero K tensor. Each row contains eight KV heads of 128 values, and the next row begins 2048 bytes later." loading="lazy" /></a>
+<figcaption>One row holds a token's keys for this layer. The eight heads sit side by side.</figcaption>
+</figure>
+
+<details class="kv-memory-detail">
+<summary>The dimensions in the model's startup log</summary>
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/kv-head-dimensions.png"><img src="/images/kv-cache-memory/kv-head-dimensions.png" alt="Startup output: eight KV heads, head size 128, and 1024 K and V values per token per layer." loading="lazy" /></a>
+<figcaption><code>n_embd_k_gqa = n_head_kv × n_embd_head_k = 8 × 128 = 1024</code>.</figcaption>
+</figure>
+</details>
+
+<p>Across all 28 layers, one token’s K and V payload is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>2 KiB × 28 layers × 2 (K and V) = 112 KiB
+</code></pre></div></div>
+
+<p>For <code class="language-plaintext highlighter-rouge">c</code> cache cells, the total is <strong><code class="language-plaintext highlighter-rouge">c × 112 KiB</code></strong>. So even eight tokens hold <strong>896 KiB</strong>, almost a MiB, in this small model. Here KiB means 1,024 bytes and MiB means 1,024 KiB.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/bytes-per-token.png"><img src="/images/kv-cache-memory/bytes-per-token.png" alt="Two 2 KiB rows make 4 KiB per layer; 28 layers make 112 KiB of cached keys and values per token." loading="lazy" /></a>
+<figcaption>4 KiB per layer, multiplied by 28 layers.</figcaption>
+</figure>
+
+<p>llama.cpp reserves space for the configured capacity, rather than growing this buffer one token at a time. My <code class="language-plaintext highlighter-rouge">-c 4096</code> run therefore reserved <strong>448 MiB</strong>, even though the prompt only occupied seven cells.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/context-allocation.png"><img src="/images/kv-cache-memory/context-allocation.png" alt="4096 cache cells, each representing room for a token's K and V across all 28 layers, total 448 MiB." loading="lazy" /></a>
+<figcaption>A cell is a shared row index across the layers' tensors, not one contiguous 112 KiB chunk.</figcaption>
+</figure>
+
+<details class="kv-memory-detail">
+<summary>The measured allocation</summary>
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/startup-log.png"><img src="/images/kv-cache-memory/startup-log.png" alt="The real startup log reports 448 MiB: 224 MiB for F16 keys and 224 MiB for F16 values, over 4096 cells and 28 layers." loading="lazy" /></a>
+<figcaption>The startup log agrees with the calculation: 224 MiB of K plus 224 MiB of V.</figcaption>
+</figure>
+</details>
+
+<h2 id="opening-the-bin-dump">Opening the .bin dump</h2>
+
+<p>For the experiment, I fed in <strong>“The cat sat on the mat.”</strong>, which became seven tokens, and saved sequence 0’s occupied cache across all 28 layers. I used a small helper, <code class="language-plaintext highlighter-rouge">kvprobe</code>, with the following command:</p>
+
+<div class="language-sh highlighter-rouge"><div class="highlight"><pre class="highlight"><code>./kvprobe <span class="nt">-m</span> Qwen3-0.6B-Q8_0.gguf <span class="se">\</span>
+  <span class="nt">-c</span> 4096 <span class="nt">-ngl</span> 99 <span class="nt">-fa</span> on <span class="nt">-ctk</span> f16 <span class="nt">-ctv</span> f16 <span class="se">\</span>
+  <span class="nt">--ops</span> <span class="s1">'text:0:The cat sat on the mat.;save:0:state-f16.bin'</span>
+
+python3 parse_state.py state-f16.bin <span class="nt">--cells</span> 3
+</code></pre></div></div>
+
+<p>The model’s weights are Q8_0; the cache in this experiment is F16. The helper saves the state through llama.cpp’s API:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">const</span> <span class="kt">size_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">llama_state_seq_get_size_ext</span><span class="p">(</span>
+    <span class="n">ctx</span><span class="p">,</span> <span class="n">s</span><span class="p">,</span> <span class="n">LLAMA_STATE_SEQ_FLAGS_NONE</span><span class="p">);</span>
+<span class="n">std</span><span class="o">::</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">uint8_t</span><span class="o">&gt;</span> <span class="n">buf</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+<span class="k">const</span> <span class="kt">size_t</span> <span class="n">got</span> <span class="o">=</span> <span class="n">llama_state_seq_get_data_ext</span><span class="p">(</span>
+    <span class="n">ctx</span><span class="p">,</span> <span class="n">buf</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">buf</span><span class="p">.</span><span class="n">size</span><span class="p">(),</span> <span class="n">s</span><span class="p">,</span>
+    <span class="n">LLAMA_STATE_SEQ_FLAGS_NONE</span><span class="p">);</span>
+<span class="n">std</span><span class="o">::</span><span class="n">ofstream</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">ios</span><span class="o">::</span><span class="n">binary</span><span class="p">).</span><span class="n">write</span><span class="p">(</span>
+    <span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="p">)</span> <span class="n">buf</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">streamsize</span><span class="p">)</span> <span class="n">got</span><span class="p">);</span>
+</code></pre></div></div>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/dump-experiment.png"><img src="/images/kv-cache-memory/dump-experiment.png" alt="The seven-token sentence is saved to state-f16.bin; the parser displays actual K rows and their hexadecimal bytes." loading="lazy" /></a>
+<figcaption>The saved sequence contains seven occupied rows per tensor, not all 4,096 reserved rows.</figcaption>
+</figure>
+
+<p>In the <strong>saved file</strong>, the K records run from layer 0 through layer 27, followed by the V records for all 28 layers. Each record has a small header and then its seven rows. This is where the “all K, then all V” layout appears.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>metadata
+K0, K1, ... K27   (header + 7 rows in each record)
+V0, V1, ... V27   (header + 7 rows in each record)
+</code></pre></div></div>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/dump-file-layout.png"><img src="/images/kv-cache-memory/dump-file-layout.png" alt="The serialized file contains 28 blue K records followed by 28 orange V records. Seven cells contribute 802816 payload bytes; metadata brings the file to 803596 bytes." loading="lazy" /></a>
+<figcaption>The file contains 802,816 bytes of K/V data and 780 bytes of metadata, for a total of <strong>803,596 bytes</strong>.</figcaption>
+</figure>
+
+<p>The first K record starts at byte 108. Its 12-byte header puts the first actual K value at byte <strong>120</strong>. Reading four F16 numbers directly from there gives:</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">struct</span>
+<span class="kn">from</span> <span class="n">pathlib</span> <span class="kn">import</span> <span class="n">Path</span>
+
+<span class="n">data</span> <span class="o">=</span> <span class="nc">Path</span><span class="p">(</span><span class="sh">"</span><span class="s">state-f16.bin</span><span class="sh">"</span><span class="p">).</span><span class="nf">read_bytes</span><span class="p">()</span>
+<span class="nf">print</span><span class="p">(</span><span class="nf">len</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="mi">120</span><span class="p">:</span><span class="mi">128</span><span class="p">].</span><span class="nf">hex</span><span class="p">(</span><span class="sh">"</span><span class="s"> </span><span class="sh">"</span><span class="p">))</span>
+<span class="nf">print</span><span class="p">(</span><span class="nf">tuple</span><span class="p">(</span><span class="nf">round</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span>
+            <span class="n">struct</span><span class="p">.</span><span class="nf">unpack_from</span><span class="p">(</span><span class="sh">"</span><span class="s">&lt;4e</span><span class="sh">"</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="mi">120</span><span class="p">)))</span>
+</code></pre></div></div>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>803596
+31 37 46 35 a8 b4 6f b0
+(0.4495, 0.3296, -0.291, -0.1385)
+</code></pre></div></div>
+
+<p>The first two bytes, <code class="language-plaintext highlighter-rouge">31 37</code>, are the little-endian F16 representation of approximately <code class="language-plaintext highlighter-rouge">0.4495</code>. That is an actual cached key value, not an illustrative number.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/f16-bytes.png"><img src="/images/kv-cache-memory/f16-bytes.png" alt="Bytes 31 37 form F16 bit pattern 0x3731. Its sign, exponent and fraction decode to approximately 0.4495." loading="lazy" /></a>
+<figcaption>Two bytes from the file, decoded into one number.</figcaption>
+</figure>
+
+<p>The <a href="/resources/kv-cache-memory/state-f16.bin">dump</a>, <a href="/resources/kv-cache-memory/state-f16.txt">full parsed output</a>, <a href="/resources/kv-cache-memory/kvprobe.cpp">probe source</a>, <a href="/resources/kv-cache-memory/build-kvprobe.sh">build helper</a>, and <a href="/resources/kv-cache-memory/parse_state.py">parser</a> are available alongside this post. The probe uses a CUDA build of the pinned llama.cpp revision linked below; the parser needs NumPy. Set <code class="language-plaintext highlighter-rouge">LLAMA_DIR</code> to that checkout when using the build helper.</p>
+
+<h2 id="the-tensors-three-dimensions">The tensor’s three dimensions</h2>
+
+<p>A layer’s K tensor has this shape, in ggml’s fastest-dimension-first notation:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[values per token, cells per stream, number of streams]
+</code></pre></div></div>
+
+<p>For this run, that is <strong><code class="language-plaintext highlighter-rouge">[1024, 4096, 1]</code></strong>. The row count is capacity, including empty cells. With F16 and Flash Attention enabled, V uses the same layout.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/tensor-dimensions.png"><img src="/images/kv-cache-memory/tensor-dimensions.png" alt="The K tensor has ne dimensions 1024, 4096, 1 and nb byte strides 2, 2048, 8388608." loading="lazy" /></a>
+<figcaption><code>ne</code> gives the sizes. <code>nb</code> gives the byte strides: two bytes per number, 2,048 per row, and 8 MiB per stream's slab.</figcaption>
+</figure>
+
+<p>Those strides tell us where any value lives. For example, take layer 5, cell 37, KV head 3, and element 10 within that head. Counting from zero, its offset from the start of that layer’s K tensor is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>37 × 2048 + (3 × 128 + 10) × 2 = 76,564 bytes
+</code></pre></div></div>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/byte-offset.png"><img src="/images/kv-cache-memory/byte-offset.png" alt="Find cell 37's row, then head 3, then element 10. The row offset and in-row offset sum to 76564 bytes." loading="lazy" /></a>
+<figcaption>A row, a head within that row, and one F16 value. This is a tensor-relative address calculation, separate from the seven-token file's offsets.</figcaption>
+</figure>
+
+<h2 id="unified-versus-non-unified">Unified versus non-unified</h2>
+
+<p>I also dug into how unified and non-unified caches affect that third dimension. Here, a <strong>stream</strong> means a cache partition, not a CUDA execution stream. A <strong>sequence</strong> is one independent conversation or run of tokens.</p>
+
+<p>With a <strong>unified cache</strong>, <code class="language-plaintext highlighter-rouge">n_stream</code> is one. Tokens from different sequences occupy rows in the same pool, with bookkeeping and attention masks keeping track of which sequence may read which cells.</p>
+
+<p>With a <strong>non-unified cache</strong>, <code class="language-plaintext highlighter-rouge">n_stream</code> is the maximum number of sequences. Each stream gets a two-dimensional slab of every layer’s K tensor and V tensor. These are views into the larger tensors, not extra copies.</p>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/stream-slabs.png"><img src="/images/kv-cache-memory/stream-slabs.png" alt="A layer's K tensor contains one two-dimensional slab per stream. ggml_view_2d selects a slab at offset s times nb[2] without copying it." loading="lazy" /></a>
+<figcaption>The stream dimension, illustrated in episode four. Stream <code>s</code> starts at <code>s × nb[2]</code>.</figcaption>
+</figure>
+
+<p>The source expresses the choice directly:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">n_stream</span><span class="p">(</span><span class="n">unified</span> <span class="o">?</span> <span class="mi">1</span> <span class="o">:</span> <span class="n">n_seq_max</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>And it creates each K slab’s view with:</p>
+
+<div class="language-cpp highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">ggml_view_2d</span><span class="p">(</span><span class="n">ctx</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">n_embd_k_gqa</span><span class="p">,</span> <span class="n">kv_size</span><span class="p">,</span>
+             <span class="n">k</span><span class="o">-&gt;</span><span class="n">nb</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">s</span> <span class="o">*</span> <span class="n">k</span><span class="o">-&gt;</span><span class="n">nb</span><span class="p">[</span><span class="mi">2</span><span class="p">]);</span>
+</code></pre></div></div>
+
+<details class="kv-memory-detail">
+<summary>The stream-selection code from episode four</summary>
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/stream-choice.png"><img src="/images/kv-cache-memory/stream-choice.png" alt="The constructor selects one stream for unified mode or n_seq_max streams otherwise." loading="lazy" /></a>
+<figcaption>With only one allowed sequence, both choices give one stream. The dump above used that single-sequence case.</figcaption>
+</figure>
+</details>
+
+<p>For a total capacity of 4,096 cells and four sequences, the shapes are:</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Mode</th>
+      <th>K tensor shape, per layer</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Unified</td>
+      <td><code class="language-plaintext highlighter-rouge">[1024, 4096, 1]</code></td>
+    </tr>
+    <tr>
+      <td>Non-unified</td>
+      <td><code class="language-plaintext highlighter-rouge">[1024, 1024, 4]</code></td>
+    </tr>
+  </tbody>
+</table>
+
+<figure class="kv-memory-figure">
+<a href="/images/kv-cache-memory/unified-vs-split.png"><img src="/images/kv-cache-memory/unified-vs-split.png" alt="Unified mode has one pool of 4096 cells; non-unified with four sequences has four pools of 1024 cells. Both contain 4096 cells in total." loading="lazy" /></a>
+<figcaption>Same total capacity, different partitioning. Both layouts reserve 448 MiB for this example.</figcaption>
+</figure>
+
+<p>That partitioning explains the speed-versus-memory-efficiency tradeoff. Non-unified attention can read a sequence’s own slice without scanning cells belonging to other sequences, which can make independent concurrent sequences faster. But spare capacity in one stream cannot simply be used by another, and common prefixes need separate copies. Unified keeps a shared pool, making it easier to use the space when conversation lengths differ.</p>
+
+<p>For me, the cache became much easier to picture once I could connect the pieces: 28 pairs of tensors, rows of 1,024 numbers, two bytes per number, and one more dimension deciding how the rows are shared.</p>
+
+<h3 id="source">Source</h3>
+
+<p>The experiment and extracted diagrams use llama.cpp <a href="https://github.com/ggml-org/llama.cpp/tree/99b95488cac0f00ce3f05af113a8c1e287753f87">99b95488c</a> and <a href="https://huggingface.co/Qwen/Qwen3-0.6B">Qwen3-0.6B</a>. The main code is in <a href="https://github.com/ggml-org/llama.cpp/blob/99b95488cac0f00ce3f05af113a8c1e287753f87/src/llama-kv-cache.cpp">llama-kv-cache.cpp</a>, including tensor construction and state serialization. The memory and dump diagrams are from episode one; the stream comparison is from episode four.</p>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
