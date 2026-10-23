@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html data-theme="">
+<head>
+<title>How linear attention works: a small memory matrix and the gated delta rule - Joel Fernandes</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta name="author" content="Joel Fernandes">
+<meta name="viewport" content="width=device-width">
+<link rel="stylesheet" href="/page.css">
+<link rel="stylesheet" href="/css/syntax.css">
+<link rel="stylesheet" href="/css/main.css">
+
+</head>
+<body>
+
+<div class="page">
+
+<div class="navmobile">
+<b>Joel's site:</b>
+<a href="/">Home</a> <span class="navsep">&middot;</span>
+<a href="/joel/">Resume</a> <span class="navsep">&middot;</span>
+<a href="/technical.html">Technical Posts</a> <span class="navsep">&middot;</span>
+<a href="/personal.html">Personal Posts</a> <span class="navsep">&middot;</span>
+<a href="/how.html">How!</a> <span class="navsep">&middot;</span>
+<a href="/simulators.html">Simulators</a>
+</div>
+
+<div class="nav">
+<p class="navhdr">Joel's site:</p>
+<a href="/">Home</a><br>
+<a href="/joel/">Resume</a><br>
+<a href="/technical.html">Technical Posts</a><br>
+<a href="/personal.html">Personal Posts</a><br>
+<a href="/how.html">How!</a><br>
+<a href="/simulators.html">Simulators</a><br>
+</div>
+
+<div class="recent">
+<p class="navhdr">Recent technical posts:</p>
+<ul>
+
+
+
+
+<li class="recent">2026-10-23 &raquo;<br><a href="/blog/2026-10-23/linear-attention-gated-delta-rule.html">How linear attention works: a small memory matrix and the gated delta rule</a></li>
+
+
+
+
+
+
+<li class="recent">2026-10-05 &raquo;<br><a href="/blog/2026-10-05/llama-cpp-kv-cache-memory.html">What does llama.cpp's KV cache actually look like in memory?</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-15 &raquo;<br><a href="/blog/2026-09-15/build-nanogpt-activation-loss-decay.html">My training run of build-nanoGPT: replacing activation functions to see loss decay</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-09 &raquo;<br><a href="/blog/2026-09-09/cross-entropy-gradient-accumulation-ddp.html">Multi-GPU calculation of gradients for accelerated training</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/weight-decay-gravity.html">Weight decay: gravity for a model with too many answers</a></li>
+
+
+
+
+
+
+<li class="recent">2026-09-08 &raquo;<br><a href="/blog/2026-09-08/flash-attention-tiled.html">Flash Attention, tiled: exact attention without the T x T HBM matrix</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-3-what-it-costs.html">Weight tying, part 3: what it costs and when to stop</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-2-one-matrix-two-meanings.html">Weight tying, part 2: how one matrix means two different things</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-23 &raquo;<br><a href="/blog/2026-08-23/weight-tying-1-two-ends.html">Weight tying, part 1: the two ends of a transformer</a></li>
+
+
+
+
+
+
+<li class="recent">2026-08-14 &raquo;<br><a href="/blog/2026-08-14/ubatch-continuous-batching.html">llama.cpp and the ubatch</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p class="navhdr">Recent personal posts:</p>
+<ul>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-03-20 &raquo;<br><a href="/blog/2026-03-20/waymo-san-francisco.html">My First Waymo Ride in San Francisco</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+<li class="recent">2026-02-24 &raquo;<br><a href="/blog/2026-02-24/happy-accidents.html">Happy Accidents</a></li>
+
+
+
+
+
+
+<li class="recent">2026-02-10 &raquo;<br><a href="/blog/2026-02-10/new-york-trip.html">New York Trip - Celebrating 40</a></li>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</ul>
+
+<hr>
+
+<p><a href="/technical.html">All technical posts</a><br>
+<a href="/personal.html">All personal posts</a></p>
+</div>
+
+<div class="site">
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<h1 class="title">How linear attention works: a small memory matrix and the gated delta rule</h1>
+<p class="meta">23 Oct 2026</p>
+
+<div class="post">
+<p>What if attention could read the past from a small matrix instead of revisiting an ever-growing list of keys and values?</p>
+
+<p>Linear attention keeps a fixed-size memory matrix. The incoming token’s query reads from it; the token’s key and value update it. The <strong>gated delta rule</strong> adds a way to fade old information and correct particular associations. We can follow the whole calculation with a small example: two key features, three value features, and just six numbers in memory.</p>
+
+<style>
+.la-figure { margin: 1.2em auto; max-width: 560px; }
+.la-figure img { display: block; width: 100%; max-width: 560px; height: auto; border-radius: 6px; }
+.la-figure figcaption { margin-top: .5em; font-size: .92em; line-height: 1.45; }
+.la-equation { overflow-x: auto; background: #fff8ef; padding: .75em; border-left: 3px solid #287b75; line-height: 1.8; }
+.la-table { overflow-x: auto; }
+</style>
+
+<h2 id="contents">Contents</h2>
+
+<ul>
+  <li><a href="#from-ordinary-attention-to-a-small-memory">From ordinary attention to a small memory</a></li>
+  <li><a href="#what-every-dimension-means">What every dimension means</a></li>
+  <li><a href="#reading-the-memory-with-a-query">Reading the memory with a query</a></li>
+  <li><a href="#writing-a-key-value-association">Writing a key-value association</a></li>
+  <li><a href="#the-gated-delta-rule">The gated delta rule</a></li>
+  <li><a href="#one-complete-update-with-numbers">One complete update with numbers</a></li>
+  <li><a href="#a-runnable-check">A runnable check</a></li>
+  <li><a href="#why-it-is-called-linear-attention">Why it is called linear attention</a></li>
+  <li><a href="#references">References</a></li>
+</ul>
+
+<h2 id="from-ordinary-attention-to-a-small-memory">From ordinary attention to a small memory</h2>
+
+<p>In ordinary causal attention, the current token has a <strong>query</strong>. We compare it with the <strong>keys</strong> of tokens up to and including the current position, turn those scores into softmax weights, and mix their <strong>value vectors</strong>. Each weight is one number multiplying an entire value vector.</p>
+
+<p>For token <code class="language-plaintext highlighter-rouge">t</code>, that looks like:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>score for token j = dot(k_j, q_t) / sqrt(d_k)
+weights = softmax(scores for j &lt;= t)
+output = sum over j &lt;= t of weight_j * v_j
+</code></pre></div></div>
+
+<p>The <a href="/blog/2026-10-05/llama-cpp-kv-cache-memory.html">KV cache</a> saves those keys and values. A new query still reads the permitted history.</p>
+
+<p>To see the basic linear-attention idea, start with a simpler weighting rule: <strong>use the key-query dot product directly, without softmax</strong>. Leave out the constant score scale for this walkthrough. Then:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y_t = sum over j &lt;= t of v_j * (k_jᵀ q_t)
+    = sum over j &lt;= t of (v_j k_jᵀ) q_t
+    = S_t q_t
+
+S_t = sum over j &lt;= t of v_j k_jᵀ
+</code></pre></div></div>
+
+<p>The middle step is just associativity. The same query multiplies every term, so we can add the outer-product matrices first and multiply by the query once. That accumulated matrix is <strong>S</strong>, the memory.</p>
+
+<p>This changes the attention rule; it is not an exact rearrangement of softmax attention. Softmax’s exponentials and query-dependent denominator prevent this simple factoring. <a href="/blog/2026-09-08/flash-attention-tiled.html">FlashAttention</a> preserves softmax and improves its execution; linear attention changes what is computed.</p>
+
+<p>The classic <a href="https://arxiv.org/abs/2006.16236">linear-attention paper</a> uses feature maps of queries and keys and keeps an additional running vector for normalization. Here we follow the simpler, unnormalized matrix-memory formulation used to introduce Gated DeltaNet in <a href="https://arxiv.org/html/2412.06464v3#S2.SS1">Section 2.1 of its paper</a>. The gated delta rule below does not add a softmax denominator.</p>
+
+<h2 id="what-every-dimension-means">What every dimension means</h2>
+
+<p>We are looking at <strong>one head in one layer, for one sequence</strong>. Each such head and sequence has its own state. All vectors below are columns.</p>
+
+<div class="la-table">
+
+  <table>
+    <thead>
+      <tr>
+        <th>Symbol</th>
+        <th>Meaning</th>
+        <th>Shape in this example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">t</code></td>
+        <td>Current token’s position</td>
+        <td>An index</td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">q_t</code></td>
+        <td>Incoming token’s query vector</td>
+        <td><code class="language-plaintext highlighter-rouge">2 × 1</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">k_t</code></td>
+        <td>Current token’s key vector</td>
+        <td><code class="language-plaintext highlighter-rouge">2 × 1</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">v_t</code></td>
+        <td>Current token’s value vector</td>
+        <td><code class="language-plaintext highlighter-rouge">3 × 1</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">d_k</code></td>
+        <td>Query/key head dimension, or <strong>headdim</strong></td>
+        <td><code class="language-plaintext highlighter-rouge">2</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">d_v</code></td>
+        <td>Value feature dimension, or <strong>Vdim</strong></td>
+        <td><code class="language-plaintext highlighter-rouge">3</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">S_t</code></td>
+        <td>Memory after processing token <code class="language-plaintext highlighter-rouge">t</code></td>
+        <td><code class="language-plaintext highlighter-rouge">3 × 2</code></td>
+      </tr>
+      <tr>
+        <td><code class="language-plaintext highlighter-rouge">y_t</code></td>
+        <td>This head’s output for the current token</td>
+        <td><code class="language-plaintext highlighter-rouge">3 × 1</code></td>
+      </tr>
+    </tbody>
+  </table>
+
+</div>
+
+<p>Q and K have the <strong>same head dimension</strong>, because their components must line up for a dot product. The value dimension need not match it. In a sequence-wide value matrix <code class="language-plaintext highlighter-rouge">V</code>, with tokens stored as rows, the shape would be <code class="language-plaintext highlighter-rouge">T × d_v</code>, where <code class="language-plaintext highlighter-rouge">T</code> is the number of tokens. <strong>Vdim is its feature width, not its token count.</strong></p>
+
+<p>S has one row per value feature and one column per key feature. These are feature axes, not lists of cached tokens. S combines information from many tokens into the same six entries.</p>
+
+<p>The model obtains q, k, and v from learned transformations of the current token’s hidden representation. The output y is a contextualized <strong>head output</strong>, not a token ID or the complete model-width representation. Later processing combines heads and projects their outputs back into the model.</p>
+
+<h2 id="reading-the-memory-with-a-query">Reading the memory with a query</h2>
+
+<p>Suppose the current memory and query are:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      key features
+         1   2
+S = [    3   0    ]   value feature 1
+    [    1   2    ]   value feature 2
+    [    2   1    ]   value feature 3
+
+q = [0.6]
+    [0.8]
+</code></pre></div></div>
+
+<p>Multiplying S by q takes a <strong>dot product with each row</strong>:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y₁ = 3 * 0.6 + 0 * 0.8 = 1.8
+y₂ = 1 * 0.6 + 2 * 0.8 = 2.2
+y₃ = 2 * 0.6 + 1 * 0.8 = 2.0
+</code></pre></div></div>
+
+<p>Those subscripts name output components, not different tokens. Together they form one output vector, <code class="language-plaintext highlighter-rouge">[1.8, 2.2, 2.0]ᵀ</code>.</p>
+
+<figure class="la-figure">
+<a href="/images/linear-attention/readout.svg"><img src="/images/linear-attention/readout.svg" alt="A three-by-two state with rows [3,0], [1,2], [2,1] multiplies the current query [0.6,0.8] transpose, producing the three-by-one output [1.8,2.2,2.0] transpose." loading="lazy" /></a>
+<figcaption>A matrix-vector product takes one dot product per state row. The result has three value components. Click to enlarge.</figcaption>
+</figure>
+
+<p>For basic additive linear attention, expanding S shows what the query is reading: a sum of earlier values, each weighted by its key’s dot product with q. We no longer need to visit every earlier token separately. With GDN, we read the same kind of matrix, but its contents have also been decayed and edited.</p>
+
+<h2 id="writing-a-key-value-association">Writing a key-value association</h2>
+
+<p>To write to S, multiply the value column by the transposed key row, <code class="language-plaintext highlighter-rouge">v kᵀ</code>. The superscript <code class="language-plaintext highlighter-rouge">ᵀ</code> means transpose: it turns a column into a row. This is an <strong>outer product</strong>, not a dot product:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>(Vdim × 1) times (1 × headdim)
+        = Vdim × headdim
+        = 3 × 2
+</code></pre></div></div>
+
+<p>For <code class="language-plaintext highlighter-rouge">v = [3, 1, 2]ᵀ</code> and <code class="language-plaintext highlighter-rouge">k = [1, 0]ᵀ</code>:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>v kᵀ = [3] [1  0] = [3  0]
+       [1]           [1  0]
+       [2]           [2  0]
+</code></pre></div></div>
+
+<p>Every value component multiplies every key component. A second pair, <code class="language-plaintext highlighter-rouge">k = [0, 1]ᵀ</code> and <code class="language-plaintext highlighter-rouge">v = [0, 2, 1]ᵀ</code>, writes the second column. Adding the two outer products gives the S we just read.</p>
+
+<figure class="la-figure">
+<a href="/images/linear-attention/write.svg"><img src="/images/linear-attention/write.svg" alt="Value column [3,1,2] transpose times key row [1,0] gives a three-by-two outer product with rows [3,0], [1,0], [2,0]." loading="lazy" /></a>
+<figcaption>The outer product has the same shape as the memory: Vdim × headdim. Writing adds a matrix; reading produces a vector.</figcaption>
+</figure>
+
+<p>Basic linear attention therefore has a simple recurrence, starting from zero:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_t = S_(t-1) + v_t k_tᵀ
+y_t = S_t q_t
+</code></pre></div></div>
+
+<p>Update first, then read. That includes the current token, as causal self-attention normally does. The previous state is carried forward across tokens and processing batches within the same sequence.</p>
+
+<p>But what if another token uses the same key with a new value? Simple addition mixes old and new. If a note says “the robot moved,” we would prefer to update its remembered location rather than add the two locations together. The gated delta rule provides that targeted update.</p>
+
+<h2 id="the-gated-delta-rule">The gated delta rule</h2>
+
+<p><strong>GDN means Gated DeltaNet.</strong> Its update combines decay with a targeted correction. With value features as rows and key features as columns, <a href="https://arxiv.org/html/2412.06464v3#S3.E10">Equation 10</a> is:</p>
+
+<div class="la-equation" role="math" aria-label="S at t equals S at t minus one times alpha at t times the quantity identity minus beta at t times k at t k at t transpose, plus beta at t times v at t k at t transpose.">
+S<sub>t</sub> = S<sub>t−1</sub> [α<sub>t</sub> (I − β<sub>t</sub> k<sub>t</sub> k<sub>t</sub><sup>ᵀ</sup>)] + β<sub>t</sub> v<sub>t</sub> k<sub>t</sub><sup>ᵀ</sup>
+</div>
+
+<p>Here <strong>α (alpha)</strong> is a scalar decay gate, <strong>β (beta)</strong> is a scalar writing strength, and <strong>I</strong> is the <code class="language-plaintext highlighter-rouge">d_k × d_k</code> identity matrix, <code class="language-plaintext highlighter-rouge">2 × 2</code> here. The model computes the gates from the current input. In the paper, their values lie between zero and one; endpoints below are useful limiting cases. The paper also L2-normalizes queries and keys, making their lengths one.</p>
+
+<h3 id="decay-the-old-memory">Decay the old memory</h3>
+
+<p>First form a decayed memory:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>D = α_t S_(t-1)
+</code></pre></div></div>
+
+<p>Alpha near one retains most of the old memory. Alpha near zero clears most of it. It scales <strong>all</strong> the old entries, not just the current key’s direction. The new write on the right of the equation is not multiplied by alpha.</p>
+
+<h3 id="correct-the-association-at-this-key">Correct the association at this key</h3>
+
+<p>Read the decayed memory using the <strong>key</strong>, not the query:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>prediction = D k_t
+error = v_t - prediction
+</code></pre></div></div>
+
+<p>This asks, “What value does the memory currently associate with this key?” The error tells us how far that answer is from the incoming value. Write the error back along the key:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_t = D + β_t (v_t - D k_t) k_tᵀ
+</code></pre></div></div>
+
+<p>Expanding that expression gives <code class="language-plaintext highlighter-rouge">D (I - β_t k_t k_tᵀ) + β_t v_t k_tᵀ</code>, the same gated delta rule. The subtraction removes part of the old association; the addition supplies the replacement.</p>
+
+<p>For a unit-length key, <code class="language-plaintext highlighter-rouge">kᵀk = 1</code>, so reading the updated memory at that same key gives:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_t k_t = (1 - β_t) D k_t + β_t v_t
+</code></pre></div></div>
+
+<p>Beta one replaces the association completely. Beta one-half moves it halfway toward the new value. Beta zero leaves only the decay.</p>
+
+<p>“Same key” means a direction in feature space, not a dictionary lookup. The targeted edit leaves an orthogonal key direction alone, but overlapping directions can be affected. Alpha’s earlier global decay still applies to both.</p>
+
+<h3 id="write-the-new-value-along-the-key">Write the new value along the key</h3>
+
+<p>The final term, <code class="language-plaintext highlighter-rouge">β_t v_t k_tᵀ</code>, writes a <strong>key-value association</strong>, not another column or a new entry in a growing token list. Its shape is still <code class="language-plaintext highlighter-rouge">3 × 2</code>.</p>
+
+<p>Finally, use the incoming token’s query to read the updated state:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y_t = S_t q_t
+</code></pre></div></div>
+
+<p>The distinction is useful: <strong>k chooses where to edit; q chooses what to read.</strong> Their dimensions match, but their values need not.</p>
+
+<figure class="la-figure">
+<a href="/images/linear-attention/gdn.svg"><img src="/images/linear-attention/gdn.svg" alt="The expanded gated delta equation has three terms: alpha times the previous state decays memory; minus beta times the predicted value alpha S old k times k transpose removes the old association along the key; plus beta v k transpose writes the new association. The updated state is read with q and retained for the next token." loading="lazy" /></a>
+<figcaption>Expanding the equation exposes three contributions. All have shape 3 × 2; the query then reads a 3 × 1 output.</figcaption>
+</figure>
+
+<h2 id="one-complete-update-with-numbers">One complete update with numbers</h2>
+
+<p>Reuse our state. The incoming token has <code class="language-plaintext highlighter-rouge">k = [1, 0]ᵀ</code> and a new value <code class="language-plaintext highlighter-rouge">v = [0, 4, 1]ᵀ</code>. Choose <code class="language-plaintext highlighter-rouge">α = 0.5</code> and <code class="language-plaintext highlighter-rouge">β = 1</code>: fade the memory, then fully replace this key’s association.</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>S_old = [3  0]       D = 0.5 S_old = [1.5  0  ]
+        [1  2]                     [0.5  1  ]
+        [2  1]                     [1    0.5]
+
+prediction = D k = [1.5, 0.5, 1]ᵀ
+error = v - prediction = [-1.5, 3.5, 0]ᵀ
+
+β error kᵀ = [-1.5  0]
+             [ 3.5  0]
+             [ 0    0]
+
+S_new = D + β error kᵀ = [0  0  ]
+                        [4  1  ]
+                        [1  0.5]
+</code></pre></div></div>
+
+<p>We can also check <code class="language-plaintext highlighter-rouge">I - β k kᵀ</code> directly. Here <code class="language-plaintext highlighter-rouge">k kᵀ = [[1, 0], [0, 0]]</code>, so <code class="language-plaintext highlighter-rouge">I - k kᵀ = [[0, 0], [0, 1]]</code>. Right-multiplying D by that matrix wipes its first column and preserves its second. Adding <code class="language-plaintext highlighter-rouge">v kᵀ</code> fills the first column with the new value.</p>
+
+<p>Reading with <code class="language-plaintext highlighter-rouge">[1, 0]ᵀ</code> now returns <code class="language-plaintext highlighter-rouge">[0, 4, 1]ᵀ</code>, the replacement. Reading with the orthogonal <code class="language-plaintext highlighter-rouge">[0, 1]ᵀ</code> returns <code class="language-plaintext highlighter-rouge">[0, 1, 0.5]ᵀ</code>: the other association survived the targeted edit, but was halved by alpha.</p>
+
+<p>For our mixed query <code class="language-plaintext highlighter-rouge">q = [0.6, 0.8]ᵀ</code>, the final output is:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>y = S_new q = [0, 3.2, 1.0]ᵀ
+</code></pre></div></div>
+
+<p>That is the contextualized <code class="language-plaintext highlighter-rouge">Vdim × 1</code> output for this head.</p>
+
+<h2 id="a-runnable-check">A runnable check</h2>
+
+<p>This NumPy example checks both forms of the GDN equation. <code class="language-plaintext highlighter-rouge">@</code> means matrix multiplication; <code class="language-plaintext highlighter-rouge">np.outer</code> makes the column-times-row product.</p>
+
+<div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kn">import</span> <span class="n">numpy</span> <span class="k">as</span> <span class="n">np</span>
+
+<span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([[</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">],</span> <span class="p">[</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">2.</span><span class="p">],</span> <span class="p">[</span><span class="mf">2.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">]])</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">])</span>
+<span class="n">k</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">])</span>
+<span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">array</span><span class="p">([</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">4.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
+<span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">1.0</span>
+
+<span class="c1"># Factored gated delta equation.
+</span><span class="n">direct</span> <span class="o">=</span> <span class="n">S</span> <span class="o">@</span> <span class="p">(</span><span class="n">alpha</span> <span class="o">*</span> <span class="p">(</span><span class="n">np</span><span class="p">.</span><span class="nf">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="o">-</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">outer</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">k</span><span class="p">)))</span>
+<span class="n">direct</span> <span class="o">+=</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">outer</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+
+<span class="c1"># The same update as decay, predict, and correct.
+</span><span class="n">decayed</span> <span class="o">=</span> <span class="n">alpha</span> <span class="o">*</span> <span class="n">S</span>
+<span class="n">prediction</span> <span class="o">=</span> <span class="n">decayed</span> <span class="o">@</span> <span class="n">k</span>
+<span class="n">updated</span> <span class="o">=</span> <span class="n">decayed</span> <span class="o">+</span> <span class="n">beta</span> <span class="o">*</span> <span class="n">np</span><span class="p">.</span><span class="nf">outer</span><span class="p">(</span><span class="n">v</span> <span class="o">-</span> <span class="n">prediction</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">updated</span> <span class="o">@</span> <span class="n">q</span>
+
+<span class="k">assert</span> <span class="n">np</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">direct</span><span class="p">,</span> <span class="n">updated</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">np</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">updated</span> <span class="o">@</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span>
+<span class="k">assert</span> <span class="n">np</span><span class="p">.</span><span class="nf">allclose</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">3.2</span><span class="p">,</span> <span class="mf">1.</span><span class="p">])</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">updated</span><span class="p">)</span>
+<span class="nf">print</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+</code></pre></div></div>
+
+<p>Output:</p>
+
+<div class="language-text highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[[0.  0. ]
+ [4.  1. ]
+ [1.  0.5]]
+[0.  3.2 1. ]
+</code></pre></div></div>
+
+<p>NumPy uses one-dimensional arrays for the vectors here; the operations implement the column-vector convention above. The example isolates the recurrence, not the surrounding learned projections, normalization, and output gating of a complete GDN layer.</p>
+
+<h2 id="why-it-is-called-linear-attention">Why it is called linear attention</h2>
+
+<p>With head dimensions fixed, each token updates and reads a <code class="language-plaintext highlighter-rouge">d_v × d_k</code> matrix. The recurrent mixing work is <code class="language-plaintext highlighter-rouge">O(d_v d_k)</code> per token, or <strong>O(T d_v d_k)</strong> over T tokens. Its persistent matrix state has no token axis, so it does not grow with the sequence length. This describes the recurrent path, not every buffer used during training or every layer of a hybrid model.</p>
+
+<p>The factored GDN formula contains a square matrix, but the error-update form avoids constructing it or doing a full matrix-matrix multiply: use a matrix-vector read and a rank-one outer-product write. Implementations can also process chunks to exploit GPU parallelism.</p>
+
+<p>The tradeoff is that a fixed-size state cannot retain arbitrarily many independent associations perfectly. Similar keys can interfere. GDN makes that memory more useful by learning when to fade old information and when to correct a particular association.</p>
+
+<p>The core idea is simple: <strong>read the memory with q, and update it with k and v. The gates decide how much to retain and how strongly to replace an association.</strong></p>
+
+<h2 id="references">References</h2>
+
+<ul>
+  <li>Angelos Katharopoulos and colleagues, <em>Transformers are RNNs: Fast Autoregressive Transformers with Linear Attention</em> (2020). Associative computation, kernel feature maps, normalization, and recurrent evaluation. <a href="https://arxiv.org/abs/2006.16236">Paper</a> · <a href="https://arxiv.org/pdf/2006.16236">PDF</a>.</li>
+  <li>Songlin Yang, Jan Kautz, and Ali Hatamizadeh, <em>Gated Delta Networks: Improving Mamba2 with Delta Rule</em> (ICLR 2025). Section 2.1 gives the matrix-memory convention; Equation 10 gives the gated delta rule; Sections 3.3 and 3.4 discuss chunkwise computation and the model block. <a href="https://arxiv.org/abs/2412.06464v3">Paper, v3</a> · <a href="https://arxiv.org/pdf/2412.06464v3">PDF, v3</a> · <a href="https://github.com/NVlabs/GatedDeltaNet">Official code</a>.</li>
+</ul>
+
+</div>
+
+<p><a href="/">&laquo; Back to Home</a></p>
+
+<hr>
+<h2>Comments</h2>
+<script src="https://utteranc.es/client.js"
+        repo="joelagnel/joelfernandes.org"
+        issue-term="pathname"
+        theme="github-light"
+        crossorigin="anonymous"
+        async>
+</script>
+
+
+<div class="footer">
+<div class="contact">
+<p>© Joel Fernandes · <a href="https://twitter.com/joel_linux">Twitter</a> · <a href="https://www.linkedin.com/in/joelagnel">LinkedIn</a> · <a href="/about-site.html">About site</a></p>
+</div>
+</div>
+
+</div>
+
+</div>
+
+<button id="dark-mode-btn" onclick="toggleDark()" title="Toggle dark mode">🌙 Dark</button>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('jf-theme') || 'light';
+  if (theme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.addEventListener('DOMContentLoaded', function() {
+      var btn = document.getElementById('dark-mode-btn');
+      if (btn) btn.textContent = '☀️ Light';
+    });
+  }
+})();
+
+function toggleDark() {
+  var html = document.documentElement;
+  var btn = document.getElementById('dark-mode-btn');
+  if (html.getAttribute('data-theme') === 'dark') {
+    html.setAttribute('data-theme', '');
+    localStorage.setItem('jf-theme', 'light');
+    btn.textContent = '🌙 Dark';
+  } else {
+    html.setAttribute('data-theme', 'dark');
+    localStorage.setItem('jf-theme', 'dark');
+    btn.textContent = '☀️ Light';
+  }
+}
+</script>
+</body>
+</html>
