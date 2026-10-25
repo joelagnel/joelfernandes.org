@@ -1,2 +1,8 @@
+# Download files and playlists are not intended for search discovery.
+# This blocks crawling, not URL-only indexing. GitHub Pages cannot set the
+# X-Robots-Tag response header required for noindex on non-HTML files.
 User-agent: *
 Disallow: /apks/
+Disallow: /*.apk
+Disallow: /*.m3u
+Disallow: /*.m3u8
