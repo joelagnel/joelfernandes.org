@@ -3,6 +3,13 @@ description: Linux Kernel Engineer at NVIDIA
 url: "http://joelfernandes.org"
 baseurl: ""
 
+# Downloads are published directly on gh-pages; preserve them on site rebuilds.
+keep_files:
+  - .git
+  - .svn
+  - apks
+  - robots.txt
+
 permalink: /blog/:year-:month-:day/:title.html
 
 markdown: kramdown
