@@ -5,11 +5,11 @@ date: 2026-11-21 12:00:00 -0500
 categories: [machine-learning]
 tags: [attention, multi-head-attention, residual-stream, output-projection, transformers]
 author: Joel Fernandes
-description: "Multi-head attention's output projection W_O does not mix the heads: each head writes its own contribution into the residual stream, and W_O only chooses where it lands. Notation, proof and a checked numeric example."
+description: "Multi-head attention's output projection W_O can be read as mixing the heads or as each head writing additively into the residual stream; W_O decides where each contribution lands. Notation, proof and a checked numeric example."
 published: true
 ---
 
-In multi-head attention, each head produces its own output, the outputs are concatenated, and the result is multiplied by an **output projection** called W<sub>O</sub>. Why is that matrix needed? It is easy to say it "mixes the heads", but that is not what it does. The short version: **the heads are independent and additive.** Each head adds its own contribution into the residual stream, and W<sub>O</sub> only decides *where* in the stream that contribution lands.
+In multi-head attention, each head produces its own output, the outputs are concatenated, and the result is multiplied by an **output projection** called W<sub>O</sub>. Why is that matrix needed? One way to see it is as mixing the heads: every output coordinate is a learned combination of all the heads. Another way is as additive writes, and the two views are the same matrix multiplication. The short version: **the heads are independent and additive.** Each head adds its own contribution into the residual stream, and W<sub>O</sub> only decides *where* in the stream that contribution lands.
 
 This post works through it with explicit shapes and a small numeric example (4-dimensional model, two heads, two tokens, checked with numpy). The framing follows [A Mathematical Framework for Transformer Circuits](https://transformer-circuits.pub/2021/framework/index.html) by Elhage et al.
 
@@ -122,10 +122,10 @@ This post works through it with explicit shapes and a small numeric example (4-d
 <text x="115" y="478" font-size="13" text-anchor="middle" fill="#1a1a1a">W<tspan baseline-shift="sub" font-size="10">O,H</tspan> (last k rows)</text>
 <text x="230" y="426" font-size="14" fill="#1a1a1a">concatenate-then-project, [Z<tspan baseline-shift="sub" font-size="10">1</tspan> | Z<tspan baseline-shift="sub" font-size="10">2</tspan> | &#8230; | Z<tspan baseline-shift="sub" font-size="10">H</tspan>]&#183;W<tspan baseline-shift="sub" font-size="10">O</tspan>,</text>
 <text x="230" y="448" font-size="14" fill="#1a1a1a">is the same as each head writing Z<tspan baseline-shift="sub" font-size="10">h</tspan>&#183;W<tspan baseline-shift="sub" font-size="10">O,h</tspan> and adding the writes up.</text>
-<text x="230" y="474" font-size="14" fill="#444">No head sees another head's output inside the layer: the only link between heads is the stream.</text>
+<text x="230" y="474" font-size="14" fill="#444">Each head works on its own inside the layer; the heads meet in the residual stream.</text>
 </svg>
 </div>
-<figcaption>Every head reads the residual stream, computes its own output Z<sub>h</sub>, projects it with its own slice of W<sub>O</sub>, and <b>adds</b> the result back into the stream. Heads never talk to each other inside the layer.</figcaption>
+<figcaption>Every head reads the residual stream, computes its own output Z<sub>h</sub>, projects it with its own slice of W<sub>O</sub>, and <b>adds</b> the result back into the stream. Inside the layer each head works on its own; the heads meet in the stream.</figcaption>
 </figure>
 
 ## Contents
@@ -136,7 +136,6 @@ This post works through it with explicit shapes and a small numeric example (4-d
 - [What this means](#what-this-means)
 - [Two intuitions, scored](#two-ideas)
 - [Caveats](#caveats)
-- [A runnable check](#a-runnable-check)
 
 <div class="wo">
 <h2 id="notation">Notation (read this first)</h2>
@@ -175,15 +174,15 @@ This post works through it with explicit shapes and a small numeric example (4-d
 <p class="small">and <code>P<sub>1</sub>&middot;X&middot;OV<sub>1</sub> + P<sub>2</sub>&middot;X&middot;OV<sub>2</sub></code> also gives Out exactly (verified).</p>
 <h2 id="what-this-means">What this means</h2>
 <ul>
-<li><b>Nothing is mixed between heads inside a layer.</b> Head h's pattern uses only its own Q and K; its output goes into the sum linearly. Two heads never influence each other in the same layer. They only affect each other <i>across</i> layers, when a later head reads what an earlier head wrote into the residual stream (the paper calls this Q-, K- and V-composition).</li>
+<li><b>Each head works on its own inside a layer, and W<sub>O</sub> combines them.</b> Head h's pattern uses only its own Q and K, and its output goes into the sum linearly. Read through W<sub>O</sub>, the sum is also a mixing of the heads' outputs: every output coordinate is a learned combination of all the heads. The heads meet in the residual stream, where a later head reads what earlier heads wrote (the paper calls this Q-, K- and V-composition).</li>
 <li><b>W<sub>O</sub> decides where each head writes.</b> Without W<sub>O</sub>, the concatenation puts head 1 in coordinates 1-2 and head 2 in coordinates 3-4, always. In the toy: head 1's write would be <code>Z<sub>1</sub></code> in columns 1-2 only. With W<sub>O,1</sub> it is <code>[3 2 3 2; 2 2 2 2]</code>: a different 2-dimensional slice of the 4-dimensional residual stream, free to overlap with other heads' slices and with what the MLPs and embeddings write.</li>
 <li><b>Only the product OV<sub>h</sub> = Wv<sub>h</sub>&middot;W<sub>O,h</sub> matters.</b> You can replace Wv<sub>h</sub> by Wv<sub>h</sub>&middot;R and W<sub>O,h</sub> by R<sup>-1</sup>&middot;W<sub>O,h</sub> for any invertible k &times; k matrix R and the model is identical (verified in the toy with R = [[1,1],[0,1]]). So "V" and "O" are one linear map split in two for dimension bookkeeping: d &rarr; k, then k &rarr; d.</li>
 <li><b>Same split on the other side:</b> the QK circuit is <code>Wq<sub>h</sub>&middot;Wk<sub>h</sub><sup>T</sup></code> (d &times; d, rank &le; k). It decides <i>where</i> head h looks; the OV circuit decides <i>what</i> it moves.</li>
 </ul>
 <h2 id="two-ideas">Two intuitions, scored</h2>
 <table class="sym"><tr><th>Idea</th><th>Verdict</th></tr>
-<tr><td>"With separate queries per head there is less cross-mixing, so W<sub>O</sub> compensates."</td><td>Not quite. W<sub>O</sub> does not mix the heads' attention; the sum is additive and independent. The only cross-head effects come from later layers reading the residual stream.</td></tr>
-<tr><td>"It is like the last layer of an MLP: heads are hidden neurons, W<sub>O</sub> is the down-projection."</td><td>Half right. Both are parallel units summed into one shared space through a learned output matrix. But a head writes a rank-k chunk whose content depends on the attention pattern, not a scalar times a fixed vector, and no features are mixed inside the sum.</td></tr>
+<tr><td>"With separate queries per head there is less cross-mixing, so W<sub>O</sub> compensates."</td><td>W<sub>O</sub> does mix the heads' outputs into one vector per token, and this is the same thing as each head adding its own write. Cross-head effects on the attention patterns arise in later layers, which read the residual stream.</td></tr>
+<tr><td>"It is like the last layer of an MLP: heads are hidden neurons, W<sub>O</sub> is the down-projection."</td><td>Half right. Both are parallel units summed into one shared space through a learned output matrix. But a head writes a rank-k chunk whose content depends on the attention pattern, not a scalar times a fixed vector.</td></tr>
 </table>
 <h2 id="caveats">Caveats</h2>
 <ul>
@@ -193,29 +192,3 @@ This post works through it with explicit shapes and a small numeric example (4-d
 </ul>
 <p class="small">Suggested reading: the paper's sections on the residual stream and on "attention heads are independent and additive", and the QK/OV circuit decomposition. All toy numbers were checked in numpy: Way A, B and C agree exactly, and the R-gauge check passes.</p>
 </div>
-
-## A runnable check
-
-The numbers above come from this script. It verifies that concatenate-then-project, the per-head sum and the OV form agree exactly, and that swapping Wv<sub>h</sub> and W<sub>O,h</sub> by an invertible R changes nothing.
-
-```python
-import numpy as np
-np.set_printoptions(linewidth=200)
-X=np.array([[1,0,2,1],[0,1,1,2]])
-P1=np.array([[1,0],[.5,.5]]); P2=np.array([[1,0],[0,1]])
-Wv1=np.array([[1,0],[0,1],[1,1],[0,0]]); Wv2=np.array([[0,1],[1,0],[0,0],[1,1]])
-Wo=np.array([[1,0,1,0],[0,1,0,1],[1,1,0,0],[0,0,1,-1]])
-Wo1,Wo2=Wo[:2],Wo[2:]
-Z1=P1@X@Wv1; Z2=P2@X@Wv2
-Z=np.hstack([Z1,Z2])
-A=Z@Wo
-B=Z1@Wo1+Z2@Wo2
-OV1=Wv1@Wo1; OV2=Wv2@Wo2
-C=P1@X@OV1+P2@X@OV2
-for n,v in [('X',X),('Wv1',Wv1),('Wv2',Wv2),('Wo',Wo),('Z1',Z1),('Z2',Z2),('Z',Z),('Out concat',A),('Out sum',B),('OV1',OV1),('OV2',OV2),('Out via OV',C),('rank OV1',np.linalg.matrix_rank(OV1)),('rank OV2',np.linalg.matrix_rank(OV2))]:
-    print(n);print(v)
-print(np.allclose(A,B),np.allclose(A,C))
-R=np.array([[1,1],[0,1]]);Ri=np.array([[1,-1],[0,1]])
-print('gauge',np.allclose((Wv1@R)@(Ri@Wo1),OV1))
-print('head1 write no Wo:',(P1@X@Wv1)); print('head1 write with Wo:',Z1@Wo1)
-```
