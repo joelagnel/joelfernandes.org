@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" height="470" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="The four functions of a transition each walk the task list under tasklist_lock, and the completion function retries about once a second">
+<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/></marker><marker id="arG" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker><marker id="arR" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker><marker id="arGr" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/></marker><marker id="arO" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/></marker><marker id="arP" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/></marker></defs>
+<rect width="900" height="470" fill="#fff"/>
+<text x="450.0" y="26" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" >The transition scan: four task-list walks</text>
+<rect x="30" y="56" width="640" height="74" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="46" y="80" text-anchor="start" font-size="13" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">klp_init_transition()</text>
+<text x="46" y="102" text-anchor="start" font-size="12" fill="#444" font-weight="normal" >sets patch_state = initial state on every task</text>
+<text x="46" y="120" text-anchor="start" font-size="12" fill="#777" font-weight="normal" >then func->transition = true</text>
+<rect x="690" y="70" width="180" height="46" rx="5" fill="#fff3e6" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="780" y="90" text-anchor="middle" font-size="10.5" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">for_each_process_thread</text>
+<text x="780" y="106" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="normal" >under tasklist_lock</text>
+<line x1="350" y1="130" x2="350" y2="152" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="30" y="152" width="640" height="74" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="46" y="176" text-anchor="start" font-size="13" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">klp_start_transition()</text>
+<text x="46" y="198" text-anchor="start" font-size="12" fill="#444" font-weight="normal" >sets TIF_PATCH_PENDING on every task not yet in the target state</text>
+<text x="46" y="216" text-anchor="start" font-size="12" fill="#777" font-weight="normal" >enables the scheduler hook</text>
+<rect x="690" y="166" width="180" height="46" rx="5" fill="#fff3e6" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="780" y="186" text-anchor="middle" font-size="10.5" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">for_each_process_thread</text>
+<text x="780" y="202" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="normal" >under tasklist_lock</text>
+<line x1="350" y1="226" x2="350" y2="248" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="30" y="248" width="640" height="74" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="46" y="272" text-anchor="start" font-size="13" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">klp_try_complete_transition()</text>
+<text x="46" y="294" text-anchor="start" font-size="12" fill="#444" font-weight="normal" >calls klp_try_switch_task() on every task</text>
+<text x="46" y="312" text-anchor="start" font-size="12" fill="#777" font-weight="normal" >tasks left over: run again in about 1 s from a delayed work item</text>
+<rect x="690" y="262" width="180" height="46" rx="5" fill="#fff3e6" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="780" y="282" text-anchor="middle" font-size="10.5" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">for_each_process_thread</text>
+<text x="780" y="298" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="normal" >under tasklist_lock</text>
+<line x1="350" y1="322" x2="350" y2="344" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="30" y="344" width="640" height="74" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="46" y="368" text-anchor="start" font-size="13" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">klp_complete_transition()</text>
+<text x="46" y="390" text-anchor="start" font-size="12" fill="#444" font-weight="normal" >resets every task to IDLE</text>
+<text x="46" y="408" text-anchor="start" font-size="12" fill="#777" font-weight="normal" >func->transition = false</text>
+<rect x="690" y="358" width="180" height="46" rx="5" fill="#fff3e6" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="780" y="378" text-anchor="middle" font-size="10.5" fill="#b8681c" font-weight="bold" font-family="Menlo, Consolas, monospace">for_each_process_thread</text>
+<text x="780" y="394" text-anchor="middle" font-size="11" fill="#b8681c" font-weight="normal" >under tasklist_lock</text>
+<path d="M 670 238 C 730 238 730 214 700 214" fill="none" stroke="#c0392b" stroke-width="0"/>
+<text x="450" y="446" text-anchor="middle" font-size="12" fill="#555" font-weight="normal" >Idle tasks are not on the task list, so every walk also visits idle_task(cpu) for each CPU</text>
+</svg>

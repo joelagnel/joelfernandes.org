@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" width="900" height="440" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="A task can be switched at kernel exit, in the idle loop, on a freezable sleep in the scheduler, by the scanner, or by inheriting at fork">
+<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/></marker><marker id="arG" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker><marker id="arR" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker><marker id="arGr" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/></marker><marker id="arO" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/></marker><marker id="arP" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/></marker></defs>
+<rect width="900" height="440" fill="#fff"/>
+<text x="450.0" y="26" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" >Where a task's patch_state can change, and what nudges it</text>
+<rect x="350" y="170" width="200" height="70" rx="8" fill="#f4f7fb" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="2"/>
+<text x="450" y="200" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" >a task with</text>
+<text x="450" y="220" text-anchor="middle" font-size="13" fill="#2c5f8a" font-weight="bold" font-family="Menlo, Consolas, monospace">TIF_PATCH_PENDING</text>
+<rect x="30" y="56" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.8"/>
+<text x="170" y="80" text-anchor="middle" font-size="13" fill="#2e7d52" font-weight="bold" >return to user space</text>
+<text x="170" y="102" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">klp_update_patch_state()</text>
+<text x="170" y="122" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >no stack check: no kernel function live</text>
+<line x1="310" y1="96" x2="350" y2="205" stroke="#2e7d52" stroke-width="1.4" stroke-dasharray="4 3"/>
+<rect x="30" y="160" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.8"/>
+<text x="170" y="184" text-anchor="middle" font-size="13" fill="#2e7d52" font-weight="bold" >idle loop</text>
+<text x="170" y="206" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">klp_update_patch_state()</text>
+<text x="170" y="226" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >no stack check</text>
+<line x1="310" y1="200" x2="350" y2="205" stroke="#2e7d52" stroke-width="1.4" stroke-dasharray="4 3"/>
+<rect x="30" y="264" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.8"/>
+<text x="170" y="288" text-anchor="middle" font-size="13" fill="#2e7d52" font-weight="bold" >fork</text>
+<text x="170" y="310" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">klp_copy_process()</text>
+<text x="170" y="330" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >child copies parent's patch_state</text>
+<line x1="310" y1="304" x2="350" y2="205" stroke="#2e7d52" stroke-width="1.4" stroke-dasharray="4 3"/>
+<rect x="590" y="56" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.8"/>
+<text x="730" y="80" text-anchor="middle" font-size="13" fill="#b8681c" font-weight="bold" >sleep with TASK_FREEZABLE</text>
+<text x="730" y="102" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">__klp_sched_try_switch()</text>
+<text x="730" y="122" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >from __schedule(), stack check</text>
+<line x1="590" y1="96" x2="550" y2="205" stroke="#b8681c" stroke-width="1.4" stroke-dasharray="4 3"/>
+<rect x="590" y="160" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.8"/>
+<text x="730" y="184" text-anchor="middle" font-size="13" fill="#b8681c" font-weight="bold" >periodic scan, about 1 s</text>
+<text x="730" y="206" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">klp_try_complete_transition()</text>
+<text x="730" y="226" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >task must be off CPU, stack check</text>
+<line x1="590" y1="200" x2="550" y2="205" stroke="#b8681c" stroke-width="1.4" stroke-dasharray="4 3"/>
+<rect x="590" y="264" width="280" height="80" rx="6" fill="#fff" fill-opacity="1.0" stroke="#6b4c9a" stroke-width="1.8"/>
+<text x="730" y="288" text-anchor="middle" font-size="13" fill="#6b4c9a" font-weight="bold" >nudge only</text>
+<text x="730" y="310" text-anchor="middle" font-size="11" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">klp_send_signals()</text>
+<text x="730" y="330" text-anchor="middle" font-size="11.5" fill="#555" font-weight="normal" >every 15 rounds: pushes a task toward a switch point</text>
+<line x1="590" y1="304" x2="550" y2="205" stroke="#6b4c9a" stroke-width="1.4" stroke-dasharray="4 3"/>
+<text x="450" y="380" text-anchor="middle" font-size="12" fill="#555" font-weight="normal" >green: no stack check is needed. orange: a reliable stack trace must show no patched function. purple: changes nothing itself.</text>
+<text x="450" y="402" text-anchor="middle" font-size="12" fill="#555" font-weight="normal" >A kernel thread that never sleeps and never returns to user space can only be switched by the orange rows.</text>
+</svg>
