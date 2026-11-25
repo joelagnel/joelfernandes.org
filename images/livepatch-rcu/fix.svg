@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="The proposed livepatch change visits the exit lists at every step and waits for all CPUs to switch, which together cover the whole exit path">
+<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/></marker><marker id="arG" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker><marker id="arR" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker><marker id="arGr" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/></marker><marker id="arO" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/></marker><marker id="arP" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/></marker></defs>
+<rect width="900" height="400" fill="#fff"/>
+<text x="450.0" y="26" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" >The proposed livepatch change laid over the exit path</text>
+<line x1="40" y1="90" x2="880" y2="90" stroke="#333" stroke-width="2.5"/>
+<line x1="60" y1="82" x2="60" y2="98" stroke="#333" stroke-width="2"/>
+<text x="40" y="74" text-anchor="start" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_tasks_rcu_start()</text>
+<line x1="250" y1="82" x2="250" y2="98" stroke="#333" stroke-width="2"/>
+<text x="250" y="60" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_notify() unhashes</text>
+<line x1="450" y1="82" x2="450" y2="98" stroke="#333" stroke-width="2"/>
+<text x="450" y="74" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">rest of do_exit()</text>
+<line x1="590" y1="82" x2="590" y2="98" stroke="#333" stroke-width="2"/>
+<text x="590" y="60" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">preempt_disable()</text>
+<line x1="740" y1="82" x2="740" y2="98" stroke="#333" stroke-width="2"/>
+<text x="740" y="74" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_tasks_rcu_finish()</text>
+<line x1="860" y1="82" x2="860" y2="98" stroke="#333" stroke-width="2"/>
+<text x="880" y="60" text-anchor="end" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">do_task_dead()</text>
+<rect x="60" y="120" width="190" height="30" rx="4" fill="#eaf1f8" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="155.0" y="140" text-anchor="middle" font-size="11.5" fill="#2c5f8a" font-weight="bold" >task-list walk (today)</text>
+<rect x="60" y="160" width="680" height="30" rx="4" fill="#eaf6ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+<text x="400.0" y="180" text-anchor="middle" font-size="11.5" fill="#2e7d52" font-weight="bold" >walk of the exit lists (new, patch 1 and 2)</text>
+<rect x="590" y="200" width="270" height="30" rx="4" fill="#f1ecf8" fill-opacity="1.0" stroke="#6b4c9a" stroke-width="1.6"/>
+<text x="725.0" y="220" text-anchor="middle" font-size="11.5" fill="#6b4c9a" font-weight="bold" >wait for tasks already in here (new)</text>
+<text x="450" y="262" text-anchor="middle" font-size="12.5" fill="#2e7d52" font-weight="bold" >the walks find tasks up to exit_tasks_rcu_finish(); the wait, run after them, covers tasks already past it</text>
+<rect x="40" y="286" width="820" height="90" rx="6" fill="#f4f7fb" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.4"/>
+<text x="450" y="310" text-anchor="middle" font-size="12" fill="#333" font-weight="normal" >klp_synchronize_transition() runs in klp_init_transition() before func->transition is set,</text>
+<text x="450" y="330" text-anchor="middle" font-size="12" fill="#333" font-weight="normal" >and in klp_try_complete_transition() before klp_complete_transition().</text>
+<text x="450" y="352" text-anchor="middle" font-size="12" fill="#333" font-weight="normal" >The second one is what keeps the old patch module from being freed under a task still inside it.</text>
+</svg>

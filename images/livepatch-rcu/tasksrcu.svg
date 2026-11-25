@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 400" width="900" height="400" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="The five phases of a Tasks RCU grace period; the exit lists are consulted in postscan and the closing synchronize_rcu waits out the non-preemptible tail">
+<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/></marker><marker id="arG" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker><marker id="arR" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker><marker id="arGr" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/></marker><marker id="arO" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/></marker><marker id="arP" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/></marker></defs>
+<rect width="900" height="400" fill="#fff"/>
+<text x="450.0" y="26" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" >A Tasks RCU grace period and the exit path</text>
+<rect x="24" y="56" width="160" height="64" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.8"/>
+<text x="104" y="82" text-anchor="middle" font-size="13" fill="#2c5f8a" font-weight="bold" >1 pregp</text>
+<text x="104" y="104" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >synchronize_rcu()</text>
+<line x1="184" y1="88" x2="198" y2="88" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="198" y="56" width="160" height="64" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.8"/>
+<text x="278" y="82" text-anchor="middle" font-size="13" fill="#2c5f8a" font-weight="bold" >2 pertask</text>
+<text x="278" y="104" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >every task on the list</text>
+<line x1="358" y1="88" x2="372" y2="88" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="372" y="56" width="160" height="64" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.8"/>
+<text x="452" y="82" text-anchor="middle" font-size="13" fill="#2e7d52" font-weight="bold" >3 postscan</text>
+<text x="452" y="104" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >every task on an exit list</text>
+<line x1="532" y1="88" x2="546" y2="88" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="546" y="56" width="160" height="64" rx="6" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.8"/>
+<text x="626" y="82" text-anchor="middle" font-size="13" fill="#2c5f8a" font-weight="bold" >4 holdout loop</text>
+<text x="626" y="104" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >poll until none left</text>
+<line x1="706" y1="88" x2="720" y2="88" stroke="#2c5f8a" stroke-width="2" marker-end="url(#ar)"/>
+<rect x="720" y="56" width="160" height="64" rx="6" fill="#fff" fill-opacity="1.0" stroke="#6b4c9a" stroke-width="1.8"/>
+<text x="800" y="82" text-anchor="middle" font-size="13" fill="#6b4c9a" font-weight="bold" >5 postgp</text>
+<text x="800" y="104" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >synchronize_rcu()</text>
+<line x1="40" y1="200" x2="880" y2="200" stroke="#333" stroke-width="2.5"/>
+<line x1="60" y1="192" x2="60" y2="208" stroke="#333" stroke-width="2"/>
+<text x="40" y="184" text-anchor="start" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_tasks_rcu_start()</text>
+<line x1="250" y1="192" x2="250" y2="208" stroke="#333" stroke-width="2"/>
+<text x="250" y="170" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_notify() unhashes</text>
+<line x1="450" y1="192" x2="450" y2="208" stroke="#333" stroke-width="2"/>
+<text x="450" y="184" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">rest of do_exit()</text>
+<line x1="590" y1="192" x2="590" y2="208" stroke="#333" stroke-width="2"/>
+<text x="590" y="170" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">preempt_disable()</text>
+<line x1="740" y1="192" x2="740" y2="208" stroke="#333" stroke-width="2"/>
+<text x="740" y="184" text-anchor="middle" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">exit_tasks_rcu_finish()</text>
+<line x1="860" y1="192" x2="860" y2="208" stroke="#333" stroke-width="2"/>
+<text x="880" y="170" text-anchor="end" font-size="10.5" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">do_task_dead()</text>
+<rect x="60" y="228" width="190" height="30" rx="4" fill="#eaf1f8" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.6"/>
+<text x="155.0" y="248" text-anchor="middle" font-size="11.5" fill="#2c5f8a" font-weight="bold" >phase 2 finds these</text>
+<rect x="60" y="266" width="680" height="30" rx="4" fill="#eaf6ee" fill-opacity="1.0" stroke="#2e7d52" stroke-width="1.6"/>
+<text x="400.0" y="286" text-anchor="middle" font-size="11.5" fill="#2e7d52" font-weight="bold" >phase 3 finds these</text>
+<rect x="590" y="304" width="270" height="30" rx="4" fill="#f1ecf8" fill-opacity="1.0" stroke="#6b4c9a" stroke-width="1.6"/>
+<text x="725.0" y="324" text-anchor="middle" font-size="11.5" fill="#6b4c9a" font-weight="bold" >phase 5 waits these out</text>
+<text x="450" y="366" text-anchor="middle" font-size="12" fill="#555" font-weight="normal" >Between them the phases cover the exit path from the first exit list insertion to the last switch.</text>
+</svg>

@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" height="480" font-family="Helvetica, Arial, sans-serif" role="img" aria-label="Tasks Trace RCU readers bump per-CPU counters; a grace period flips which set new readers use and waits until the old set's lock and unlock sums match">
+<defs><marker id="ar" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2c5f8a"/></marker><marker id="arG" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#888"/></marker><marker id="arR" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#c0392b"/></marker><marker id="arGr" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#2e7d52"/></marker><marker id="arO" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#b8681c"/></marker><marker id="arP" markerWidth="10" markerHeight="10" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#6b4c9a"/></marker></defs>
+<rect width="900" height="480" fill="#fff"/>
+<text x="450.0" y="26" text-anchor="middle" font-size="16" fill="#333" font-weight="bold" >Tasks Trace RCU: per-CPU counters, flip, drain</text>
+<rect x="20" y="50" width="276" height="380" rx="6" fill="#fff" fill-opacity="1.0" stroke="#888" stroke-width="1.4"/>
+<text x="158" y="74" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" >1  readers running</text>
+<text x="36" y="110" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 0</text>
+<rect x="36" y="118" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="48" y="137" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="48" y="155" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 2    unlock 1</text>
+<rect x="36" y="172" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="48" y="191" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="48" y="209" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 0    unlock 0</text>
+<text x="36" y="260" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 1</text>
+<rect x="36" y="268" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="48" y="287" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="48" y="305" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 1    unlock 1</text>
+<rect x="36" y="322" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="48" y="341" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="48" y="359" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 0    unlock 0</text>
+<text x="158" y="408" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >lock sum 3, unlock sum 2: one reader inside</text>
+<rect x="312" y="50" width="276" height="380" rx="6" fill="#fff" fill-opacity="1.0" stroke="#888" stroke-width="1.4"/>
+<text x="450" y="74" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" >2  grace period starts</text>
+<text x="328" y="110" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 0</text>
+<rect x="328" y="118" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="340" y="137" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="340" y="155" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 2    unlock 1</text>
+<rect x="328" y="172" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="340" y="191" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="340" y="209" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 1    unlock 0</text>
+<text x="328" y="260" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 1</text>
+<rect x="328" y="268" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="340" y="287" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="340" y="305" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 1    unlock 1</text>
+<rect x="328" y="322" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="340" y="341" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="340" y="359" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 0    unlock 0</text>
+<text x="450" y="408" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >new readers use set B; wait for set A</text>
+<rect x="604" y="50" width="276" height="380" rx="6" fill="#fff" fill-opacity="1.0" stroke="#888" stroke-width="1.4"/>
+<text x="742" y="74" text-anchor="middle" font-size="13" fill="#333" font-weight="bold" >3  last old reader leaves</text>
+<text x="620" y="110" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 0</text>
+<rect x="620" y="118" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="632" y="137" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="632" y="155" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 2    unlock 1</text>
+<rect x="620" y="172" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="632" y="191" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="632" y="209" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 1    unlock 0</text>
+<text x="620" y="260" text-anchor="start" font-size="12" fill="#444" font-weight="bold" >CPU 1</text>
+<rect x="620" y="268" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#2c5f8a" stroke-width="1.5"/>
+<text x="632" y="287" text-anchor="start" font-size="11.5" fill="#2c5f8a" font-weight="bold" >set A</text>
+<text x="632" y="305" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 1    unlock 2</text>
+<rect x="620" y="322" width="244" height="46" rx="4" fill="#fff" fill-opacity="1.0" stroke="#b8681c" stroke-width="1.5"/>
+<text x="632" y="341" text-anchor="start" font-size="11.5" fill="#b8681c" font-weight="bold" >set B</text>
+<text x="632" y="359" text-anchor="start" font-size="12" fill="#333" font-weight="normal" font-family="Menlo, Consolas, monospace">lock 0    unlock 0</text>
+<text x="742" y="408" text-anchor="middle" font-size="11" fill="#555" font-weight="normal" >set A: lock sum 3 = unlock sum 3: done</text>
+<text x="450" y="458" text-anchor="middle" font-size="12" fill="#555" font-weight="normal" >A reader may unlock on a different CPU than it locked on; only the sums matter. (The real grace period scans the idle set first, then flips.)</text>
+</svg>
